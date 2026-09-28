@@ -1,9 +1,13 @@
 ---
-/** Event types as cards. Each links to its landing page. */
-import Icon from './Icon.astro';
+/**
+ * Event types as photo tiles. Each tile shows the event's photo from the event photo map
+ * (eventPhoto in src/data/photos.ts), its name and one line, and links to its landing page.
+ */
+import Photo from './Photo.astro';
 import { events } from '../data/events';
-import { eventTypes } from '../data/event-types';
+import { eventPhoto } from '../data/photos';
 import { href } from '../lib/paths';
+import { uid } from '../lib/uid';
 
 interface Props {
   exclude?: string[];
@@ -16,26 +20,36 @@ const { exclude = [], only, headingLevel = 'h3', layout = 'grid' } = Astro.props
 const list = only
   ? only.map((slug) => events.find((e) => e.slug === slug)).filter((e) => e !== undefined)
   : events.filter((e) => !exclude.includes(e.slug));
-const iconFor = (slug: string) => eventTypes.find((t) => t.slug === slug)?.icon ?? 'party-popper';
 const Heading = headingLevel;
+// The tile is one link named by the event: the photo's description is not part of its name.
+const prefix = uid('event');
+const sizes =
+  layout === 'shelf'
+    ? '(min-width: 75rem) 290px, (min-width: 900px) 24vw, min(78vw, 300px)'
+    : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
 ---
 {
   list.length > 0 && (
     <ul class:list={['events', `events--${layout}`]}>
-      {list.map((e) => (
-        <li class="events__item">
-          <a class="event-card card" href={href(`/events/${e.slug}/`)}>
-            <span class="icon-tile">
-              <Icon name={iconFor(e.slug)} />
-            </span>
-            <Heading class="event-card__name t-title-3">{e.name}</Heading>
-            <p class="event-card__summary secondary">{e.summary}</p>
-            <span class="link-more event-card__more">
-              Plan yours <Icon name="chevron-right" />
-            </span>
-          </a>
-        </li>
-      ))}
+      {list.map((e) => {
+        const photo = eventPhoto(e.slug);
+        const nameId = `${prefix}-${e.slug}`;
+        return (
+          <li class="events__item">
+            <a class="event-card card" href={href(`/events/${e.slug}/`)} aria-labelledby={nameId} aria-describedby={`${nameId}-summary`}>
+              {photo && <Photo photo={photo} rounded={false} sizes={sizes} class="event-card__photo" />}
+              <div class="event-card__body">
+                <Heading id={nameId} class="event-card__name t-title-3">
+                  {e.name}
+                </Heading>
+                <p id={`${nameId}-summary`} class="event-card__summary secondary">
+                  {e.summary}
+                </p>
+              </div>
+            </a>
+          </li>
+        );
+      })}
     </ul>
   )
 }
@@ -60,8 +74,8 @@ const Heading = headingLevel;
 
   .events--grid {
     display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   }
 
   .events--shelf {
@@ -99,6 +113,7 @@ const Heading = headingLevel;
       grid-auto-flow: row;
       grid-auto-columns: auto;
       grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.25rem;
       overflow: visible;
       scroll-snap-type: none;
       margin-inline: 0;
@@ -106,28 +121,18 @@ const Heading = headingLevel;
     }
   }
 
+  /* The photo runs to the card's edges; the card's radius clips it. */
   .event-card {
     display: grid;
-    align-content: start;
-    gap: 0.6rem;
+    grid-template-rows: auto 1fr;
     height: 100%;
-    padding: 1.5rem;
+    overflow: hidden;
+    isolation: isolate;
     color: var(--label);
     text-decoration: none;
     transition:
       transform var(--dur-2) var(--ease-spring),
       box-shadow var(--dur-2) ease;
-  }
-
-  /* 200% text on phones: wider cards and tighter padding give the names room. */
-  @media (width < 20rem) {
-    .events--shelf {
-      grid-auto-columns: 88%;
-    }
-
-    .event-card {
-      padding: 1rem;
-    }
   }
 
   .event-card:hover {
@@ -136,17 +141,29 @@ const Heading = headingLevel;
     box-shadow: var(--shadow-3);
   }
 
-  .event-card__name {
-    margin-top: 0.5rem;
+  .event-card:focus-visible {
+    border-radius: var(--r-lg);
+  }
+
+  .event-card__body {
+    display: grid;
+    align-content: start;
+    gap: 0.4rem;
+    padding: 1.1rem 1.25rem 1.1rem;
   }
 
   .event-card__summary {
     font-size: var(--t-subhead);
   }
 
-  .event-card__more {
-    margin-top: auto;
-    padding-top: 0.5rem;
-    font-size: var(--t-subhead);
+  /* 200% text on phones: wider cards and tighter padding give the names room. */
+  @media (width < 20rem) {
+    .events--shelf {
+      grid-auto-columns: 88%;
+    }
+
+    .event-card__body {
+      padding: 0.9rem 1rem;
+    }
   }
 </style>

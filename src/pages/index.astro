@@ -1,132 +1,267 @@
 ---
+/**
+ * Home, per docs/design/brand.md "Page direction: Home":
+ * full-bleed hero on the building at dusk with the date checker, a short statement with three facts,
+ * The Hall and The Grove as photo cards, events as photo tiles, a rates teaser, the booking steps,
+ * the arrival band, four questions, and the closing call to action.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ArchFrame from '../components/ArchFrame.astro';
+import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
-import FactStrip from '../components/FactStrip.astro';
 import EventIndex from '../components/EventIndex.astro';
 import LocationBand from '../components/LocationBand.astro';
 import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
-import { heroPhoto, photosTagged, photos } from '../data/photos';
+import { heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { publishedFaqs } from '../data/faq';
 import { bookHref, pricingHref } from '../data/nav';
-import { priceSummary, formatUSD } from '../shared/pricing';
+import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
 import { href } from '../lib/paths';
 
-const hero = heroPhoto();
-const indoorPhoto = photosTagged('indoor')[0] ?? photos.find((p) => p !== hero) ?? null;
-const outdoorPhoto = photosTagged('outdoor')[0] ?? null;
-const indoor = site.spaces.find((s) => s.id === 'indoor');
-const outdoor = site.spaces.find((s) => s.id === 'outdoor');
-const { fromHourly } = priceSummary();
-const homeFaqs = ['How many guests can the venue hold?', 'Do I need to be a member of New Community Church to book?', 'Is alcohol allowed?', 'Is catering included?', 'How do I check if my date is available?']
-  .map((q) => publishedFaqs.find((f) => f.q === q))
-  .filter((f) => f !== undefined);
+const hero = photoByName('exterior-dusk') ?? heroPhoto();
+const hall = site.spaces.find((s) => s.id === 'indoor');
+const grove = site.spaces.find((s) => s.id === 'outdoor');
+const hallName = hall?.name ?? 'The Hall';
+const groveName = grove?.name ?? 'The Grove';
+
+/* The two spaces. Features are only what the photos show (brand.md, Photography). */
+interface SpaceCard {
+  id: 'hall' | 'grove';
+  name: string;
+  capacity: number | undefined;
+  sentence: string;
+  features: string[];
+  photo: VenuePhoto | undefined;
+  href: string;
+}
+const spaceCards: SpaceCard[] = [
+  {
+    id: 'hall',
+    name: hallName,
+    capacity: hall?.capacity,
+    sentence: 'Our indoor space: an open room for receptions, banquets, showers, and meetings.',
+    features: ['Arched windows', 'Fireplace feature wall', 'Dark wood-look floors'],
+    photo: photosFor('hall')[0],
+    href: '/the-space/#hall',
+  },
+  {
+    id: 'grove',
+    name: groveName,
+    capacity: grove?.capacity,
+    sentence: 'Our outdoor space among tall pines, for ceremonies, reunions, and community gatherings.',
+    features: ['Timber gazebo', 'Picnic tables on a paved patio', 'Open lawn under tall pines'],
+    photo: photosFor('grove')[0],
+    href: '/the-space/#grove',
+  },
+];
+
+/* Rates teaser: the lowest hourly rate for each space, straight from the rate card. */
+const spaceNames = { indoor: hallName, outdoor: groveName, both: `${hallName} and ${groveName}` } as const;
+const rates = (['indoor', 'outdoor', 'both'] as const).map((id) => {
+  const [day, rate] = (Object.entries(pricing.hourly[id]) as [DayType, number][]).reduce((low, cur) => (cur[1] < low[1] ? cur : low));
+  return { id, name: spaceNames[id], rate, days: pricing.dayTypes[day].label };
+});
+const rateDays = [...new Set(rates.map((r) => r.days))];
+const { lowestPackage } = priceSummary();
+const ratesLead = `Hourly rates by day and space,${lowestPackage ? ` packages from ${formatUSD(lowestPackage)},` : ''} and an instant estimate for any date.`;
+const ratesNote =
+  rateDays.length === 1
+    ? `Starting rates apply ${rateDays[0]}. Every rate, package, and fee is on the pricing page.`
+    : 'Rates vary by day. Every rate, package, and fee is on the pricing page.';
+
+/* Four questions, chosen by their exact text. A question missing from src/data/faq.ts is skipped. */
+const HOME_QUESTIONS = [
+  'How many guests can the venue hold?',
+  'Who can book the venue?',
+  'How do deposits and payments work?',
+  'How do I check if my date is available?',
+];
+const homeFaqs = HOME_QUESTIONS.map((q) => publishedFaqs.find((f) => f.q === q)).filter((f) => f !== undefined);
 
 const title = 'Event venue in Suffolk, VA | The Venue at NCC';
-const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capacity}, outdoor space for ${outdoor?.capacity}, parking included, open to everyone. Check dates and get an instant estimate.`;
+const description = `An event venue among the pines in Suffolk, Virginia: ${hallName} for up to ${hall?.capacity} guests, ${groveName} for up to ${grove?.capacity}, and on-site parking. Check your date online.`;
 ---
 <BaseLayout title={title} description={description} og="home" venueDetails>
-  <section class="hero">
-    <div class="container hero__head">
-      <h1 class="hero__h1">
+  <section class="hero" aria-labelledby="hero-title">
+    {
+      hero && (
+        <div class="hero__media">
+          <Photo photo={hero} ratio="fill" tall rounded={false} priority sizes="100vw" />
+        </div>
+      )
+    }
+    <div class="hero__scrim" aria-hidden="true"></div>
+    <div class="hero__copy">
+      <h1 id="hero-title" class="hero__h1">
         <span class="hero__kicker">Event venue in Suffolk, Virginia<span class="visually-hidden">:</span></span>
-        <span class="hero__title t-display">Unforgettable events await you.</span>
+        <span class="hero__title t-display">Celebrate among the pines.</span>
       </h1>
-      <p class="t-lead hero__lead">
-        An indoor hall for {indoor?.capacity}, an outdoor space for {outdoor?.capacity}, and parking included. Open to all,
-        with upfront pricing and an instant estimate for your date.
+      <p class="hero__lead">
+        Gather up to {hall?.capacity} guests in {hallName} or {grove?.capacity} in {groveName}, with on-site parking included.
       </p>
-      <div class="btn-row hero__actions">
-        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
-        <a class="link-more" href={href(pricingHref)}>See pricing <Icon name="chevron-right" /></a>
+      <div class="btn-row btn-row--stack hero__actions">
+        <a class="btn btn--white btn--lg" href={href(bookHref)}>Check Availability</a>
+        <a class="btn btn--outline-white btn--lg" href={href('/the-space/')}>Tour the Space</a>
       </div>
     </div>
-
-    <div class="container hero__stage">
-      <div class="hero__media">
-        <ArchFrame shape="panel" ratio="2 / 1" photo={hero} priority sizes="(min-width: 1240px) 1200px, 94vw" variant={0} muntins={false} window={!hero} class="hero__panel" />
-      </div>
-      <div class="hero__widget">
-        <DateChecker client:load bookHref={href(bookHref)} />
-      </div>
-    </div>
-
-    <div class="container">
-      <FactStrip center class="hero__facts" />
+    <div class="hero__checker">
+      <DateChecker client:load bookHref={href(bookHref)} />
     </div>
   </section>
 
-  <section class="section section--grouped" aria-labelledby="why-heading">
+  <section class="section intro" aria-labelledby="intro-heading">
     <div class="container">
-      <div class="section-head section-head--center">
-        <h2 id="why-heading">What every booking includes</h2>
-        <p class="t-lead">The space, on-site parking, and the freedom to bring your own caterer.</p>
+      <h2 id="intro-heading" class="visually-hidden">About the venue</h2>
+      <p class="intro__statement">
+        {site.name} is an event venue on a wooded campus in north Suffolk, operated by {site.parent.name}. We host weddings,
+        banquets, showers, reunions, and meetings in two distinct spaces, and we confirm every booking personally.
+      </p>
+      <dl class="intro__facts">
+        <div class="intro__fact">
+          <dt>Two distinct spaces</dt>
+          <dd>{hallName} indoors and {groveName} outdoors, on one campus.</dd>
+        </div>
+        <div class="intro__fact">
+          <dt>On-site parking</dt>
+          <dd>A large paved lot, included with every booking.</dd>
+        </div>
+        <div class="intro__fact">
+          <dt>Minutes from downtown</dt>
+          <dd>On Godwin Boulevard in north Suffolk.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="spaces-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="spaces-heading">Two spaces, one address</h2>
+        <p class="t-lead">Choose {hallName}, {groveName}, or request both for the same event.</p>
       </div>
-      <div class="bento">
-        <article class="bento__tile bento__tile--wide card">
-          <h3 class="t-title-2">Room for your whole guest list</h3>
-          <div class="cap">
-            <div class="cap__item">
-              <Icon name="building" class="cap__icon" />
-              <p class="cap__num num">{indoor?.capacity}</p>
-              <p class="secondary">guests in the indoor hall</p>
-            </div>
-            <div class="cap__item">
-              <Icon name="tree" class="cap__icon" />
-              <p class="cap__num num">{outdoor?.capacity}</p>
-              <p class="secondary">guests in the outdoor space</p>
-            </div>
-          </div>
-          <a class="link-more" href={href('/the-space/')}>Plan your guest count <Icon name="chevron-right" /></a>
-        </article>
-        <article class="bento__tile card">
-          <span class="icon-tile"><Icon name="users" /></span>
-          <h3>Open to everyone</h3>
-          <p class="secondary">No membership needed. Anyone can book the venue.</p>
-        </article>
-        <article class="bento__tile card">
-          <span class="icon-tile"><Icon name="utensils" /></span>
-          <h3>Bring your own caterer</h3>
-          <p class="secondary">Catering is not included, so you choose the menu, the caterer, and the budget.</p>
-        </article>
-        <article class="bento__tile card">
-          <span class="icon-tile"><Icon name="wine" /></span>
-          <h3>Alcohol welcome</h3>
-          <p class="secondary">Raise a glass. You can serve alcohol at your event.</p>
-        </article>
-        <article class="bento__tile card">
-          <span class="icon-tile"><Icon name="parking" /></span>
-          <h3>Parking included</h3>
-          <p class="secondary">On-site parking comes with every booking.</p>
-        </article>
-        <article class="bento__tile bento__tile--wide bento__tile--price card">
-          <div>
-            <h3 class="t-title-2">Upfront pricing, from {formatUSD(fromHourly)} an hour</h3>
-            <p class="secondary">See every rate, then get an instant estimate for your date, space, and hours.</p>
-          </div>
+      <div class="spaces">
+        {
+          spaceCards.map((card) => {
+            const styled = card.photo?.styled[0];
+            return (
+              <article class="space card" aria-labelledby={`space-${card.id}`}>
+                {card.photo && (
+                  <div class="space__media">
+                    <Photo
+                      photo={card.photo}
+                      class="space__pane space__pane--real"
+                      caption={Boolean(styled)}
+                      sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw"
+                    />
+                    {styled && (
+                      <Photo photo={styled} class="space__pane space__pane--styled" sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw" />
+                    )}
+                  </div>
+                )}
+                <div class="space__body">
+                  {styled && (
+                    <fieldset class="segmented space__view">
+                      <legend class="visually-hidden">Photo of {card.name}</legend>
+                      <label class="segmented__item space__seg">
+                        <input class="visually-hidden space__radio" type="radio" name={`view-${card.id}`} value="real" checked />
+                        As Photographed
+                      </label>
+                      <label class="segmented__item space__seg">
+                        <input class="visually-hidden space__radio space__radio--styled" type="radio" name={`view-${card.id}`} value="styled" />
+                        Styled Concept
+                      </label>
+                    </fieldset>
+                  )}
+                  <h3 id={`space-${card.id}`} class="space__name t-title-1">
+                    {card.name}
+                  </h3>
+                  {card.capacity && (
+                    <p class="space__cap">
+                      <Icon name="users" />
+                      Up to {card.capacity} guests
+                    </p>
+                  )}
+                  <p class="space__sentence secondary">{card.sentence}</p>
+                  <ul class="space__features">
+                    {card.features.map((f) => (
+                      <li>
+                        <Icon name="check" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <a class="link-more space__link" href={href(card.href)}>
+                    Explore {card.name} <Icon name="chevron-right" />
+                  </a>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="events-heading">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div class="section-head__text">
+          <h2 id="events-heading">Events we host</h2>
+          <p class="t-lead">Weddings, banquets, showers, birthdays, repasts, meetings, reunions, and community gatherings.</p>
+        </div>
+        <a class="link-more" href={href('/events/')}>See all events <Icon name="chevron-right" /></a>
+      </div>
+      <EventIndex layout="shelf" />
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="rates-heading">
+    <div class="container rates">
+      <div class="rates__copy">
+        <h2 id="rates-heading">Clear rates, published up front</h2>
+        <p class="t-lead">{ratesLead}</p>
+      </div>
+      <div class="rates__panel">
+        <dl class="list-group rates__list">
+          {
+            rates.map((r) => (
+              <div class="rates__row">
+                <dt class="rates__name">{r.name}</dt>
+                <dd class="rates__price">
+                  <span class="rates__from">from</span>
+                  <span class="rates__num num">{formatUSD(r.rate)}</span>
+                  <span class="rates__unit">an hour</span>
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="rates__note">{ratesNote}</p>
+        <div class="btn-row rates__action">
           <a class="btn btn--tinted" href={href(pricingHref)}>
             <Icon name="tag" />
-            View Pricing
+            See Pricing
           </a>
-        </article>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="section" aria-labelledby="steps-heading">
     <div class="container">
-      <div class="section-head section-head--center">
-        <h2 id="steps-heading">Book in three steps</h2>
-        <p class="t-lead">No phone tag. See what is open and ask for your date in minutes.</p>
+      <div class="section-head">
+        <h2 id="steps-heading">How booking works</h2>
+        <p class="t-lead">Three steps from choosing a date to a confirmed booking.</p>
       </div>
       <ol class="steps">
         {
           site.bookingSteps.map((step, i) => (
             <li class="steps__item">
-              <span class="steps__num num" aria-hidden="true">{i + 1}</span>
+              <span class="steps__num num" aria-hidden="true">
+                {i + 1}
+              </span>
               <h3>{step.title}</h3>
               <p class="secondary">{step.body}</p>
             </li>
@@ -139,58 +274,17 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     </div>
   </section>
 
-  <section class="section section--grouped" aria-labelledby="events-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="events-heading">Plan any kind of event</h2>
-        <p class="t-lead">Weddings to workshops, showers to celebrations of life.</p>
-      </div>
-      <EventIndex layout="shelf" />
-      <p class="more-link">
-        <a class="link-more" href={href('/events/')}>See all events <Icon name="chevron-right" /></a>
-      </p>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="spaces-heading">
-    <div class="container">
-      <div class="section-head section-head--center">
-        <h2 id="spaces-heading">Two spaces at one address</h2>
-        <p class="t-lead">Choose the hall, the open air, or ask for both.</p>
-      </div>
-      <div class="spaces">
-        <article class="space">
-          <ArchFrame photo={indoorPhoto} ratio="4 / 5" variant={1} sizes="(min-width: 900px) 440px, 88vw" />
-          <div class="space__text">
-            <h3 class="t-title-2">{indoor?.name}</h3>
-            <p class="secondary">Up to {indoor?.capacity} guests. {indoor?.description}</p>
-          </div>
-        </article>
-        <article class="space">
-          <ArchFrame photo={outdoorPhoto} ratio="4 / 5" variant={2} sizes="(min-width: 900px) 440px, 88vw" />
-          <div class="space__text">
-            <h3 class="t-title-2">{outdoor?.name}</h3>
-            <p class="secondary">Up to {outdoor?.capacity} guests. {outdoor?.description}</p>
-          </div>
-        </article>
-      </div>
-      <p class="more-link more-link--center">
-        <a class="link-more" href={href('/the-space/')}>Explore the space <Icon name="chevron-right" /></a>
-      </p>
-    </div>
-  </section>
-
   <LocationBand />
 
   {
     homeFaqs.length > 0 && (
       <section class="section" aria-labelledby="faq-heading">
         <div class="container faq-grid">
-          <div class="section-head">
-            <h2 id="faq-heading">Questions, answered</h2>
-            <p class="t-lead">The things people ask before they book.</p>
+          <div class="section-head faq-grid__head">
+            <h2 id="faq-heading">Before you book</h2>
+            <p class="t-lead">Answers to the questions we hear most.</p>
             <a class="link-more" href={href('/faq/')}>
-              All questions <Icon name="chevron-right" />
+              See all questions <Icon name="chevron-right" />
             </a>
           </div>
           <FaqList items={homeFaqs} />
@@ -199,205 +293,491 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     )
   }
 
-  <section class="section section--tight section--grouped church" aria-labelledby="church-heading">
-    <div class="container church__inner">
-      <span class="icon-tile"><Icon name="church" /></span>
-      <div>
-        <h2 id="church-heading" class="t-title-2">Part of New Community Church</h2>
-        <p class="secondary">
-          The Venue at NCC is the event space of {site.parent.name}, part of Suffolk since {site.parent.foundingYear}. The church
-          was founded by {site.parent.pastor}, who serves as its pastor.
-        </p>
-      </div>
-      <a class="link-more" href={href('/about/')}>About us <Icon name="chevron-right" /></a>
-    </div>
-  </section>
-
   <CtaBand />
 </BaseLayout>
 
 <style>
+  /* ---------- Hero ---------- */
+
+  /*
+    One grid for the hero. Row 1 is the photo, full bleed, with the copy at the bottom left.
+    Row 2 holds the date checker below 64rem; from 64rem it floats in row 1 at the bottom right.
+    The DateChecker island renders once (its ids are fixed), so CSS alone moves it.
+  */
   .hero {
-    padding-top: clamp(2.5rem, 1.5rem + 4vw, 5rem);
-    padding-bottom: clamp(3rem, 2rem + 4vw, 5.5rem);
+    --hero-h: min(88svh, 56rem);
+    --checker-w: 23.75rem;
+    /* Where the photo is cropped: the lit entry and the cross sit right of center. */
+    --photo-pos: 50% 62%;
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(var(--gutter), 1fr)
+      [content-start] minmax(0, var(--max))
+      [content-end] minmax(var(--gutter), 1fr)
+      [full-end];
+    grid-template-rows: [photo-start] minmax(var(--hero-h), auto) [photo-end] auto;
+    background: var(--bg-grouped);
+  }
+
+  .hero__media,
+  .hero__scrim {
+    grid-column: full;
+    grid-row: photo;
+  }
+
+  .hero__media {
+    position: relative;
     overflow: hidden;
   }
 
-  .hero__head {
+  .hero__media :global(.photo) {
+    position: absolute;
+    inset: 0;
+  }
+
+  /*
+    Legibility scrim, tinted toward Deep Plum and strongest at the bottom left where the copy sits
+    over the pale paving. The only gradients on the site are scrims like this one.
+  */
+  .hero__scrim {
+    /* Positioned like the photo, so it paints above it. */
+    position: relative;
+    background:
+      linear-gradient(
+        to top,
+        rgb(26 16 36 / 0.86) 0%,
+        rgb(26 16 36 / 0.62) 30%,
+        rgb(26 16 36 / 0.22) 55%,
+        rgb(26 16 36 / 0) 72%
+      ),
+      linear-gradient(to right, rgb(26 16 36 / 0.62) 0%, rgb(26 16 36 / 0.32) 40%, rgb(26 16 36 / 0) 66%);
+  }
+
+  .hero__copy {
+    grid-column: content;
+    grid-row: photo;
+    align-self: end;
+    z-index: 1;
     display: grid;
-    justify-items: center;
     gap: 1.25rem;
-    text-align: center;
+    max-width: 42rem;
+    padding-block: clamp(6rem, 20svh, 12rem) clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    color: #ffffff;
   }
 
   .hero__h1 {
     display: grid;
-    gap: 0.75rem;
-    justify-items: center;
+    gap: 0.9rem;
+    color: #ffffff;
   }
 
   .hero__kicker {
-    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
+    font-family: var(--font);
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
     font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--accent-text);
+    line-height: 1.3;
+    letter-spacing: normal;
+    color: var(--lilac);
   }
 
   .hero__title {
-    max-width: 13ch;
+    color: #ffffff;
+    text-shadow: 0 1px 24px rgb(26 16 36 / 0.35);
   }
 
   .hero__lead {
-    max-width: 38rem;
+    max-width: 34rem;
+    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.92);
   }
 
   .hero__actions {
-    justify-content: center;
-    gap: 1.25rem;
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
   }
 
-  .hero__stage {
-    position: relative;
-    margin-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+  .hero :global(:focus-visible) {
+    outline-color: #ffffff;
   }
 
-  @media (max-width: 899.98px) {
-    .hero :global(.hero__panel .media__frame) {
-      aspect-ratio: 5 / 4;
-    }
+  .hero__checker :global(:focus-visible) {
+    outline-color: var(--accent-text);
   }
 
-  /* The date checker card (.bk-dc) is the only surface here: content does not sit on Liquid Glass. */
-  .hero__widget :global(.bk-dc) {
+  /* Below 64rem the checker sits under the photo, as a plain card on the grouped background. */
+  .hero__checker {
+    grid-column: content;
+    grid-row: 2;
+    padding-block: 1.5rem 2.5rem;
+  }
+
+  .hero__checker :global(.bk-dc) {
     margin-inline: auto;
   }
 
-  @media (min-width: 64rem) {
-    .hero__widget {
-      position: absolute;
-      right: clamp(1.25rem, 3vw, 2.5rem);
-      bottom: clamp(1.25rem, 3vw, 2.5rem);
-      width: min(380px, 42%);
+  /* Phones: the photo fills the screen between the nav bar and the floating tab bar. */
+  @media (width < 46.5rem) {
+    .hero {
+      --hero-h: max(28rem, calc(100svh - var(--nav-h) - var(--tabbar-space)));
     }
   }
 
+  /* The copy spans the width here, so the scrim rises from the bottom only. */
   @media (width < 64rem) {
-    .hero__widget {
-      margin-top: -3rem;
-      margin-inline: 0.75rem;
-      position: relative;
-      z-index: 1;
+    .hero {
+      --photo-pos: 72% 50%;
+    }
+
+    .hero__scrim {
+      background: linear-gradient(
+        to top,
+        rgb(26 16 36 / 0.9) 0%,
+        rgb(26 16 36 / 0.76) 30%,
+        rgb(26 16 36 / 0.52) 55%,
+        rgb(26 16 36 / 0.18) 75%,
+        rgb(26 16 36 / 0) 90%
+      );
     }
   }
 
-  /* The ul carries FactStrip's scope, so reach it with :global. */
-  .hero :global(.hero__facts) {
-    margin-top: 2rem;
+  /* From 64rem the checker floats over the photo at the bottom right, on glass. */
+  @media (min-width: 64rem) {
+    .hero__copy {
+      max-width: min(42rem, calc(100% - var(--checker-w) - 3rem));
+    }
+
+    .hero__checker {
+      grid-row: photo;
+      align-self: end;
+      justify-self: end;
+      z-index: 1;
+      width: var(--checker-w);
+      padding-block: 2.5rem clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    }
+
+    /*
+      The card becomes a glass panel. The glass tokens turn solid under Reduce Transparency, Increase
+      Contrast, and where backdrop-filter is not supported (global.css).
+    */
+    .hero__checker :global(.bk-dc) {
+      max-width: none;
+      margin-inline: 0;
+      background-color: var(--glass-bg-strong);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-edge), var(--glass-shadow);
+    }
   }
 
-  /* Bento grid */
-  .bento {
+  /* ---------- Statement ---------- */
+
+  .intro__statement {
+    max-width: 52rem;
+    font-family: var(--font-serif);
+    font-size: clamp(1.375rem, 1.1rem + 1.1vw, 2.125rem);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+    color: var(--label);
+  }
+
+  .intro__facts {
     display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 1.5rem clamp(1.5rem, 4vw, 3rem);
+    margin: clamp(2.5rem, 2rem + 2vw, 4rem) 0 0;
   }
 
-  @media (min-width: 960px) {
-    .bento {
+  @media (min-width: 48rem) {
+    .intro__facts {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-
-    .bento__tile--wide {
-      grid-column: span 2;
-    }
-
-    .bento__tile--price {
-      grid-column: span 3;
-    }
   }
 
-  .bento__tile {
+  .intro__fact {
     display: grid;
     align-content: start;
+    gap: 0.4rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .intro__fact dt {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: var(--label);
+  }
+
+  .intro__fact dd {
+    margin: 0;
+    color: var(--label-2);
+  }
+
+  /* ---------- The two spaces ---------- */
+
+  .spaces {
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  @media (min-width: 56rem) {
+    .spaces {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* 12px around a 20px photo radius makes the card's 32px corner concentric. */
+  .space {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 0.75rem;
+    border-radius: var(--r-xl);
+  }
+
+  /* Both views share one cell, so switching never moves the text below. */
+  .space__media {
+    display: grid;
+  }
+
+  .space__media > :global(.photo) {
+    grid-area: 1 / 1;
+    align-self: start;
+    transition:
+      opacity var(--dur-2) ease,
+      visibility var(--dur-2);
+  }
+
+  .space__media > :global(.space__pane--styled) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .space:has(.space__radio--styled:checked) .space__media > :global(.space__pane--styled) {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .space:has(.space__radio--styled:checked) .space__media > :global(.space__pane--real) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* Captions line up with the text below. */
+  .space__media :global(.photo__caption) {
+    padding-inline: 0.75rem;
+  }
+
+  .space__body {
+    display: grid;
+    align-content: start;
+    justify-items: start;
     gap: 0.75rem;
-    padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+    padding: 1.25rem 0.75rem 0.5rem;
   }
 
-  .bento__tile .icon-tile {
-    margin-bottom: 0.5rem;
+  /* The As Photographed and Styled Concept control: native radios, so arrow keys and Tab work as expected. */
+  .space__view {
+    display: grid;
+    width: 100%;
+    max-width: 21rem;
+    margin: 0 0 0.5rem;
+    border: 0;
+    min-inline-size: 0;
   }
 
-  .bento__tile--price {
-    display: flex;
-    flex-wrap: wrap;
+  .space__seg {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem 2rem;
-    background:
-      radial-gradient(120% 140% at 100% 0%, var(--accent-tint-2), transparent 60%),
-      var(--bg-elevated);
+    justify-content: center;
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    text-align: center;
+    line-height: 1.2;
   }
 
-  .bento__tile--price > div {
+  .space__seg:hover {
+    background: var(--fill-3);
+  }
+
+  .space__seg:has(:checked) {
+    background: var(--bg-elevated);
+    box-shadow:
+      inset 0 0 0 2px var(--accent-text),
+      0 3px 8px rgb(0 0 0 / 0.12),
+      0 3px 1px rgb(0 0 0 / 0.04);
+    font-weight: 600;
+  }
+
+  .space__seg:has(:focus-visible) {
+    outline: 3px solid var(--accent-text);
+    outline-offset: 2px;
+  }
+
+  @media (forced-colors: active) {
+    .space__seg:has(:checked) {
+      outline: 3px solid Highlight;
+      outline-offset: -3px;
+    }
+  }
+
+  /* Without :has() the control could not switch the photo, so it is not offered. */
+  @supports not selector(:has(*)) {
+    .space__view {
+      display: none;
+    }
+  }
+
+  .space__name {
+    margin-top: 0.25rem;
+  }
+
+  .space__cap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+
+  .space__sentence {
+    max-width: 34rem;
+  }
+
+  .space__features {
     display: grid;
     gap: 0.5rem;
-    max-width: 40rem;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    list-style: none;
   }
 
-  /* In dark mode the tinted button sits on the tile's purple glow; a lighter purple keeps it above 4.5:1. */
-  @media (prefers-color-scheme: dark) {
-    .bento__tile--price .btn--tinted {
-      color: #d19bff;
-    }
+  .space__features li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: var(--t-callout);
   }
 
-  .cap {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    margin: 0.5rem 0;
-  }
-
-  .cap__item {
-    display: grid;
-    align-content: start;
-    gap: 0.15rem;
-    padding: 1.25rem;
-    border-radius: var(--r-md);
-    background: var(--bg-grouped);
-  }
-
-  .cap :global(.cap__icon) {
-    width: 26px;
-    height: 26px;
+  .space__features :global(.icon) {
+    width: 1.1em;
+    height: 1.1em;
     color: var(--accent-text);
-    margin-bottom: 0.4rem;
   }
 
-  @media (width < 26rem) {
-    .cap {
-      grid-template-columns: minmax(0, 1fr);
+  .space__link {
+    margin-top: 0.25rem;
+  }
+
+  /* ---------- Section heads with a trailing link ---------- */
+
+  .section-head--split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    max-width: none;
+  }
+
+  .section-head__text {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 44rem;
+  }
+
+  /* ---------- Rates ---------- */
+
+  .rates {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  @media (min-width: 56rem) {
+    .rates {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
-  .cap__num {
-    font-size: clamp(2.75rem, 2rem + 3vw, 4.25rem);
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.04em;
+  .rates__copy {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    max-width: 34rem;
   }
 
-  /* Steps */
+  .rates__action {
+    margin-top: 0.5rem;
+    padding-inline: 1.25rem;
+  }
+
+  .rates__panel {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .rates__list {
+    margin: 0;
+  }
+
+  .rates__row {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    min-height: 64px;
+    padding: 1rem 1.25rem;
+  }
+
+  .rates__row + .rates__row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 0;
+    border-top: 1px solid var(--separator);
+  }
+
+  .rates__name {
+    font-weight: 600;
+  }
+
+  .rates__price {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--label-2);
+    font-size: var(--t-subhead);
+  }
+
+  .rates__num {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.875rem);
+    line-height: 1;
+    color: var(--label);
+  }
+
+  .rates__note {
+    padding-inline: 1.25rem;
+    color: var(--label-2);
+    font-size: var(--t-footnote);
+  }
+
+  /* ---------- Steps ---------- */
+
   .steps {
     display: grid;
-    gap: 1rem;
+    gap: 2rem clamp(1.5rem, 4vw, 3rem);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  @media (min-width: 820px) {
+  @media (min-width: 48rem) {
     .steps {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -405,92 +785,53 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
 
   .steps__item {
     display: grid;
-    gap: 0.6rem;
     align-content: start;
-    padding: 1.75rem;
-    border-radius: var(--r-lg);
-    background: var(--bg-grouped);
+    gap: 0.6rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
   }
 
   .steps__num {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--on-accent);
-    font-weight: 700;
-    margin-bottom: 0.4rem;
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    line-height: 1;
+    color: var(--accent-text);
+    margin-bottom: 0.5rem;
   }
 
-  .steps__cta {
-    justify-content: center;
-    margin-top: 2.5rem;
-  }
+  /* One column: the numeral stands beside its step. */
+  @media (width < 48rem) {
+    .steps__item {
+      grid-template-columns: 2.25rem minmax(0, 1fr);
+      column-gap: 1rem;
+    }
 
-  .more-link {
-    margin-top: 1rem;
-  }
-
-  .more-link--center {
-    text-align: center;
-    margin-top: 2rem;
-  }
-
-  /* Spaces */
-  .spaces {
-    display: grid;
-    gap: clamp(2rem, 4vw, 3.5rem);
-    max-width: 960px;
-    margin-inline: auto;
-  }
-
-  @media (min-width: 760px) {
-    .spaces {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .steps__num {
+      grid-row: span 2;
+      margin-bottom: 0;
     }
   }
 
-  .space {
-    display: grid;
-    gap: 1.25rem;
+  .steps__cta {
+    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
   }
 
-  .space__text {
-    display: grid;
-    gap: 0.4rem;
-    text-align: center;
-  }
+  /* ---------- Questions ---------- */
 
-  /* FAQ */
   .faq-grid {
     display: grid;
     gap: 2rem clamp(2rem, 6vw, 5rem);
   }
 
-  @media (min-width: 900px) {
+  .faq-grid__head {
+    justify-items: start;
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 56rem) {
     .faq-grid {
       grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
       align-items: start;
     }
-  }
-
-  /* Church */
-  .church__inner {
-    display: grid;
-    gap: 1rem 1.5rem;
-    align-items: center;
-  }
-
-  @media (min-width: 760px) {
-    .church__inner {
-      grid-template-columns: auto 1fr auto;
-    }
-  }
-
-  .church__inner p {
-    margin-top: 0.35rem;
-    max-width: 48rem;
   }
 </style>
