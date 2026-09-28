@@ -114,9 +114,12 @@ const showCta = !current(bookHref);
     }
   }
 
-  /* One line whenever it fits; at very large text sizes it wraps rather than pushing the page wider. */
+  /*
+    One line whenever it fits; at very large text sizes it wraps rather than pushing the page wider.
+    Like an iOS inline navigation title, it stops growing past a point so the bar stays one row; page zoom still scales it.
+  */
   .nav__name {
-    font-size: 1.0625rem;
+    font-size: min(1.0625rem, 21px);
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -125,6 +128,7 @@ const showCta = !current(bookHref);
   .nav__demo {
     flex: none;
     margin-left: 0.15rem;
+    font-size: min(0.75rem, 15px);
   }
 
   .nav__links ul {

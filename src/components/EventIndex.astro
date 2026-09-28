@@ -119,6 +119,17 @@ const Heading = headingLevel;
       box-shadow var(--dur-2) ease;
   }
 
+  /* 200% text on phones: wider cards and tighter padding give the names room. */
+  @media (width < 20rem) {
+    .events--shelf {
+      grid-auto-columns: 88%;
+    }
+
+    .event-card {
+      padding: 1rem;
+    }
+  }
+
   .event-card:hover {
     text-decoration: none;
     transform: translateY(-2px);

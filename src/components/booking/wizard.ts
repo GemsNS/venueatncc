@@ -92,7 +92,7 @@ export function restoreDraft(saved: unknown): Draft | null {
   return out;
 }
 
-/** Prefill from ?date=&space=&guests=&event=&hours= (links from the home page, pricing, and the space page). */
+/** Prefill from ?date=&space=&guests=&event=&hours=&visit=1 (links from the home page, pricing, and the space page). */
 export function applySearch(draft: Draft, params: URLSearchParams, today: DateKey): Draft {
   const next = { ...draft };
   const date = parseDate(params.get('date'));
@@ -108,6 +108,7 @@ export function applySearch(draft: Draft, params: URLSearchParams, today: DateKe
   if (hours !== null) next.hours = hours;
   const event = params.get('event');
   if (event && (event === 'other' || eventTypes.some((e) => e.slug === event))) next.eventType = event;
+  if (params.get('visit') === '1') next.wantsVisit = true;
   if (date || space || guests !== null || hours !== null) {
     next.step = 1;
   }

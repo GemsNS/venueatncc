@@ -126,6 +126,7 @@ const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero
 
   .story__card {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-content: start;
     gap: 0.75rem;
     padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);

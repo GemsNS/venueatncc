@@ -273,7 +273,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     margin-inline: auto;
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 64rem) {
     .hero__widget {
       position: absolute;
       right: clamp(1.25rem, 3vw, 2.5rem);
@@ -282,7 +282,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     }
   }
 
-  @media (max-width: 899.98px) {
+  @media (width < 64rem) {
     .hero__widget {
       margin-top: -3rem;
       margin-inline: 0.75rem;
@@ -373,6 +373,12 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     height: 26px;
     color: var(--accent-text);
     margin-bottom: 0.4rem;
+  }
+
+  @media (width < 26rem) {
+    .cap {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .cap__num {

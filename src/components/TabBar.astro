@@ -91,7 +91,8 @@ const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h))
     padding: 6px 2px 5px;
     border-radius: var(--r-full);
     color: var(--label-2);
-    font-size: 0.6875rem;
+    /* Like iOS tab bars, labels stop growing past a point so words never split; page zoom still scales them. */
+    font-size: min(0.6875rem, 15px);
     font-weight: 600;
     letter-spacing: 0;
     text-decoration: none;
@@ -110,7 +111,7 @@ const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h))
     max-width: 100%;
     line-height: 1.2;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .tabbar__tab :global(.icon) {

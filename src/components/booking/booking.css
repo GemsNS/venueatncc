@@ -856,6 +856,7 @@ button.bk-progress__item:hover {
 
 .bk-choices {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 22px;
   container-type: inline-size;
@@ -2035,12 +2036,14 @@ html:not(.js) .bk-skel {
 
 .bk-pe {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 
 .bk-pe__controls,
 .bk-pe__result {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 22px;
   padding: 20px;
@@ -2099,10 +2102,14 @@ html:not(.js) .bk-skel {
   margin-top: 6px;
 }
 
+.bk-pe .field {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .bk-pe__dateinput {
   flex: 1;
   width: auto;
-  min-width: 11rem;
+  min-width: min(11rem, 100%);
 }
 
 @media (min-width: 900px) {
@@ -2186,4 +2193,45 @@ html:not(.js) .bk-skel {
 .bk-dc__space-status,
 .bk-pe__controls label {
   overflow-wrap: anywhere;
+}
+
+/* Large text on phones: the action bar wraps instead of pushing the page sideways. */
+@media (width < 30rem) {
+  .bk-actions__inner {
+    flex-wrap: wrap;
+  }
+
+  .bk-actions__next {
+    min-width: 0;
+  }
+
+  .bk-actions__back {
+    padding-inline: 0.6rem;
+  }
+}
+
+@media (width < 26rem) {
+  .bk-pe .segmented:not(.bk-seg--days) {
+    display: grid;
+    width: 100%;
+    grid-auto-flow: row;
+    border-radius: var(--r-md);
+  }
+
+  .bk-pe .segmented:not(.bk-seg--days) .segmented__item {
+    border-radius: var(--r-sm);
+  }
+}
+
+/* 200% text on phones: day choices take one column so long names never push the page sideways. */
+@media (width < 20rem) {
+  .bk-seg--days {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width < 30rem) {
+  .bk-pe__dateinput {
+    padding-inline: 0.5rem;
+  }
 }

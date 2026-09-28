@@ -100,7 +100,7 @@ body.is-bare {
 }
 
 /* Phones: keep focused rows and scrolled-to targets clear of the floating tab bar. */
-@media (max-width: 743.98px) {
+@media (width < 46.5rem) {
   html:has(.adm-tabbar) {
     scroll-padding-bottom: calc(var(--adm-tabbar-h) + 28px + env(safe-area-inset-bottom));
   }
@@ -213,7 +213,7 @@ body.is-bare {
   height: 18px;
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-content {
     max-width: none;
     padding: 20px 32px 48px calc(var(--adm-sidebar-w) + 12px + 32px);
@@ -422,7 +422,7 @@ body.is-bare {
   gap: 0 24px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 64rem) {
   .adm-columns {
     grid-template-columns: 1fr 1fr;
     align-items: start;
@@ -786,14 +786,14 @@ body.is-bare {
 
 .adm-tiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 64rem) {
   .adm-tiles {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
@@ -846,7 +846,7 @@ body.is-bare {
   gap: 8px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 64rem) {
   .adm-toolbar {
     grid-template-columns: auto minmax(16rem, 24rem);
     justify-content: space-between;
@@ -859,7 +859,7 @@ body.is-bare {
   padding: 0 12px;
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-segmented .segmented__item {
     min-width: 4.5rem;
     padding: 0 1rem;
@@ -1048,7 +1048,7 @@ body.is-bare {
   font-size: var(--t-subhead);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 64rem) {
   .adm-table__head,
   .adm-inbox__row {
     grid-template-columns: minmax(12rem, 2.2fr) 1fr 0.8fr 1.1fr 0.8fr 1fr 18px;
@@ -1195,13 +1195,13 @@ body.is-bare {
   margin-top: 12px;
 }
 
-@media (max-width: 1099.98px) {
+@media (width < 68.75rem) {
   .adm-detail .adm-contact-actions {
     display: none;
   }
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 68.75rem) {
   .adm-contact-actions.adm-quick-contact {
     display: none;
   }
@@ -1221,14 +1221,14 @@ body.is-bare {
 }
 
 /* Phones: the label sits above its value, so dates, times, and emails get the full row. */
-@media (max-width: 479.98px) {
+@media (width < 30rem) {
   .adm-kv {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-kv {
     grid-template-columns: minmax(6rem, 28%) minmax(0, 1fr);
     gap: 4px 16px;
@@ -1543,7 +1543,7 @@ body.is-bare {
   display: none;
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-calwrap {
     padding: 8px;
   }
@@ -1636,7 +1636,7 @@ body.is-bare {
   }
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-sheet {
     inset: 0;
     width: min(560px, 100% - 48px);
@@ -1861,7 +1861,7 @@ body.is-bare {
   pointer-events: none;
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-toasts {
     left: calc(var(--adm-sidebar-w) + 24px);
     bottom: 24px;
@@ -1939,7 +1939,7 @@ body.is-bare {
   border-radius: var(--r-xl);
 }
 
-@media (min-width: 744px) {
+@media (min-width: 46.5rem) {
   .adm-signin__card {
     padding: 40px 36px 32px;
   }
@@ -2099,5 +2099,12 @@ body.is-bare {
   .adm-signin .input:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
+  }
+}
+
+/* Dark mode: keep the month label readable when a row's hover background lightens the tile. */
+@media (prefers-color-scheme: dark) {
+  .adm-datetile__month {
+    color: #ff9a92;
   }
 }
