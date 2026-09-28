@@ -1,6 +1,7 @@
 /**
- * Share images (Open Graph / Twitter cards), one per page, rendered at build time.
- * 1200 x 630 PNG in the site's white-and-purple style: large title, key facts, and a photo of the building at dusk.
+ * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
+ * 1200 x 630 PNG: a real photo of the property, a Deep Plum scrim for legibility, the white lockup, the page
+ * title in Libre Caslon Display, and one short line in Inter. What each card shows lives in _cards.ts.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -8,35 +9,64 @@ import path from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
-import { site } from '../../data/site';
-import { shareCards, sharePills, type ShareCard as Card } from './_cards';
+import { shareCards, type ShareCard } from './_cards';
 
 export const getStaticPaths = (() =>
   Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
 
-const root = process.cwd();
-const read = (p: string) => fs.readFile(path.join(root, 'node_modules', p));
+const W = 1200;
+const H = 630;
+const PAD = 64;
+/** The lockup's height on the card. Its viewBox is 534 by 100. */
+const LOCKUP_H = 60;
+const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-let assets: Promise<{ regular: Buffer; semibold: Buffer; bold: Buffer; mark: string; photo: string }> | undefined;
-function loadAssets() {
-  assets ??= (async () => {
-    const [regular, semibold, bold, markPng, photoJpg] = await Promise.all([
-      read('@fontsource/inter/files/inter-latin-400-normal.woff'),
-      read('@fontsource/inter/files/inter-latin-600-normal.woff'),
-      read('@fontsource/inter/files/inter-latin-700-normal.woff'),
-      sharp(path.join(root, 'src/assets/brand/ncc-mark.png')).resize(96, 96).png().toBuffer(),
-      // The building at dusk, cropped to the photo panel at twice its size for a sharp render.
-      sharp(path.join(root, 'src/assets/venue/exterior-dusk-tall.jpg')).resize(640, 1148, { fit: 'cover' }).jpeg({ quality: 82 }).toBuffer(),
+/** Deep Plum, dark value, as RGB for the scrim's stops. */
+const PLUM = '26, 16, 36';
+const plum = (alpha: number) => `rgba(${PLUM}, ${alpha})`;
+const LILAC = '#CDB3EE';
+
+const root = process.cwd();
+const fromRoot = (...p: string[]) => path.join(root, ...p);
+const fontFile = (p: string) => fs.readFile(fromRoot('node_modules', p));
+const dataUri = (type: string, b: Buffer | Uint8Array) => `data:${type};base64,${Buffer.from(b).toString('base64')}`;
+
+interface Shared {
+  caslon: Buffer;
+  inter: Buffer;
+  interMedium: Buffer;
+  lockup: string;
+}
+let shared: Promise<Shared> | undefined;
+function loadShared(): Promise<Shared> {
+  shared ??= (async () => {
+    // satori reads woff and ttf, not woff2.
+    const [caslon, inter, interMedium, lockupSvg] = await Promise.all([
+      fontFile('@fontsource/libre-caslon-display/files/libre-caslon-display-latin-400-normal.woff'),
+      fontFile('@fontsource/inter/files/inter-latin-400-normal.woff'),
+      fontFile('@fontsource/inter/files/inter-latin-500-normal.woff'),
+      fs.readFile(fromRoot('src/assets/brand/venue-lockup-white.svg'), 'utf8'),
     ]);
-    return {
-      regular,
-      semibold,
-      bold,
-      mark: `data:image/png;base64,${markPng.toString('base64')}`,
-      photo: `data:image/jpeg;base64,${photoJpg.toString('base64')}`,
-    };
+    // The lockup is outlined paths, so resvg draws it without fonts. Rendered at twice its size for a crisp edge.
+    const lockupPng = new Resvg(lockupSvg, { fitTo: { mode: 'height', value: LOCKUP_H * 2 } }).render().asPng();
+    return { caslon, inter, interMedium, lockup: dataUri('image/png', lockupPng) };
   })();
-  return assets;
+  return shared;
+}
+
+/** Several cards share a photo, so each one is resized once per build. */
+const photos = new Map<string, Promise<string>>();
+function loadPhoto(file: string): Promise<string> {
+  let photo = photos.get(file);
+  if (!photo) {
+    photo = sharp(fromRoot('src/assets/venue', file))
+      .resize(W, H, { fit: 'cover' })
+      .jpeg({ quality: 86, mozjpeg: true })
+      .toBuffer()
+      .then((b) => dataUri('image/jpeg', b));
+    photos.set(file, photo);
+  }
+  return photo;
 }
 
 type Node = { type: string; props: Record<string, unknown> };
@@ -44,45 +74,50 @@ const h = (type: string, style: Record<string, unknown>, children?: unknown, ext
   type,
   props: { style, children, ...extra },
 });
+const layer = { position: 'absolute', top: 0, left: 0, width: W, height: H } as const;
 
-const pill = (text: string) =>
-  h('div', { display: 'flex', padding: '10px 18px', borderRadius: 999, backgroundColor: '#F4F0F8', color: '#4F2A75', fontSize: 22, fontWeight: 600 }, text);
+/** The width inside the padding. */
+const CONTENT_W = W - PAD * 2;
+
+/**
+ * The title's size: 84px, smaller so a longer title still fits on one line, and never below 60px
+ * (a title longer than that wraps). Libre Caslon Display averages about 0.42em a character; 0.44 leaves room.
+ */
+function titleSize(title: string): number {
+  return Math.max(60, Math.min(84, Math.floor(CONTENT_W / (title.length * 0.44))));
+}
 
 export const GET: APIRoute = async ({ props }) => {
-  const { card } = props as { card: Card };
-  const a = await loadAssets();
-  const titleSize = card.title.length > 44 ? 58 : card.title.length > 30 ? 66 : 76;
+  const { card } = props as { card: ShareCard };
+  const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo.file)]);
+  const size = titleSize(card.title);
 
-  const tree = h('div', { width: 1200, height: 630, display: 'flex', backgroundColor: '#ffffff', fontFamily: 'Inter', color: '#1C1622' }, [
-    h('div', { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '60px 0 56px 72px', width: 800 }, [
-      h('div', { display: 'flex', alignItems: 'center', gap: 16 }, [
-        h('img', { width: 52, height: 52, borderRadius: 26 }, undefined, { src: a.mark, width: 52, height: 52 }),
-        h('div', { fontSize: 30, fontWeight: 600, letterSpacing: -0.5 }, site.name),
+  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: `rgb(${PLUM})`, fontFamily: 'Inter', color: '#FFFFFF' }, [
+    h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
+    // Legibility scrims only: deepest behind the text at the lower left, a light veil under the lockup.
+    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${plum(0.78)} 0%, ${plum(0.5)} 38%, ${plum(0.1)} 72%, ${plum(0)} 100%)` }),
+    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${plum(0.8)} 0%, ${plum(0.32)} 40%, ${plum(0)} 62%, ${plum(0)} 76%, ${plum(0.3)} 100%)` }),
+    h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: PAD }, [
+      h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
+      h('div', { display: 'flex', flexDirection: 'column', gap: 20, width: CONTENT_W }, [
+        h('div', { fontFamily: 'Libre Caslon Display', fontSize: size, lineHeight: 1.08, letterSpacing: -0.01 * size }, card.title),
+        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: LILAC }, card.line),
       ]),
-      h('div', { display: 'flex', flexDirection: 'column', gap: 18 }, [
-        h('div', { fontSize: 28, fontWeight: 600, color: '#4F2A75' }, card.kicker),
-        h('div', { fontSize: titleSize, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2.2, maxWidth: 700 }, card.title),
-      ]),
-      h('div', { display: 'flex', gap: 12 }, sharePills.map(pill)),
-    ]),
-    h('div', { display: 'flex', alignItems: 'flex-end', justifyContent: 'center', width: 400, paddingTop: 56 }, [
-      h(
-        'div',
-        { display: 'flex', width: 320, height: 574, overflow: 'hidden', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
-        [h('img', { width: 320, height: 574, objectFit: 'cover' }, undefined, { src: a.photo, width: 320, height: 574 })],
-      ),
     ]),
   ]);
 
   const svg = await satori(tree as never, {
-    width: 1200,
-    height: 630,
+    width: W,
+    height: H,
     fonts: [
-      { name: 'Inter', data: a.regular, weight: 400, style: 'normal' },
-      { name: 'Inter', data: a.semibold, weight: 600, style: 'normal' },
-      { name: 'Inter', data: a.bold, weight: 700, style: 'normal' },
+      { name: 'Libre Caslon Display', data: a.caslon, weight: 400, style: 'normal' },
+      { name: 'Inter', data: a.inter, weight: 400, style: 'normal' },
+      { name: 'Inter', data: a.interMedium, weight: 500, style: 'normal' },
     ],
   });
-  const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
+  const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
+  // resvg writes a loosely compressed RGBA file. The card is opaque, so drop the alpha channel and recompress,
+  // still lossless: a 256-color palette would halve the size but blotches smooth walls and sky.
+  const png = await sharp(rendered).removeAlpha().png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
   return new Response(new Uint8Array(png), { headers: { 'Content-Type': 'image/png' } });
 };
