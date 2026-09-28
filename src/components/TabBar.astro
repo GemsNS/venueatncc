@@ -1,7 +1,10 @@
 ---
 /**
- * Floating Liquid Glass tab bar for small screens (HIG: tab bars for top-level navigation,
- * five tabs at most, floating above content). Hidden on wide screens where the top nav shows everything.
+ * Floating Liquid Glass tab bar for the compact size class (HIG: tab bars for top-level navigation,
+ * five tabs at most, floating above content). Hidden from 46.5rem (744px at default text size),
+ * where the top nav shows everything. Keep the breakpoint in step with Header.astro.
+ * While it shows, it sets --tabbar-space (global.css), which keeps focused controls, sticky bars
+ * and the end of the footer clear of it.
  */
 import Icon from './Icon.astro';
 import { tabNav } from '../data/nav';
@@ -30,7 +33,7 @@ const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h))
     display: none;
   }
 
-  @media (max-width: 899.98px) {
+  @media (width < 46.5rem) {
     .tabbar {
       display: block;
       position: fixed;
@@ -48,8 +51,27 @@ const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h))
       box-shadow: var(--glass-edge), var(--glass-shadow);
     }
 
-    :global(body) {
-      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    /* The bar's height (about 66px plus 10px from the edge, more with larger text) and a margin. */
+    :global(html:has(.tabbar)) {
+      --tabbar-space: calc(76px + 1rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  /*
+    Short screens (landscape phones, 400% zoom): a fixed bar would cover most of the content,
+    so the tab bar sits at the end of the page instead.
+  */
+  @media (width < 46.5rem) and (max-height: 500px) {
+    .tabbar {
+      position: static;
+      width: auto;
+      max-width: 440px;
+      margin: 16px auto calc(16px + env(safe-area-inset-bottom));
+      transform: none;
+    }
+
+    :global(html:has(.tabbar)) {
+      --tabbar-space: 0px;
     }
   }
 
@@ -82,6 +104,13 @@ const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h))
   .tabbar__tab:hover {
     text-decoration: none;
     color: var(--label);
+  }
+
+  .tabbar__tab span {
+    max-width: 100%;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .tabbar__tab :global(.icon) {

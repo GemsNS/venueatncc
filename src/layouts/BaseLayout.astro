@@ -11,6 +11,8 @@ import { heroPhoto } from '../data/photos';
 import { abs, graph, parentOrganization, venue, website, webPage } from '../lib/schema';
 import { isDemo } from '../lib/env';
 import { href, withoutBase } from '../lib/paths';
+import { bookHref } from '../data/nav';
+import { shareCardAlt } from '../pages/og/_cards';
 
 interface Props {
   /** Full <title>. Keep under 60 characters. */
@@ -19,6 +21,7 @@ interface Props {
   description?: string;
   /** Share image key from /og/<key>.png. */
   og?: string;
+  /** Share image description. Defaults to the text on the share card. */
   ogAlt?: string;
   noindex?: boolean;
   /** schema.org WebPage subtype, e.g. 'AboutPage', 'FAQPage', 'ContactPage', 'CollectionPage'. */
@@ -29,23 +32,32 @@ interface Props {
   venueDetails?: boolean;
   /** Hide the site chrome (used by the admin app). */
   bare?: boolean;
+  /**
+   * Show the floating tab bar on compact screens. Off by default on the booking page, where the
+   * wizard's own action bar holds the bottom of the screen and a third bar would cover the calendar.
+   */
+  tabBar?: boolean;
 }
+
+const path = withoutBase(Astro.url.pathname);
 
 const {
   title,
   description = site.description,
   og = 'home',
-  ogAlt = `${site.name}, an event venue in Suffolk, Virginia`,
+  ogAlt = shareCardAlt(og) ?? `${site.name}, an event venue in Suffolk, Virginia`,
   noindex = false,
   pageType,
   schema = [],
   venueDetails = false,
   bare = false,
+  tabBar = path !== bookHref,
 } = Astro.props;
 
-const path = withoutBase(Astro.url.pathname);
-// Canonical URLs always point at the real domain, including from the demo.
+// Canonical URLs point at the real domain. The demo and noindex pages (404, admin) carry none:
+// a canonical beside noindex sends mixed signals, and the 404 page has no real URL of its own.
 const canonical = abs(path);
+const withCanonical = !isDemo && !noindex;
 // Share images must resolve where the page is actually hosted.
 const ogImage = new URL(href(`/og/${og}.png`), Astro.site).href;
 
@@ -72,7 +84,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{isDemo ? `Demo: ${title}` : title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {withCanonical && <link rel="canonical" href={canonical} />}
     {robots && <meta name="robots" content={robots} />}
 
     <link rel="preload" href={interFont} as="font" type="font/woff2" crossorigin />
@@ -92,7 +104,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <meta property="og:locale" content={site.locale} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {withCanonical && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -118,7 +130,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
       <slot />
     </main>
     {!bare && <Footer />}
-    {!bare && <TabBar />}
+    {!bare && tabBar && <TabBar />}
     <script>
       // One gentle reveal per marked block, once, when it enters the viewport.
       const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');

@@ -4,6 +4,7 @@ import { events } from '../data/events';
 import { mainNav, bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { isDemo } from '../lib/env';
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
 const year = new Date().getFullYear();
 ---
@@ -58,7 +59,14 @@ const year = new Date().getFullYear();
 
     <div class="footer__legal">
       <p>Copyright © {year} {site.name}. All rights reserved.</p>
-      {isDemo && <p>This is a demo. Booking requests stay in your browser and no emails are sent.</p>}
+      {
+        isDemo && (
+          <p>
+            This is a demo. Booking requests stay in your browser and no emails are sent.{' '}
+            <a href={href('/admin/')}>Open the demo admin</a> ({DEMO_ADMIN_EMAIL}, password {DEMO_ADMIN_PASSWORD}).
+          </p>
+        )
+      }
       <p class="footer__addr">{fullAddress}</p>
     </div>
   </div>
@@ -70,7 +78,8 @@ const year = new Date().getFullYear();
     color: var(--label-2);
     font-size: var(--t-footnote);
     line-height: 1.5;
-    padding-block: 3rem 2rem;
+    /* On compact screens the footer's color runs down behind the floating tab bar (--tabbar-space). */
+    padding-block: 3rem calc(2rem + var(--tabbar-space));
     border-top: 1px solid var(--separator);
   }
 
@@ -94,12 +103,19 @@ const year = new Date().getFullYear();
     color: var(--label);
   }
 
+  /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
   .footer ul {
     display: grid;
-    gap: 0.45rem;
-    margin: 0;
+    gap: 0;
+    margin: -5px 0 0;
     padding: 0;
     list-style: none;
+  }
+
+  .footer li a,
+  .footer address a {
+    display: inline-block;
+    padding-block: 5px;
   }
 
   .footer a {
@@ -112,13 +128,19 @@ const year = new Date().getFullYear();
 
   .footer address {
     display: grid;
-    gap: 0.45rem;
-    margin-top: 0.8rem;
+    justify-items: start;
+    gap: 0;
+    margin-top: calc(0.8rem - 5px);
     font-style: normal;
   }
 
   .footer__col p + ul {
-    margin-top: 0.7rem;
+    margin-top: calc(0.7rem - 5px);
+  }
+
+  .footer__legal a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
   }
 
   .footer__legal {

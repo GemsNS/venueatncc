@@ -106,7 +106,17 @@
   --max-text: 42rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
   --section: clamp(4rem, 3rem + 5vw, 8rem);
-  --nav-h: 56px;
+  /* 56px at default text size; grows with larger text so the bar never clips its links. */
+  --nav-h: 3.5rem;
+  /*
+    Size classes (HIG): compact below 46.5rem (744px at default text size) shows the floating
+    tab bar; regular shows the top nav. The chrome queries are in rem so larger text moves
+    the switch too. Media queries cannot read custom properties, so Header.astro and
+    TabBar.astro repeat the value.
+    --tabbar-space is the room the floating tab bar needs at the bottom of the screen
+    (0 when it is not shown). Sticky bars and scroll padding use it.
+  */
+  --tabbar-space: 0px;
 
   /* Motion (iOS-like springs) */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -198,6 +208,16 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: calc(var(--nav-h) + 1rem);
+  /* Keep keyboard focus clear of the floating tab bar (WCAG 2.4.11). */
+  scroll-padding-bottom: calc(var(--tabbar-space) + 1rem);
+}
+
+/* Short screens (phones in landscape, 400% zoom): the bars scroll with the page (see Header and TabBar). */
+@media (max-height: 500px) {
+  html {
+    scroll-padding-top: 1rem;
+    scroll-padding-bottom: 1rem;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -236,6 +256,8 @@ h4 {
   color: var(--label);
   font-weight: 700;
   text-wrap: balance;
+  /* At very large text sizes a long word breaks instead of running off a narrow screen. */
+  overflow-wrap: anywhere;
 }
 
 h1 {
@@ -273,6 +295,13 @@ a {
 
 a:hover {
   text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* Links inside running text are underlined, so color is not the only cue (WCAG 1.4.1). */
+main p a:not(.btn, .link-more) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
 }
 
@@ -489,15 +518,21 @@ main:focus {
   justify-content: center;
   gap: 0.45rem;
   min-height: var(--btn-h);
-  padding: 0 1.25rem;
+  padding: 0.4rem 1.25rem;
   border: 0;
   border-radius: var(--r-full);
   font: inherit;
   font-size: var(--t-callout);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.15;
+  /*
+    Labels stay on one line whenever they fit. When a label is wider than its line (a 320px
+    screen, or text enlarged to 200%), it wraps inside the capsule instead of running off screen.
+  */
+  max-width: 100%;
+  text-align: center;
+  text-wrap: balance;
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -518,13 +553,14 @@ main:focus {
 
 .btn--lg {
   --btn-h: 52px;
-  padding: 0 1.6rem;
+  padding-inline: 1.6rem;
   font-size: var(--t-headline);
 }
 
 .btn--sm {
   --btn-h: 36px;
-  padding: 0 0.95rem;
+  padding-block: 0.3rem;
+  padding-inline: 0.95rem;
   font-size: var(--t-subhead);
 }
 
@@ -620,6 +656,11 @@ main:focus {
   gap: 0.2rem;
   color: var(--accent-text);
   font-weight: 500;
+}
+
+/* As a standalone link it gets a full-height target; inside a card the whole card is the link. */
+a.link-more {
+  min-height: 44px;
 }
 
 .link-more .icon {
@@ -809,11 +850,18 @@ main:focus {
   background: var(--fill);
 }
 
+/*
+  Focus: the 1px accent border plus a 1px accent shadow make a 2px solid ring, with a soft halo.
+  The transparent outline shows up in forced colors (Windows High Contrast), where shadows are dropped.
+*/
 .input:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   background: var(--bg-elevated);
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-tint-2);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 5px var(--accent-tint-2);
 }
 
 .input[aria-invalid='true'] {
@@ -828,10 +876,12 @@ textarea.input {
 
 /* ---------- Segmented control ---------- */
 
+/* Equal segments that never push past their container; at very large text sizes long labels wrap. */
 .segmented {
   display: inline-grid;
   grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  grid-auto-columns: minmax(0, 1fr);
+  max-width: 100%;
   gap: 2px;
   padding: 3px;
   border-radius: var(--r-full);
@@ -839,8 +889,11 @@ textarea.input {
 }
 
 .segmented__item {
+  min-width: 0;
   min-height: 38px;
   padding: 0 1rem;
+  overflow-wrap: anywhere;
+  hyphens: auto;
   border: 0;
   border-radius: var(--r-full);
   background: transparent;
@@ -854,12 +907,26 @@ textarea.input {
     box-shadow var(--dur-2) var(--ease-spring);
 }
 
+/* The selected thumb carries a 2px accent ring: the white thumb alone is too faint against the track (WCAG 1.4.11). */
 .segmented__item[aria-pressed='true'],
 .segmented__item[aria-checked='true'],
 .segmented__item[aria-selected='true'] {
   background: var(--bg-elevated);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    inset 0 0 0 2px var(--accent-text),
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
   font-weight: 600;
+}
+
+/* Forced colors drop backgrounds and shadows, so outline the selected segment instead. */
+@media (forced-colors: active) {
+  .segmented__item[aria-pressed='true'],
+  .segmented__item[aria-checked='true'],
+  .segmented__item[aria-selected='true'] {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
 }
 
 /* ---------- Prose ---------- */

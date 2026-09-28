@@ -1,7 +1,9 @@
 ---
 /**
  * Glass navigation bar (HIG: navigation floats above content on the Liquid Glass layer).
- * Desktop shows the full nav; on small screens the floating tab bar takes over (TabBar.astro).
+ * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the full
+ * nav; compact screens hand navigation to the floating tab bar (TabBar.astro). The breakpoints are
+ * in rem so that larger text switches to the compact layout sooner instead of overflowing.
  */
 import { Image } from 'astro:assets';
 import mark from '../assets/brand/ncc-mark.png';
@@ -12,6 +14,8 @@ import { isDemo } from '../lib/env';
 
 const path = withoutBase(Astro.url.pathname);
 const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
+// On the booking page the call to action would link to the page itself.
+const showCta = !current(bookHref);
 ---
 <header class="nav" data-nav>
   <div class="nav__inner container">
@@ -33,9 +37,13 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
         }
       </ul>
     </nav>
-    <a class="btn btn--filled btn--sm nav__cta" href={href(bookHref)} aria-current={current(bookHref) ? 'page' : undefined}>
-      Check Availability
-    </a>
+    {
+      showCta && (
+        <a class="btn btn--filled btn--sm nav__cta" href={href(bookHref)}>
+          Check Availability
+        </a>
+      )
+    }
   </div>
 </header>
 
@@ -68,11 +76,12 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
     border-bottom-color: var(--separator);
   }
 
+  /* min-height, not height: with larger text the bar grows instead of clipping its links. */
   .nav__inner {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    height: var(--nav-h);
+    min-height: var(--nav-h);
   }
 
   .nav__brand {
@@ -90,6 +99,7 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
   }
 
   .nav__mark {
+    flex: none;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -97,14 +107,23 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
     background: #fff;
   }
 
+  /* The white disc is dimmed a little in dark mode (HIG: dim bright images on dark backgrounds). */
+  @media (prefers-color-scheme: dark) {
+    .nav__mark {
+      filter: brightness(0.86);
+    }
+  }
+
+  /* One line whenever it fits; at very large text sizes it wraps rather than pushing the page wider. */
   .nav__name {
     font-size: 1.0625rem;
     font-weight: 600;
     letter-spacing: -0.02em;
-    white-space: nowrap;
+    line-height: 1.2;
   }
 
   .nav__demo {
+    flex: none;
     margin-left: 0.15rem;
   }
 
@@ -143,20 +162,42 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
     font-weight: 600;
   }
 
-  @media (max-width: 899.98px) {
+  /* Compact size class: the floating tab bar carries navigation (keep in step with TabBar.astro). */
+  @media (width < 46.5rem) {
     .nav__links {
       display: none;
     }
+  }
 
-    .nav__cta {
-      --btn-h: 36px;
+  /*
+    Regular but narrow (744px to 1023px at default text size): the mark stands in for the name, so
+    the five links and the call to action fit. The brand link keeps its accessible name.
+  */
+  @media (46.5rem <= width < 64rem) {
+    .nav__inner {
+      gap: 1rem;
+    }
+
+    .nav__name {
+      display: none;
+    }
+
+    .nav__links a {
+      padding: 0 0.6rem;
     }
   }
 
   /* On phones the floating tab bar's Book tab is the primary action, so the header stays uncluttered. */
-  @media (max-width: 479.98px) {
+  @media (width < 30rem) {
     .nav__cta {
       display: none;
+    }
+  }
+
+  /* Short screens (landscape phones, 400% zoom): the bar scrolls away with the page to leave room for content. */
+  @media (max-height: 500px) {
+    .nav {
+      position: relative;
     }
   }
 </style>
