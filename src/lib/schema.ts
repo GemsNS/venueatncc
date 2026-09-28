@@ -1,15 +1,50 @@
 /**
  * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts and
  * src/shared/pricing.ts, so a fact changed there changes the search-engine markup too.
+ * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall and The Grove. Structured
+ * data never mentions alcohol, and catering reaches it only through the one neutral FAQ answer.
  */
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
-import { pricing, priceSummary } from '../shared/pricing';
+import { pricing, priceSummary, formatUSD } from '../shared/pricing';
+import type { SpaceChoice } from '../shared/types';
 
 const venueId = `${site.url}/#venue`;
 const orgId = `${site.url}/#parent`;
 const websiteId = `${site.url}/#website`;
 const ratesId = `${site.url}/pricing/#rates`;
+
+/**
+ * Share images that stand for the venue as a whole: the building at blue hour and The Hall.
+ * Fixed paths rather than hashed assets, so the URLs in structured data stay stable between builds.
+ */
+const VENUE_SHARE_IMAGES = ['/og/home.png', '/og/the-space.png'];
+
+/**
+ * Words and phrases the brand keeps out of public copy (docs/design/brand.md, Voice). Structured data and
+ * llms.txt leave out copy that uses one and warn at build time, so off-brand text in src/data/ never reaches
+ * search engines or assistants. Marking up only some of a page's visible questions is valid structured data.
+ */
+const OFF_BRAND =
+  /\b(alcohol\w*|drinks?|bars?|beer|wine|mimosas?|toasts?|raise a glass|ABC|BYO\w*|bring your own|your own caterer|caterer of your choice|the freedom to|your menu, your way|whether there is a kitchen)\b/i;
+
+/** The first off-brand word or phrase in some copy, or null when it is clean. */
+export function offBrandPhrase(text: string): string | null {
+  return OFF_BRAND.exec(text)?.[0] ?? null;
+}
+
+const warned = new Set<string>();
+function warnOnce(message: string) {
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(message);
+}
+
+/** The public name of a space choice: The Hall, The Grove, or The Hall and The Grove. */
+export function spaceName(choice: SpaceChoice): string {
+  const name = (id: 'indoor' | 'outdoor') => site.spaces.find((s) => s.id === id)?.name ?? (id === 'indoor' ? 'The Hall' : 'The Grove');
+  return choice === 'both' ? `${name('indoor')} and ${name('outdoor')}` : name(choice);
+}
 
 /** The places the venue serves, typed for schema.org. Shared by the venue and every event Service. */
 function areaServed() {
@@ -58,6 +93,7 @@ const feature = (name: string, value: boolean | string = true) => ({
 /**
  * The venue as a local business and event venue. Emitted on every page and referenced by @id.
  * Capacity and parking facts appear in the page chrome site-wide, so they are included.
+ * imageUrls are absolute URLs of real photos of the property; the venue's share images follow them.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {
   const { fromHourly } = priceSummary();
@@ -80,17 +116,15 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     hasMap: site.address.mapsUrl,
     areaServed: areaServed(),
     parentOrganization: { '@id': orgId },
-    // STOPGAP: until real venue photos exist (src/data/photos.ts), the image is the home share card.
-    // Replace it with a photo of the venue as soon as one is added.
-    image: imageUrls.length > 0 ? imageUrls : [abs('/og/home.png')],
+    image: [...new Set([...imageUrls, ...VENUE_SHARE_IMAGES.map(abs)])],
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,
     maximumAttendeeCapacity: site.maxCapacity,
-    priceRange: `From $${fromHourly} per hour`,
+    priceRange: `From ${formatUSD(fromHourly)} per hour`,
     currenciesAccepted: pricing.currency,
     amenityFeature: [
-      feature('On-site parking included', site.policies.parkingIncluded),
-      ...site.spaces.map((s) => feature(`${s.name} for up to ${s.capacity} guests`)),
+      feature('On-site parking', site.policies.parkingIncluded),
+      ...site.spaces.map((s) => feature(`${s.name}, up to ${s.capacity} guests`)),
     ],
   };
   if (opts.details) {
@@ -118,12 +152,14 @@ export function website() {
 }
 
 export function webPage(opts: { path: string; title: string; description: string; type?: string }) {
+  const phrase = offBrandPhrase(opts.description);
+  if (phrase) warnOnce(`[schema] The description of ${opts.path} says "${phrase}", so its WebPage markup uses the venue description. Rewrite it to follow docs/design/brand.md.`);
   return {
     '@type': opts.type ?? 'WebPage',
     '@id': `${abs(opts.path)}#webpage`,
     url: abs(opts.path),
     name: opts.title,
-    description: opts.description,
+    description: phrase ? site.description : opts.description,
     isPartOf: { '@id': websiteId },
     about: { '@id': venueId },
     inLanguage: 'en-US',
@@ -143,9 +179,16 @@ export function breadcrumbs(items: { name: string; path: string }[]) {
 }
 
 export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
+  const onBrand = items.filter((f) => {
+    const phrase = offBrandPhrase(`${f.q} ${f.a}`);
+    if (phrase) warnOnce(`[schema] Left "${f.q}" out of the FAQPage markup because it says "${phrase}". Rewrite it to follow docs/design/brand.md.`);
+    return !phrase;
+  });
+  // An FAQPage with no questions is invalid, and an empty node is ignored.
+  if (onBrand.length === 0) return {};
   return {
     '@type': 'FAQPage',
-    mainEntity: items.map((f) => ({
+    mainEntity: onBrand.map((f) => ({
       '@type': 'Question',
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -156,12 +199,14 @@ export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
 /** An event type offered at the venue, modelled as a Service with a price hint. */
 export function eventService(opts: { name: string; description: string; path: string; serviceType: string }) {
   const { fromHourly } = priceSummary();
+  const phrase = offBrandPhrase(opts.description);
+  if (phrase) warnOnce(`[schema] The description of "${opts.name}" says "${phrase}", so its Service markup uses the venue description. Rewrite it to follow docs/design/brand.md.`);
   return {
     '@type': 'Service',
     '@id': `${abs(opts.path)}#service`,
     name: opts.name,
     serviceType: opts.serviceType,
-    description: opts.description,
+    description: phrase ? site.description : opts.description,
     url: abs(opts.path),
     provider: { '@id': venueId },
     areaServed: areaServed(),
@@ -173,7 +218,7 @@ export function eventService(opts: { name: string; description: string; path: st
         price: fromHourly,
         priceCurrency: pricing.currency,
         unitText: 'hour',
-        description: `Venue rental from $${fromHourly} per hour`,
+        description: `Venue rental from ${formatUSD(fromHourly)} per hour`,
       },
       url: abs('/book/'),
     },
@@ -189,7 +234,7 @@ export function rateCatalog() {
   const hourly = (Object.keys(pricing.hourly) as (keyof typeof pricing.hourly)[]).flatMap((space) =>
     (Object.keys(pricing.hourly[space]) as (keyof (typeof pricing.hourly)['indoor'])[]).map((day) => ({
       '@type': 'Offer',
-      name: `${pricing.spaces[space].label}, ${pricing.dayTypes[day].label}`,
+      name: `${spaceName(space)}, ${pricing.dayTypes[day].label}`,
       priceCurrency: pricing.currency,
       offeredBy,
       priceSpecification: {

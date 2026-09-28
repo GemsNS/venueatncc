@@ -1,38 +1,73 @@
 /**
- * The text on each share card (/og/<key>.png), kept apart from the renderer so pages can describe
- * the same card in og:image:alt (BaseLayout.astro). The underscore keeps Astro from routing this file.
+ * What each share card (/og/<key>.png) shows: a real photo of the property, the page title, and one short
+ * line. Kept apart from the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro).
+ * The underscore keeps Astro from routing this file.
+ *
+ * Only real photographs. A styled concept is never a share image, so pick() falls back to the hero photo.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
+import { photoByName, eventPhoto, heroPhoto, type VenuePhoto } from '../../data/photos';
 import { priceSummary, formatUSD } from '../../shared/pricing';
+import { offBrandPhrase } from '../../lib/schema';
 
 export interface ShareCard {
-  kicker: string;
+  /** The page title, set in Libre Caslon Display. Sentence case. */
   title: string;
+  /** One short line under the title, set in Inter. No trailing period. */
+  line: string;
+  /** The photo behind the text: a file in src/assets/venue/ and its caption. */
+  photo: { file: string; caption?: string };
 }
 
-const indoor = site.spaces.find((s) => s.id === 'indoor');
-const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+function pick(photo: VenuePhoto | null): ShareCard['photo'] {
+  const real = photo && !photo.styledOf ? photo : heroPhoto();
+  if (!real) throw new Error('[og] No venue photo is available for the share cards. Add photos to src/assets/venue/.');
+  return { file: real.file, caption: real.caption };
+}
 
-/** The fact pills along the bottom of every card. */
-export const sharePills: string[] = [`Indoors up to ${indoor?.capacity}`, `Outdoors up to ${outdoor?.capacity}`, 'Parking included'];
+const byName = (name: string) => pick(photoByName(name));
+const capacity = (id: 'indoor' | 'outdoor') => site.spaces.find((s) => s.id === id)?.capacity;
+const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Hall';
+const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
+const bothSpaces = `${hall} up to ${capacity('indoor')} guests, ${grove} up to ${capacity('outdoor')}`;
+const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
 const { fromHourly } = priceSummary();
+
 export const shareCards: Record<string, ShareCard> = {
-  home: { kicker: 'Event venue in Suffolk, Virginia', title: 'Unforgettable events await you.' },
-  events: { kicker: 'Events', title: 'Every kind of event, one welcoming venue.' },
-  'the-space': { kicker: 'The space', title: `A hall for ${indoor?.capacity}. The open air for ${outdoor?.capacity}.` },
-  pricing: { kicker: 'Pricing', title: `Upfront rates from ${formatUSD(fromHourly)} an hour.` },
-  book: { kicker: 'Check availability', title: 'Find your date.' },
-  faq: { kicker: 'FAQ', title: 'Questions, answered.' },
-  about: { kicker: 'About', title: 'A place for the moments people remember.' },
+  home: { title: 'Celebrate among the pines.', line: `Event venue in ${site.address.city}, ${site.address.regionName}`, photo: byName('exterior-dusk') },
+  'the-space': { title: `${hall} and ${grove}`, line: bothSpaces, photo: byName('hall-windows') },
+  pricing: {
+    title: `Rates from ${formatUSD(fromHourly)} an hour`,
+    line: 'Transparent rates and an instant estimate for your date',
+    photo: byName('hall-fireplace'),
+  },
+  // The events index leads with the photo of the first event on the list.
+  events: {
+    title: 'Events for every occasion',
+    line: 'Weddings, banquets, showers, meetings, and reunions',
+    photo: pick(eventPhoto(events[0]?.slug ?? '')),
+  },
+  about: {
+    title: `Rooted in ${site.address.city} since ${site.parent.foundingYear}`,
+    line: `${site.name} is operated by ${site.parent.name}`,
+    photo: byName('gable'),
+  },
+  faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
+  book: { title: 'Check availability', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
 };
-for (const e of events) shareCards[e.slug] = { kicker: e.name, title: e.h1 };
+// Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
+for (const e of events) {
+  const line = offBrandPhrase(e.summary) ? bothSpaces : withoutPeriod(e.summary);
+  shareCards[e.slug] = { title: e.name, line, photo: pick(eventPhoto(e.slug)) };
+}
 
 /** og:image:alt for a card: what the image shows, in reading order. */
 export function shareCardAlt(key: string): string | undefined {
   const card = shareCards[key];
   if (!card) return undefined;
-  const pills = sharePills.map((p, i) => (i === 0 ? p : p.charAt(0).toLowerCase() + p.slice(1))).join(', ');
-  return `${site.name}. ${card.kicker}: ${card.title} ${pills}.`;
+  const sentence = (s: string) => (/[.?]$/.test(s) ? s : `${s}.`);
+  const photo = card.photo.caption ? ` Photo: ${sentence(card.photo.caption)}` : '';
+  return `${site.name}. ${sentence(card.title)} ${sentence(card.line)}${photo}`;
 }
