@@ -48,6 +48,7 @@ const INDOOR = capacityOf('indoor');
 const OUTDOOR = capacityOf('outdoor');
 const PHONE = site.contact.phone;
 const ADDRESS = fullAddress;
+const STREET = site.address.street;
 const CHURCH = site.parent.name;
 const FOUNDED = site.parent.foundingYear;
 const FOUNDER = `${site.parent.pastorTitle} ${site.parent.pastor}`;
@@ -62,7 +63,7 @@ export const events: EventType[] = [
     metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: an indoor hall for up to ${INDOOR} guests, outdoor space for up to ${OUTDOOR}, and on-site parking included.`,
     h1: 'Your Suffolk wedding venue at New Community Church',
     intro: [
-      `The Venue at NCC is the event space of ${CHURCH} at 5112 Godwin Blvd in Suffolk, Virginia. Say your vows outdoors with up to ${OUTDOOR} guests, or celebrate in the indoor hall with up to ${INDOOR}. Anyone can book, and church membership is not required.`,
+      `The Venue at NCC is the event space of ${CHURCH} at ${STREET} in Suffolk, Virginia. Say your vows outdoors with up to ${OUTDOOR} guests, or celebrate in the indoor hall with up to ${INDOOR}. Anyone can book, and church membership is not required.`,
       'Your rental includes the space you book and on-site parking. Catering is not included, which leaves the menu and the caterer up to you. Alcohol is allowed, so a champagne toast or a bar can be part of the plan.',
     ],
     sections: [
@@ -364,7 +365,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'Where can I host a retirement party in Suffolk, VA?',
-        a: `The Venue at NCC, at 5112 Godwin Blvd in Suffolk, can be booked by anyone for a retirement party. The indoor hall holds up to ${INDOOR} guests, and on-site parking is included.`,
+        a: `The Venue at NCC, at ${STREET} in Suffolk, can be booked by anyone for a retirement party. The indoor hall holds up to ${INDOOR} guests, and on-site parking is included.`,
       },
       {
         q: 'Can I bring my own cake, food, and drinks?',
@@ -393,7 +394,7 @@ export const events: EventType[] = [
     name: 'Repasts & celebrations of life',
     summary: 'A place for family and friends to gather, share a meal, and remember.',
     metaTitle: 'Repast venue in Suffolk, VA for celebrations of life',
-    metaDescription: `A calm place for family and friends to gather after a funeral or memorial in Suffolk, VA. Bring your own food, and parking is included. Call ${PHONE}.`,
+    metaDescription: `A place for family and friends to gather after a funeral or memorial in Suffolk, VA. Bring your own food, and parking is included. Call ${PHONE}.`,
     h1: 'Repasts and celebrations of life in Suffolk',
     intro: [
       `When someone you love has died, the gathering after the service is often where the stories come out and people finally have time to talk. The Venue at NCC, the event space of ${CHURCH} in Suffolk, is open to any family for a repast or celebration of life, whether or not you belong to the church.`,
@@ -475,7 +476,7 @@ export const events: EventType[] = [
     metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. Room for up to ${INDOOR} people, parking included, and instant estimates online.`,
     h1: 'Off-site meeting space in Suffolk for your team or board',
     intro: [
-      `Board meetings, staff trainings, and planning days often go better away from the usual office. The Venue at NCC on Godwin Boulevard in Suffolk has an indoor hall for up to ${INDOOR} people, and any business, nonprofit, or group can book it.`,
+      `Board meetings, staff trainings, and planning days often go better away from the usual office. The Venue at NCC at ${STREET} in Suffolk has an indoor hall for up to ${INDOOR} people, and any business, nonprofit, or group can book it.`,
       'On-site parking is included with every booking, so there is nothing extra to budget for parking. Catering is not included, which means you can bring in coffee, order lunch from the place your team already likes, or hire a caterer.',
     ],
     sections: [
@@ -639,7 +640,7 @@ export const events: EventType[] = [
     slug: 'church-community-events',
     name: 'Church & community events',
     summary: 'Conferences, fellowship events, youth nights, and community meetings.',
-    metaTitle: 'Church event venue on Godwin Blvd in Suffolk, VA',
+    metaTitle: 'Church and community event venue in Suffolk, VA',
     metaDescription: `Plan a church conference, youth night, or community meeting at The Venue at NCC in Suffolk, VA. Open to any group, with room for up to ${OUTDOOR} guests outdoors.`,
     h1: 'Church and community events in Suffolk',
     intro: [
