@@ -33,8 +33,8 @@ const sizes =
     : layout === 'trio'
       ? '(min-width: 75rem) 390px, (min-width: 48rem) 31vw, 92vw'
       : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
-// "&" stays with the word after it, so a title never ends a line on it.
-const keepAmp = (name: string) => name.replace(/ & /g, ' &\u00A0');
+// "&" stays with the word before it, so a wrapped title never starts a line with it ("Repasts &" / "celebrations of life").
+const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
 ---
 {
   list.length > 0 && (
