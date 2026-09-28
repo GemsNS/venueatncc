@@ -5,7 +5,8 @@
  * Questions with `a: null` are a to-do list for the venue team.
  *
  * Voice: professional and neutral (docs/design/brand.md). State facts; do not market permissive policies.
- * Catering is mentioned in exactly one entry, "Is catering provided?".
+ * Catering is mentioned in exactly one entry, "Is catering provided?". It is shown on /faq/ only:
+ * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
  * The home page looks these questions up by their exact text, so keep them word for word:
  *   "How many guests can the venue hold?", "Who can book the venue?",
@@ -112,7 +113,6 @@ export const faqs: Faq[] = [
     a: `The Venue at NCC is operated by ${site.parent.name}, part of the Suffolk community since ${site.parent.foundingYear}.`,
   },
   // To answer, then publish:
-  { topic: 'space', q: 'Is there a kitchen I can use?', a: null },
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },
   { topic: 'space', q: 'Is the venue wheelchair accessible?', a: null },
   { topic: 'booking', q: 'What is the cancellation policy?', a: null },

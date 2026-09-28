@@ -120,9 +120,9 @@ portrait (`name-tall.jpg`, 1600px wide) for art direction on phones.
 | `exterior-dusk` | The building at blue hour, lit entry, white cross on the gable, pines behind | Home hero, About |
 | `approach-dusk` | Long paved drive and lawn toward the building at dusk | Arrival and location band, parking |
 | `driveway` | Wide paved drive and lot in daylight | Parking, campus |
-| `gable` | Stucco gable with the white cross and arched windows | About, church relationship |
+| `gable` | Stucco gable with the white cross and arched windows | About, church relationship, repasts and memorials |
 | `hall-windows` | The Hall: arched windows, fireplace feature wall, wood-look floor | The Hall primary, showers, receptions |
-| `hall-fireplace` | The Hall toward the windows and fireplace wall | Receptions and banquets, repasts |
+| `hall-fireplace` | The Hall toward the windows and fireplace wall | Receptions and banquets |
 | `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | Meetings, birthdays |
 | `grove-tables` | The Grove: gazebo and picnic tables on a paved patio under pines | The Grove primary, reunions |
 | `gazebo` | The Grove: timber gazebo with a metal roof on open lawn | Weddings, ceremonies |

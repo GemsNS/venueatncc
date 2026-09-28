@@ -35,27 +35,28 @@ const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
 const { fromHourly } = priceSummary();
 
+// Each page's card carries that page's H1, so the preview matches the page it opens. Keep them in step.
 export const shareCards: Record<string, ShareCard> = {
   home: { title: 'Celebrate among the pines.', line: `Event venue in ${site.address.city}, ${site.address.regionName}`, photo: byName('exterior-dusk') },
-  'the-space': { title: `${hall} and ${grove}`, line: bothSpaces, photo: byName('hall-windows') },
+  'the-space': { title: 'Two spaces, indoors and out.', line: bothSpaces, photo: byName('hall-windows') },
   pricing: {
-    title: `Rates from ${formatUSD(fromHourly)} an hour`,
-    line: 'Transparent rates and an instant estimate for your date',
+    title: 'Transparent rates for every event.',
+    line: `From ${formatUSD(fromHourly)} an hour, with an instant estimate for your date`,
     photo: byName('hall-fireplace'),
   },
   // The events index leads with the photo of the first event on the list.
   events: {
-    title: 'Events for every occasion',
-    line: 'Weddings, banquets, showers, meetings, and reunions',
+    title: `Weddings, celebrations, and gatherings in ${site.address.city}`,
+    line: 'A planning guide and a checklist for each occasion',
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
   about: {
-    title: `Rooted in ${site.address.city} since ${site.parent.foundingYear}`,
-    line: `${site.name} is operated by ${site.parent.name}`,
+    title: `A venue of ${site.parent.name}.`,
+    line: `Part of the ${site.address.city} community since ${site.parent.foundingYear}`,
     photo: byName('gable'),
   },
-  faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
-  book: { title: 'Check availability', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
+  faq: { title: 'Frequently asked questions.', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
+  book: { title: 'Check availability.', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
 };
 // Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
 for (const e of events) {

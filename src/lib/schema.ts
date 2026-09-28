@@ -2,7 +2,7 @@
  * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts and
  * src/shared/pricing.ts, so a fact changed there changes the search-engine markup too.
  * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall and The Grove. Structured
- * data never mentions alcohol, and catering reaches it only through the one neutral FAQ answer.
+ * data never mentions alcohol or catering.
  */
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
@@ -31,6 +31,14 @@ const OFF_BRAND =
 /** The first off-brand word or phrase in some copy, or null when it is clean. */
 export function offBrandPhrase(text: string): string | null {
   return OFF_BRAND.exec(text)?.[0] ?? null;
+}
+
+/**
+ * Catering is neutral copy, but brand.md allows it only in the pricing page's rental terms and the one FAQ
+ * entry on /faq/. Structured data and llms.txt leave that entry out quietly; it is on-brand, not an error.
+ */
+export function mentionsCatering(text: string): boolean {
+  return /\bcater/i.test(text);
 }
 
 const warned = new Set<string>();
@@ -182,7 +190,7 @@ export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
   const onBrand = items.filter((f) => {
     const phrase = offBrandPhrase(`${f.q} ${f.a}`);
     if (phrase) warnOnce(`[schema] Left "${f.q}" out of the FAQPage markup because it says "${phrase}". Rewrite it to follow docs/design/brand.md.`);
-    return !phrase;
+    return !phrase && !mentionsCatering(`${f.q} ${f.a}`);
   });
   // An FAQPage with no questions is invalid, and an empty node is ignored.
   if (onBrand.length === 0) return {};

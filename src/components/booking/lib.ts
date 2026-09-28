@@ -1,6 +1,6 @@
 /**
  * Small helpers shared by the booking islands. Keep this free of zod and the API client so the
- * lighter islands (date checker, capacity planner, price estimator) stay lean.
+ * lighter islands (date checker, price estimator) stay lean.
  */
 import { href } from '../../lib/paths';
 import { CAPACITY } from '../../shared/capacity';

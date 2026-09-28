@@ -147,7 +147,7 @@ const EVENT_PHOTOS: Record<string, string> = {
   'receptions-banquets': 'hall-fireplace',
   'baby-bridal-showers': 'hall-windows',
   'birthday-parties': 'hall-doors',
-  'repasts-memorials': 'hall-fireplace',
+  'repasts-memorials': 'gable',
   'meetings-trainings': 'hall-doors',
   'graduations-reunions': 'grove-tables',
   'church-community-events': 'grove-path',

@@ -252,7 +252,7 @@ export function CountField(props: {
   incLabel: string;
   /**
    * Announce the new count after a step (the buttons keep focus, so the change is otherwise silent).
-   * Leave it out where the page already announces the result, as the capacity planner does.
+   * Leave it out where the page already announces the result.
    */
   announceAs?: (n: number) => string;
 }) {

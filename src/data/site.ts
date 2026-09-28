@@ -11,7 +11,8 @@
  * Space names confirmed for the brand on 2026-09-28: The Hall (indoor) and The Grove (outdoor).
  * Confirmed from wearencc.org and OpenStreetMap on 2026-09-27:
  *   church name, address, church phone, founding year, pastor, geo coordinates.
- * Kept from the original venueatncc.org page: the tagline "Unforgettable Events Await You".
+ * The tagline is the brand line from docs/design/brand.md, also the home page headline. It replaces
+ * "Unforgettable Events Await You" from the original venueatncc.org page.
  *
  * Rates live in src/shared/pricing.ts.
  */
@@ -33,8 +34,8 @@ export interface Space {
 export const site = {
   name: 'The Venue at NCC',
   shortName: 'The Venue',
-  /** Kept from the original venueatncc.org page. */
-  tagline: 'Unforgettable events await you',
+  /** The brand line. Feeds the slogan in the venue structured data. */
+  tagline: 'Celebrate among the pines',
   url: 'https://venueatncc.org',
   locale: 'en_US',
 
@@ -124,11 +125,11 @@ export const site = {
     parkingIncluded: true,
   },
 
-  /** What a booking includes. Only confirmed items. */
+  /**
+   * What a booking includes. Only confirmed items. Catering is not listed as an exclusion here: brand.md
+   * allows it only in the pricing page's rental terms and in one FAQ entry.
+   */
   included: ['The space you book', 'On-site parking'],
-
-  /** What a booking does not include. Only confirmed items. */
-  notIncluded: ['Catering and décor, arranged separately by the client'],
 
   /**
    * Office hours for calls and visits (not event hours). Shown on /book/ only.

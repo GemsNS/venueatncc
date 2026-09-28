@@ -1,15 +1,15 @@
 /**
  * /llms.txt: a plain-text summary of the venue for AI assistants and answer engines.
  * Generated from the same data as the site so it never drifts. Written in the brand voice of
- * docs/design/brand.md: first person plural, brief and precise. It never mentions alcohol, and catering
- * appears only where a published FAQ answer carries the one neutral line.
+ * docs/design/brand.md: first person plural, brief and precise. It never mentions alcohol or catering, so
+ * the one catering FAQ stays on /faq/ only.
  * The demo build does not publish this file (astro.config.mjs); the real one lives on venueatncc.org.
  */
 import type { APIRoute } from 'astro';
 import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs } from '../data/faq';
-import { offBrandPhrase, spaceName } from '../lib/schema';
+import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
 import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
 import { todayKey } from '../shared/dates';
 import type { SpaceChoice } from '../shared/types';
@@ -39,7 +39,7 @@ export const GET: APIRoute = () => {
     pricing.bookingDeposit.type === 'percent' ? `${pricing.bookingDeposit.value}% of the total` : formatUSD(pricing.bookingDeposit.value);
   const specialRates = pricing.discounts.filter((d) => d.percent > 0);
   const eventList = onBrand(events, (e) => `${e.name} ${e.summary}`, (e) => e.name);
-  const faqs = onBrand(publishedFaqs, (f) => `${f.q} ${f.a}`, (f) => f.q);
+  const faqs = onBrand(publishedFaqs, (f) => `${f.q} ${f.a}`, (f) => f.q).filter((f) => !mentionsCatering(`${f.q} ${f.a}`));
 
   const lines = [
     `# ${site.name}`,
