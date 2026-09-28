@@ -116,7 +116,7 @@ body.is-bare {
   max-width: 480px;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
   padding: 4px;
   border-radius: var(--adm-radius-bar);
@@ -132,7 +132,8 @@ body.is-bare {
   min-height: 44px;
   border-radius: 28px;
   color: var(--label);
-  font-size: 0.6875rem;
+  /* Like iOS tab bars, labels stop growing past a point; page zoom still scales them. */
+  font-size: min(0.6875rem, 15px);
   font-weight: 600;
   line-height: 1.1;
   text-decoration: none;
@@ -396,6 +397,7 @@ body.is-bare {
 
 .adm-section__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -419,12 +421,13 @@ body.is-bare {
 
 .adm-columns {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0 24px;
 }
 
 @media (min-width: 64rem) {
   .adm-columns {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
   }
 }
@@ -786,11 +789,18 @@ body.is-bare {
 
 .adm-tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* 200% text on phones: one tile per row so values and captions stay readable. */
+@media (width < 20rem) {
+  .adm-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (min-width: 64rem) {
@@ -1159,10 +1169,13 @@ body.is-bare {
 
 .adm-selectwrap {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .adm-select.input {
-  min-width: 12rem;
+  min-width: min(12rem, 100%);
+  max-width: 100%;
   min-height: 44px;
   padding: 0 40px 0 14px;
   border-radius: var(--r-full);

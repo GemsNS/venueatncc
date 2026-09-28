@@ -1165,6 +1165,7 @@ button.bk-progress__item:hover {
 .bk-tile {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 10px;
   min-height: 104px;
@@ -2195,13 +2196,21 @@ html:not(.js) .bk-skel {
   overflow-wrap: anywhere;
 }
 
-/* Large text on phones: the action bar wraps instead of pushing the page sideways. */
+/* Narrow phones: the action bar wraps instead of pushing the page sideways. */
 @media (width < 30rem) {
   .bk-actions__inner {
     flex-wrap: wrap;
   }
+}
+
+/* 200% text on phones: Back and the estimate share a row, and Next spans the row below. */
+@media (width < 20rem) {
+  .bk-actions__inner {
+    border-radius: var(--r-xl);
+  }
 
   .bk-actions__next {
+    flex: 1 1 100%;
     min-width: 0;
   }
 
@@ -2233,5 +2242,12 @@ html:not(.js) .bk-skel {
 @media (width < 30rem) {
   .bk-pe__dateinput {
     padding-inline: 0.5rem;
+  }
+}
+
+/* 200% text on phones: one event tile per row so long names such as "anniversaries" stay whole. */
+@media (width < 20rem) {
+  .bk-tiles {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
