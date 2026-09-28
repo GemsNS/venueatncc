@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
 import type { DateKey } from '../../shared/types';
-import { SINGLE_SPACES, SPACE_HINT, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
+import { CAPACITY } from '../../shared/capacity';
+import { MIDDOT, NBSP, SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
@@ -20,6 +21,12 @@ const WINDOW_DAYS = 120;
 const SPEAK_AFTER_MS = 500;
 
 const TOO_EARLY_MESSAGE = 'Choose a date from today on.';
+
+/** One short line under each space: "Indoor · 100 guests", short enough not to leave a word alone on a line. */
+const SPACE_META: Record<Single, string> = {
+  indoor: `Indoor ${MIDDOT} ${CAPACITY.indoor}${NBSP}guests`,
+  outdoor: `Outdoor ${MIDDOT} ${CAPACITY.outdoor}${NBSP}guests`,
+};
 
 export default function DateChecker(props: { bookHref?: string }) {
   const [today, setToday] = useState<DateKey>('');
@@ -204,7 +211,7 @@ export default function DateChecker(props: { bookHref?: string }) {
                 <span class="bk-dc__space-name">{spaceLabel(s)}</span>
                 <span class="bk-dc__radio" aria-hidden="true" />
               </span>
-              <span class="bk-dc__space-cap">{SPACE_HINT[s]}</span>
+              <span class="bk-dc__space-cap">{SPACE_META[s]}</span>
               <span class="bk-dc__space-status">
                 {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">{date ? (statusPending ? 'Checking' : '') : 'Pick a date'}</span>}
               </span>
@@ -253,7 +260,7 @@ export default function DateChecker(props: { bookHref?: string }) {
       </div>
 
       <a class="btn btn--filled btn--lg bk-dc__cta" href={cta}>
-        Check Availability
+        Continue to Booking
         <Icon name="arrow-right" />
       </a>
     </div>

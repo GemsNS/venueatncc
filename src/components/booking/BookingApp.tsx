@@ -37,6 +37,7 @@ import {
   orderFields,
   restoreDraft,
   validate,
+  withMinimumHours,
   type Draft,
   type Step,
 } from './wizard';
@@ -44,7 +45,7 @@ import {
 const SUBTITLES: Record<Step, string> = {
   1: 'Pick a day, then tell us how many guests and how long you need.',
   2: 'Tell us a little about your event.',
-  3: 'So we can follow up about your request.',
+  3: 'How we should reach you about your request.',
   4: 'Check the details, then send your request.',
 };
 
@@ -200,6 +201,7 @@ export default function BookingApp() {
     draft.appliedSearch = search;
     if (draft.date && draft.date < t) draft.date = '';
     if (!draft.date && draft.step > 1) draft.step = 1;
+    draft = withMinimumHours(draft);
     setToday(t);
     setD(draft);
     setView(draft.date ? ymOf(draft.date) : initialView(t));
@@ -228,7 +230,7 @@ export default function BookingApp() {
   const day = d.date ? avail.days[d.date] : undefined;
 
   const update = useCallback((patch: Partial<Draft>) => {
-    setD((prev) => ({ ...prev, ...patch }));
+    setD((prev) => withMinimumHours({ ...prev, ...patch }));
     const keys = Object.keys(patch).flatMap((k) => [k, ...(RELATED[k] ?? [])]);
     setErrors((prev) => {
       if (!keys.some((k) => k in prev)) return prev;
@@ -551,7 +553,7 @@ export default function BookingApp() {
             <div class="bk-errsum" role="group" aria-labelledby="bk-errsum-title" tabIndex={-1} ref={summaryRef}>
               <p class="bk-errsum__title" id="bk-errsum-title">
                 <Icon name="info" />
-                {summaryItems.length === 1 ? 'Check this to continue' : `Check these ${summaryItems.length} things to continue`}
+                {summaryItems.length === 1 ? 'Complete this item to continue' : `Complete these ${summaryItems.length} items to continue`}
               </p>
               <ul>
                 {summaryItems.map((f) => (

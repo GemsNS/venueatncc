@@ -2,13 +2,12 @@
 import { site } from '../../data/site';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
-import { addHours, formatShort, formatTime } from '../../shared/dates';
+import { formatEndTime, formatShort, formatTime } from '../../shared/dates';
 import { dayTypeOf } from '../../shared/pricing';
 import type { AvailabilityDay, DateKey } from '../../shared/types';
 import { Calendar, type CalStatus } from './Calendar';
 import {
   HOURS_MAX,
-  HOURS_MIN,
   SINGLE_SPACES,
   SPACE_CHOICE_TITLE,
   SPACE_HINT,
@@ -23,7 +22,7 @@ import {
 } from './lib';
 import { ChoiceList, CountField, Note, Stepper, type ChoiceOption } from './ui';
 import { ymOf, type YM } from './useAvailability';
-import { GUESTS_MAX, GUESTS_MIN, errorId, fieldId, type Draft } from './wizard';
+import { GUESTS_MAX, GUESTS_MIN, errorId, fieldId, minHoursFor, type Draft } from './wizard';
 import { FieldError, describe } from './fields';
 
 export interface StepDateProps {
@@ -196,7 +195,7 @@ export function StepDate(props: StepDateProps) {
               id={fieldId('hours')}
               labelId="bk-hours-label"
               value={d.hours}
-              min={HOURS_MIN}
+              min={minHoursFor(d.date)}
               max={HOURS_MAX}
               onChange={(hours) => update({ hours })}
               format={hoursLabel}
@@ -209,7 +208,7 @@ export function StepDate(props: StepDateProps) {
         </div>
         <p class="field__hint bk-hours-hint" id={hoursHintId}>
           <span class="num">
-            {formatTime(d.startTime)} to {formatTime(addHours(d.startTime, d.hours))}
+            {formatTime(d.startTime)} to {formatEndTime(d.startTime, d.hours)}
           </span>
           . Ask us about time to set up and clean up.
           {dayType ? ` ${minimumHoursNote(dayType)}` : ''}

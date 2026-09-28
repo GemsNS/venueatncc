@@ -32,12 +32,19 @@ const crumbs = [
 
 const heroPhoto = photoByName('hall-windows') ?? photosFor('hall')[0] ?? null;
 
-/** A space's real photos in data order, with the hero photo moved out of the lead position. */
+/** A space's real photos in data order, without the hero photo: no photo appears twice on the page. */
 function galleryFor(space: 'hall' | 'grove'): VenuePhoto[] {
   const list = photosFor(space);
-  const [first, ...rest] = list;
-  return first && first === heroPhoto && rest.length > 0 ? [...rest, first] : list;
+  const rest = list.filter((p) => p !== heroPhoto);
+  return rest.length > 0 ? rest : list;
 }
+
+/**
+ * Crops for the pair of portrait frames a two-photo gallery uses: the fireplace wall, and the double doors
+ * with the windows beside them, so neither reads as a second copy of the hero. A styled concept follows
+ * the crop of the photo it was made from.
+ */
+const PAIR_CROPS: Record<string, string> = { 'hall-fireplace': '85% 50%', 'hall-doors': '100% 50%' };
 
 /** The lowest hourly rate for a space, from the rate card. */
 const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
@@ -79,7 +86,7 @@ const sections: Section[] = [
     ],
     actions: [
       { label: `Check ${hall.short} Dates`, href: `${href(bookHref)}?space=indoor`, kind: 'filled' },
-      { label: 'See all rates', href: href(pricingHref), kind: 'more' },
+      { label: 'See All Rates', href: href(pricingHref), kind: 'more' },
     ],
     photos: galleryFor('hall'),
     flip: false,
@@ -96,7 +103,7 @@ const sections: Section[] = [
     ],
     actions: [
       { label: `Check ${grove.short} Dates`, href: `${href(bookHref)}?space=outdoor`, kind: 'filled' },
-      { label: 'See all rates', href: href(pricingHref), kind: 'more' },
+      { label: 'See All Rates', href: href(pricingHref), kind: 'more' },
     ],
     photos: galleryFor('grove'),
     flip: true,
@@ -105,7 +112,7 @@ const sections: Section[] = [
   {
     id: 'campus',
     heading: 'The campus',
-    lead: 'A long paved drive leads past open lawn to the building and a large paved lot, a few minutes from downtown Suffolk.',
+    lead: 'A long paved drive leads past open lawn to the building and a large paved lot, minutes from downtown Suffolk.',
     rows: [
       { label: 'Parking', value: 'On site, included with every booking' },
       { label: 'Address', value: fullAddress },
@@ -147,7 +154,7 @@ const gallerySchema =
     <div class="container">
       <Breadcrumbs items={crumbs} />
       <div class="sp-hero__head">
-        <h1 id="space-title" class="t-large-title">Two spaces, indoors and out.</h1>
+        <h1 id="space-title" class="t-large-title">Two spaces, indoors and out</h1>
         <div class="sp-hero__side">
           <p class="t-lead">
             {hall.name} welcomes up to {hall.capacity} guests indoors, and {grove.name} up to {grove.capacity} among tall pines. Both
@@ -189,14 +196,19 @@ const gallerySchema =
                     </label>
                   </fieldset>
                 )}
-                <ul class="sp-gallery">
+                <ul class:list={['sp-gallery', { 'sp-gallery--pair': s.photos.length === 2 }]}>
                   {s.photos.map((p, i) => {
                     const styled = p.styled[0];
-                    const sizes = i === 0 ? LEAD_SIZES : SMALL_SIZES;
+                    // Two photos sit side by side as equal portraits; three or more lead with one wide photo.
+                    const pair = s.photos.length === 2;
+                    const lead = !pair && i === 0;
+                    const sizes = lead ? LEAD_SIZES : SMALL_SIZES;
+                    const ratio = pair ? '4 / 5' : '3 / 2';
+                    const crop = pair ? PAIR_CROPS[p.name] : undefined;
                     return (
-                      <li class:list={['sp-gallery__item', { 'sp-gallery__lead': i === 0 }]}>
-                        <Photo photo={p} caption sizes={sizes} class={styled ? 'sp-shot--paired' : undefined} />
-                        {styled && <Photo photo={styled} sizes={sizes} class="sp-shot--styled" />}
+                      <li class:list={['sp-gallery__item', { 'sp-gallery__lead': lead }]}>
+                        <Photo photo={p} caption ratio={ratio} crop={crop} sizes={sizes} class={styled ? 'sp-shot--paired' : undefined} />
+                        {styled && <Photo photo={styled} ratio={ratio} crop={crop} sizes={sizes} class="sp-shot--styled" />}
                       </li>
                     );
                   })}
@@ -244,7 +256,7 @@ const gallerySchema =
       <div class="sp-incl__main">
         <h2 id="included-heading">What the rental includes</h2>
         <p class="t-lead">Book {hall.name}, {grove.name}, or both. Every rental includes:</p>
-        <ul class="list-group list-group--on-white sp-incl__list">
+        <ul class="list-group sp-incl__list">
           {
             site.included.map((item) => (
               <li class="list-row">
@@ -447,6 +459,13 @@ const gallerySchema =
     min-width: 0;
   }
 
+  /* A pair of portraits: side by side from 36rem, and calmer 3:2 frames stacked on phones. */
+  @media (width < 36rem) {
+    .sp-gallery--pair :global(.photo__frame) {
+      aspect-ratio: 3 / 2;
+    }
+  }
+
   /* Small tiles keep their captions short enough to sit under a half-width photo. */
   .sp-gallery__item:not(.sp-gallery__lead) :global(.photo__caption) {
     font-size: 0.9375rem;
@@ -473,8 +492,10 @@ const gallerySchema =
     max-width: 36rem;
   }
 
+  /* On the white section the list is set off by a hairline, not a faint shadow. */
   .sp-incl__list {
     margin-top: 0.25rem;
+    border: 1px solid var(--separator);
   }
 
   .sp-incl :global(.sp-incl__icon) {

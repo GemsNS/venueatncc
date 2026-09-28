@@ -10,18 +10,19 @@ import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
 import { photoByName } from '../data/photos';
-import { pricing, priceSummary, formatUSD, marketContext, type DayType } from '../shared/pricing';
+import { pricing, formatUSD, type DayType } from '../shared/pricing';
 import { SPACE_NAME, capacityLabel } from '../shared/capacity';
 import { todayKey } from '../shared/dates';
 import type { SpaceChoice } from '../shared/types';
 import { breadcrumbs, rateCatalog, venueRates } from '../lib/schema';
 import { href } from '../lib/paths';
 
-const { fromHourly } = priceSummary();
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
+/** The lowest hourly rate for a space, from the rate card. */
+const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
 const title = 'Venue rental rates in Suffolk, VA | The Venue at NCC';
-const description = `Event venue rental rates in Suffolk, VA from ${formatUSD(fromHourly)} an hour. ${hall?.name} for up to ${hall?.capacity} guests, ${grove?.name} for up to ${grove?.capacity}, on-site parking included. Get an instant estimate.`;
+const description = `Venue rental rates in Suffolk, VA: ${grove?.name} from ${fromRate('outdoor')} an hour and ${hall?.name} from ${fromRate('indoor')}, with on-site parking. Get an instant estimate for your date.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Pricing', path: '/pricing/' },
@@ -35,7 +36,7 @@ const packagesByDay = days
   .filter((g) => g.items.length > 0);
 const autoDiscounts = pricing.discounts.filter((d) => d.appliesTo !== 'manual' && d.percent > 0);
 const askDiscounts = pricing.discounts.filter((d) => d.appliesTo === 'manual' && d.percent > 0);
-const satHallBlock = pricing.packages.find((p) => p.id === 'sat-indoor-6');
+
 const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
 
 /**
@@ -78,17 +79,18 @@ const photo = photoByName('hall-fireplace');
       <Breadcrumbs items={crumbs} />
       <div class="page-hero__grid">
         <div class="page-hero__copy">
-          <h1 class="t-large-title">Transparent rates for every event.</h1>
+          <h1 class="t-large-title">Transparent rates for every event</h1>
           <p class="t-lead">
-            Book {hall?.name} or {grove?.name} by the hour from {formatUSD(fromHourly)}, or reserve a package for a set block of
-            time. On-site parking is included, and every fee is listed on this page.
+            Book {grove?.name} from {fromRate('outdoor')} an hour or {hall?.name} from {fromRate('indoor')}, or reserve a package for
+            a set block of time. On-site parking is included, and every fee is listed on this page.
           </p>
           {
             offer && (
               <p class="offer">
                 <Icon name="tag" />
                 <span>
-                  <strong>{offer.label}.</strong> It is applied automatically to your estimate.
+                  <strong>{offer.name}: {offer.percent}% off the rental</strong> {offer.terms}. It is applied automatically to your
+                  estimate.
                 </span>
               </p>
             )
@@ -153,7 +155,7 @@ const photo = photoByName('hall-fireplace');
     <div class="container">
       <div class="section-head">
         <h2 id="rates-heading">Hourly rates</h2>
-        <p class="t-lead">For an event of any length. Your rate depends on the space and the day.</p>
+        <p class="t-lead">Charged by the hour. Your rate depends on the space and the day, and each day has a minimum number of hours.</p>
       </div>
 
       <div class="card rates rates--table">
@@ -178,7 +180,7 @@ const photo = photoByName('hall-fireplace');
                 <tr>
                   <th scope="row">
                     <span class="rates__day">{pricing.dayTypes[d].label}</span>
-                    <span class="rates__min">{pricing.minimumHours[d]}-hour minimum</span>
+                    <span class="rates__min"><span class="nowrap">{pricing.minimumHours[d]}-hour</span> minimum</span>
                   </th>
                   {spaces.map((s) => (
                     <td>
@@ -206,7 +208,7 @@ const photo = photoByName('hall-fireplace');
                   <li class="list-row">
                     <div class="list-row__main">
                       <div>{pricing.dayTypes[d].label}</div>
-                      <div class="list-row__detail">{pricing.minimumHours[d]}-hour minimum</div>
+                      <div class="list-row__detail"><span class="nowrap">{pricing.minimumHours[d]}-hour</span> minimum</div>
                     </div>
                     <div class="rates__cell">
                       <span class="rates__price price num">{formatUSD(pricing.hourly[s][d])}</span>
@@ -304,40 +306,6 @@ const photo = photoByName('hall-fireplace');
             {rentalTerms.map((t) => <li>{t}</li>)}
           </ul>
         </section>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-labelledby="compare-heading">
-    <div class="container compare">
-      <div class="section-head">
-        <h2 id="compare-heading">How we compare</h2>
-        <p class="t-lead">
-          We reviewed published rates at {marketContext.venueCount} event venues across Hampton Roads in {marketContext.researched}.
-        </p>
-      </div>
-      <div class="compare__grid">
-        <article class="card compare__card">
-          <p class="compare__label">Comparable halls, Saturday, 6 hours</p>
-          <p class="compare__num price num">
-            <span class="nowrap">{formatUSD(marketContext.saturdaySixHourLow)}</span> to <span class="nowrap">{formatUSD(marketContext.saturdaySixHourHigh)}</span>
-          </p>
-          <p class="t-footnote secondary">Private venue-only halls for 75 to 100 guests. Hall rental only, before fees and tax.</p>
-        </article>
-        {
-          satHallBlock && (
-            <article class="card compare__card compare__card--ours">
-              <p class="compare__label compare__label--ours">{hall?.name}, Saturday, 6 hours</p>
-              <p class="compare__num price num">{formatUSD(satHallBlock.price)}</p>
-              <p class="t-footnote compare__note">
-                The {satHallBlock.name}, rental only.
-                {offer && ` ${formatUSD(Math.round(satHallBlock.price * (1 - offer.percent / 100)))} with the founding rate.`}
-                {pricing.fees.cleaning > 0 && ` A ${formatUSD(pricing.fees.cleaning)} cleaning fee applies to every booking.`}
-                {' '}On-site parking is included.
-              </p>
-            </article>
-          )
-        }
       </div>
     </div>
   </section>
@@ -449,14 +417,27 @@ const photo = photoByName('hall-fireplace');
     border-bottom: 1px solid var(--separator);
   }
 
+  /* Three columns on wide screens, so Saturday's six packages fill two rows exactly. */
   .pkg-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: auto;
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  @media (min-width: 40rem) {
+    .pkg-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .pkg-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   /* Space, name, price, and description share row tracks, so prices line up across a row. */
@@ -524,6 +505,30 @@ const photo = photoByName('hall-fireplace');
   .rates__table td,
   .rates__cell {
     white-space: nowrap;
+  }
+
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  /*
+    Rate, fee, and special-rate rows: the label and the amount sit side by side while they fit, and the
+    amount drops below the label when they do not (large text on a phone), instead of overlapping it.
+  */
+  .rates-space :global(.list-row),
+  .fees :global(.list-row) {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+
+  .rates-space :global(.list-row__main),
+  .fees :global(.list-row__main) {
+    flex: 1 1 11rem;
+  }
+
+  .rates__cell,
+  .fees__amount {
+    margin-left: auto;
   }
 
   .rates__price {
@@ -661,69 +666,8 @@ const photo = photoByName('hall-fireplace');
     color: var(--accent-text);
   }
 
-  /* The heading beside the two cards on wide screens, as in the pricing questions below. */
-  .compare {
-    display: grid;
-    gap: 0 clamp(2rem, 6vw, 5rem);
-  }
-
-  @media (min-width: 64rem) {
-    .compare {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      align-items: start;
-    }
-  }
-
-  /* One column on phones, two side by side on tablets, stacked again beside the heading on wide screens. */
-  .compare__grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  @media (min-width: 600px) and (max-width: 63.99rem) {
-    .compare__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  .nowrap {
-    white-space: nowrap;
-  }
-
-  .compare__card {
-    display: grid;
-    align-content: start;
-    gap: 0.75rem;
-    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-  }
-
-  .compare__card > p,
   .pkg > p {
     margin: 0;
-  }
-
-  .compare__card--ours {
-    box-shadow: inset 0 0 0 2px var(--accent-text), var(--shadow-1);
-  }
-
-  .compare__label {
-    color: var(--label-2);
-    font-size: var(--t-subhead);
-    font-weight: 600;
-  }
-
-  .compare__label--ours {
-    color: var(--accent-text);
-  }
-
-  .compare__note {
-    color: var(--label-2);
-  }
-
-  .compare__num {
-    font-size: var(--t-title-1);
-    line-height: 1.15;
   }
 
   .pfaq {

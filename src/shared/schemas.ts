@@ -60,7 +60,7 @@ export const inquiryInputSchema = z.object({
   startTime: hhmm,
   hours: z.coerce.number().int('Choose whole hours.').min(1, 'Choose at least 1 hour.').max(16, 'For more than 16 hours, call us.'),
   space: z.enum(['indoor', 'outdoor', 'both'], { error: 'Choose a space.' }),
-  guests: z.coerce.number().int('Enter a whole number.').min(1, 'Enter your guest count.').max(1000, 'Enter a realistic guest count.'),
+  guests: z.coerce.number().int('Enter a whole number.').min(1, 'Enter your guest count.').max(1000, 'Enter a guest count of 1,000 or fewer.'),
   name: singleLine(120).min(2, 'Enter your name.'),
   email: z.email('Enter a valid email address.').max(200),
   phone: singleLine(40).optional(),

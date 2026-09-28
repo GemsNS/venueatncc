@@ -1,6 +1,6 @@
 /** The live summary: the request so far and its estimate. Sticky beside the wizard on wide screens. */
 import { eventTypeName } from '../../data/event-types';
-import { addHours, formatTime } from '../../shared/dates';
+import { formatEndTime, formatTime } from '../../shared/dates';
 import { formatUSD, priceSummary } from '../../shared/pricing';
 import type { Estimate } from '../../shared/types';
 import { formatLongKept, guestsLabel, spaceLabel } from './lib';
@@ -11,7 +11,7 @@ export function SummaryCard(props: { d: Draft; est: Estimate | null }) {
   const { d, est } = props;
   const rows: [string, string][] = [
     ['Date', d.date ? formatLongKept(d.date) : 'Not chosen yet'],
-    ['Time', `${formatTime(d.startTime)} to ${formatTime(addHours(d.startTime, d.hours))}`],
+    ['Time', `${formatTime(d.startTime)} to ${formatEndTime(d.startTime, d.hours)}`],
     ['Space', spaceLabel(d.space)],
     ['Guests', guestsLabel(d.guests)],
     ['Event', d.eventType ? eventTypeName(d.eventType, d.eventTypeOther.trim()) : 'Not chosen yet'],

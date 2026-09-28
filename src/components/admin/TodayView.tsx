@@ -4,7 +4,7 @@ import { formatLong, formatShort, parseKey, todayKey } from '../../shared/dates'
 import type { Inquiry } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
-import { DOT, OPEN_STATUSES, eventTypeName, formatUSD, plural, spaceLabel } from './format';
+import { OPEN_STATUSES, SEP, eventTypeName, formatUSD, plural, spaceLabel } from './format';
 import { calendarHash } from './route';
 import { EmptyState, ErrorBanner, PageHeader, Skeleton, SkeletonRows, StatusBadge } from './ui';
 
@@ -109,7 +109,9 @@ export function TodayView() {
                     <span class="list-row__main">
                       <span class="adm-row__title">{b.label || 'Booked'}</span>
                       <span class="adm-row__meta">
-                        {formatShort(b.date)} {DOT} {spaceLabel(b.space)}
+                        <span class="adm-nowrap">{formatShort(b.date)}</span>
+                        {SEP}
+                        <span class="adm-nowrap">{spaceLabel(b.space)}</span>
                       </span>
                     </span>
                     <Icon name="chevron-right" class="adm-row__chevron" />
@@ -148,7 +150,11 @@ export function TodayView() {
                         {i.name}
                       </span>
                       <span class="adm-row__meta">
-                        {eventTypeName(i.eventType, i.eventTypeOther)} {DOT} {formatShort(i.date)} {DOT} {plural(i.guests, 'guest')}
+                        {eventTypeName(i.eventType, i.eventTypeOther)}
+                        {SEP}
+                        <span class="adm-nowrap">{formatShort(i.date)}</span>
+                        {SEP}
+                        <span class="adm-nowrap">{plural(i.guests, 'guest')}</span>
                       </span>
                     </span>
                     <StatusBadge status={i.status} />

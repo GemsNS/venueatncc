@@ -4,7 +4,8 @@ import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
 import { site } from '../../data/site';
 import { isDemo } from '../../lib/env';
-import { addHours, formatTime } from '../../shared/dates';
+import { formatEndTime, formatTime } from '../../shared/dates';
+import { formatPhone } from '../../shared/phone';
 import { formatLongKept, guestsLabel, hoursLabel, spaceLabel, telHref } from './lib';
 import type { Draft, Step } from './wizard';
 
@@ -47,7 +48,7 @@ export function StepReview(props: {
   const { d } = props;
   const rows1: [string, string][] = [
     ['Date', d.date ? formatLongKept(d.date) : 'Not chosen'],
-    ['Time', `${formatTime(d.startTime)} to ${formatTime(addHours(d.startTime, d.hours))} (${hoursLabel(d.hours)})`],
+    ['Time', `${formatTime(d.startTime)} to ${formatEndTime(d.startTime, d.hours)} (${hoursLabel(d.hours)})`],
     ['Space', spaceLabel(d.space)],
     ['Guests', guestsLabel(d.guests)],
   ];
@@ -58,7 +59,7 @@ export function StepReview(props: {
   const rows3: [string, string][] = [
     ['Name', d.name.trim()],
     ['Email', d.email.trim()],
-    ...(d.phone.trim() ? ([['Phone', d.phone.trim()]] as [string, string][]) : []),
+    ...(d.phone.trim() ? ([['Phone', formatPhone(d.phone)]] as [string, string][]) : []),
     ['Reach me by', PREF_LABEL[d.contactPreference]],
     ...(d.message.trim() ? ([['Message', d.message.trim()]] as [string, string][]) : []),
   ];

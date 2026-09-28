@@ -4,7 +4,9 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FactStrip from '../../components/FactStrip.astro';
 import CtaBand from '../../components/CtaBand.astro';
+import Photo from '../../components/Photo.astro';
 import { events } from '../../data/events';
+import { photoByName } from '../../data/photos';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 
@@ -17,6 +19,8 @@ const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
 ];
+// The drive at dusk: a real photo that none of the event tiles below uses.
+const photo = photoByName('approach-dusk');
 const itemList = {
   '@type': 'ItemList',
   name: `Events at ${site.name}`,
@@ -32,14 +36,14 @@ const itemList = {
   <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__copy">
-        <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
-        <p class="t-lead">
-          Choose an occasion for a planning guide, the space that suits it, and a practical checklist. {hall?.name} holds up to {hall?.capacity} guests
-          and {grove?.name} up to {grove?.capacity}, with on-site parking for every booking.
-        </p>
+      <div class="page-hero__grid">
+        <div class="page-hero__copy">
+          <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
+          <p class="t-lead">Choose an occasion for a planning guide, the space that suits it, and a practical checklist.</p>
+          <FactStrip class="page-hero__facts" />
+        </div>
+        {photo && <Photo photo={photo} class="page-hero__photo" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>
-      <FactStrip class="page-hero__facts" />
     </div>
   </section>
 
@@ -51,7 +55,7 @@ const itemList = {
 
   <CtaBand
     heading="Planning something else?"
-    body={`Tell us about it in your request. ${hall?.name} holds up to ${hall?.capacity} guests and ${grove?.name} up to ${grove?.capacity}, and we confirm every booking personally.`}
+    body={`Tell us about it in your request, and we will confirm whether ${hall?.name} or ${grove?.name} suits it.`}
   />
 </BaseLayout>
 
@@ -60,14 +64,36 @@ const itemList = {
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 
+  .page-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem 4rem;
+    align-items: center;
+    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  }
+
   .page-hero__copy {
     display: grid;
     gap: 1.25rem;
     max-width: 48rem;
-    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
   }
 
   .page-hero :global(.page-hero__facts) {
-    margin-top: 1.75rem;
+    margin-top: 0.5rem;
+  }
+
+  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the tiles. */
+  .page-hero__grid > :global(.page-hero__photo) {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .page-hero__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    }
+
+    .page-hero__grid > :global(.page-hero__photo) {
+      display: block;
+    }
   }
 </style>

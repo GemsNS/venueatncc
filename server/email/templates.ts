@@ -10,7 +10,8 @@
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
-import { addHours, formatLong, formatTime } from '../../src/shared/dates';
+import { formatEndTime, formatLong, formatTime } from '../../src/shared/dates';
+import { formatPhone } from '../../src/shared/phone';
 import { formatUSD } from '../../src/shared/pricing';
 import { SPACE_NAMES, type ContactPreference, type Estimate, type Inquiry } from '../../src/shared/types';
 
@@ -72,7 +73,7 @@ const CONTACT_HOW: Record<ContactPreference, string> = { email: 'email', phone: 
 export const spaceLabel = (space: Inquiry['space']) => SPACE_NAMES[space];
 export const eventLabel = (i: Pick<Inquiry, 'eventType' | 'eventTypeOther'>) => eventTypeName(i.eventType, i.eventTypeOther);
 export const timeRange = (i: Pick<Inquiry, 'startTime' | 'hours'>) =>
-  `${formatTime(i.startTime)} to ${formatTime(addHours(i.startTime, i.hours))} (${i.hours} ${i.hours === 1 ? 'hour' : 'hours'})`;
+  `${formatTime(i.startTime)} to ${formatEndTime(i.startTime, i.hours)} (${i.hours} ${i.hours === 1 ? 'hour' : 'hours'})`;
 const yesNo = (b: boolean) => (b ? 'Yes' : 'No');
 
 /** A dialable number for tel: links, the same rule as the admin's dialable(): +1 for 10-digit US numbers. */
@@ -247,7 +248,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
   ];
   if (i.visitNotes) detailRows.push(['Visit notes', i.visitNotes]);
   const contactRows: [string, string][] = [['Name', i.name], ['Email', i.email]];
-  if (i.phone) contactRows.push(['Phone', i.phone]);
+  if (i.phone) contactRows.push(['Phone', formatPhone(i.phone)]);
   contactRows.push(['Prefers', CONTACT_LABEL[i.contactPreference]]);
 
   const esc = (rows: [string, string][]) => rows.map(([k, v]) => [k, multiline(v)] as [string, string]);
@@ -262,7 +263,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     paragraph(`${escapeHtml(name)} sent a request through the website. Reply to this email to answer them directly.`),
     referenceBox(i.reference),
     ctx.conflict
-      ? paragraph(`<strong style="color:${PURPLE};">Heads up:</strong> ${escapeHtml(ctx.conflict)}`)
+      ? paragraph(`<strong style="color:${PURPLE};">Calendar conflict:</strong> ${escapeHtml(ctx.conflict)}`)
       : '',
     sectionTitle('Event'),
     detailTable(esc(detailRows)),
@@ -280,7 +281,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     `New booking inquiry ${i.reference}`,
     '',
     `${name} sent a request through the website. Reply to this email to answer them directly.`,
-    ...(ctx.conflict ? ['', `Heads up: ${ctx.conflict}`] : []),
+    ...(ctx.conflict ? ['', `Calendar conflict: ${ctx.conflict}`] : []),
     '',
     'EVENT',
     textRows(detailRows),
@@ -312,7 +313,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
  * the event type only as named in our own list.
  */
 export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailContext): RenderedEmail {
-  const subject = `We received your request (${i.reference})`;
+  const subject = `Your request to ${site.name} (${i.reference})`;
   const how = CONTACT_HOW[i.contactPreference];
   const steps = [
     `${site.contact.contactName} from our team will contact you by ${how} about your date and details.`,

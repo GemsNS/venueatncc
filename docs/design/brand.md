@@ -121,12 +121,21 @@ portrait (`name-tall.jpg`, 1600px wide) for art direction on phones.
 | `approach-dusk` | Long paved drive and lawn toward the building at dusk | Arrival and location band, parking |
 | `driveway` | Wide paved drive and lot in daylight | Parking, campus |
 | `gable` | Stucco gable with the white cross and arched windows | About, church relationship, repasts and memorials |
-| `hall-windows` | The Hall: arched windows, fireplace feature wall, wood-look floor | The Hall primary, showers, receptions |
-| `hall-fireplace` | The Hall toward the windows and fireplace wall | Receptions and banquets |
-| `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | Meetings, birthdays |
-| `grove-tables` | The Grove: gazebo and picnic tables on a paved patio under pines | The Grove primary, reunions |
-| `gazebo` | The Grove: timber gazebo with a metal roof on open lawn | Weddings, ceremonies |
+| `hall-windows` | The Hall: arched windows, fireplace feature wall, wood-look floor | The Hall primary, The Space hero, showers |
+| `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall on the home page and The Space gallery, pricing |
+| `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | Meetings and trainings |
+| `grove-tables` | The Grove: gazebo and picnic tables on a paved patio under pines | The Grove primary |
+| `gazebo` | The Grove: timber gazebo with a metal roof on open lawn | The Grove gallery, ceremonies |
 | `grove-path` | The Grove: paved path to the gazebo through the trees | Church and community events |
+
+No image appears twice on one page. A styled concept counts as a different image from the photo it was
+made from.
+
+Event photos (`EVENT_PHOTOS` in `src/data/photos.ts`), one different image per event: weddings
+`styled-gazebo-ceremony`, receptions and banquets `styled-hall-windows-reception`, birthdays
+`styled-hall-fireplace-dinner`, graduations and reunions `styled-grove-tables-reunion`, showers
+`hall-windows`, meetings and trainings `hall-doors`, repasts and memorials `gable`, church and community
+events `grove-path`.
 
 Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark wood-look
 floors, recessed lighting, double doors. The Grove: a timber gazebo, picnic tables on a paved patio, open
@@ -141,12 +150,16 @@ Some photos may gain a styled version generated from the real photo (furniture, 
 added; architecture unchanged). Rules:
 
 - File name `styled-<base>-<scene>.jpg`, with a `photoDetails` entry `{ styledOf: '<base>.jpg', ... }`.
-- Always shown with a visible "Styled Concept" badge on the image and the caption "Styled concept. Décor
-  shown is not included with the rental." The alt text starts with "Styled concept:".
-- Presented as an opt-in view: a segmented control "As Photographed" and "Styled Concept" on The Hall and
-  The Grove cards and galleries. The real photo is the default. Render the control only when a styled
+- Always shown with a visible "Styled Concept" badge on the image. The alt text starts with "Styled
+  concept:". Wherever the image is shown at size (galleries, space cards, event pages) it also carries the
+  caption "Styled concept. Décor shown is not included with the rental." Event tiles show the badge alone.
+- On The Hall and The Grove cards and galleries it is an opt-in view: a segmented control "As
+  Photographed" and "Styled Concept". The real photo is the default. Render the control only when a styled
   version exists.
-- Never used as a hero, OG image, or the only image of a space.
+- Allowed on event tiles and event pages (the tile, and the hero of that event's page), with the badge,
+  and the caption on the event page.
+- Never the home hero, a share image, structured data, or the only image of a space. Share images and
+  structured data use the real photo it was made from (`realPhoto()` in `src/data/photos.ts`).
 
 ## Voice
 
@@ -172,18 +185,21 @@ instant estimate, dates confirmed personally, a wooded setting minutes from down
 
 ## Page direction
 
-**Home.** (1) Full-bleed hero, `exterior-dusk` (tall crop below 46.5rem), height about min(88svh, 56rem),
-bottom-left scrim for legibility. Kicker "Event venue in Suffolk, Virginia"; H1 "Celebrate among the
-pines."; one-sentence lead naming The Hall for 100, The Grove for 150, and on-site parking; "Check
-Availability" filled and "Tour the Space" secondary. The date checker floats as a glass panel at the
-bottom right from 64rem, and sits below the hero otherwise. (2) A short Caslon Text statement about the
+**Home.** (1) Full-bleed hero, `exterior-dusk`, height about min(88svh, 56rem), bottom-left scrim for
+legibility. Kicker "Event venue in Suffolk, Virginia"; H1 "Celebrate among the pines."; one-sentence lead
+naming The Hall for 100, The Grove for 150, and on-site parking; "Check Availability" filled and "Tour the
+Space" secondary. The date checker floats as a glass panel at the bottom right from 64rem, and sits below
+the hero otherwise. Below 46.5rem no text sits on the photo: the photo is a block cropped to the building
+(the lit entry and the gable cross), and the kicker, headline, lead, and buttons follow on a Deep Plum
+panel that continues from it, then the date checker. (2) A short Caslon Text statement about the
 venue with three plain facts. (3) The two spaces as large photo cards with capacity, a sentence, three real
 features, and a link. (4) Events hosted, as photo tiles. (5) Rates teaser linking to pricing. (6) How
 booking works, three numbered steps. (7) Arrival band with `approach-dusk`, address, directions link.
 (8) Four FAQs. (9) CTA band on Deep Plum.
 
 **The Space.** Hero on `hall-windows`. Sections for The Hall and The Grove, each with a small gallery of
-its photos, capacity, real features, and the styled-concept toggle when available. A Campus section with
+its photos, capacity, real features, and the styled-concept toggle when available. The Hall gallery leaves
+out the hero photo, so no photo appears twice. A Campus section with
 `approach-dusk`, `driveway`, `gable` and parking. What the rental includes (the space you book and
 on-site parking) and a visit request CTA.
 

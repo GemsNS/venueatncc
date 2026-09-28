@@ -39,7 +39,7 @@ export const inquiryText = {
   },
 };
 
-export const FORM_TOO_FAST = 'That was quick. Wait a few seconds, then send your request again.';
+export const FORM_TOO_FAST = 'Wait a few seconds, then send your request again.';
 export const FORM_EXPIRED = 'This form has expired. Refresh the page and send your request again.';
 
 const BOOLEAN_FIELDS = ['wantsVisit'] as const;

@@ -4,7 +4,7 @@ import { formatShort, todayKey } from '../../shared/dates';
 import { INQUIRY_STATUSES, type Inquiry, type InquiryStatus } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
-import { DOT, ELLIPSIS, LDQUO, RDQUO, eventTypeName, formatUSD, plural, spaceLabel, statusLabel } from './format';
+import { ELLIPSIS, LDQUO, RDQUO, SEP, eventTypeName, formatUSD, plural, spaceLabel, statusLabel } from './format';
 import { inboxHash, type InboxFilter } from './route';
 import { EmptyState, ErrorBanner, PageHeader, SegmentedRadio, SkeletonRows, StatusBadge } from './ui';
 
@@ -352,7 +352,13 @@ export function InboxView({ status, q }: { status: InboxFilter; q: string }) {
                   </span>
                   <Icon name="chevron-right" class="adm-row__chevron" />
                   <span class="adm-inbox__compact">
-                    {formatShort(i.date)} {DOT} {plural(i.guests, 'guest')} {DOT} {spaceLabel(i.space)} {DOT} {formatUSD(i.estimateTotal)}
+                    <span class="adm-nowrap">{formatShort(i.date)}</span>
+                    {SEP}
+                    <span class="adm-nowrap">{plural(i.guests, 'guest')}</span>
+                    {SEP}
+                    <span class="adm-nowrap">{spaceLabel(i.space)}</span>
+                    {SEP}
+                    <span class="adm-nowrap">{formatUSD(i.estimateTotal)}</span>
                   </span>
                 </a>
               </li>

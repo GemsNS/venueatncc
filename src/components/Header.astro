@@ -4,7 +4,8 @@
  * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the full
  * nav; compact screens hand navigation to the floating tab bar (TabBar.astro). The breakpoints are
  * in rem so that larger text switches to the compact layout sooner instead of overflowing.
- * The brand is the full lockup, or the monogram alone where the links need the room (46.5rem to 64rem).
+ * The brand is always the full lockup (brand.md): 36px tall, or 32px (the minimum) where the links need
+ * the room (46.5rem to 64rem), where the demo pill also steps aside.
  */
 import Logo from './Logo.astro';
 import { site } from '../data/site';
@@ -21,7 +22,7 @@ const showCta = !current(bookHref);
   <div class="nav__inner container">
     <a class="nav__brand" href={href('/')} aria-label={`${site.name}, home`}>
       <Logo variant="lockup" height={36} decorative class="nav__lockup" />
-      <Logo variant="mark" height={36} decorative class="nav__monogram" />
+      <Logo variant="lockup" height={32} decorative class="nav__lockup-sm" />
       {isDemo && <span class="badge badge--accent nav__demo">Demo</span>}
     </a>
     <nav class="nav__links" aria-label="Main">
@@ -98,8 +99,8 @@ const showCta = !current(bookHref);
     text-decoration: none;
   }
 
-  /* The monogram stands in for the lockup only where the links need the room (below). */
-  .nav__brand :global(.nav__monogram) {
+  /* The smaller lockup stands in only where the links need the room (below). */
+  .nav__brand :global(.nav__lockup-sm) {
     display: none;
   }
 
@@ -152,24 +153,29 @@ const showCta = !current(bookHref);
   }
 
   /*
-    Regular but narrow (744px to 1023px at default text size): the monogram stands in for the lockup, so
-    the five links and the call to action fit. The brand link keeps its accessible name.
+    Regular but narrow (744px to 1023px at default text size): the lockup at its 32px minimum, tighter
+    links, and no demo pill, so the business name, the five links, and the call to action all fit.
   */
   @media (46.5rem <= width < 64rem) {
     .nav__inner {
-      gap: 1rem;
+      gap: 0.75rem;
     }
 
-    .nav__brand :global(.nav__lockup) {
+    .nav__brand :global(.nav__lockup),
+    .nav__demo {
       display: none;
     }
 
-    .nav__brand :global(.nav__monogram) {
+    .nav__brand :global(.nav__lockup-sm) {
       display: block;
     }
 
+    .nav__links ul {
+      gap: 0;
+    }
+
     .nav__links a {
-      padding: 0 0.6rem;
+      padding: 0 0.5rem;
     }
   }
 

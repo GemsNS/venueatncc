@@ -595,6 +595,24 @@
   white-space: nowrap;
 }
 
+/* The refundable deposit: its own quiet box under the payment rows, outlined rather than filled. */
+.bk-est__pay--aside {
+  margin-top: 8px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+
+.bk-est__pay--aside dd {
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.bk-est__sub {
+  display: block;
+  font-size: var(--t-footnote);
+  color: var(--label-3);
+}
+
 .bk-est__notes {
   display: grid;
   gap: 4px;
@@ -769,11 +787,12 @@ body:not(:has(.tabbar)) .bk-actions {
   }
 }
 
+/* Left-aligned with the form above it, not centered between the form and the summary. */
 .bk-help {
   margin-top: 28px;
   font-size: var(--t-footnote);
   color: var(--label-2);
-  text-align: center;
+  text-align: start;
 }
 
 /* ---------- Progress and step heading ---------- */
@@ -1084,7 +1103,11 @@ button.bk-progress__item:hover {
   background: transparent;
   color: var(--label);
   font: inherit;
-  font-size: var(--t-callout);
+  /*
+    Capped by the screen width as well, so with very large text on a phone two-digit dates still fit
+    their 44px circle instead of running into the next day. Never smaller at the default text size.
+  */
+  font-size: min(var(--t-callout), max(15px, 5.2vw));
   font-variant-numeric: tabular-nums;
   line-height: 1;
   cursor: pointer;
@@ -1932,6 +1955,17 @@ html:not(.js) .bk-skel {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* The three open Saturdays share one row (one per row with very large text), never two and a straggler. */
+.bk-dc__sats .bk-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr));
+}
+
+.bk-dc__sats .bk-chip {
+  justify-content: center;
+  padding-inline: 8px;
 }
 
 .bk-chip {

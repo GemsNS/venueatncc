@@ -1141,6 +1141,10 @@ body.is-bare {
   display: inline-flex;
 }
 
+.adm-statusbar__saved[hidden] {
+  display: none;
+}
+
 .adm-statusbar__note {
   display: flex;
   align-items: flex-start;
@@ -1255,8 +1259,9 @@ body.is-bare {
   }
 }
 
+/* The label always keeps at least 40% of the row, so a long line-item label wraps instead of sliding under the amount. */
 .adm-money .adm-kv {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(40%, 1fr) auto;
 }
 
 .adm-kv__label {
@@ -1390,11 +1395,13 @@ body.is-bare {
 
 /* ---------- Calendar ---------- */
 
+/* The month and its buttons share a row while they fit; otherwise the buttons take their own row. */
 .adm-calbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 12px;
   margin-bottom: 8px;
 }
 
@@ -1402,6 +1409,7 @@ body.is-bare {
   font-size: var(--t-title-2);
   line-height: 1.2;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .adm-calbar__nav {
@@ -2113,3 +2121,8 @@ body.is-bare {
 }
 
 
+
+/* Meta segments (a date, a guest count) never break inside. */
+.adm-nowrap {
+  white-space: nowrap;
+}

@@ -2,6 +2,7 @@
 /**
  * Event types as photo tiles. Each tile shows the event's photo from the event photo map
  * (eventPhoto in src/data/photos.ts), its name and one line, and links to its landing page.
+ * A styled concept carries its "Styled Concept" badge; the caption is left to the event page itself.
  */
 import Photo from './Photo.astro';
 import { events } from '../data/events';
@@ -13,8 +14,11 @@ interface Props {
   exclude?: string[];
   only?: string[];
   headingLevel?: 'h2' | 'h3';
-  /** 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px. */
-  layout?: 'grid' | 'shelf';
+  /**
+   * 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px;
+   * 'trio' is three tiles in one row from 48rem and one column below.
+   */
+  layout?: 'grid' | 'shelf' | 'trio';
 }
 const { exclude = [], only, headingLevel = 'h3', layout = 'grid' } = Astro.props;
 const list = only
@@ -26,7 +30,11 @@ const prefix = uid('event');
 const sizes =
   layout === 'shelf'
     ? '(min-width: 75rem) 290px, (min-width: 900px) 24vw, min(78vw, 300px)'
-    : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
+    : layout === 'trio'
+      ? '(min-width: 75rem) 390px, (min-width: 48rem) 31vw, 92vw'
+      : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
+// "&" stays with the word after it, so a title never ends a line on it.
+const keepAmp = (name: string) => name.replace(/ & /g, ' &\u00A0');
 ---
 {
   list.length > 0 && (
@@ -37,10 +45,10 @@ const sizes =
         return (
           <li class="events__item">
             <a class="event-card card" href={href(`/events/${e.slug}/`)} aria-labelledby={nameId} aria-describedby={`${nameId}-summary`}>
-              {photo && <Photo photo={photo} rounded={false} sizes={sizes} class="event-card__photo" />}
+              {photo && <Photo photo={photo} rounded={false} sizes={sizes} caption={false} class="event-card__photo" />}
               <div class="event-card__body">
                 <Heading id={nameId} class="event-card__name t-title-3">
-                  {e.name}
+                  {keepAmp(e.name)}
                 </Heading>
                 <p id={`${nameId}-summary`} class="event-card__summary secondary">
                   {e.summary}
@@ -76,6 +84,18 @@ const sizes =
     display: grid;
     gap: 1.25rem;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  }
+
+  .events--trio {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 48rem) {
+    .events--trio {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   .events--shelf {
@@ -150,6 +170,10 @@ const sizes =
     align-content: start;
     gap: 0.4rem;
     padding: 1.1rem 1.25rem 1.1rem;
+  }
+
+  .event-card__name {
+    text-wrap: balance;
   }
 
   .event-card__summary {

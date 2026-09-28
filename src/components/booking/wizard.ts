@@ -6,16 +6,17 @@ import { eventTypes } from '../../data/event-types';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { formatShort } from '../../shared/dates';
+import { dayTypeOf, pricing } from '../../shared/pricing';
 import { fieldErrors, inquiryInputSchema } from '../../shared/schemas';
 import type { AvailabilityDay, ContactPreference, DateKey, InquiryInput, SpaceChoice } from '../../shared/types';
 import { HOURS_MAX, HOURS_MIN, TOO_LATE_MESSAGE, latestBookableDate, parseDate, parseIntIn, parseSpace, spaceLabel } from './lib';
 
 export type Step = 1 | 2 | 3 | 4;
 
-/** title: the step heading (sentence case). nav: the clickable progress label (Title Case). */
+/** title: the step heading. nav: the clickable progress label, in the same sentence case. */
 export const STEPS: { n: Step; title: string; nav: string }[] = [
-  { n: 1, title: 'Date and space', nav: 'Date and Space' },
-  { n: 2, title: 'Your event', nav: 'Your Event' },
+  { n: 1, title: 'Date and space', nav: 'Date and space' },
+  { n: 2, title: 'Your event', nav: 'Your event' },
   { n: 3, title: 'Contact', nav: 'Contact' },
   { n: 4, title: 'Review', nav: 'Review' },
 ];
@@ -91,6 +92,20 @@ export function restoreDraft(saved: unknown): Draft | null {
 }
 
 /** Prefill from ?date=&space=&guests=&event=&hours=&visit=1 (links from the home page, pricing, and the space page). */
+/** The fewest hours that can be booked on a date: the day's minimum from the rate card, or HOURS_MIN with no date. */
+export function minHoursFor(date: DateKey | ''): number {
+  return date ? Math.max(HOURS_MIN, pricing.minimumHours[dayTypeOf(date)]) : HOURS_MIN;
+}
+
+/**
+ * Raises the hours to the chosen day's minimum (a Saturday bills at least 5), so the stepper, the time
+ * range, and the estimate always show the same length.
+ */
+export function withMinimumHours(d: Draft): Draft {
+  const min = minHoursFor(d.date);
+  return d.hours < min ? { ...d, hours: min } : d;
+}
+
 export function applySearch(draft: Draft, params: URLSearchParams, today: DateKey): Draft {
   const next = { ...draft };
   const date = parseDate(params.get('date'));

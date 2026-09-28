@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import { capacityError } from '../../shared/capacity';
 import { formatLong, formatShort, todayKey } from '../../shared/dates';
+import { formatPhone } from '../../shared/phone';
+import { pricing } from '../../shared/pricing';
 import type { IconName } from '../../shared/icons';
 import { INQUIRY_STATUSES, type CalendarBlock, type InquiryDetail, type InquiryEvent, type InquiryStatus } from '../../shared/types';
 import { Icon } from '../islands/Icon';
@@ -308,7 +310,8 @@ export function InquiryView({ id }: { id: number }) {
           >
             {statusBusy ? `Updating${ELLIPSIS}` : 'Update Status'}
           </button>
-          <span id="adm-status-saved" class="adm-statusbar__saved">
+          {/* The saved status shows only while the select holds an unsaved change; otherwise it would repeat the select. */}
+          <span id="adm-status-saved" class="adm-statusbar__saved" hidden={unchanged}>
             <span class="visually-hidden">Saved status: </span>
             <StatusBadge status={d.status} />
           </span>
@@ -390,7 +393,7 @@ export function InquiryView({ id }: { id: number }) {
                 </Row>
               ) : (
                 <Row label="Balance">
-                  <span>None, paid in full to reserve (event within 30 days)</span>
+                  <span>Paid in full</span>
                 </Row>
               )}
               <Row label="Refundable damage deposit">
@@ -400,6 +403,9 @@ export function InquiryView({ id }: { id: number }) {
             <p class="adm-footnote">
               {est.dayTypeLabel} rates, {plural(est.billableHours, 'billable hour')}.{' '}
               {est.billableHours > est.hours ? `${plural(est.hours, 'hour')} requested. ` : ''}
+              {est.total > 0 && est.bookingDeposit >= est.total
+                ? `Requested within ${pricing.bookingDeposit.balanceDueDaysBefore} days of the event, so the full amount is due to reserve. `
+                : ''}
               Estimate saved when the request came in.
             </p>
           </Section>
@@ -465,7 +471,7 @@ export function InquiryView({ id }: { id: number }) {
               <Row label="Email">
                 <span class="adm-break">{d.email}</span>
               </Row>
-              <Row label="Phone">{d.phone ? d.phone : <span class="adm-muted">Not given</span>}</Row>
+              <Row label="Phone">{d.phone ? formatPhone(d.phone) : <span class="adm-muted">Not given</span>}</Row>
               <Row label="Prefers">{PREF_LABEL[d.contactPreference] ?? d.contactPreference}</Row>
             </dl>
             <ContactActions d={d} />

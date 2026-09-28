@@ -217,8 +217,9 @@ export function Calendar(props: CalendarProps) {
                 const isToday = k === today;
                 const disabled = st === 'past' || st === 'booked' || st === 'later';
                 const label = [formatLong(k), st ? STATUS_WORD[st] : '', isSel ? 'selected' : ''].filter(Boolean).join(', ');
+                // The cell (a gridcell under role="grid") carries the selected state; the label says it too.
                 return (
-                  <td key={k}>
+                  <td key={k} aria-selected={isSel ? 'true' : 'false'}>
                     <button
                       type="button"
                       class={`bk-day${isSel ? ' is-selected' : ''}${isToday ? ' is-today' : ''}`}

@@ -1,7 +1,7 @@
 /** Labels and formatting for the admin app. Prices always come from src/shared/pricing.ts. */
 import { INQUIRY_STATUSES, SPACE_NAMES, type BlockKind, type InquiryStatus, type SpaceChoice } from '../../shared/types';
 import { formatUSD } from '../../shared/pricing';
-import { VENUE_TZ, addHours, formatTime } from '../../shared/dates';
+import { VENUE_TZ, formatEndTime, formatTime } from '../../shared/dates';
 
 export { formatUSD };
 export { eventTypeName } from '../../data/event-types';
@@ -38,6 +38,8 @@ export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Hall', outdoo
 export const KIND_LABEL: Record<BlockKind, string> = { booked: 'Booked', held: 'Held', closed: 'Closed' };
 
 export const DOT = String.fromCharCode(183);
+/** Between meta segments: the dot stays at the end of a line, never at the start of the next. */
+export const SEP = `${String.fromCharCode(160)}${DOT} `;
 export const ELLIPSIS = String.fromCharCode(8230);
 export const LDQUO = String.fromCharCode(8220);
 export const RDQUO = String.fromCharCode(8221);
@@ -50,7 +52,7 @@ const NBSP = String.fromCharCode(160);
 
 /** "6:00 PM to 11:00 PM (5 hours)". The hour count never wraps apart from its unit. */
 export function timeRange(startTime: string, hours: number): string {
-  return `${formatTime(startTime)} to ${formatTime(addHours(startTime, hours))} (${plural(hours, 'hour').replace(' ', NBSP)})`;
+  return `${formatTime(startTime)} to ${formatEndTime(startTime, hours)} (${plural(hours, 'hour').replace(' ', NBSP)})`;
 }
 
 const stampFmt = new Intl.DateTimeFormat('en-US', {

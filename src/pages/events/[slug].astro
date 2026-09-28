@@ -1,21 +1,22 @@
 ---
 /**
  * An event landing page: a rectangular photo hero from the event photo map, the planning guide with
- * its checklist, the two spaces as photo cards, how booking works, FAQs, and related events.
- * Copy lives in src/data/events.ts. Only real photos, only through Photo (docs/design/brand.md).
+ * its checklist, the two spaces as photo cards, how booking works, FAQs, and three related events.
+ * Copy lives in src/data/events.ts. Photos only through Photo (docs/design/brand.md): the hero may be a
+ * styled concept, which Photo shows with its badge and caption. No image appears twice on a page.
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FaqList from '../../components/FaqList.astro';
-import FactStrip from '../../components/FactStrip.astro';
+
 import CtaBand from '../../components/CtaBand.astro';
 import Icon from '../../components/Icon.astro';
 import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
 import { site, type SpaceId } from '../../data/site';
-import { eventPhoto, photosFor, type PhotoSpace, type VenuePhoto } from '../../data/photos';
+import { eventPhoto, photosFor, realPhoto, type PhotoSpace, type VenuePhoto } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
@@ -34,7 +35,7 @@ const crumbs = [
   { name: 'Events', path: '/events/' },
   { name: event.name, path },
 ];
-const related = event.related.filter((slug) => slug !== event.slug && events.some((e) => e.slug === slug));
+
 const { fromHourly } = priceSummary();
 const eventParam = `event=${encodeURIComponent(event.slug)}`;
 const bookLink = `${href(bookHref)}?${eventParam}`;
@@ -46,17 +47,32 @@ const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
 // The two spaces as photo cards. The space the hero shows leads, and each card uses a different
-// photo of its space than the hero, so no image repeats on the page.
+// photo of its space than the hero (and than the real photo behind a styled hero), so no image repeats.
 const areaOf: Record<Exclude<SpaceId, 'both'>, PhotoSpace> = { indoor: 'hall', outdoor: 'grove' };
+const heroNames = new Set([photo?.name, realPhoto(photo)?.name].filter(Boolean));
 function cardPhoto(area: PhotoSpace): VenuePhoto | null {
   const list = photosFor(area);
-  return list.find((p) => p.name !== photo?.name) ?? list[0] ?? null;
+  return list.find((p) => !heroNames.has(p.name)) ?? list[0] ?? null;
 }
 const leadSpace: SpaceId = photo?.space === 'grove' ? 'outdoor' : 'indoor';
 const spaceCards = site.spaces
   .filter((s): s is typeof s & { id: 'indoor' | 'outdoor' } => s.id === 'indoor' || s.id === 'outdoor')
   .map((space) => ({ space, photo: cardPhoto(areaOf[space.id]) }))
   .sort((a, b) => Number(b.space.id === leadSpace) - Number(a.space.id === leadSpace));
+
+// Three related events whose tiles show none of the photos already on the page: the event's own
+// related list first, then the other events in list order.
+const RELATED_COUNT = 3;
+const usedPhotos = new Set([photo?.name, ...spaceCards.map((c) => c.photo?.name)].filter(Boolean));
+const related: string[] = [];
+for (const slug of [...event.related, ...events.map((e) => e.slug)]) {
+  if (related.length === RELATED_COUNT) break;
+  if (slug === event.slug || related.includes(slug) || !events.some((e) => e.slug === slug)) continue;
+  const tile = eventPhoto(slug)?.name;
+  if (tile && usedPhotos.has(tile)) continue;
+  if (tile) usedPhotos.add(tile);
+  related.push(slug);
+}
 
 const schema = [
   breadcrumbs(crumbs),
@@ -79,7 +95,6 @@ const schema = [
         </div>
         {photo && <Photo photo={photo} ratio="3 / 2" priority class="ev-hero__photo" sizes="(min-width: 75rem) 680px, (min-width: 64rem) 56vw, calc(100vw - 2rem)" />}
       </div>
-      <FactStrip class="ev-hero__facts" />
     </div>
   </section>
 
@@ -149,7 +164,7 @@ const schema = [
     <div class="container">
       <div class="section-head">
         <h2 id="steps-heading">How booking works</h2>
-        <p class="t-lead">Rates from {formatUSD(fromHourly)} an hour, with an instant estimate for your date. We confirm every booking personally.</p>
+        <p class="t-lead">Rates from {formatUSD(fromHourly)} an hour, with an instant estimate for your date.</p>
       </div>
       <ol class="ev-steps">
         {
@@ -162,10 +177,6 @@ const schema = [
           ))
         }
       </ol>
-      <div class="btn-row ev-steps__actions">
-        <a class="btn btn--tinted" href={href(pricingHref)}>See Pricing</a>
-        <a class="btn btn--tinted" href={visitLink}>Request a Visit</a>
-      </div>
     </div>
   </section>
 
@@ -190,13 +201,13 @@ const schema = [
           <div class="section-head">
             <h2 id="related-heading">Other events we host</h2>
           </div>
-          <EventIndex only={related} />
+          <EventIndex only={related} layout="trio" />
         </div>
       </section>
     )
   }
 
-  <CtaBand />
+  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." />
 </BaseLayout>
 
 <style>
@@ -231,9 +242,6 @@ const schema = [
     margin-top: 0.5rem;
   }
 
-  .ev-hero :global(.ev-hero__facts) {
-    margin-top: clamp(1.75rem, 1.25rem + 2vw, 3rem);
-  }
 
   /* ---------- Planning guide and checklist ---------- */
 
@@ -421,9 +429,6 @@ const schema = [
     font-variant-numeric: lining-nums;
   }
 
-  .ev-steps__actions {
-    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
-  }
 
   /* ---------- FAQ ---------- */
 

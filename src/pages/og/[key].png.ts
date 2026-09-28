@@ -91,12 +91,15 @@ export const GET: APIRoute = async ({ props }) => {
   const { card } = props as { card: ShareCard };
   const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo.file)]);
   const size = titleSize(card.title);
+  // A pale photo with strong lines (the gable's white cross) gets a deeper scrim behind the title.
+  const k = card.deepScrim ? 1.18 : 1;
+  const scrim = (alpha: number) => plum(Math.min(0.94, alpha * k));
 
   const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: `rgb(${PLUM})`, fontFamily: 'Inter', color: '#FFFFFF' }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
     // Legibility scrims only: deepest behind the text at the lower left, a light veil under the lockup.
-    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${plum(0.78)} 0%, ${plum(0.5)} 38%, ${plum(0.1)} 72%, ${plum(0)} 100%)` }),
-    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${plum(0.8)} 0%, ${plum(0.32)} 40%, ${plum(0)} 62%, ${plum(0)} 76%, ${plum(0.3)} 100%)` }),
+    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${scrim(0.78)} 0%, ${scrim(0.5)} 38%, ${scrim(0.1)} 72%, ${plum(0)} 100%)` }),
+    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${scrim(0.8)} 0%, ${scrim(0.32)} 40%, ${plum(0)} 62%, ${plum(0)} 76%, ${plum(0.3)} 100%)` }),
     h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: PAD }, [
       h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
       h('div', { display: 'flex', flexDirection: 'column', gap: 20, width: CONTENT_W }, [

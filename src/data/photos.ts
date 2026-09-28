@@ -8,13 +8,16 @@
  *   styled-<base>-<scene>.jpg   A styled concept of a real photo (virtual staging: furniture, linens,
  *                               florals and lighting added, architecture unchanged). Needs a photoDetails
  *                               entry with styledOf: '<base>.jpg'. Attached to that photo as `styled`.
- *                               Never listed on its own, never a hero, never the only image of a space.
+ *                               Never listed on its own. It may illustrate an event tile or an event
+ *                               page (always with its badge, and its caption on the event page), but it
+ *                               is never the home hero, a share image, structured data, or the only
+ *                               image of a space. realPhoto() gives the photo it was made from.
  *
  * Describe each photo in `photoDetails`: precise, factual alt text that says only what the photo shows,
  * a short caption, tags, and the space it belongs to. The build warns about files with no entry, entries
  * with no file, and files smaller than 1600px on the long edge.
  *
- * Helpers: photoByName('hall-windows'), photosFor('hall'), heroPhoto(), eventPhoto('weddings').
+ * Helpers: photoByName('hall-windows'), photosFor('hall'), heroPhoto(), eventPhoto('weddings'), realPhoto(p).
  */
 import type { ImageMetadata } from 'astro';
 
@@ -78,7 +81,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
   'hall-doors.jpg': {
     alt: 'The Hall toward its white double doors, with a large wall-mounted screen on the left, two arched windows, and recessed ceiling lights',
-    caption: 'The double doors and wall-mounted screen in The Hall',
+    caption: 'The double doors in The Hall',
     tags: ['indoor'],
     space: 'hall',
   },
@@ -114,7 +117,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
   'gable.jpg': {
     alt: 'The stucco front gable with a tall white cross between two narrow arched windows of leaded glass, under a blue sky',
-    caption: 'The front gable of New Community Church',
+    caption: 'The front gable, with its white cross',
     tags: ['about', 'church'],
     space: 'campus',
   },
@@ -141,15 +144,20 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
 };
 
-/** Which photo leads each event page. Every slug in src/data/events.ts is listed; any other slug gets hall-windows. */
+/**
+ * Which photo leads each event page and its tile. Every slug in src/data/events.ts is listed, each with a
+ * different image; any other slug gets hall-windows. Styled concepts are allowed here, with their badge
+ * (Photo.astro adds it), and their caption on the event page. Share images and structured data use the
+ * real photo instead (realPhoto).
+ */
 const EVENT_PHOTOS: Record<string, string> = {
-  weddings: 'gazebo',
-  'receptions-banquets': 'hall-fireplace',
+  weddings: 'styled-gazebo-ceremony',
+  'receptions-banquets': 'styled-hall-windows-reception',
+  'birthday-parties': 'styled-hall-fireplace-dinner',
+  'graduations-reunions': 'styled-grove-tables-reunion',
   'baby-bridal-showers': 'hall-windows',
-  'birthday-parties': 'hall-doors',
-  'repasts-memorials': 'gable',
   'meetings-trainings': 'hall-doors',
-  'graduations-reunions': 'grove-tables',
+  'repasts-memorials': 'gable',
   'church-community-events': 'grove-path',
 };
 const EVENT_PHOTO_FALLBACK = 'hall-windows';
@@ -272,7 +280,16 @@ export function heroPhoto(): VenuePhoto | null {
   return photosTagged('hero')[0] ?? photos[0] ?? null;
 }
 
-/** The photo that leads an event page, from the event photo map; hall-windows when the slug is not mapped. */
+/**
+ * The photo that leads an event page and its tile, from the event photo map; hall-windows when the slug is
+ * not mapped. It may be a styled concept: use realPhoto() wherever only a real photograph is allowed.
+ */
 export function eventPhoto(slug: string): VenuePhoto | null {
   return photoByName(EVENT_PHOTOS[slug] ?? EVENT_PHOTO_FALLBACK) ?? photoByName(EVENT_PHOTO_FALLBACK);
+}
+
+/** The real photograph behind a photo: the photo itself, or for a styled concept the photo it was made from. */
+export function realPhoto(photo: VenuePhoto | null): VenuePhoto | null {
+  if (!photo || !photo.styledOf) return photo;
+  return photos.find((p) => p.file === photo.styledOf) ?? null;
 }

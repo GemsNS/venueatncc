@@ -5,7 +5,8 @@
  *
  * The file is served as responsive AVIF and WebP at widths up to the source width and cropped with CSS
  * (object-fit: cover) to the frame's ratio. With `tall`, phones below 46.5rem get the 4:5 portrait file
- * instead, in a 4:5 frame. A styled concept always carries its "Styled Concept" badge and caption.
+ * instead, in a 4:5 frame. A styled concept always carries its "Styled Concept" badge, and its caption
+ * unless the page passes caption={false} (event tiles, where the badge alone is shown; brand.md).
  */
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -24,10 +25,12 @@ interface Props {
   /** Rounded corners (var(--r-lg)). false for full bleed. */
   rounded?: boolean;
   class?: string;
-  /** A caption under the photo. true uses the photo's own caption. */
+  /** A caption under the photo. true uses the photo's own caption; false shows none, even for a styled concept. */
   caption?: string | boolean;
   /** A short label on a small glass pill in the top-left corner, e.g. "Styled Concept". */
   badge?: string;
+  /** CSS object-position for this frame, e.g. '85% 50%'. Overrides the photo's own crop. */
+  crop?: string;
 }
 
 const {
@@ -40,10 +43,11 @@ const {
   class: className,
   caption,
   badge,
+  crop = photo.crop,
 } = Astro.props;
 
 const isStyled = photo.styledOf !== undefined;
-const captionText = isStyled ? photo.caption : caption === true ? photo.caption : caption || undefined;
+const captionText = caption === false ? undefined : isStyled || caption === true ? photo.caption : caption || undefined;
 const badgeText = badge ?? (isStyled ? 'Styled Concept' : undefined);
 const fill = ratio === 'fill';
 const useTall = tall && photo.tall !== undefined;
@@ -70,7 +74,7 @@ const main = await sources(photo.src);
 const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
 // The portrait file fills the frame on phones, so it is as wide as the screen there.
 const tallSizes = '100vw';
-const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, photo.crop ? `--photo-pos: ${photo.crop}` : ''].filter(Boolean).join('; ');
+const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: ${crop}` : ''].filter(Boolean).join('; ');
 ---
 <figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
   <div class="photo__frame">

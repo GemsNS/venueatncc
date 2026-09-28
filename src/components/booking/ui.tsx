@@ -441,13 +441,19 @@ export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boo
             )}
           </>
         )}
-        {est.refundableDeposit > 0 && (
+      </dl>
+      {/* Set apart from the payment rows: it is returned, and it is not part of the total. */}
+      {est.refundableDeposit > 0 && (
+        <dl class="bk-est__pay bk-est__pay--aside">
           <div class="bk-est__payrow">
-            <dt>Refundable damage deposit</dt>
+            <dt>
+              Refundable damage deposit
+              <span class="bk-est__sub">Refundable, not part of the total</span>
+            </dt>
             <dd class="num">{formatUSD(est.refundableDeposit)}</dd>
           </div>
-        )}
-      </dl>
+        </dl>
+      )}
       {props.notes !== false && (
         <ul class="bk-est__notes">
           {est.notes.map((n) => (

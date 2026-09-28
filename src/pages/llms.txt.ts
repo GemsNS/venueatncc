@@ -65,7 +65,9 @@ export const GET: APIRoute = () => {
     ...(pricing.fees.damageDepositRefundable > 0
       ? [`- Refundable damage deposit: ${formatUSD(pricing.fees.damageDepositRefundable)}, returned after the event if there is no damage`]
       : []),
-    ...(offer ? [`- ${offer.label}. Discounts do not combine; the estimate uses the best one that applies.`] : []),
+    ...(offer
+      ? [`- ${offer.name}: ${offer.percent}% off the rental ${offer.terms}. Discounts do not combine; the estimate uses the best one that applies.`]
+      : []),
     '',
     ...(pricing.packages.length > 0
       ? ['## Packages', '', ...pricing.packages.map((p) => `- ${p.name}: ${formatUSD(p.price)} for ${p.hours} hours`), '']

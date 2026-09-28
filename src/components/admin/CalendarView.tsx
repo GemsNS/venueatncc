@@ -5,7 +5,7 @@ import { SPACE_NAMES, type BlockKind, type CalendarBlock, type DateKey, type Spa
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
 import { Sheet } from './Dialog';
-import { DOT, ELLIPSIS, KIND_LABEL, SPACE_SHORT, formatMonth, plural, spaceLabel } from './format';
+import { DOT, ELLIPSIS, KIND_LABEL, SEP, SPACE_SHORT, formatMonth, plural, spaceLabel } from './format';
 import { calendarHash } from './route';
 import { ErrorBanner, PageHeader, SegmentedRadio } from './ui';
 
@@ -481,7 +481,9 @@ export function CalendarView({ month: routeMonth, day: routeDay }: { month: stri
                   <span class="list-row__main">
                     <span class="adm-row__title">{b.label || KIND_LABEL[b.kind]}</span>
                     <span class="adm-row__meta">
-                      {formatShort(b.date)} {DOT} {spaceLabel(b.space)}
+                      <span class="adm-nowrap">{formatShort(b.date)}</span>
+                      {SEP}
+                      <span class="adm-nowrap">{spaceLabel(b.space)}</span>
                     </span>
                   </span>
                   <Chip block={b} />

@@ -69,7 +69,7 @@ export const faqs: Faq[] = [
   },
   {
     topic: 'space',
-    q: 'What about tables, chairs, and room setup?',
+    q: 'Can you help with tables, chairs, and room setup?',
     a: 'Please ask when you request a date. Share your guest count and the layout you have in mind, and we will review the setup with you before you reserve.',
   },
   {

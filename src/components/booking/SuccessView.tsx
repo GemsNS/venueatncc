@@ -6,7 +6,7 @@ import { eventTypeName } from '../../data/event-types';
 import { site } from '../../data/site';
 import { isDemo } from '../../lib/env';
 import { href } from '../../lib/paths';
-import { formatUSD } from '../../shared/pricing';
+import { formatUSD, pricing } from '../../shared/pricing';
 import type { InquiryCreated } from '../../shared/types';
 import { formatLongKept, guestsLabel, spaceLabel, telHref } from './lib';
 import { EstimateView, payment } from './ui';
@@ -93,7 +93,7 @@ export function SuccessView(props: {
             ))}
           </dl>
           <details class="bk-details">
-            <summary>See the Estimate</summary>
+            <summary>See Estimate</summary>
             <EstimateView est={created.estimate} />
           </details>
         </section>
@@ -116,7 +116,7 @@ export function SuccessView(props: {
                 2
               </span>
               <span>
-                <strong>We reach out.</strong> We contact you {REACH[d.contactPreference]} to confirm the details and your quote.
+                <strong>We follow up.</strong> We contact you {REACH[d.contactPreference]} to confirm the details and your quote.
               </span>
             </li>
             <li>
@@ -126,7 +126,7 @@ export function SuccessView(props: {
               <span>
                 <strong>Your booking deposit reserves the date.</strong>{' '}
                 {pay.full
-                  ? `Your event is soon, so the deposit is the full ${formatUSD(pay.reserve)}.`
+                  ? `Your event is within ${pricing.bookingDeposit.balanceDueDaysBefore} days, so the full ${formatUSD(pay.reserve)} reserves the date.`
                   : `For this estimate, that is ${formatUSD(pay.reserve)}.`}
               </span>
             </li>
@@ -143,7 +143,7 @@ export function SuccessView(props: {
           Done
         </a>
         <button type="button" class="btn btn--gray btn--lg" onClick={props.onPlanAnother}>
-          Plan Another
+          Plan Another Event
         </button>
       </div>
     </div>

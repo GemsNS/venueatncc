@@ -1,12 +1,12 @@
 ---
 /**
- * Site footer on Deep Plum: the white lockup, contact details, navigation, the address, and the
- * church that operates the venue.
+ * Site footer on Deep Plum: the white lockup, the address and contact details, navigation, and the
+ * church that operates the venue. The address appears once, in "Visit and contact".
  */
 import { Image } from 'astro:assets';
 import Logo from './Logo.astro';
 import nccSeal from '../assets/brand/ncc-mark.png';
-import { site, fullAddress } from '../data/site';
+import { site } from '../data/site';
 import { events } from '../data/events';
 import { mainNav, bookHref } from '../data/nav';
 import { href } from '../lib/paths';
@@ -46,7 +46,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
         <h2 id="f-explore" class="footer__head">Explore</h2>
         <ul>
           {mainNav.map((item) => <li><a href={href(item.href)}>{item.label}</a></li>)}
-          <li><a href={href(bookHref)}>Check availability</a></li>
+          <li><a href={href(bookHref)}>Check Availability</a></li>
         </ul>
       </nav>
 
@@ -73,7 +73,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
           </span>
           <span>Operated by {site.parent.name}</span>
         </a>
-        <p>Part of {site.address.city} since {site.parent.foundingYear}.</p>
+        <p>Founded in {site.parent.foundingYear}.</p>
         {
           site.social.length > 0 && (
             <ul>
@@ -94,7 +94,6 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
           </p>
         )
       }
-      <p class="footer__addr">{fullAddress}</p>
     </div>
   </div>
 </footer>
@@ -124,6 +123,13 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
   :global(main:has(> .cta:last-child)) + .footer .footer__top {
     padding-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
     border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  /* Dark mode, on pages without the closing band: a faint lilac hairline sets the footer off from the page. */
+  @media (prefers-color-scheme: dark) {
+    :global(main:not(:has(> .cta:last-child))) + .footer {
+      border-top: 1px solid rgb(205 179 238 / 0.14);
+    }
   }
 
   .footer__top {
@@ -169,7 +175,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
 
   @media (min-width: 64rem) {
     .footer__grid {
-      grid-template-columns: 1.2fr 0.8fr 1.1fr 1.2fr;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
@@ -196,6 +202,20 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
   .footer address a {
     display: inline-block;
     padding-block: 5px;
+  }
+
+  /* Touch screens: every link is a full 44px target (HIG). */
+  @media (pointer: coarse) {
+    .footer li a,
+    .footer address a {
+      min-height: 44px;
+      padding-block: calc((44px - 1.5em) / 2);
+    }
+
+    .footer ul,
+    .footer address {
+      margin-top: min(0px, calc((1.5em - 44px) / 2));
+    }
   }
 
   .footer a {
@@ -278,15 +298,6 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
     margin-top: 0;
   }
 
-  .footer__addr {
-    margin-left: auto;
-  }
-
-  @media (max-width: 699.98px) {
-    .footer__addr {
-      margin-left: 0;
-    }
-  }
 
   /* Forced colors: the band becomes the system background, and the white lockup follows the text color. */
   @media (forced-colors: active) {

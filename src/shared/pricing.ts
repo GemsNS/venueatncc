@@ -25,7 +25,12 @@ export interface PricingPackage {
 
 export interface PricingDiscount {
   id: string;
+  /** The line in an estimate and on the rates page. */
   label: string;
+  /** Who qualifies, as the subject of a sentence, e.g. "Nonprofits and churches". Defaults to the label. */
+  who?: string;
+  /** When it applies, e.g. "Sunday to Thursday", for "... for events Sunday to Thursday". */
+  when?: string;
   percent: number;
   /** 'eventType:<slug>' and 'dayType:<type>' apply automatically; 'manual' is shown on the rates page only. */
   appliesTo: string;
@@ -42,8 +47,20 @@ export interface PricingModel {
   fees: { cleaning: number; damageDepositRefundable: number };
   bookingDeposit: { type: 'percent' | 'flat'; value: number; balanceDueDaysBefore: number };
   discounts: PricingDiscount[];
-  introOffer: { label: string; percent: number; validUntil: DateKey } | null;
+  introOffer: IntroOffer | null;
 }
+
+export interface IntroOffer {
+  /** Its name, e.g. "Founding rate". The estimate line reads "<name>, <percent>% off the rental". */
+  name: string;
+  /** The condition, completing "20% off the rental ...", e.g. "when you book by March 31, 2027". */
+  terms: string;
+  percent: number;
+  validUntil: DateKey;
+}
+
+/** The estimate line for an introductory offer: "Founding rate, 20% off the rental". */
+export const introOfferLabel = (o: IntroOffer) => `${o.name}, ${o.percent}% off the rental`;
 
 /**
  * Recommended from the September 2026 comparables analysis (47 distinct Hampton Roads venues plus
@@ -55,14 +72,14 @@ export interface PricingModel {
 export const pricing: PricingModel = {
   status: 'recommended',
   currency: 'USD',
-  // Internal labels for the admin, CSV exports, and team emails. Public copy uses SPACE_NAME from
-  // ./capacity: The Hall, The Grove, and The Hall and The Grove.
+  // The public names, the same as SPACE_NAME in ./capacity and SPACE_NAMES in ./types, which the
+  // booking app, the admin, the emails, and the CSV export use.
   spaces: {
-    indoor: { label: 'Indoor hall', capacity: 100 },
-    outdoor: { label: 'Outdoor space', capacity: 150 },
+    indoor: { label: SPACE_NAME.indoor, capacity: 100 },
+    outdoor: { label: SPACE_NAME.outdoor, capacity: 150 },
     // 150 for 'both' is an internal validation ceiling (the larger space), NOT a published combined
     // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
-    both: { label: 'Indoor and outdoor', capacity: 150 },
+    both: { label: SPACE_NAME.both, capacity: 150 },
   },
   dayTypes: {
     weekday: { label: 'Monday to Thursday', days: [1, 2, 3, 4] },
@@ -97,25 +114,19 @@ export const pricing: PricingModel = {
   discounts: [
     { id: 'repast', label: 'Repast and celebration of life rate', percent: 25, appliesTo: 'eventType:repasts-memorials' },
     { id: 'weekday-daytime', label: 'Weekday daytime, Monday to Thursday, ending by 4 PM', percent: 20, appliesTo: 'manual' },
-    { id: 'nonprofit', label: 'Nonprofits and churches, Sunday to Thursday', percent: 15, appliesTo: 'manual' },
+    {
+      id: 'nonprofit',
+      label: 'Nonprofits and churches, Sunday to Thursday',
+      who: 'Nonprofits and churches',
+      when: 'Sunday to Thursday',
+      percent: 15,
+      appliesTo: 'manual',
+    },
     { id: 'military', label: 'Military, veterans, and first responders', percent: 10, appliesTo: 'manual' },
   ],
-  introOffer: { label: 'Founding rate: 20% off the rental when you book by March 31, 2027', percent: 20, validUntil: '2027-03-31' },
+  introOffer: { name: 'Founding rate', terms: 'when you book by March 31, 2027', percent: 20, validUntil: '2027-03-31' },
 };
 
-/**
- * Market context from the comparables analysis, shown on the pricing page.
- * venueCount: 59 research entries, less 5 market benchmarks and 7 duplicate listings.
- * The Saturday band is private venue-only halls for 75 to 100 guests, hall rental only, before fees and tax.
- */
-export const marketContext = {
-  researched: 'September 2026',
-  venueCount: 47,
-  saturdaySixHourLow: 870,
-  saturdaySixHourHigh: 1350,
-  saturdayHourlyLow: 145,
-  saturdayHourlyHigh: 225,
-};
 
 export function dayTypeOf(date: DateKey, model: PricingModel = pricing): DayType {
   const dow = dayOfWeek(date);
@@ -143,7 +154,11 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
   const billableHours = Math.max(hours, minHours);
 
   let rental = rate * billableHours;
-  let rentalLabel = `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate}/hour`;
+  // Below the day's minimum, the line says why it bills more hours than were asked for.
+  let rentalLabel =
+    billableHours > hours
+      ? `${SPACE_NAME[input.space]}, ${model.dayTypes[dayType].label} minimum of ${billableHours} hours at $${rate} an hour`
+      : `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate} an hour`;
   let packageName: string | undefined;
 
   for (const p of model.packages) {
@@ -154,7 +169,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
     if (price < rental) {
       rental = price;
       packageName = p.name;
-      rentalLabel = extra > 0 ? `${p.name}, ${p.hours} hours, plus ${extra} extra hours at $${rate}/hour` : `${p.name}, ${p.hours} hours`;
+      rentalLabel = extra > 0 ? `${p.name}, ${p.hours} hours, plus ${extra} extra ${extra === 1 ? 'hour' : 'hours'} at $${rate} an hour` : `${p.name}, ${p.hours} hours`;
     }
   }
 
@@ -174,7 +189,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
     if (applies && d.percent > 0) applicable.push({ label: d.label, percent: d.percent });
   }
   if (model.introOffer && model.introOffer.percent > 0 && today <= model.introOffer.validUntil) {
-    applicable.push({ label: model.introOffer.label, percent: model.introOffer.percent });
+    applicable.push({ label: introOfferLabel(model.introOffer), percent: model.introOffer.percent });
   }
   const best = applicable.sort((a, b) => b.percent - a.percent)[0];
   if (best) {

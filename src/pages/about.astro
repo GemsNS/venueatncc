@@ -40,16 +40,16 @@ const principles = [
   },
   {
     title: 'What a rental includes',
-    body: 'The space you book and on-site parking, at one address in north Suffolk.',
+    body: 'The space you book and on-site parking.',
   },
   {
     title: 'Published rates',
     body: 'Every rate is on our pricing page, and the booking form gives an instant estimate for your date.',
-    link: { label: 'See pricing', href: href(pricingHref) },
+    link: { label: 'See Pricing', href: href(pricingHref) },
   },
   {
     title: 'Confirmed personally',
-    body: `${site.contact.contactName} and our team review each request and confirm availability with you. A booking deposit then reserves your date.`,
+    body: 'Our team reviews each request personally. We confirm availability with you, then your booking deposit reserves the date.',
   },
 ];
 ---
@@ -58,7 +58,7 @@ const principles = [
     <div class="container">
       <Breadcrumbs items={crumbs} />
       <div class="ab-hero__head">
-        <h1 id="about-title" class="t-large-title">A venue of {site.parent.name}.</h1>
+        <h1 id="about-title" class="t-large-title">A venue of {site.parent.name}</h1>
         <p class="t-lead ab-hero__lead">
           An event venue in Suffolk, Virginia, with {hall.name} for up to {hall.capacity} guests and {grove.name} for up to
           {' '}{grove.capacity}. We host weddings, receptions, showers, reunions, meetings, and memorials, and we confirm every
@@ -76,7 +76,7 @@ const principles = [
         <div class="ab-church__head">
           <h2 id="church-heading">{site.parent.name}</h2>
           <p class="t-serif-lead">
-            The Venue at NCC is operated by {site.parent.name}, part of the Suffolk community since {site.parent.foundingYear}.
+            The Venue at NCC is operated by {site.parent.name}, on the church campus in Suffolk.
           </p>
         </div>
         <dl class="ab-spec">
@@ -98,8 +98,8 @@ const principles = [
           </div>
         </dl>
         <p class="secondary">
-          The church opens {hall.name} and {grove.name} on its campus to families, businesses, nonprofits, and congregations
-          for their events.
+          {site.parent.name} makes {hall.name} and {grove.name} available to families, businesses, nonprofits, and other
+          congregations.
         </p>
       </div>
       {
@@ -137,7 +137,7 @@ const principles = [
         }
       </ul>
       <p class="ab-more">
-        <a class="link-more" href={href('/events/')}>See the events we host <Icon name="chevron-right" /></a>
+        <a class="link-more" href={href('/events/')}>See Events We Host <Icon name="chevron-right" /></a>
       </p>
     </div>
   </section>

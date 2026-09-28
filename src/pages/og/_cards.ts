@@ -3,11 +3,12 @@
  * line. Kept apart from the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro).
  * The underscore keeps Astro from routing this file.
  *
- * Only real photographs. A styled concept is never a share image, so pick() falls back to the hero photo.
+ * Only real photographs. A styled concept is never a share image, so pick() uses the real photo it was made
+ * from (realPhoto), and the hero photo when there is none.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
-import { photoByName, eventPhoto, heroPhoto, type VenuePhoto } from '../../data/photos';
+import { photoByName, eventPhoto, heroPhoto, realPhoto, type VenuePhoto } from '../../data/photos';
 import { priceSummary, formatUSD } from '../../shared/pricing';
 import { offBrandPhrase } from '../../lib/schema';
 
@@ -18,10 +19,15 @@ export interface ShareCard {
   line: string;
   /** The photo behind the text: a file in src/assets/venue/ and its caption. */
   photo: { file: string; caption?: string };
+  /** A deeper scrim, for a pale photo with strong lines behind the title (the white cross on the gable). */
+  deepScrim?: boolean;
 }
 
+/** Photos that need the deeper scrim behind the title. */
+const DEEP_SCRIM = new Set(['gable.jpg']);
+
 function pick(photo: VenuePhoto | null): ShareCard['photo'] {
-  const real = photo && !photo.styledOf ? photo : heroPhoto();
+  const real = realPhoto(photo) ?? heroPhoto();
   if (!real) throw new Error('[og] No venue photo is available for the share cards. Add photos to src/assets/venue/.');
   return { file: real.file, caption: real.caption };
 }
@@ -38,9 +44,9 @@ const { fromHourly } = priceSummary();
 // Each page's card carries that page's H1, so the preview matches the page it opens. Keep them in step.
 export const shareCards: Record<string, ShareCard> = {
   home: { title: 'Celebrate among the pines.', line: `Event venue in ${site.address.city}, ${site.address.regionName}`, photo: byName('exterior-dusk') },
-  'the-space': { title: 'Two spaces, indoors and out.', line: bothSpaces, photo: byName('hall-windows') },
+  'the-space': { title: 'Two spaces, indoors and out', line: bothSpaces, photo: byName('hall-windows') },
   pricing: {
-    title: 'Transparent rates for every event.',
+    title: 'Transparent rates for every event',
     line: `From ${formatUSD(fromHourly)} an hour, with an instant estimate for your date`,
     photo: byName('hall-fireplace'),
   },
@@ -51,17 +57,20 @@ export const shareCards: Record<string, ShareCard> = {
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
   about: {
-    title: `A venue of ${site.parent.name}.`,
-    line: `Part of the ${site.address.city} community since ${site.parent.foundingYear}`,
+    title: `A venue of ${site.parent.name}`,
+    line: `${hall} and ${grove}, on the church campus in ${site.address.city}`,
     photo: byName('gable'),
   },
-  faq: { title: 'Frequently asked questions.', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
-  book: { title: 'Check availability.', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
+  faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
+  book: { title: 'Check availability', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
 };
 // Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
 for (const e of events) {
   const line = offBrandPhrase(e.summary) ? bothSpaces : withoutPeriod(e.summary);
   shareCards[e.slug] = { title: e.name, line, photo: pick(eventPhoto(e.slug)) };
+}
+for (const card of Object.values(shareCards)) {
+  if (DEEP_SCRIM.has(card.photo.file)) card.deepScrim = true;
 }
 
 /** og:image:alt for a card: what the image shows, in reading order. */

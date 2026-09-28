@@ -96,19 +96,13 @@ const repastRate = pricing.discounts.find((d) => d.id === 'repast' && d.percent 
 const nonprofitRate = pricing.discounts.find((d) => d.id === 'nonprofit' && d.percent > 0);
 const howApplied = (d: { appliesTo: string }) =>
   d.appliesTo === 'manual' ? 'Mention it in your request.' : 'It is applied automatically in your estimate.';
-/** "Nonprofits and churches (Sunday to Thursday)" becomes who: "Nonprofits and churches", when: "Sunday to Thursday". */
-function splitLabel(label: string): { who: string; when: string } {
-  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(label);
-  return m ? { who: m[1], when: m[2] } : { who: label, when: '' };
-}
+
 const REPAST_RATE = repastRate
   ? ` Repasts and celebrations of life receive ${repastRate.percent}% off the rental. ${howApplied(repastRate)}`
   : '';
+/** "Nonprofits and churches receive 15% off the rental for events Sunday to Thursday. Mention it in your request." */
 const NONPROFIT_RATE = nonprofitRate
-  ? (() => {
-      const { who, when } = splitLabel(nonprofitRate.label);
-      return ` ${who} receive ${nonprofitRate.percent}% off the rental${when ? ` for events ${when}` : ''}. ${howApplied(nonprofitRate)}`;
-    })()
+  ? ` ${nonprofitRate.who ?? nonprofitRate.label} receive ${nonprofitRate.percent}% off the rental${nonprofitRate.when ? ` for events ${nonprofitRate.when}` : ''}. ${howApplied(nonprofitRate)}`
   : '';
 
 const repastRateFaq = repastRate
@@ -145,7 +139,7 @@ export const events: EventType[] = [
       {
         heading: 'Ceremony outdoors, reception indoors',
         body: [
-          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a paved patio, and tall pines on every side. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
+          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a paved patio, and tall pines around it. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
           `${HALL} is our indoor space, with arched windows, a fireplace feature wall, and dark wood-look floors. It holds up to ${INDOOR} guests for the reception. Reserve both for the same day and guests move from the ceremony to the reception without returning to their cars. With both spaces reserved, ${HALL} is also ready for up to ${INDOOR} guests if the weather turns.`,
         ],
       },
@@ -389,7 +383,7 @@ export const events: EventType[] = [
   {
     slug: 'birthday-parties',
     name: 'Birthdays & milestones',
-    summary: 'First birthdays, sweet sixteens, big-number birthdays, and retirement parties.',
+    summary: 'First birthdays, sweet sixteens, milestone birthdays, and retirement parties.',
     metaTitle: 'Birthday party venue in Suffolk, VA | The Venue at NCC',
     metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and parking is included.`,
     h1: 'Milestone birthdays and retirement parties',
@@ -406,9 +400,9 @@ export const events: EventType[] = [
         ],
       },
       {
-        heading: 'First birthdays, sweet sixteens, and big-number birthdays',
+        heading: 'First birthdays, sweet sixteens, and milestone birthdays',
         body: [
-          'Every milestone brings a different crowd. A first birthday is a party for parents, grandparents, and a few little ones, so many families plan around nap schedules and keep the program short. A sweet sixteen usually centers on music, photos, and one planned moment such as a candle ceremony.',
+          'Every milestone brings a different crowd. A first birthday is a party for parents, grandparents, and a few little ones, so many families plan around nap schedules and keep the program short. A sweet sixteen usually centers on friends, photos, and one planned moment such as a candle ceremony.',
           'A fortieth, fiftieth, or seventieth often mixes generations and may include a few speeches or a surprise entrance. A retirement party brings together coworkers, family, and friends, so keep the speaking list short and give each speaker a few minutes at most.',
         ],
       },
@@ -538,7 +532,7 @@ export const events: EventType[] = [
         a: `Repasts are often arranged within a few days of a funeral, while celebrations of life can be planned weeks or months ahead. Either way, check your date on the availability calendar or call ${PHONE}, and we will talk it through.`,
       },
     ],
-    related: ['church-community-events', 'receptions-banquets'],
+    related: ['church-community-events', 'receptions-banquets', 'meetings-trainings'],
     keywords: [
       'repast venue Suffolk VA',
       'celebration of life venue Suffolk VA',
@@ -555,7 +549,7 @@ export const events: EventType[] = [
     metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, with on-site parking and instant estimates.`,
     h1: 'Meeting and training space in Suffolk',
     intro: [
-      `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} holds up to ${INDOOR} people in a wooded setting minutes from downtown Suffolk, with on-site parking for every attendee.`,
+      `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} holds up to ${INDOOR} people in a wooded setting minutes from downtown Suffolk, with on-site parking included.`,
       'Businesses, nonprofits, schools, and community groups book with the same simple process. The instant estimate on the pricing page gives you a figure to forward for approval, and we confirm every booking personally.',
     ],
     sections: [
@@ -570,7 +564,7 @@ export const events: EventType[] = [
         heading: 'Before the meeting',
         body: [
           'Start with the agenda and work backward: what the group needs to finish, how long the session should run, and when to take breaks. A hands-on training needs a different layout than a board meeting where everyone faces each other, so walk the room with us before you book if the layout matters.',
-          'Send attendees the agenda, address, and start time a few days ahead, along with anything they should read first, and list the equipment and materials your team will bring.',
+          'Send attendees the agenda, address, and start time a few days ahead, along with anything they should read first. If you need equipment in the room, ask us when you send your request.',
         ],
       },
       {
@@ -596,7 +590,7 @@ export const events: EventType[] = [
         'Check your date on the availability calendar.',
         'Get an instant estimate on the pricing page for budget approval.',
         'Visit the room to plan your layout.',
-        'List the equipment and materials your team will bring.',
+        'Ask us about any equipment your session needs.',
         'Send attendees the address and start time, and let them know parking is on site.',
       ],
     },
@@ -619,7 +613,7 @@ export const events: EventType[] = [
         a: `Pick your date on the availability calendar and send a request with your meeting details, which takes about two minutes. ${RESERVE}`,
       },
     ],
-    related: ['church-community-events', 'receptions-banquets'],
+    related: ['church-community-events', 'receptions-banquets', 'graduations-reunions'],
     keywords: [
       'meeting space Suffolk VA',
       'meeting room rental Suffolk VA',

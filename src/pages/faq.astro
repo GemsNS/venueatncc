@@ -10,7 +10,7 @@ import { photoByName } from '../data/photos';
 import { breadcrumbs, faqPage } from '../lib/schema';
 
 const title = 'FAQ | Booking The Venue at NCC in Suffolk, VA';
-const description = `Answers about capacity, rates, deposits, parking, and booking at The Venue at NCC, an event venue in Suffolk, Virginia with The Hall for up to ${site.spaces[0].capacity} guests and The Grove for up to ${site.spaces[1].capacity}.`;
+const description = `Answers about capacity, rates, deposits, parking, and booking at The Venue at NCC in Suffolk, VA, with The Hall for ${site.spaces[0].capacity} guests and The Grove for ${site.spaces[1].capacity}.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'FAQ', path: '/faq/' },
@@ -33,7 +33,7 @@ const photo = photoByName('grove-path');
       <Breadcrumbs items={crumbs} />
       <div class="page-hero__grid">
         <div class="page-hero__copy">
-          <h1 class="t-large-title">Frequently asked questions.</h1>
+          <h1 class="t-large-title">Frequently asked questions</h1>
           <p class="t-lead">
             Answers to the questions we hear most about the spaces, rates, and booking. For anything else, call
             {' '}<a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or email

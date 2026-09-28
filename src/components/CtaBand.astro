@@ -56,6 +56,13 @@ const showSecondary = secondary.href !== path;
     color: var(--on-deep);
   }
 
+  /* Dark mode: Deep Plum sits close to the page color, so a faint lilac hairline marks where the band begins. */
+  @media (prefers-color-scheme: dark) {
+    .cta {
+      border-top: 1px solid rgb(205 179 238 / 0.14);
+    }
+  }
+
   .cta__inner {
     display: grid;
     gap: 2rem 4rem;

@@ -86,7 +86,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             type="text"
             maxLength={80}
             autoComplete="off"
-            placeholder="For example, a family reunion picnic"
+            placeholder="For example, a fundraiser or a club meeting"
             value={d.eventTypeOther}
             aria-invalid={errors.eventTypeOther ? 'true' : undefined}
             aria-describedby={errors.eventTypeOther ? errorId('eventTypeOther') : undefined}
@@ -143,7 +143,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             </span>
             <span class="bk-fact__text">
               <strong>We confirm every date personally.</strong>
-              <span class="bk-fact__hint">We check availability with you, then your booking deposit reserves the date.</span>
+              <span class="bk-fact__hint">We confirm availability, then your booking deposit reserves the date.</span>
             </span>
           </li>
           <li class="bk-fact">
