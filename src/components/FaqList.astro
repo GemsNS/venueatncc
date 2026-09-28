@@ -1,0 +1,84 @@
+---
+/** Questions and answers as native disclosure widgets: keyboard and screen-reader friendly with no script. */
+interface Props {
+  items: { q: string; a: string }[];
+  /** Open the first item by default. */
+  openFirst?: boolean;
+}
+const { items, openFirst = false } = Astro.props;
+
+// Keep the venue name on one line inside questions.
+const NBSP = String.fromCharCode(160);
+const keepTogether = (q: string) => q.replace(/The Venue at NCC/g, ['The', 'Venue', 'at', 'NCC'].join(NBSP));
+---
+<div class="faq-list">
+  {
+    items.map((item, i) => (
+      <details class="faq" open={openFirst && i === 0}>
+        <summary class="faq__q">
+          <span>{keepTogether(item.q)}</span>
+        </summary>
+        <div class="faq__a">
+          <p>{item.a}</p>
+        </div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq-list {
+    border-top: 1px solid var(--line);
+  }
+
+  .faq {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .faq__q {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding-block: 1.2rem;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq__q span {
+    text-wrap: pretty;
+  }
+
+  .faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__q::after {
+    content: '';
+    flex: none;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-right: 2px solid var(--navy);
+    border-bottom: 2px solid var(--navy);
+    transform: rotate(45deg) translateY(-25%);
+    transition: transform 180ms ease;
+  }
+
+  .faq[open] .faq__q::after {
+    transform: rotate(-135deg) translateY(-25%);
+  }
+
+  .faq__a {
+    padding-bottom: 1.4rem;
+    max-width: 62ch;
+    color: var(--ink-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq__q::after {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,399 @@
+/*
+  The Venue at NCC design system
+
+  Palette
+    navy     #14203C  sampled from the NCC logo; the primary ink and dark surfaces
+    pine     #26433A  the pines of the Suffolk coastal plain; the location band
+    stucco   #E8D9C1  warm wall color; used only inside the illustrated arch and fine trim
+    brass    #A87A2E  window hardware; hairline trim around arches, never body text
+    paper    #F4F5F7  cool page background (not cream)
+    cobalt   #2E42FF  borrowed from wearencc.org; focus rings only, the family link
+
+  Type
+    Marcellus  display (h1, h2, wordmark). Flared Roman capitals, like carved stone lettering.
+    Montserrat body and interface. Echoes the geometric sans in the NCC logo.
+
+  Shape
+    Arches are the only curved shapes on the site. Everything else is nearly square.
+*/
+
+@import '@fontsource/marcellus/latin-400.css';
+@import '@fontsource-variable/montserrat/wght.css';
+
+:root {
+  --navy: #14203c;
+  --navy-2: #22325a;
+  --navy-deep: #0d1630;
+  --pine: #26433a;
+  --pine-deep: #1b3129;
+  --stucco: #e8d9c1;
+  --brass: #a87a2e;
+  --paper: #f4f5f7;
+  --surface: #ffffff;
+  --line: #d8dde6;
+  --ink: #14203c;
+  --ink-2: #47516a;
+  --on-dark: #f4f6fa;
+  --on-dark-2: #c3cbdc;
+  --cobalt: #2e42ff;
+
+  --font-display: 'Marcellus', 'Times New Roman', serif;
+  --font-body: 'Montserrat Variable', 'Segoe UI', system-ui, sans-serif;
+
+  /* Scale after Bringhurst's classic sizes: 14 17 21 24 36 48 60 72 */
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3125rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.875rem, 1.45rem + 1.6vw, 2.25rem);
+  --step-4: clamp(2.25rem, 1.55rem + 2.8vw, 3rem);
+  --step-5: clamp(2.6rem, 1.4rem + 4.6vw, 4.5rem);
+
+  --measure: 62ch;
+  --radius: 3px;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --max: 1180px;
+  --section: clamp(4rem, 3rem + 5vw, 7.5rem);
+  --header-h: 76px;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  font-weight: 400;
+  line-height: 1.65;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+h1 {
+  font-size: var(--step-5);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: var(--step-4);
+  line-height: 1.12;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+p + p {
+  margin-top: 1em;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--cobalt);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* On dark bands the cobalt ring alone is under 3:1, so add a light halo outside it. */
+.on-dark :focus-visible {
+  outline-offset: 0;
+  box-shadow: 0 0 0 6px var(--on-dark);
+}
+
+::selection {
+  background: var(--stucco);
+  color: var(--navy);
+}
+
+/* Layout primitives */
+
+.container {
+  width: min(100% - 2 * var(--gutter), var(--max));
+  margin-inline: auto;
+}
+
+.section {
+  padding-block: var(--section);
+}
+
+.section--tight {
+  padding-block: calc(var(--section) * 0.6);
+}
+
+.prose {
+  max-width: var(--measure);
+}
+
+.prose h2 {
+  font-size: var(--step-3);
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose h2:first-child {
+  margin-top: 0;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.25rem;
+}
+
+.prose li + li {
+  margin-top: 0.4rem;
+}
+
+.lead {
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 44ch;
+}
+
+.muted {
+  color: var(--ink-2);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--navy);
+  color: var(--on-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.75rem 1.4rem;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.btn--primary {
+  background: var(--navy);
+  color: var(--on-dark);
+}
+
+.btn--primary:hover {
+  background: var(--navy-2);
+}
+
+.btn--secondary {
+  background: transparent;
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.btn--secondary:hover {
+  background: var(--navy);
+  color: var(--on-dark);
+}
+
+.btn--light {
+  background: var(--on-dark);
+  color: var(--navy);
+}
+
+.btn--light:hover {
+  background: #ffffff;
+}
+
+.btn--ghost-light {
+  background: transparent;
+  border-color: rgba(244, 246, 250, 0.55);
+  color: var(--on-dark);
+}
+
+.btn--ghost-light:hover {
+  border-color: var(--on-dark);
+  background: rgba(244, 246, 250, 0.08);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 479.98px) {
+  .btn-row {
+    flex-direction: column;
+    align-items: stretch;
+    justify-self: stretch;
+  }
+
+  .btn-row .btn {
+    width: 100%;
+  }
+}
+
+/* Text link with a quiet arrowless affordance */
+.text-link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+}
+
+.text-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Dark surfaces */
+
+.on-dark {
+  color: var(--on-dark);
+}
+
+.on-dark h1,
+.on-dark h2,
+.on-dark h3 {
+  color: var(--on-dark);
+}
+
+.on-dark .muted,
+.on-dark .lead {
+  color: var(--on-dark-2);
+}
+
+/* Section heading block */
+
+.section-head {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+  margin-bottom: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+}
+
+.section-head p {
+  color: var(--ink-2);
+  font-size: 1.125rem;
+}
+
+.on-dark .section-head p {
+  color: var(--on-dark-2);
+}
+
+main:focus {
+  outline: none;
+}
+
+/* Inner page header */
+
+.page-head {
+  padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 3vw, 4.5rem);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--paper) 100%);
+  border-bottom: 1px solid var(--line);
+}
+
+.page-head__copy {
+  display: grid;
+  gap: 1.5rem;
+  justify-items: start;
+  max-width: 52rem;
+  margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+}
+
+.page-head__copy h1 {
+  font-size: var(--step-4);
+}
+
+.page-head__copy .lead {
+  max-width: 60ch;
+}

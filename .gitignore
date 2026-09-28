@@ -1,0 +1,25 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+
+# environment
+.env
+.env.*
+!.env.example
+
+# os
+.DS_Store
+Thumbs.db
+
+# local data
+data/
+*.db
+*.db-*
+.outbox/
+server-dist/

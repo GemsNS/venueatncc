@@ -1,0 +1,114 @@
+---
+import '../styles/global.css';
+import marcellusFont from '@fontsource/marcellus/files/marcellus-latin-400-normal.woff2?url';
+import montserratFont from '@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2?url';
+import { getImage } from 'astro:assets';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import MobileCallBar from '../components/MobileCallBar.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { site } from '../data/site';
+import { heroPhoto } from '../data/photos';
+import { abs, graph, parentOrganization, venue, website, webPage } from '../lib/schema';
+
+interface Props {
+  /** Full <title>. Keep under 60 characters. */
+  title: string;
+  /** Meta description. Aim for 140 to 160 characters. */
+  description?: string;
+  /** Share image key from /og/<key>.png. */
+  og?: string;
+  /** Alt text for the share image. */
+  ogAlt?: string;
+  noindex?: boolean;
+  /** schema.org WebPage subtype, e.g. 'AboutPage', 'FAQPage', 'ContactPage', 'CollectionPage'. */
+  pageType?: string;
+  /** Extra JSON-LD nodes for this page (breadcrumbs, FAQ, service). */
+  schema?: Record<string, unknown>[];
+  /** Include room, capacity, and amenity details in the venue JSON-LD (only where they are visible). */
+  venueDetails?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  og = 'home',
+  ogAlt = `${site.name}, an event venue in Suffolk, Virginia`,
+  noindex = false,
+  pageType,
+  schema = [],
+  venueDetails = false,
+} = Astro.props;
+
+const canonical = abs(Astro.url.pathname);
+const ogImage = abs(`/og/${og}.png`);
+
+const hero = heroPhoto();
+const venueImages: string[] = [];
+if (hero) {
+  const img = await getImage({ src: hero.src, width: 1200, format: 'jpg' });
+  venueImages.push(abs(img.src));
+}
+
+const jsonLd = graph(
+  venue(venueImages, { details: venueDetails }),
+  parentOrganization(),
+  website(),
+  webPage({ path: Astro.url.pathname, title, description, type: pageType }),
+  ...schema,
+);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+
+    <link rel="preload" href={marcellusFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={montserratFont} as="font" type="font/woff2" crossorigin />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+
+    <meta name="theme-color" content="#14203c" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content={site.locale} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogAlt} />
+
+    <meta name="geo.region" content="US-VA" />
+    <meta name="geo.placename" content={site.address.city} />
+    <meta name="geo.position" content={`${site.address.geo.lat};${site.address.geo.lng}`} />
+    <meta name="ICBM" content={`${site.address.geo.lat}, ${site.address.geo.lng}`} />
+
+    <JsonLd data={jsonLd} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <MobileCallBar />
+  </body>
+</html>

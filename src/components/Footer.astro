@@ -1,0 +1,184 @@
+---
+import { Image } from 'astro:assets';
+import mark from '../assets/brand/ncc-mark.png';
+import { site, fullAddress } from '../data/site';
+import { events } from '../data/events';
+import { mainNav, bookHref } from '../data/nav';
+
+const year = new Date().getFullYear();
+---
+<footer class="site-footer on-dark">
+  <div class="container site-footer__grid">
+    <div class="site-footer__brand">
+      <a class="site-footer__logo" href="/">
+        <Image src={mark} alt="" width={56} height={56} densities={[1, 2]} class="site-footer__mark" />
+        <span>{site.name}</span>
+      </a>
+      <p class="muted">An event space in Suffolk, Virginia, at New Community Church.</p>
+      <address class="site-footer__address">
+        <span>{site.address.street}</span>
+        <span>{site.address.city}, {site.address.region} {site.address.postalCode}</span>
+        <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+        {site.contact.email && <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>}
+      </address>
+      <a class="site-footer__directions" href={site.address.directionsUrl} rel="noopener" target="_blank">
+        Get directions<span class="visually-hidden"> to {fullAddress} (opens in a new tab)</span>
+      </a>
+    </div>
+
+    {
+      events.length > 0 && (
+        <nav class="site-footer__col" aria-labelledby="footer-events">
+          <h2 id="footer-events">Plan an event</h2>
+          <ul>
+            {events.map((e) => (
+              <li>
+                <a href={`/events/${e.slug}/`}>{e.name}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    <nav class="site-footer__col" aria-labelledby="footer-visit">
+      <h2 id="footer-visit">The venue</h2>
+      <ul>
+        {mainNav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        <li><a href={bookHref}>Check your date</a></li>
+      </ul>
+    </nav>
+
+    <div class="site-footer__col site-footer__church">
+      <h2>Part of New Community Church</h2>
+      <p class="muted">
+        The Venue at NCC is the event space of {site.parent.name}, part of the Suffolk community since {site.parent.foundingYear}.
+      </p>
+      <a class="site-footer__church-link" href={site.parent.url} rel="noopener">Visit wearencc.org</a>
+      {
+        site.social.length > 0 && (
+          <ul class="site-footer__social">
+            {site.social.map((s) => (
+              <li>
+                <a href={s.url} rel="noopener me">{s.label}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </div>
+  <div class="container site-footer__base">
+    <p>© {year} {site.name}</p>
+    <p>{site.tagline}.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--navy-deep);
+    padding-top: clamp(3.5rem, 3rem + 3vw, 5.5rem);
+    padding-bottom: 2rem;
+    font-size: 0.975rem;
+  }
+
+  .site-footer a {
+    color: var(--on-dark);
+  }
+
+  .site-footer__grid {
+    display: grid;
+    gap: 2.5rem 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+
+  @media (min-width: 1000px) {
+    .site-footer__grid {
+      grid-template-columns: 1.3fr 1fr 0.8fr 1.1fr;
+    }
+  }
+
+  .site-footer__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    text-decoration: none;
+    margin-bottom: 1rem;
+  }
+
+  .site-footer__mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+  }
+
+  .site-footer__address {
+    display: grid;
+    gap: 0.15rem;
+    margin-top: 1.25rem;
+    font-style: normal;
+  }
+
+  .site-footer__address a {
+    font-weight: 600;
+    margin-top: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .site-footer__directions,
+  .site-footer__church-link {
+    display: inline-block;
+    margin-top: 1rem;
+    font-weight: 600;
+    text-decoration-color: var(--brass);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+  }
+
+  .site-footer__col h2 {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .site-footer__col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .site-footer__col ul a {
+    text-decoration: none;
+    color: var(--on-dark-2);
+  }
+
+  .site-footer__col ul a:hover {
+    color: var(--on-dark);
+    text-decoration: underline;
+  }
+
+  .site-footer__social {
+    margin-top: 1.25rem !important;
+  }
+
+  .site-footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(195, 203, 220, 0.2);
+    color: var(--on-dark-2);
+    font-size: var(--step--1);
+  }
+
+  .site-footer__base p + p {
+    margin-top: 0;
+  }
+</style>

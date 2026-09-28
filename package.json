@@ -1,0 +1,34 @@
+{
+  "name": "venueatncc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Promotional website for The Venue at NCC, the event space of New Community Church in Suffolk, Virginia.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.6",
+    "@astrojs/preact": "^6.0.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource/marcellus": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "astro": "^7.3.5",
+    "better-sqlite3": "^12.11.1",
+    "nodemailer": "^10.0.11",
+    "preact": "^10.29.8",
+    "satori": "^0.33.5",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/nodemailer": "^8.0.2",
+    "typescript": "^6.0.3"
+  }
+}

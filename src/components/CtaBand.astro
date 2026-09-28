@@ -1,0 +1,92 @@
+---
+import { site } from '../data/site';
+import { bookHref } from '../data/nav';
+
+interface Props {
+  heading?: string;
+  body?: string;
+}
+const {
+  heading = 'Check your date',
+  body = 'Tell us the date, the kind of event, and roughly how many guests you expect. We will follow up about availability and next steps.',
+} = Astro.props;
+---
+<section class="cta-band on-dark" aria-labelledby="cta-heading">
+  <div class="container cta-band__inner">
+    <div class="cta-band__copy">
+      <h2 id="cta-heading">{heading}</h2>
+      <p class="lead">{body}</p>
+    </div>
+    <div class="cta-band__actions">
+      <a class="btn btn--light" href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
+      <a class="btn btn--ghost-light" href={bookHref}>Check your date</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-band {
+    position: relative;
+    background: var(--navy);
+    padding-block: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+    overflow: hidden;
+  }
+
+  /* A single arch outline, echoing the windows, set into the band's corner. */
+  .cta-band::after {
+    content: '';
+    position: absolute;
+    right: clamp(-140px, -8vw, -60px);
+    bottom: -40%;
+    width: clamp(260px, 30vw, 420px);
+    aspect-ratio: 4 / 5;
+    border: 1px solid rgba(168, 122, 46, 0.55);
+    border-radius: 100vmax 100vmax 0 0;
+    pointer-events: none;
+  }
+
+  /* Opaque so the decorative arch line never runs through the button label. */
+  .cta-band .btn--ghost-light {
+    background: var(--navy);
+  }
+
+  .cta-band .btn--ghost-light:hover {
+    background: var(--navy-2);
+  }
+
+  @media (min-width: 900px) {
+    .cta-band::after {
+      top: clamp(1.25rem, 2.5vw, 2.5rem);
+      bottom: auto;
+    }
+  }
+
+  .cta-band__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 2rem;
+    align-items: end;
+  }
+
+  @media (min-width: 900px) {
+    .cta-band__inner {
+      grid-template-columns: 1.4fr 1fr;
+    }
+
+    .cta-band__actions {
+      justify-content: flex-end;
+    }
+  }
+
+  .cta-band__copy {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .cta-band__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

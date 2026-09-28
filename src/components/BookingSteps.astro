@@ -1,0 +1,72 @@
+---
+/** The booking process, from site.bookingSteps. A real sequence, so it is numbered. */
+import { site } from '../data/site';
+
+// Step 1 says how to reach us, and only mentions the form once one is configured.
+// A no-break space keeps the phone number on one line.
+const phone = site.contact.phone.replace(' ', String.fromCharCode(160));
+const contactLine = site.contact.formEndpoint ? `Call ${phone} or send the inquiry form.` : `Call ${phone}.`;
+---
+<ol class="steps">
+  {
+    site.bookingSteps.map((step, i) => (
+      <li class="steps__item">
+        <span class="steps__num" aria-hidden="true">{i + 1}</span>
+        <div class="steps__body">
+          <h3>{step.title}</h3>
+          <p>
+            {step.body}
+            {i === 0 && ` ${contactLine}`}
+          </p>
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .steps {
+    display: grid;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 820px) {
+    .steps {
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(1.5rem, 4vw, 3.5rem);
+    }
+  }
+
+  .steps__item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .steps__num {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3.6rem;
+    border: 1px solid var(--brass);
+    border-radius: 100vmax 100vmax 2px 2px;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    line-height: 1;
+    padding-top: 0.35rem;
+    color: var(--navy);
+  }
+
+  .steps__body {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .steps__body p {
+    color: var(--ink-2);
+  }
+</style>

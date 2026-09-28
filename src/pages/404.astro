@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArchFrame from '../components/ArchFrame.astro';
+import { site } from '../data/site';
+---
+<BaseLayout title={`Page not found | ${site.name}`} description="This page does not exist. Find events, the space, and booking details for The Venue at NCC in Suffolk, VA." noindex>
+  <section class="section">
+    <div class="container nf">
+      <div class="nf__copy">
+        <h1>This page does not exist</h1>
+        <p class="lead">The link may be out of date, or the address may have a typo. These pages can help.</p>
+        <ul class="nf__links">
+          <li><a class="text-link" href="/">Home</a></li>
+          <li><a class="text-link" href="/events/">Events we host</a></li>
+          <li><a class="text-link" href="/book/">Check your date</a></li>
+          <li><a class="text-link" href="/faq/">Questions and answers</a></li>
+        </ul>
+        <p class="muted">Or call <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>.</p>
+      </div>
+      <div class="nf__arch">
+        <ArchFrame variant={7} sizes="280px" />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  @media (min-width: 820px) {
+    .nf {
+      grid-template-columns: 1.5fr 1fr;
+    }
+  }
+
+  .nf__copy {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .nf__copy h1 {
+    font-size: var(--step-4);
+  }
+
+  .nf__links {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nf__arch {
+    width: min(60%, 280px);
+    justify-self: center;
+  }
+</style>

@@ -1,0 +1,92 @@
+---
+/**
+ * A typographic index of event types. Each row links to the event's landing page.
+ */
+import { events } from '../data/events';
+
+interface Props {
+  /** Slugs to leave out, e.g. the current page. */
+  exclude?: string[];
+  /** Only these slugs, in this order. */
+  only?: string[];
+  headingLevel?: 'h2' | 'h3';
+}
+const { exclude = [], only, headingLevel = 'h3' } = Astro.props;
+const list = only
+  ? only.map((slug) => events.find((e) => e.slug === slug)).filter((e) => e !== undefined)
+  : events.filter((e) => !exclude.includes(e.slug));
+const Heading = headingLevel;
+---
+{
+  list.length > 0 && (
+    <ul class:list={['event-index', { 'event-index--three': list.length === 3 }]}>
+      {list.map((e) => (
+        <li class="event-index__item">
+          <a class="event-index__link" href={`/events/${e.slug}/`}>
+            <Heading class="event-index__name">{e.name}</Heading>
+            <p class="event-index__summary">{e.summary}</p>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .event-index {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (min-width: 760px) {
+    .event-index {
+      grid-template-columns: 1fr 1fr;
+      column-gap: clamp(2rem, 5vw, 5rem);
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .event-index--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .event-index__item {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .event-index__link {
+    display: grid;
+    gap: 0.35rem;
+    height: 100%;
+    align-content: start;
+    padding-block: 1.4rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .event-index__name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--step-2);
+    line-height: 1.2;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 150ms ease;
+  }
+
+  .event-index__link:hover .event-index__name,
+  .event-index__link:focus-visible .event-index__name {
+    text-decoration-color: var(--brass);
+  }
+
+  .event-index__summary {
+    color: var(--ink-2);
+    max-width: 46ch;
+  }
+</style>

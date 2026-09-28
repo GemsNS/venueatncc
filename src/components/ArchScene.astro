@@ -1,0 +1,30 @@
+---
+/**
+ * Illustrated view through an arched window: an evening sky over a line of pines.
+ * Shown inside an arch until real venue photos are added to src/assets/venue/.
+ * Decorative only; it carries no information, so it is hidden from assistive tech.
+ */
+import { archSceneSvg } from '../lib/archScene';
+import { uid } from '../lib/uid';
+
+interface Props {
+  variant?: number;
+  muntins?: boolean;
+}
+const { variant = 0, muntins = true } = Astro.props;
+const svg = archSceneSvg({
+  variant,
+  muntins,
+  id: uid('arch'),
+  attrs: 'class="arch-scene" aria-hidden="true" focusable="false" width="100%" height="100%"',
+});
+---
+<Fragment set:html={svg} />
+
+<style>
+  :global(.arch-scene) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

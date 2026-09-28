@@ -1,0 +1,93 @@
+---
+/** Where the venue is, with directions and a lazily loaded map. */
+import { site, fullAddress } from '../data/site';
+
+interface Props {
+  heading?: string;
+}
+const { heading = 'Find us on Godwin Boulevard' } = Astro.props;
+const nearby = site.areaServed.filter((a) => a !== 'Suffolk' && a !== 'Hampton Roads');
+const nearbyList = new Intl.ListFormat('en', { style: 'long', type: 'disjunction' }).format([...nearby, 'elsewhere in Hampton Roads']);
+const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Community Church, ${fullAddress}`)}&z=15&output=embed`;
+---
+<section class="location on-dark" aria-labelledby="location-heading">
+  <div class="container location__grid">
+    <div class="location__copy">
+      <h2 id="location-heading">{heading}</h2>
+      <address class="location__address">
+        <strong>{site.name}</strong>
+        <span>At {site.parent.name}</span>
+        <span>{site.address.street}</span>
+        <span>{site.address.city}, {site.address.region} {site.address.postalCode}</span>
+      </address>
+      <p class="muted">
+        Guests coming from {nearbyList}? Send them this address and the directions link early.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn--light" href={site.address.directionsUrl} rel="noopener" target="_blank">
+          Get directions<span class="visually-hidden"> (opens in a new tab)</span>
+        </a>
+        <a class="btn btn--ghost-light" href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
+      </div>
+    </div>
+    <div class="location__map">
+      <iframe
+        title={`Map showing ${site.name} at ${fullAddress}`}
+        src={mapSrc}
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+      ></iframe>
+    </div>
+  </div>
+</section>
+
+<style>
+  .location {
+    background: var(--pine);
+    padding-block: var(--section);
+  }
+
+  .location__grid {
+    display: grid;
+    gap: 2.5rem clamp(2.5rem, 6vw, 5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .location__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    }
+  }
+
+  .location__copy {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: start;
+  }
+
+  .location__address {
+    display: grid;
+    gap: 0.1rem;
+    font-style: normal;
+    font-size: 1.125rem;
+  }
+
+  .location__address strong {
+    font-weight: 600;
+  }
+
+  .location__map {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--pine-deep);
+    border: 1px solid rgba(232, 217, 193, 0.35);
+  }
+
+  .location__map iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+</style>

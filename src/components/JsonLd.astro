@@ -1,0 +1,19 @@
+---
+interface Props {
+  data: Record<string, unknown> | Record<string, unknown>[];
+}
+const { data } = Astro.props;
+
+// Escape "<" (so no string can close the <script> element or open a comment) and the
+// U+2028/U+2029 line separators. Built from character codes so the escape sequences
+// cannot be mangled by editors or tooling that interpret backslashes.
+const BACKSLASH = String.fromCharCode(92);
+const escapes: [RegExp, string][] = [
+  [new RegExp(String.fromCharCode(60), 'g'), `${BACKSLASH}u003c`],
+  [new RegExp(String.fromCharCode(0x2028), 'g'), `${BACKSLASH}u2028`],
+  [new RegExp(String.fromCharCode(0x2029), 'g'), `${BACKSLASH}u2029`],
+];
+let json = JSON.stringify(data);
+for (const [pattern, replacement] of escapes) json = json.replace(pattern, replacement);
+---
+<script type="application/ld+json" is:inline set:html={json} />

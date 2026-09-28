@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { site } from '../data/site';
+import { publishedFaqs } from '../data/faq';
+import { breadcrumbs, faqPage } from '../lib/schema';
+
+const title = 'FAQ | Booking The Venue at NCC in Suffolk, VA';
+const description =
+  'Answers about The Venue at NCC in Suffolk, VA: where it is, what events it hosts, how to check your date, and how to get a quote. Call (757) 338-3432.';
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'FAQ', path: '/faq/' },
+];
+---
+<BaseLayout
+  title={title}
+  description={description}
+  og="faq"
+  schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}
+>
+  <section class="page-head">
+    <div class="container">
+      <Breadcrumbs items={crumbs} />
+      <div class="page-head__copy">
+        <h1>Questions about The Venue at NCC</h1>
+        <p class="lead">
+          Answers to common questions about booking our event space in Suffolk. If your question is not here, call
+          {site.contact.phone}.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="faq-page">
+        <FaqList items={publishedFaqs} openFirst />
+      </div>
+    </div>
+  </section>
+
+  <CtaBand heading="Still have a question?" body={`Call ${site.contact.phone}. We are glad to talk through your event, your date, and anything else you want to know.`} />
+</BaseLayout>
+
+<style>
+  .faq-page {
+    max-width: 860px;
+  }
+</style>

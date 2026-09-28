@@ -1,0 +1,269 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import BookingSteps from '../components/BookingSteps.astro';
+import InquiryForm from '../components/InquiryForm.astro';
+import { site, fullAddress } from '../data/site';
+import { breadcrumbs } from '../lib/schema';
+
+const title = 'Check your date | Book The Venue at NCC in Suffolk, VA';
+const description =
+  'Book The Venue at NCC for your event in Suffolk, VA. Call (757) 338-3432 with your date, event type, and guest count, and we will follow up about availability.';
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Check your date', path: '/book/' },
+];
+const hasForm = Boolean(site.contact.formEndpoint);
+---
+<BaseLayout title={title} description={description} og="book" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
+  <section class="page-head">
+    <div class="container">
+      <Breadcrumbs items={crumbs} />
+      <div class="page-head__copy">
+        <h1>Check your date at The Venue at NCC</h1>
+        <p class="lead">
+          {
+            hasForm
+              ? 'Tell us about your event and we will follow up about availability, the space, and next steps. You can also call us.'
+              : 'The quickest way to check a date is to call. Have your date, the kind of event, and a rough guest count ready.'
+          }
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container book__grid">
+      <div class="book__main">
+        {
+          hasForm ? (
+            <>
+              <h2 class="book__h2">Send an inquiry</h2>
+              <InquiryForm />
+            </>
+          ) : (
+            <div class="call-panel">
+              <h2 class="book__h2">Call to check your date</h2>
+              <a class="call-panel__number" href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+              <p>When you call, it helps to share:</p>
+              <ul class="call-panel__list">
+                <li>The date you have in mind, and any backup dates</li>
+                <li>The kind of event you are planning</li>
+                <li>About how many guests you expect</li>
+                <li>The hours you would need, including setup and cleanup</li>
+              </ul>
+              {site.contact.email && (
+                <p>
+                  Prefer email? Write to <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+                </p>
+              )}
+            </div>
+          )
+        }
+      </div>
+
+      <aside class="book__aside" aria-label="Venue details">
+        <div class="detail">
+          <h2>Address</h2>
+          <address>
+            {site.name}<br />
+            {site.address.street}<br />
+            {site.address.city}, {site.address.region} {site.address.postalCode}
+          </address>
+          <a class="text-link" href={site.address.directionsUrl} rel="noopener" target="_blank">
+            Get directions<span class="visually-hidden"> to {fullAddress} (opens in a new tab)</span>
+          </a>
+        </div>
+        <div class="detail">
+          <h2>Phone</h2>
+          <a class="detail__phone" href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+        </div>
+        {
+          site.hours.length > 0 && (
+            <div class="detail">
+              <h2>Office hours</h2>
+              <dl class="detail__hours">
+                {site.hours.map((h) => (
+                  <div>
+                    <dt>{h.days}</dt>
+                    <dd>{h.hours}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )
+        }
+        <div class="detail">
+          <h2>Rates</h2>
+          {
+            site.packages.length > 0 ? (
+              <ul class="packages">
+                {site.packages.map((p) => (
+                  <li class="package">
+                    <div class="package__head">
+                      <h3>{p.name}</h3>
+                      <p class="package__price">{p.price ?? 'Request a quote'}</p>
+                    </div>
+                    <p class="muted">{p.summary}</p>
+                    {p.includes.length > 0 && (
+                      <ul class="package__includes">
+                        {p.includes.map((i) => <li>{i}</li>)}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="muted">Call with your date and event details for a quote.</p>
+            )
+          }
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--tight steps-band" aria-labelledby="steps-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="steps-heading">What happens next</h2>
+      </div>
+      <BookingSteps />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .book__grid {
+    display: grid;
+    gap: 3rem clamp(3rem, 7vw, 7rem);
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .book__grid {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+  }
+
+  .book__h2 {
+    font-size: var(--step-3);
+    margin-bottom: 1.5rem;
+  }
+
+  .call-panel {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+
+  .call-panel .book__h2 {
+    margin-bottom: 0;
+  }
+
+  .call-panel__number {
+    font-family: var(--font-display);
+    font-size: var(--step-5);
+    line-height: 1.1;
+    text-decoration: none;
+    color: var(--navy);
+    font-variant-numeric: lining-nums;
+    border-bottom: 1px solid var(--brass);
+    margin-bottom: 1rem;
+  }
+
+  .call-panel__number:hover {
+    border-bottom-width: 2px;
+  }
+
+  .call-panel__list {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .book__aside {
+    display: grid;
+    gap: 2rem;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--brass);
+    border-radius: var(--radius);
+  }
+
+  .detail {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: start;
+  }
+
+  .detail h2 {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  .detail address {
+    font-style: normal;
+  }
+
+  .detail__phone {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .detail__hours {
+    margin: 0;
+    width: 100%;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .detail__hours div {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .detail__hours dd {
+    margin: 0;
+  }
+
+  .packages {
+    width: 100%;
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .package__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+  }
+
+  .package__head h3 {
+    font-size: 1.0625rem;
+  }
+
+  .package__price {
+    font-weight: 600;
+  }
+
+  .package__includes {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.95rem;
+  }
+
+  .steps-band {
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+</style>
