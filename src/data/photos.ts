@@ -9,7 +9,9 @@
  *    the gallery, with alt text built from the filename (or a generic description when the
  *    filename is a camera name like IMG_1234.jpg), so descriptive entries are strongly preferred.
  * 3. Tag a photo to place it:
- *      'hero'         the arched photo at the top of the home page (first match wins)
+ *      'hero'         the large panel at the top of the home page (first match wins)
+ *      'indoor'       the indoor hall card (home page and /the-space/)
+ *      'outdoor'      the outdoor space card (home page and /the-space/)
  *      'space'        featured in the home page "the space" row
  *      'about'        the arched photo on the About page
  *      '<event slug>' used on that event page, e.g. 'weddings', 'repasts-memorials'

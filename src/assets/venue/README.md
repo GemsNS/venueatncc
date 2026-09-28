@@ -9,7 +9,8 @@ Use originals at least 1600px on the long edge. The build prints a warning for s
 To control alt text, captions, crop, and where a photo appears, add an entry for it in
 `src/data/photos.ts`. Tag options:
 
-- `hero` for the arched photo at the top of the home page
+- `hero` for the large panel at the top of the home page
+- `indoor` and `outdoor` for the two space cards
 - `space` for the home page "the space" row
 - `about` for the arched photo on the About page
 - an event slug such as `weddings` or `repasts-memorials` for that event page
