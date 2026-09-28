@@ -14,7 +14,7 @@
     "build:demo": "cross-env PUBLIC_DEMO=true astro build --outDir dist-demo",
     "start": "node server-dist/index.mjs",
     "admin:create": "tsx server/cli/create-admin.ts",
-    "test": "tsx --test server/**/*.test.ts src/**/*.test.ts",
+    "test": "tsx --test \"server/**/*.test.ts\" \"src/**/*.test.ts\"",
     "check": "astro check",
     "preview:demo": "cross-env PUBLIC_DEMO=true astro preview --outDir dist-demo"
   },
