@@ -5,12 +5,15 @@
  * Copy rules:
  * - Venue facts (capacity, phone, address, church details) come from site.ts through the
  *   constants below, so a change there flows into every page. Never type them in by hand.
- * - Never write a price. Rates live in src/shared/pricing.ts; point to the pricing page instead.
- * - Unconfirmed details (tables and chairs, kitchen, AV, decorating and setup times, end times)
- *   appear only as questions to ask us. Never state or imply an answer.
+ * - Never type a price or a percentage. Rates live in src/shared/pricing.ts; point to the pricing
+ *   page, or build the sentence from `pricing` (as the special rates below do).
+ * - Unconfirmed details (tables and chairs, whether there is a kitchen, AV, decorating and setup
+ *   times, end times) appear only as questions to ask us. Never state or imply an answer.
+ * - Reserving always reads: we confirm availability, then your booking deposit reserves the date.
  * - No em or en dashes, no exclamation marks. Headings in sentence case.
  */
 import { site, fullAddress, type SpaceId } from './site';
+import { pricing } from '../shared/pricing';
 
 export interface EventSection {
   heading: string;
@@ -51,8 +54,22 @@ const ADDRESS = fullAddress;
 const STREET = site.address.street;
 const CHURCH = site.parent.name;
 const FOUNDED = site.parent.foundingYear;
-const FOUNDER = `${site.parent.pastorTitle} ${site.parent.pastor}`;
+const FOUNDER = site.parent.pastor;
 const CHURCH_SITE = site.parent.url.replace('https://', '');
+/** The reserving sentence, worded the same everywhere on the site. */
+const RESERVE = 'We confirm availability, then your booking deposit reserves the date.';
+
+/** Special-rate sentences, built from the rate card so the percentages never drift. */
+const repastRate = pricing.discounts.find((d) => d.id === 'repast' && d.percent > 0);
+const nonprofitRate = pricing.discounts.find((d) => d.id === 'nonprofit' && d.percent > 0);
+const howApplied = (d: { appliesTo: string }) =>
+  d.appliesTo === 'manual' ? 'Mention it in your request.' : 'It is applied automatically in your estimate.';
+const REPAST_RATE = repastRate
+  ? ` Repasts and celebrations of life get our ${repastRate.label.toLowerCase()}: ${repastRate.percent}% off the rental. ${howApplied(repastRate)}`
+  : '';
+const NONPROFIT_RATE = nonprofitRate
+  ? ` The special rate for ${nonprofitRate.label.charAt(0).toLowerCase()}${nonprofitRate.label.slice(1)} is ${nonprofitRate.percent}% off the rental. ${howApplied(nonprofitRate)}`
+  : '';
 
 export const events: EventType[] = [
   {
@@ -78,7 +95,7 @@ export const events: EventType[] = [
         heading: 'Your caterer, your menu',
         body: [
           'Catering is not included, and that gives you room to plan the meal your way. Book the caterer you already trust, choose a cuisine that reflects your families, or plan a relaxed buffet. There is no house menu to work around.',
-          'Alcohol is allowed, so you can plan a champagne toast, wine with dinner, or a full bar through your caterer. Before you sign with a caterer, ask us about kitchen access and what time they can arrive, so their plan matches the space.',
+          'Alcohol is allowed, so you can plan a champagne toast, wine with dinner, or a full bar through your caterer. Before you sign with a caterer, ask us whether there is a kitchen they can use and what time they can arrive, so their plan matches the space.',
         ],
       },
       {
@@ -91,7 +108,7 @@ export const events: EventType[] = [
       {
         heading: 'How to reserve your wedding date',
         body: [
-          'Booking takes three steps. Pick your date on the live availability calendar and choose the indoor hall, the outdoor space, or both. Send a request with your guest count and plans, which takes about two minutes. We follow up to confirm the date and details, and then your date is reserved for you.',
+          `Booking takes three steps. Pick your date on the live availability calendar and choose the indoor hall, the outdoor space, or both. Send a request with your guest count and plans, which takes about two minutes. ${RESERVE}`,
           `Rates depend on the day, the space, and how many hours you need. The pricing page shows the full rate card and gives you an instant estimate, so you can compare dates before you choose one. Prefer to talk it through first? Call ${PHONE}.`,
         ],
       },
@@ -106,7 +123,7 @@ export const events: EventType[] = [
         'Book your caterer early, since catering is not included with the rental.',
         'Plan your drinks. Alcohol is allowed, so arrange any bar service with your caterer.',
         'Ask us whether tables and chairs are included or should be rented.',
-        'Ask about kitchen access, decorating, setup times, and what time your event needs to end.',
+        'Ask whether there is a kitchen your caterer can use, and ask about decorating, setup times, and what time your event needs to end.',
       ],
     },
     faqs: [
@@ -120,7 +137,7 @@ export const events: EventType[] = [
       },
       {
         q: 'Can we bring our own caterer and serve alcohol?',
-        a: 'Yes. Catering is not included, so you choose your caterer or bring your own food, and alcohol is allowed. Ask us about kitchen access and arrival times before you finalize the plan with your caterer.',
+        a: 'Yes. Catering is not included, so you choose your caterer or bring your own food, and alcohol is allowed. Before you finalize the plan with your caterer, ask us whether there is a kitchen they can use and when they can arrive.',
       },
       {
         q: 'How much does a wedding at The Venue at NCC cost?',
@@ -145,7 +162,7 @@ export const events: EventType[] = [
     slug: 'receptions-banquets',
     name: 'Banquets & anniversaries',
     summary: 'Anniversary dinners, award banquets, and formal celebrations.',
-    metaTitle: 'Banquet hall for anniversaries and awards in Suffolk, VA',
+    metaTitle: 'Banquet hall in Suffolk, VA | The Venue at NCC',
     metaDescription: `Host an anniversary dinner or awards banquet at The Venue at NCC in Suffolk, VA. Indoor hall for up to ${INDOOR} guests, your own caterer, and alcohol allowed.`,
     h1: 'Anniversary dinners and awards banquets in Suffolk',
     intro: [
@@ -177,7 +194,7 @@ export const events: EventType[] = [
       {
         heading: 'Reserving a date for your banquet or anniversary dinner',
         body: [
-          'Booking takes three steps. Pick your date on the live availability calendar, send a request with the occasion and a rough guest count in about two minutes, and we follow up to confirm the date and details.',
+          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the occasion and a rough guest count, which takes about two minutes. ${RESERVE}`,
           `Rates depend on the day, the space, and how many hours you need. If a board or committee needs to approve the cost, the instant estimate on the pricing page gives them a clear figure to review. Questions first? Call ${PHONE}.`,
         ],
       },
@@ -198,7 +215,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'Can we use our own caterer for a banquet?',
-        a: 'Yes. Catering is not included, so you choose the caterer or bring your own food. Ask us about kitchen access and caterer arrival times when you send your request.',
+        a: 'Yes. Catering is not included, so you choose the caterer or bring your own food. When you send your request, ask us whether there is a kitchen your caterer can use and when they can arrive.',
       },
       {
         q: 'Is alcohol allowed at an anniversary party or banquet?',
@@ -230,7 +247,7 @@ export const events: EventType[] = [
     slug: 'baby-bridal-showers',
     name: 'Baby & bridal showers',
     summary: 'Showers, gender reveals, and sip-and-sees for family and friends.',
-    metaTitle: 'Bridal shower and baby shower venue | Suffolk, VA',
+    metaTitle: 'Baby and bridal shower venue, Suffolk | The Venue at NCC',
     metaDescription:
       'Host a baby shower, bridal shower, or gender reveal at The Venue at NCC in Suffolk, VA. Bring your own food, parking is included, and anyone can book.',
     h1: 'Baby shower and bridal shower venue in Suffolk',
@@ -263,7 +280,7 @@ export const events: EventType[] = [
       {
         heading: 'Booking your shower at The Venue at NCC',
         body: [
-          'Booking takes three steps. Pick your date on the live availability calendar, send a request with the type of shower and a rough guest count in about two minutes, and we follow up to confirm the date and details.',
+          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the type of shower and a rough guest count, which takes about two minutes. ${RESERVE}`,
           `If you are co-hosting, agree on the date first so one host can send the request. Questions before you book? Call ${PHONE}.`,
         ],
       },
@@ -275,7 +292,7 @@ export const events: EventType[] = [
         'Set a budget and use the instant estimate to split costs with co-hosts.',
         `Write a draft guest list. The indoor hall holds up to ${INDOOR} guests.`,
         'Plan the food, since catering is not included. Homemade, catered, or a mix of both is up to you.',
-        'Ask us about kitchen access if you plan to warm or serve food on site.',
+        'Ask us whether there is a kitchen you can use if you plan to warm or serve food on site.',
         'Ask whether tables and chairs are provided and what you should bring yourself.',
         'Ask about decorating and when you can arrive to set up.',
         'Plan a simple order for the event, from food and games to gifts or the big reveal.',
@@ -288,7 +305,7 @@ export const events: EventType[] = [
       },
       {
         q: 'Can I bring my own food to a shower?',
-        a: 'Yes. Catering is not included, so you can bring homemade food, order from a caterer, or do both. Ask us about kitchen access if you need to warm or chill anything on site.',
+        a: 'Yes. Catering is not included, so you can bring homemade food, order from a caterer, or do both. If you need to warm or chill anything on site, ask us whether there is a kitchen you can use.',
       },
       {
         q: 'When should a baby shower be held?',
@@ -312,7 +329,7 @@ export const events: EventType[] = [
     slug: 'birthday-parties',
     name: 'Birthdays & milestones',
     summary: 'First birthdays, sweet sixteens, big-number birthdays, and retirement parties.',
-    metaTitle: 'Birthday and retirement party venue in Suffolk, VA',
+    metaTitle: 'Birthday party venue in Suffolk, VA | The Venue at NCC',
     metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue at NCC in Suffolk, VA. Up to ${INDOOR} guests indoors, alcohol allowed, parking included.`,
     h1: 'Milestone birthdays and retirement parties in Suffolk',
     intro: [
@@ -338,13 +355,13 @@ export const events: EventType[] = [
         heading: 'How to plan a milestone birthday party',
         body: [
           'Start with the guest of honor. Decide early whether the party is a surprise, and if it is, pick one trusted person to handle the arrival. Next, set a budget and a rough guest count, since those two numbers shape the menu, the invitations, and which space you need.',
-          'Send invitations four to six weeks ahead for most milestone parties, and earlier if guests are traveling. Before you book a caterer or a baker, ask us about kitchen access, setup times, and what time the party needs to end, so everyone works from the same schedule.',
+          'Send invitations four to six weeks ahead for most milestone parties, and earlier if guests are traveling. Before you book a caterer or a baker, ask us whether there is a kitchen they can use, when you can set up, and what time the party needs to end, so everyone works from the same schedule.',
         ],
       },
       {
         heading: 'Three steps to book your birthday party',
         body: [
-          'Pick your date on the live availability calendar. Send a request with the occasion and about how many guests you expect, which takes about two minutes. We follow up to confirm the date and details, and then your date is reserved for you.',
+          `Pick your date on the live availability calendar. Send a request with the occasion and about how many guests you expect, which takes about two minutes. ${RESERVE}`,
           `Rates depend on the day, the space, and how many hours you need, and the pricing page shows an instant estimate. Our address is ${ADDRESS}, and you can reach us at ${PHONE}.`,
         ],
       },
@@ -369,7 +386,7 @@ export const events: EventType[] = [
       },
       {
         q: 'Can I bring my own cake, food, and drinks?',
-        a: 'Yes. Catering is not included, so you bring the cake, food, and caterer you want, and alcohol is allowed. Ask us about kitchen access when you send your request.',
+        a: 'Yes. Catering is not included, so you bring the cake, food, and caterer you want, and alcohol is allowed. When you send your request, ask us whether there is a kitchen your caterer can use.',
       },
       {
         q: 'How far in advance should I book a birthday party venue?',
@@ -393,7 +410,7 @@ export const events: EventType[] = [
     slug: 'repasts-memorials',
     name: 'Repasts & celebrations of life',
     summary: 'A place for family and friends to gather, share a meal, and remember.',
-    metaTitle: 'Repast venue in Suffolk, VA for celebrations of life',
+    metaTitle: 'Repast venue in Suffolk, VA | The Venue at NCC',
     metaDescription: `A place for family and friends to gather after a funeral or memorial in Suffolk, VA. Bring your own food, and parking is included. Call ${PHONE}.`,
     h1: 'Repasts and celebrations of life in Suffolk',
     intro: [
@@ -405,7 +422,7 @@ export const events: EventType[] = [
         heading: 'Planning a funeral repast',
         body: [
           'Most repasts begin soon after the burial or memorial service, so the service schedule usually sets the timing. Many families choose one point person to handle the repast so the closest relatives are not fielding every question. That person can confirm the date, share a rough guest count, and keep track of decisions in one place.',
-          'Food is often the biggest decision. Catering is not included, so your family decides what is served. Some families hire a caterer, some ask relatives and friends to bring dishes, and some do a mix of both. Ask us about kitchen access and setup time so the food plan works on the day.',
+          'Food is often the biggest decision. Catering is not included, so your family decides what is served. Some families hire a caterer, some ask relatives and friends to bring dishes, and some do a mix of both. Ask us whether there is a kitchen you can use and how much time you will have to set up, so the food plan works on the day.',
           'It also helps to decide early who will welcome guests, who will offer a blessing before the meal, and who will pack up leftovers and flowers at the end. Small jobs like these are easy to hand to cousins, friends, or church members who want to help.',
         ],
       },
@@ -419,8 +436,8 @@ export const events: EventType[] = [
       {
         heading: 'Arranging a repast at The Venue at NCC',
         body: [
-          `You can call ${PHONE} or start online. Pick the date on the availability calendar, send a short request with the service time and a rough guest count, and we follow up to confirm. A best guess on numbers is fine, since attendance at a repast is often hard to know ahead of time.`,
-          `Rates depend on the day and how many hours you need, and the pricing page shows an instant estimate so the family can see the cost before deciding. If you are coordinating with a funeral home, share our address, ${ADDRESS}, with them early.`,
+          `You can call ${PHONE} or start online. Pick the date on the availability calendar, send a short request with the service time and a rough guest count, and we confirm availability. Then your booking deposit reserves the date. A best guess on numbers is fine, since attendance at a repast is often hard to know ahead of time.`,
+          `Rates depend on the day and how many hours you need, and the pricing page shows an instant estimate so the family can see the cost before deciding.${REPAST_RATE} If you are coordinating with a funeral home, share our address, ${ADDRESS}, with them early.`,
         ],
       },
     ],
@@ -431,7 +448,7 @@ export const events: EventType[] = [
         'Choose one family point person to answer questions and keep track of decisions.',
         'Share a rough guest count, and plan food for a few more people than you expect.',
         'Decide on food. Catering is not included, so a caterer, family dishes, or both are up to you.',
-        'Ask us about kitchen access and how much time you will have to set up and clean up.',
+        'Ask us whether there is a kitchen you can use and how much time you will have to set up and clean up.',
         'Ask whether tables and chairs are provided, and whether sound or a screen is available for a slideshow.',
         'Pick who will welcome guests and who will offer a blessing before the meal.',
         `Share the address, ${ADDRESS}, with guests and the funeral home.`,
@@ -472,7 +489,7 @@ export const events: EventType[] = [
     slug: 'meetings-trainings',
     name: 'Meetings & workshops',
     summary: 'Board meetings, trainings, workshops, and nonprofit gatherings.',
-    metaTitle: 'Meeting space in Suffolk, VA: boards, trainings, workshops',
+    metaTitle: 'Meeting space in Suffolk, VA | The Venue at NCC',
     metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. Room for up to ${INDOOR} people, parking included, and instant estimates online.`,
     h1: 'Off-site meeting space in Suffolk for your team or board',
     intro: [
@@ -504,7 +521,7 @@ export const events: EventType[] = [
       {
         heading: 'How to book meeting space at The Venue at NCC',
         body: [
-          'Booking takes three steps. Pick your date on the live availability calendar, send a request with your meeting type and headcount in about two minutes, and we follow up to confirm the date and details.',
+          `Booking takes three steps. Pick your date on the live availability calendar and send a request with your meeting type and headcount, which takes about two minutes. ${RESERVE}`,
           `Rates depend on the day, the space, and how many hours you need. The pricing page gives an instant estimate you can forward for approval, and you can reach us at ${PHONE} with any questions.`,
         ],
       },
@@ -533,7 +550,7 @@ export const events: EventType[] = [
       },
       {
         q: 'Can we bring in coffee or lunch?',
-        a: 'Yes. Catering is not included, so you can bring your own coffee and lunch or have a caterer deliver. Ask us about kitchen access if you need to keep food warm.',
+        a: 'Yes. Catering is not included, so you can bring your own coffee and lunch or have a caterer deliver. If you need to keep food warm, ask us whether there is a kitchen you can use.',
       },
       {
         q: 'Is parking included for attendees?',
@@ -541,7 +558,7 @@ export const events: EventType[] = [
       },
       {
         q: 'How do I book meeting space in Suffolk at The Venue at NCC?',
-        a: 'Pick your date on the availability calendar, send a request with your meeting details in about two minutes, and we follow up to confirm. The pricing page gives an instant estimate before you send it.',
+        a: `Pick your date on the availability calendar and send a request with your meeting details, which takes about two minutes. ${RESERVE} The pricing page gives an instant estimate before you send it.`,
       },
     ],
     related: ['church-community-events', 'receptions-banquets'],
@@ -558,7 +575,7 @@ export const events: EventType[] = [
     slug: 'graduations-reunions',
     name: 'Graduations & reunions',
     summary: 'Graduation parties, family reunions, and class reunions.',
-    metaTitle: 'Family reunion and graduation party venue in Suffolk, VA',
+    metaTitle: 'Reunion and graduation venue, Suffolk | The Venue at NCC',
     metaDescription: `Host a graduation party or family reunion at The Venue at NCC in Suffolk, VA. Outdoor space for up to ${OUTDOOR} guests, parking included, and your own food.`,
     h1: 'Graduation parties and reunions in Suffolk',
     intro: [
@@ -591,7 +608,7 @@ export const events: EventType[] = [
       {
         heading: 'Booking your graduation party or reunion',
         body: [
-          'Booking takes three steps. Pick your date on the live availability calendar, send a request with the type of celebration and a rough guest count in about two minutes, and we follow up to confirm the date and details.',
+          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the type of celebration and a rough guest count, which takes about two minutes. ${RESERVE}`,
           `The instant estimate on the pricing page makes it easy to work out a fair share per household or classmate. If you are planning for a reunion committee, have one point person handle the booking so the details stay in one place. Questions? Call ${PHONE}.`,
         ],
       },
@@ -604,7 +621,7 @@ export const events: EventType[] = [
         `Choose a space: up to ${INDOOR} guests indoors or up to ${OUTDOOR} outdoors.`,
         'Get an instant estimate and decide how households or classmates will share the cost.',
         'Plan the food, since catering is not included. A potluck, a caterer, or both is up to you.',
-        'Ask whether tables and chairs are included, and ask about kitchen access.',
+        'Ask whether tables and chairs are included, and whether there is a kitchen your caterer can use.',
         'Ask about setup, cleanup, and end times for your event.',
         'Send save-the-dates with the full address and a note that parking is included.',
       ],
@@ -640,12 +657,12 @@ export const events: EventType[] = [
     slug: 'church-community-events',
     name: 'Church & community events',
     summary: 'Conferences, fellowship events, youth nights, and community meetings.',
-    metaTitle: 'Church and community event venue in Suffolk, VA',
+    metaTitle: 'Church event venue in Suffolk, VA | The Venue at NCC',
     metaDescription: `Plan a church conference, youth night, or community meeting at The Venue at NCC in Suffolk, VA. Open to any group, with room for up to ${OUTDOOR} guests outdoors.`,
     h1: 'Church and community events in Suffolk',
     intro: [
       `Much of the life of a church or community happens outside of Sunday morning. A conference, a fellowship event, a youth night, or a community meeting each needs a clear plan and a place to meet. The Venue at NCC in Suffolk has an indoor hall for up to ${INDOOR} guests and an outdoor space for up to ${OUTDOOR}, and any church or community group can book it.`,
-      `The Venue at NCC is the event space of ${CHURCH}, established in Suffolk in ${FOUNDED} by ${FOUNDER}. Other churches, ministries, and neighborhood groups are welcome to book, and on-site parking is included.`,
+      `The Venue at NCC is the event space of ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. Other churches, ministries, and neighborhood groups are welcome to book, and on-site parking is included.`,
     ],
     sections: [
       {
@@ -673,8 +690,8 @@ export const events: EventType[] = [
       {
         heading: 'Reserving a date for your church or community event',
         body: [
-          'Pick your date on the live availability calendar and choose the space that fits your group. Send a request with the event type and a rough headcount, which takes about two minutes. We follow up to confirm the date and details, and then you can start sharing it with your leaders, speakers, and volunteers.',
-          `Rates depend on the day, the space, and how many hours you need. If several leaders are involved, choose one person to handle the booking so nothing gets lost between meetings. Questions? Call ${PHONE}.`,
+          `Pick your date on the live availability calendar and choose the space that fits your group. Send a request with the event type and a rough headcount, which takes about two minutes. ${RESERVE} After that, you can start sharing the date with your leaders, speakers, and volunteers.`,
+          `Rates depend on the day, the space, and how many hours you need.${NONPROFIT_RATE} If several leaders are involved, choose one person to handle the booking so nothing gets lost between meetings. Questions? Call ${PHONE}.`,
         ],
       },
     ],
@@ -694,7 +711,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'Which church is The Venue at NCC part of?',
-        a: `The Venue at NCC is the event space of ${CHURCH}, established in Suffolk in ${FOUNDED} by ${FOUNDER}. You can learn more about the church at ${CHURCH_SITE}.`,
+        a: `The Venue at NCC is the event space of ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. You can learn more about the church at ${CHURCH_SITE}.`,
       },
       {
         q: 'Can other churches and community groups book the venue?',

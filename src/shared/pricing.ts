@@ -45,10 +45,11 @@ export interface PricingModel {
 }
 
 /**
- * Recommended from the September 2026 comparables analysis (59 Hampton Roads venues, 54 verified):
- * venue-only halls for 100 to 150 guests that allow alcohol and outside caterers rent for about
- * $145 to $225 an hour on Saturdays ($870 to $1,350 for 6 hours). This card sits at the value end
- * of that band, below the priced faith halls, with a founding discount to earn first reviews.
+ * Recommended from the September 2026 comparables analysis (47 distinct Hampton Roads venues plus
+ * 5 market benchmarks): private venue-only halls for 75 to 100 guests rent for about $145 to $225
+ * an hour on Saturdays ($870 to $1,350 for 6 hours, hall rental only, before fees and tax). This card
+ * sits at the value end of that band, below the priced faith halls, with a founding discount to earn
+ * first reviews.
  */
 export const pricing: PricingModel = {
   status: 'recommended',
@@ -56,6 +57,8 @@ export const pricing: PricingModel = {
   spaces: {
     indoor: { label: 'Indoor hall', capacity: 100 },
     outdoor: { label: 'Outdoor space', capacity: 150 },
+    // 150 for 'both' is an internal validation ceiling (the larger space), NOT a published combined
+    // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
     both: { label: 'Indoor and outdoor', capacity: 150 },
   },
   dayTypes: {
@@ -71,19 +74,19 @@ export const pricing: PricingModel = {
   },
   minimumHours: { weekday: 2, friday: 4, saturday: 5, sunday: 3 },
   packages: [
-    { id: 'sat-indoor-6', name: 'Saturday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
-    { id: 'sat-outdoor-6', name: 'Saturday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
+    { id: 'sat-indoor-6', name: 'Saturday Indoor Block', description: 'The indoor hall for 6 hours. A fit for receptions, showers, and banquets.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
+    { id: 'sat-outdoor-6', name: 'Saturday Outdoor Block', description: 'The outdoor space for 6 hours. A fit for ceremonies, reunions, and graduation parties.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
     { id: 'sat-both-6', name: 'Saturday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, with the hall as your rain plan for up to 100 guests.', space: 'both', dayType: 'saturday', hours: 6, price: 1250 },
-    { id: 'sat-indoor-12', name: 'Saturday Full Day, Indoor', description: 'The indoor hall for up to 12 hours, setup and cleanup time included.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
-    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Outdoor', description: 'The outdoor space for up to 12 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
+    { id: 'sat-indoor-12', name: 'Saturday Full Day, Indoor', description: 'The indoor hall for up to 12 hours, for a long program or a full day of events.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
+    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Outdoor', description: 'The outdoor space for up to 12 hours, for an all-day reunion or community day.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
     { id: 'sat-both-12', name: 'Saturday Wedding and Celebration Day', description: 'Both spaces for up to 12 hours: ceremony outside, reception inside or out.', space: 'both', dayType: 'saturday', hours: 12, price: 2200 },
-    { id: 'fri-indoor-6', name: 'Friday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
-    { id: 'fri-outdoor-6', name: 'Friday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
-    { id: 'fri-both-6', name: 'Friday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, setup and cleanup time included.', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
-    { id: 'fri-both-12', name: 'Friday Full Day, Indoor and Outdoor', description: 'Both spaces for up to 12 hours. Good for weddings and rehearsal-plus-reception days.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
-    { id: 'sun-indoor-6', name: 'Sunday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
-    { id: 'sun-outdoor-6', name: 'Sunday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
-    { id: 'sun-both-6', name: 'Sunday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, setup and cleanup time included.', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
+    { id: 'fri-indoor-6', name: 'Friday Indoor Block', description: 'The indoor hall for 6 hours on a Friday.', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
+    { id: 'fri-outdoor-6', name: 'Friday Outdoor Block', description: 'The outdoor space for 6 hours on a Friday.', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
+    { id: 'fri-both-6', name: 'Friday Indoor and Outdoor Block', description: 'Both spaces for 6 hours on a Friday.', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
+    { id: 'fri-both-12', name: 'Friday Full Day, Indoor and Outdoor', description: 'Both spaces for up to 12 hours. Good for Friday weddings and receptions.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
+    { id: 'sun-indoor-6', name: 'Sunday Indoor Block', description: 'The indoor hall for 6 hours on a Sunday.', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
+    { id: 'sun-outdoor-6', name: 'Sunday Outdoor Block', description: 'The outdoor space for 6 hours on a Sunday.', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
+    { id: 'sun-both-6', name: 'Sunday Indoor and Outdoor Block', description: 'Both spaces for 6 hours on a Sunday.', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
     { id: 'weekday-indoor-8', name: 'Weekday Full Day, Indoor', description: 'The indoor hall for up to 8 hours, Monday to Thursday. Good for trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
   ],
   fees: { cleaning: 100, damageDepositRefundable: 250 },
@@ -97,10 +100,14 @@ export const pricing: PricingModel = {
   introOffer: { label: 'Founding rate: 20% off the rental when you book by March 31, 2027', percent: 20, validUntil: '2027-03-31' },
 };
 
-/** Market context from the comparables analysis, shown on the pricing page. */
+/**
+ * Market context from the comparables analysis, shown on the pricing page.
+ * venueCount: 59 research entries, less 5 market benchmarks and 7 duplicate listings.
+ * The Saturday band is private venue-only halls for 75 to 100 guests, hall rental only, before fees and tax.
+ */
 export const marketContext = {
   researched: 'September 2026',
-  venueCount: 59,
+  venueCount: 47,
   saturdaySixHourLow: 870,
   saturdaySixHourHigh: 1350,
   saturdayHourlyLow: 145,

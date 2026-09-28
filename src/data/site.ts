@@ -44,7 +44,11 @@ export const site = {
     shortName: 'NCC',
     url: 'https://wearencc.org',
     foundingYear: 1997,
+    /** Display form, with the honorific. */
     pastor: 'Rev. Anthony M. VanDyke',
+    /** The same person split for structured data (schema.org Person name and honorificPrefix). */
+    pastorName: 'Anthony M. VanDyke',
+    pastorHonorific: 'Rev.',
     pastorTitle: 'Pastor and Founder',
     /** The church office line. The venue has its own number below. */
     phone: '(757) 338-3432',
@@ -77,19 +81,15 @@ export const site = {
       'https://www.google.com/maps/dir/?api=1&destination=5112+Godwin+Blvd%2C+Suffolk%2C+VA+23434',
   },
 
-  /** Communities in the market area. Used for local SEO copy and `areaServed` in structured data. */
+  /**
+   * Places the venue serves, for `areaServed` in structured data (src/lib/schema.ts).
+   * Structured data must match visible content, so list only places the pages actually name.
+   * Add a town here only after it appears in page copy.
+   */
   areaServed: [
-    'Suffolk',
-    'Chesapeake',
-    'Portsmouth',
-    'Norfolk',
-    'Virginia Beach',
-    'Smithfield',
-    'Isle of Wight County',
-    'Carrollton',
-    'Windsor',
-    'Hampton Roads',
-  ],
+    { name: 'Suffolk, Virginia', type: 'City' },
+    { name: 'Hampton Roads', type: 'AdministrativeArea' },
+  ] as { name: string; type: 'City' | 'AdministrativeArea' }[],
 
   /** The bookable spaces. 'both' is offered as a request; the team confirms availability. */
   spaces: [
@@ -148,7 +148,7 @@ export const site = {
     },
     {
       title: 'We confirm',
-      body: 'We follow up to confirm the date and details, then your date is reserved for you.',
+      body: 'We confirm availability, then your booking deposit reserves the date.',
     },
   ],
 } as const;

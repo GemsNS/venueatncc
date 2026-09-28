@@ -32,12 +32,12 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
   <section class="hero">
     <div class="container hero__head">
       <h1 class="hero__h1">
-        <span class="hero__kicker">Event venue in Suffolk, Virginia</span>
+        <span class="hero__kicker">Event venue in Suffolk, Virginia<span class="visually-hidden">:</span></span>
         <span class="hero__title t-display">Unforgettable events await you.</span>
       </h1>
       <p class="t-lead hero__lead">
-        An indoor hall for {indoor?.capacity}, an outdoor space for {outdoor?.capacity}, and parking for everyone. Open to
-        all, with upfront pricing and an instant estimate for your date.
+        An indoor hall for {indoor?.capacity}, an outdoor space for {outdoor?.capacity}, and parking included. Open to all,
+        with upfront pricing and an instant estimate for your date.
       </p>
       <div class="btn-row hero__actions">
         <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
@@ -49,7 +49,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
       <div class="hero__media">
         <ArchFrame shape="panel" ratio="2 / 1" photo={hero} priority sizes="(min-width: 1240px) 1200px, 94vw" variant={0} muntins={false} window={!hero} class="hero__panel" />
       </div>
-      <div class="hero__widget glass">
+      <div class="hero__widget">
         <DateChecker client:load bookHref={href(bookHref)} />
       </div>
     </div>
@@ -62,12 +62,12 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
   <section class="section section--grouped" aria-labelledby="why-heading">
     <div class="container">
       <div class="section-head section-head--center">
-        <h2 id="why-heading">Everything you need. Nothing you don't.</h2>
-        <p class="t-lead">A flexible space that fits the way you want to celebrate.</p>
+        <h2 id="why-heading">What every booking includes</h2>
+        <p class="t-lead">The space, on-site parking, and the freedom to bring your own caterer.</p>
       </div>
       <div class="bento">
         <article class="bento__tile bento__tile--wide card">
-          <h3 class="t-title-2">Room for your whole guest list.</h3>
+          <h3 class="t-title-2">Room for your whole guest list</h3>
           <div class="cap">
             <div class="cap__item">
               <Icon name="building" class="cap__icon" />
@@ -100,11 +100,11 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
         <article class="bento__tile card">
           <span class="icon-tile"><Icon name="parking" /></span>
           <h3>Parking included</h3>
-          <p class="secondary">On-site parking comes with every booking, for every guest.</p>
+          <p class="secondary">On-site parking comes with every booking.</p>
         </article>
         <article class="bento__tile bento__tile--wide bento__tile--price card">
           <div>
-            <h3 class="t-title-2">Upfront pricing, from {formatUSD(fromHourly)} an hour.</h3>
+            <h3 class="t-title-2">Upfront pricing, from {formatUSD(fromHourly)} an hour</h3>
             <p class="secondary">See every rate, then get an instant estimate for your date, space, and hours.</p>
           </div>
           <a class="btn btn--tinted" href={href(pricingHref)}>
@@ -119,7 +119,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
   <section class="section" aria-labelledby="steps-heading">
     <div class="container">
       <div class="section-head section-head--center">
-        <h2 id="steps-heading">Book in three steps.</h2>
+        <h2 id="steps-heading">Book in three steps</h2>
         <p class="t-lead">No phone tag. See what is open and ask for your date in minutes.</p>
       </div>
       <ol class="steps">
@@ -142,7 +142,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
   <section class="section section--grouped" aria-labelledby="events-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="events-heading">Plan any kind of event.</h2>
+        <h2 id="events-heading">Plan any kind of event</h2>
         <p class="t-lead">Weddings to workshops, showers to celebrations of life.</p>
       </div>
       <EventIndex layout="shelf" />
@@ -155,7 +155,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
   <section class="section" aria-labelledby="spaces-heading">
     <div class="container">
       <div class="section-head section-head--center">
-        <h2 id="spaces-heading">Two spaces. One address.</h2>
+        <h2 id="spaces-heading">Two spaces at one address</h2>
         <p class="t-lead">Choose the hall, the open air, or ask for both.</p>
       </div>
       <div class="spaces">
@@ -187,7 +187,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
       <section class="section" aria-labelledby="faq-heading">
         <div class="container faq-grid">
           <div class="section-head">
-            <h2 id="faq-heading">Questions, answered.</h2>
+            <h2 id="faq-heading">Questions, answered</h2>
             <p class="t-lead">The things people ask before they book.</p>
             <a class="link-more" href={href('/faq/')}>
               All questions <Icon name="chevron-right" />
@@ -205,8 +205,8 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
       <div>
         <h2 id="church-heading" class="t-title-2">Part of New Community Church</h2>
         <p class="secondary">
-          The Venue at NCC is the event space of {site.parent.name}, part of Suffolk since {site.parent.foundingYear} and led by
-          {' '}{site.parent.pastor}, {site.parent.pastorTitle.toLowerCase()}.
+          The Venue at NCC is the event space of {site.parent.name}, part of Suffolk since {site.parent.foundingYear}. The church
+          was founded by {site.parent.pastor}, who serves as its pastor.
         </p>
       </div>
       <a class="link-more" href={href('/about/')}>About us <Icon name="chevron-right" /></a>
@@ -268,9 +268,9 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     }
   }
 
-  .hero__widget {
-    border-radius: var(--r-xl);
-    padding: 1.25rem;
+  /* The date checker card (.bk-dc) is the only surface here: content does not sit on Liquid Glass. */
+  .hero__widget :global(.bk-dc) {
+    margin-inline: auto;
   }
 
   @media (min-width: 900px) {
@@ -291,7 +291,8 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     }
   }
 
-  .hero__facts {
+  /* The ul carries FactStrip's scope, so reach it with :global. */
+  .hero :global(.hero__facts) {
     margin-top: 2rem;
   }
 
@@ -344,6 +345,13 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
     max-width: 40rem;
   }
 
+  /* In dark mode the tinted button sits on the tile's purple glow; a lighter purple keeps it above 4.5:1. */
+  @media (prefers-color-scheme: dark) {
+    .bento__tile--price .btn--tinted {
+      color: #d19bff;
+    }
+  }
+
   .cap {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -353,6 +361,7 @@ const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capac
 
   .cap__item {
     display: grid;
+    align-content: start;
     gap: 0.15rem;
     padding: 1.25rem;
     border-radius: var(--r-md);
