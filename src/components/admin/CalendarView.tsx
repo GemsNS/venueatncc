@@ -269,6 +269,23 @@ export function CalendarView({ month: routeMonth, day: routeDay }: { month: stri
     if (routeDay) setSheetDay(routeDay);
   }, [routeDay]);
 
+  // An empty month points to the next blocked date, so the first view is not a dead end.
+  const [nextBlocked, setNextBlocked] = useState<DateKey | null>(null);
+  useEffect(() => {
+    setNextBlocked(null);
+    if (!blocks || blocks.length > 0) return;
+    let alive = true;
+    const monthEnd = lastDay(month);
+    const from = addDays(monthEnd < today ? today : monthEnd, 1);
+    api.admin.listBlocks(from, addDays(from, 365)).then((res) => {
+      if (!alive || isError(res) || res.length === 0) return;
+      setNextBlocked(res.reduce((min, b) => (b.date < min ? b.date : min), res[0].date));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [blocks, month]);
+
   useEffect(() => {
     if (!wantFocus.current) return;
     const btn = gridRef.current?.querySelector<HTMLButtonElement>(`button[data-date="${focusDate}"]`);
@@ -444,7 +461,17 @@ export function CalendarView({ month: routeMonth, day: routeDay }: { month: stri
           </div>
         ) : monthBlocks.length === 0 ? (
           <div class="list-group adm-list">
-            <p class="list-row adm-muted">Nothing blocked in {formatMonth(y, m)}.</p>
+            <div class="list-row adm-cal__empty">
+              <p class="adm-muted">
+                Nothing blocked in {formatMonth(y, m)}.
+                {nextBlocked && ` The next blocked date is ${formatShort(nextBlocked)}.`}
+              </p>
+              {nextBlocked && (
+                <button type="button" class="btn btn--tinted btn--sm adm-btn-44" onClick={() => goMonth(monthOf(nextBlocked), nextBlocked)}>
+                  Go to {formatMonth(parseKey(nextBlocked).y, parseKey(nextBlocked).m)}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <ul class="list-group adm-list">

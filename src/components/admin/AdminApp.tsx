@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { api, isError, type Result } from '../../lib/api';
-import type { AdminStats, AdminUser } from '../../shared/types';
+import type { AdminStats, AdminUser, ApiError } from '../../shared/types';
 import { AdminContext, type AdminCtx } from './context';
 import { CalendarView } from './CalendarView';
 import { SHOW_DEMO, resetDemo } from './demo-tools';
@@ -22,6 +22,13 @@ import { EmptyState, PageHeader } from './ui';
 type Phase = 'loading' | 'signedOut' | 'signedIn';
 
 const EXPIRED = 'Your session ended. Sign in again to pick up where you left off.';
+
+/** The fetch never got an answer. src/lib/api/http.ts reports that with this message (and a network flag once it has one). */
+const NO_ANSWER = /could not reach the server/i;
+
+function isNetworkError(res: ApiError): boolean {
+  return (res as ApiError & { network?: boolean }).network === true || NO_ANSWER.test(res.error);
+}
 
 function screenTitle(route: Route): string {
   switch (route.name) {
@@ -118,9 +125,10 @@ export default function AdminApp() {
       const res = await call;
       if (isError(res) && userRef.current && !expiring.current) {
         // The API reports errors without a status code, so confirm the session is still alive.
-        // Offline is not an ended session.
+        // Only the server can end a session: being offline or not reaching the server is not one,
+        // and the probe would read as signed out, losing whatever the user was typing.
         const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
-        if (!offline) {
+        if (!offline && !isNetworkError(res)) {
           const still = await api.admin.session().catch(() => userRef.current);
           if (!still) expire();
         }
@@ -190,7 +198,13 @@ export default function AdminApp() {
     } catch {
       return 'The reset did not work. Try again.';
     }
-    const u = await api.admin.session();
+    let u: AdminUser | null;
+    try {
+      u = await api.admin.session();
+    } catch {
+      // Could not check; the reset itself worked, so stay signed in.
+      u = userRef.current;
+    }
     if (!u) {
       leave('Demo data reset. Sign in to continue.');
       navigate('#/', true);
