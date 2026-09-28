@@ -3,69 +3,98 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
 import FaqList from '../components/FaqList.astro';
+import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import PriceEstimator from '../components/booking/PriceEstimator';
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
+import { photoByName } from '../data/photos';
 import { pricing, priceSummary, formatUSD, marketContext, type DayType } from '../shared/pricing';
-import { capacityLabel } from '../shared/capacity';
+import { SPACE_NAME, capacityLabel } from '../shared/capacity';
 import { todayKey } from '../shared/dates';
 import type { SpaceChoice } from '../shared/types';
 import { breadcrumbs, rateCatalog, venueRates } from '../lib/schema';
 import { href } from '../lib/paths';
 
 const { fromHourly } = priceSummary();
+const hall = site.spaces.find((s) => s.id === 'indoor');
+const grove = site.spaces.find((s) => s.id === 'outdoor');
 const title = 'Venue rental rates in Suffolk, VA | The Venue at NCC';
-const description = `Event venue rental rates in Suffolk, VA from ${formatUSD(fromHourly)} an hour. Indoor hall for 100, outdoor space for 150, parking included. Get an instant estimate.`;
+const description = `Event venue rental rates in Suffolk, VA from ${formatUSD(fromHourly)} an hour. ${hall?.name} for up to ${hall?.capacity} guests, ${grove?.name} for up to ${grove?.capacity}, on-site parking included. Get an instant estimate.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Pricing', path: '/pricing/' },
 ];
 const spaces: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 const days: DayType[] = ['saturday', 'friday', 'sunday', 'weekday'];
-const pricingFaqs = publishedFaqs.filter((f) => f.topic === 'pricing' || f.topic === 'food');
-const deposit =
-  pricing.bookingDeposit.type === 'percent' ? `${pricing.bookingDeposit.value}% of your total` : formatUSD(pricing.bookingDeposit.value);
+const pricingFaqs = publishedFaqs.filter((f) => f.topic === 'pricing');
 const offer = pricing.introOffer && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
 const packagesByDay = days
   .map((d) => ({ day: d, items: pricing.packages.filter((p) => p.dayType === d) }))
   .filter((g) => g.items.length > 0);
 const autoDiscounts = pricing.discounts.filter((d) => d.appliesTo !== 'manual' && d.percent > 0);
 const askDiscounts = pricing.discounts.filter((d) => d.appliesTo === 'manual' && d.percent > 0);
-const satIndoorBlock = pricing.packages.find((p) => p.id === 'sat-indoor-6');
+const satHallBlock = pricing.packages.find((p) => p.id === 'sat-indoor-6');
 const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
+
 /**
  * Capacity next to a space. 'both' never gets a single combined figure (it is not confirmed),
  * so it names each space's own limit instead.
  */
-const packageSpaceLine = (s: SpaceChoice) =>
-  s === 'both' ? capacityLabel('both') : `${pricing.spaces[s].label}, ${capacityLabel(s).toLowerCase()}`;
-const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : `Up to ${pricing.spaces[s].capacity}`);
+const packageSpaceLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : `${SPACE_NAME[s]}, ${capacityLabel(s).toLowerCase()}`);
+const rateHead = (s: SpaceChoice) =>
+  s === 'both' ? { name: 'Both spaces', detail: SPACE_NAME.both } : { name: SPACE_NAME[s], detail: capacityLabel(s) };
+
+/** Exactly what every rental includes (site.included). */
+const included = site.included;
+
+/** Rental terms: deposit and balance from the pricing module, and the one neutral catering line (brand.md). */
+const rentalTerms = [
+  pricing.bookingDeposit.type === 'percent'
+    ? `A booking deposit of ${pricing.bookingDeposit.value}% of your total reserves your date once we confirm availability.`
+    : `A booking deposit of ${formatUSD(pricing.bookingDeposit.value)} reserves your date once we confirm availability.`,
+  balanceDays > 0
+    ? `The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
+    : null,
+  'Catering and décor are arranged separately by the client.',
+  'Estimates are confirmed with your final quote.',
+].filter((t): t is string => t !== null);
+
+const fees = [
+  pricing.fees.cleaning > 0 && { label: 'Cleaning fee', detail: 'Added to every booking.', amount: formatUSD(pricing.fees.cleaning) },
+  pricing.fees.damageDepositRefundable > 0 && {
+    label: 'Refundable damage deposit',
+    detail: 'Returned after your event if there is no damage.',
+    amount: formatUSD(pricing.fees.damageDepositRefundable),
+  },
+].filter((f): f is { label: string; detail: string; amount: string } => Boolean(f));
+
+const photo = photoByName('hall-fireplace');
 ---
 <BaseLayout title={title} description={description} og="pricing" schema={[breadcrumbs(crumbs), rateCatalog(), venueRates()]}>
   <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__copy">
-        <h1 class="hero-h1">
-          <span class="kicker">Pricing<span class="visually-hidden">:</span></span>
-          <span class="t-large-title"><span class="h-line">Upfront rates.</span> <span class="h-line">An estimate in seconds.</span></span>
-        </h1>
-        <p class="t-lead">
-          Rent the space you need by the hour, from {formatUSD(fromHourly)}, or choose a package. Parking is included, and
-          every fee is listed on this page.
-        </p>
-        {
-          offer && (
-            <p class="offer">
-              <Icon name="sparkles" />
-              <span>
-                <strong>{offer.label}.</strong> It is applied automatically to your estimate.
-              </span>
-            </p>
-          )
-        }
+      <div class="page-hero__grid">
+        <div class="page-hero__copy">
+          <h1 class="t-large-title">Transparent rates for every event.</h1>
+          <p class="t-lead">
+            Book {hall?.name} or {grove?.name} by the hour from {formatUSD(fromHourly)}, or reserve a package for a set block of
+            time. On-site parking is included, and every fee is listed on this page.
+          </p>
+          {
+            offer && (
+              <p class="offer">
+                <Icon name="tag" />
+                <span>
+                  <strong>{offer.label}.</strong> It is applied automatically to your estimate.
+                </span>
+              </p>
+            )
+          }
+        </div>
+        {photo && <Photo photo={photo} class="page-hero__photo" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>
     </div>
   </section>
@@ -75,7 +104,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
       <div class="section-head">
         <h2 id="estimate-heading">Estimate your event</h2>
         <p class="t-lead">
-          Pick a space, a day, and how long you need it. We apply the best package and any automatic discount. Other special
+          Choose a space, a day, and how long you need it. We apply the best package and any automatic discount. Other special
           rates are confirmed with your quote.
         </p>
       </div>
@@ -91,20 +120,22 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
         <div class="container">
           <div class="section-head">
             <h2 id="packages-heading">Packages</h2>
-            <p class="t-lead">Set blocks of time at a better price than the hourly rate.</p>
+            <p class="t-lead">Set blocks of time, priced below the hourly rate.</p>
           </div>
           <div class="pkg-days">
             {packagesByDay.map((g) => (
-              <section class="pkg-day" aria-label={pricing.dayTypes[g.day].label}>
-                <h3 class="t-title-3">{pricing.dayTypes[g.day].label}</h3>
+              <section class="pkg-day" aria-labelledby={`pkg-${g.day}`}>
+                <h3 id={`pkg-${g.day}`} class="serif-label">
+                  {pricing.dayTypes[g.day].label}
+                </h3>
                 <ul class="pkg-grid">
                   {g.items.map((p) => (
-                    <li class="card pkg">
+                    <li class="pkg">
                       <p class="pkg__space secondary t-footnote">{packageSpaceLine(p.space)}</p>
                       <h4 class="t-headline">{p.name}</h4>
-                      <p class="pkg__price num">
-                        {formatUSD(p.price)}
-                        <span class="t-subhead secondary"> / {p.hours} hours</span>
+                      <p class="pkg__price">
+                        <span class="price num">{formatUSD(p.price)}</span>
+                        <span class="pkg__hours t-subhead secondary">for {p.hours} hours</span>
                       </p>
                       <p class="t-subhead secondary">{p.description}</p>
                     </li>
@@ -122,7 +153,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     <div class="container">
       <div class="section-head">
         <h2 id="rates-heading">Hourly rates</h2>
-        <p class="t-lead">For any length of event. Your rate depends on the space and the day.</p>
+        <p class="t-lead">For an event of any length. Your rate depends on the space and the day.</p>
       </div>
 
       <div class="card rates rates--table">
@@ -134,8 +165,8 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
               {
                 spaces.map((s) => (
                   <th scope="col">
-                    <span class="rates__space">{pricing.spaces[s].label}</span>
-                    <span class="rates__cap">{rateCapLine(s)}</span>
+                    <span class="rates__space">{rateHead(s).name}</span>
+                    <span class="rates__cap">{rateHead(s).detail}</span>
                   </th>
                 ))
               }
@@ -150,9 +181,9 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
                     <span class="rates__min">{pricing.minimumHours[d]}-hour minimum</span>
                   </th>
                   {spaces.map((s) => (
-                    <td class="num">
-                      <span class="rates__price">{formatUSD(pricing.hourly[s][d])}</span>
-                      <span class="rates__unit">/hour</span>
+                    <td>
+                      <span class="rates__price price num">{formatUSD(pricing.hourly[s][d])}</span>
+                      <span class="rates__unit">an hour</span>
                     </td>
                   ))}
                 </tr>
@@ -165,9 +196,10 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
       <div class="rates--stacked">
         {
           spaces.map((s) => (
-            <section class="rates-space">
-              <h3 class="t-headline rates-space__head">
-                {pricing.spaces[s].label} <span class="secondary t-subhead">{rateCapLine(s)}</span>
+            <section class="rates-space" aria-labelledby={`rates-${s}`}>
+              <h3 id={`rates-${s}`} class="rates-space__head">
+                <span class="t-headline">{rateHead(s).name}</span>
+                <span class="secondary t-subhead">{rateHead(s).detail}</span>
               </h3>
               <ul class="list-group">
                 {days.map((d) => (
@@ -176,9 +208,9 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
                       <div>{pricing.dayTypes[d].label}</div>
                       <div class="list-row__detail">{pricing.minimumHours[d]}-hour minimum</div>
                     </div>
-                    <div class="num">
-                      <span class="rates__price">{formatUSD(pricing.hourly[s][d])}</span>
-                      <span class="rates__unit">/hour</span>
+                    <div class="rates__cell">
+                      <span class="rates__price price num">{formatUSD(pricing.hourly[s][d])}</span>
+                      <span class="rates__unit">an hour</span>
                     </div>
                   </li>
                 ))}
@@ -188,136 +220,136 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
         }
       </div>
 
-      <div class="fees">
-        <h3 class="t-title-2">Deposits and fees</h3>
-        <ul class="list-group">
-          <li class="list-row list-row--icon">
-            <span class="icon-tile"><Icon name="calendar-check" /></span>
-            <div class="list-row__main">
-              <div class="t-headline">Reserve your date</div>
-              <div class="list-row__detail">
-                Send your request, we confirm availability, then your booking deposit reserves the date. The booking deposit is
-                {deposit}.{
-                  balanceDays > 0 &&
-                    ` The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
-                }
-              </div>
+      <div class="fee-grid">
+        {
+          fees.length > 0 && (
+            <div class="fees">
+              <h3 class="serif-label">Fees</h3>
+              <ul class="list-group">
+                {fees.map((f) => (
+                  <li class="list-row">
+                    <div class="list-row__main">
+                      <div class="t-headline">{f.label}</div>
+                      <div class="list-row__detail">{f.detail}</div>
+                    </div>
+                    <span class="fees__amount price num">{f.amount}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </li>
-          {
-            pricing.fees.cleaning > 0 && (
-              <li class="list-row list-row--icon">
-                <span class="icon-tile"><Icon name="sparkles" /></span>
-                <div class="list-row__main">
-                  <div class="t-headline">Cleaning fee</div>
-                  <div class="list-row__detail">{formatUSD(pricing.fees.cleaning)} per event.</div>
-                </div>
-              </li>
-            )
-          }
-          {
-            pricing.fees.damageDepositRefundable > 0 && (
-              <li class="list-row list-row--icon">
-                <span class="icon-tile"><Icon name="lock" /></span>
-                <div class="list-row__main">
-                  <div class="t-headline">Refundable damage deposit</div>
-                  <div class="list-row__detail">
-                    {formatUSD(pricing.fees.damageDepositRefundable)}, returned after your event if there is no damage.
-                  </div>
-                </div>
-              </li>
-            )
-          }
-          <li class="list-row list-row--icon">
-            <span class="icon-tile"><Icon name="parking" /></span>
-            <div class="list-row__main">
-              <div class="t-headline">Parking</div>
-              <div class="list-row__detail">Included with every booking.</div>
-            </div>
-          </li>
-        </ul>
-      </div>
+          )
+        }
 
-      {
-        (autoDiscounts.length > 0 || askDiscounts.length > 0) && (
-          <div class="fees">
-            <h3 class="t-title-2">Special rates</h3>
-            <ul class="list-group">
-              {autoDiscounts.map((d) => (
-                <li class="list-row list-row--icon">
-                  <span class="icon-tile"><Icon name="tag" /></span>
-                  <div class="list-row__main">
-                    <div class="t-headline">{d.label}</div>
-                    <div class="list-row__detail">{d.percent}% off the rental, applied automatically.</div>
-                  </div>
-                </li>
-              ))}
-              {askDiscounts.map((d) => (
-                <li class="list-row list-row--icon">
-                  <span class="icon-tile"><Icon name="tag" /></span>
-                  <div class="list-row__main">
-                    <div class="t-headline">{d.label}</div>
-                    <div class="list-row__detail">{d.percent}% off the rental. Mention it in your request.</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <p class="t-footnote secondary fees__note">Discounts do not combine. Automatic rates appear in your estimate; mention any other rate in your request and we apply the best one.</p>
-          </div>
-        )
-      }
+        {
+          (autoDiscounts.length > 0 || askDiscounts.length > 0) && (
+            <div class="fees">
+              <h3 class="serif-label">Special rates</h3>
+              <ul class="list-group">
+                {autoDiscounts.map((d) => (
+                  <li class="list-row">
+                    <div class="list-row__main">
+                      <div class="t-headline">{d.label}</div>
+                      <div class="list-row__detail">Applied automatically to your estimate.</div>
+                    </div>
+                    <span class="fees__amount">
+                      <span class="price num">{d.percent}%</span> <span class="fees__off">off</span>
+                    </span>
+                  </li>
+                ))}
+                {askDiscounts.map((d) => (
+                  <li class="list-row">
+                    <div class="list-row__main">
+                      <div class="t-headline">{d.label}</div>
+                      <div class="list-row__detail">Mention it in your request.</div>
+                    </div>
+                    <span class="fees__amount">
+                      <span class="price num">{d.percent}%</span> <span class="fees__off">off</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p class="t-footnote secondary fees__note">
+                Discounts apply to the rental and do not combine. We apply the best rate that fits your event.
+              </p>
+            </div>
+          )
+        }
+      </div>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="compare-heading">
+  <section class="section" aria-labelledby="terms-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="terms-heading">Inclusions and terms</h2>
+        <p class="t-lead">What every booking includes, and how a reservation works.</p>
+      </div>
+      <div class="terms-grid">
+        <section class="terms card" aria-labelledby="included-heading">
+          <h3 id="included-heading" class="serif-label">Included with every rental</h3>
+          <ul class="terms__list terms__list--check">
+            {
+              included.map((item) => (
+                <li>
+                  <Icon name="check" />
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+        <section class="terms card" aria-labelledby="rental-terms-heading">
+          <h3 id="rental-terms-heading" class="serif-label">Rental terms</h3>
+          <ul class="terms__list">
+            {rentalTerms.map((t) => <li>{t}</li>)}
+          </ul>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="compare-heading">
     <div class="container compare">
       <div class="section-head">
         <h2 id="compare-heading">How we compare</h2>
         <p class="t-lead">
-          We checked published rates at {marketContext.venueCount} event venues across Hampton Roads in {marketContext.researched}.
+          We reviewed published rates at {marketContext.venueCount} event venues across Hampton Roads in {marketContext.researched}.
         </p>
       </div>
       <div class="compare__grid">
         <article class="card compare__card">
-          <p class="secondary t-subhead">Comparable halls, Saturday, 6 hours</p>
-          <p class="compare__num num">
-            {formatUSD(marketContext.saturdaySixHourLow)} to {formatUSD(marketContext.saturdaySixHourHigh)}
+          <p class="compare__label">Comparable halls, Saturday, 6 hours</p>
+          <p class="compare__num price num">
+            <span class="nowrap">{formatUSD(marketContext.saturdaySixHourLow)}</span> to <span class="nowrap">{formatUSD(marketContext.saturdaySixHourHigh)}</span>
           </p>
           <p class="t-footnote secondary">Private venue-only halls for 75 to 100 guests. Hall rental only, before fees and tax.</p>
         </article>
         {
-          satIndoorBlock && (
+          satHallBlock && (
             <article class="card compare__card compare__card--ours">
-              <p class="t-subhead compare__label">The Venue at NCC, Saturday, 6 hours</p>
-              <p class="compare__num num">{formatUSD(satIndoorBlock.price)}</p>
+              <p class="compare__label compare__label--ours">{hall?.name}, Saturday, 6 hours</p>
+              <p class="compare__num price num">{formatUSD(satHallBlock.price)}</p>
               <p class="t-footnote compare__note">
-                Indoor hall block, rental only{offer ? `, or ${formatUSD(Math.round(satIndoorBlock.price * (1 - offer.percent / 100)))} with the founding rate` : ''}.
-                {pricing.fees.cleaning > 0 && `The ${formatUSD(pricing.fees.cleaning)} cleaning fee is added to every booking. `}Parking included.
+                The {satHallBlock.name}, rental only.
+                {offer && ` ${formatUSD(Math.round(satHallBlock.price * (1 - offer.percent / 100)))} with the founding rate.`}
+                {pricing.fees.cleaning > 0 && ` A ${formatUSD(pricing.fees.cleaning)} cleaning fee applies to every booking.`}
+                {' '}On-site parking is included.
               </p>
             </article>
           )
         }
-        <article class="card compare__card">
-          <p class="secondary t-subhead">What some nearby halls do not allow</p>
-          <ul class="compare__list">
-            <li><Icon name="wine" /> Serving alcohol</li>
-            <li><Icon name="utensils" /> Bringing any caterer you like</li>
-            <li><Icon name="users" /> Booking without church membership or city residency</li>
-          </ul>
-          <p class="t-footnote secondary">All three are welcome here.</p>
-        </article>
       </div>
     </div>
   </section>
 
   {
     pricingFaqs.length > 0 && (
-      <section class="section section--grouped" aria-labelledby="pfaq-heading">
+      <section class="section" aria-labelledby="pfaq-heading">
         <div class="container pfaq">
           <div class="section-head">
             <h2 id="pfaq-heading">Pricing questions</h2>
             <p class="t-lead">
-              Something else? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>.
+              Anything else? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>.
             </p>
           </div>
           <FaqList items={pricingFaqs} />
@@ -326,7 +358,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     )
   }
 
-  <CtaBand heading="Found your number? Find your date." />
+  <CtaBand />
 </BaseLayout>
 
 <style>
@@ -334,30 +366,34 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 
+  .page-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem 4rem;
+    align-items: center;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
   .page-hero__copy {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
-    max-width: 50rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    max-width: 40rem;
   }
 
-  .hero-h1 {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.6rem;
+  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the estimate. */
+  .page-hero__grid > :global(.page-hero__photo) {
+    display: none;
   }
 
-  .kicker {
-    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
-    font-weight: 600;
-    color: var(--accent-text);
-    letter-spacing: -0.01em;
-  }
+  @media (min-width: 64rem) {
+    .page-hero__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    }
 
-  /* Each sentence of the H1 on its own line, so it never breaks mid-sentence. */
-  .h-line {
-    display: block;
+    .page-hero__grid > :global(.page-hero__photo) {
+      display: block;
+    }
   }
 
   .offer {
@@ -380,14 +416,37 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     min-width: 0;
   }
 
+  /* Prices are set in Libre Caslon Text, regular weight, with lining figures so columns line up. */
+  .price {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--label);
+  }
+
+  /* A serif label between 18 and 28px: Libre Caslon Text, not the display cut (brand.md). */
+  .serif-label {
+    font-family: var(--font-serif);
+    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+  }
+
   .pkg-days {
     display: grid;
-    gap: clamp(2rem, 1.5rem + 2vw, 3rem);
+    gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
   }
 
   .pkg-day {
     display: grid;
     gap: 1rem;
+  }
+
+  .pkg-day > .serif-label {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--separator);
   }
 
   .pkg-grid {
@@ -400,7 +459,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     list-style: none;
   }
 
-  /* Eyebrow, name, price, and description share row tracks, so prices line up across a row. */
+  /* Space, name, price, and description share row tracks, so prices line up across a row. */
   .pkg {
     display: grid;
     grid-row: span 4;
@@ -408,14 +467,20 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     row-gap: 0.4rem;
     align-items: start;
     padding: 1.5rem;
+    border-radius: var(--r-lg);
     background: var(--bg-grouped);
-    box-shadow: none;
   }
 
   .pkg__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .pkg__price .price {
     font-size: var(--t-title-1);
-    font-weight: 700;
-    letter-spacing: -0.03em;
     line-height: 1.1;
   }
 
@@ -430,7 +495,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
 
   .rates__table th,
   .rates__table td {
-    padding: 1rem 0.75rem;
+    padding: 1.1rem 0.75rem;
     text-align: left;
     vertical-align: middle;
     border-bottom: 1px solid var(--separator);
@@ -456,17 +521,18 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
     color: var(--label-2);
   }
 
-  .rates__table td {
+  .rates__table td,
+  .rates__cell {
     white-space: nowrap;
   }
 
   .rates__price {
-    font-size: var(--t-title-3);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-size: 1.5rem;
+    line-height: 1.2;
   }
 
   .rates__unit {
+    margin-left: 0.3rem;
     color: var(--label-2);
     font-size: var(--t-footnote);
   }
@@ -482,7 +548,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
 
     .rates--stacked {
       display: grid;
-      gap: 1.5rem;
+      gap: 1.75rem;
     }
 
     .rates-space {
@@ -490,104 +556,174 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
       gap: 0.6rem;
     }
 
-    .rates-space h3 {
+    .rates-space__head {
+      display: grid;
+      gap: 0.1rem;
       padding-left: 0.25rem;
     }
 
-    .rates-space__head span {
-      display: block;
+    .rates-space__head .t-subhead {
       font-weight: 400;
     }
   }
 
+  .fee-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 1.5rem + 2vw, 3rem) 2rem;
+    margin-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  }
+
+  @media (min-width: 64rem) {
+    .fee-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+  }
+
   .fees {
-    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
     display: grid;
     gap: 1rem;
   }
 
-  .fees .list-group {
-    max-width: 760px;
+  .fees > .serif-label {
+    padding-left: 0.25rem;
+  }
+
+  .fees__amount {
+    flex: none;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .fees__amount.price,
+  .fees__amount .price {
+    font-size: 1.375rem;
+  }
+
+  .fees__off {
+    color: var(--label-2);
+    font-size: var(--t-footnote);
   }
 
   .fees__note {
     padding-left: 0.25rem;
   }
 
-  /* One column on phones; two with the list card full width on tablets; three on desktop. */
+  .terms-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  @media (min-width: 46.5rem) {
+    .terms-grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+
+  .terms {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+    background: var(--bg-grouped);
+    box-shadow: none;
+  }
+
+  .terms__list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .terms__list li {
+    padding-block: 0.8rem;
+    border-top: 1px solid var(--separator);
+    color: var(--label);
+  }
+
+  .terms__list li:first-child {
+    border-top: 0;
+    padding-top: 0.25rem;
+  }
+
+  .terms__list--check li {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    font-weight: 600;
+  }
+
+  .terms__list--check :global(.icon) {
+    color: var(--accent-text);
+  }
+
+  /* The heading beside the two cards on wide screens, as in the pricing questions below. */
+  .compare {
+    display: grid;
+    gap: 0 clamp(2rem, 6vw, 5rem);
+  }
+
+  @media (min-width: 64rem) {
+    .compare {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+
+  /* One column on phones, two side by side on tablets, stacked again beside the heading on wide screens. */
   .compare__grid {
     display: grid;
     gap: 1rem;
     grid-template-columns: minmax(0, 1fr);
   }
 
-  @media (min-width: 600px) {
+  @media (min-width: 600px) and (max-width: 63.99rem) {
     .compare__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .compare__card:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-    }
   }
 
-  @media (min-width: 900px) {
-    .compare__grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .compare__card:last-child:nth-child(odd) {
-      grid-column: auto;
-    }
+  .nowrap {
+    white-space: nowrap;
   }
 
   .compare__card {
     display: grid;
     align-content: start;
-    gap: 0.6rem;
-    padding: 1.75rem;
-    background: var(--bg-grouped);
-    box-shadow: none;
+    gap: 0.75rem;
+    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  }
+
+  .compare__card > p,
+  .pkg > p {
+    margin: 0;
   }
 
   .compare__card--ours {
-    background: var(--accent-tint);
+    box-shadow: inset 0 0 0 2px var(--accent-text), var(--shadow-1);
   }
 
   .compare__label {
-    color: var(--accent-text);
+    color: var(--label-2);
+    font-size: var(--t-subhead);
     font-weight: 600;
   }
 
-  /* Secondary gray is under 4.5:1 on the purple tint, so the note uses the primary label color. */
+  .compare__label--ours {
+    color: var(--accent-text);
+  }
+
   .compare__note {
-    color: var(--label);
+    color: var(--label-2);
   }
 
   .compare__num {
     font-size: var(--t-title-1);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-  }
-
-  .compare__list {
-    display: grid;
-    gap: 0.5rem;
-    margin: 0.25rem 0;
-    padding: 0;
-    list-style: none;
-    font-weight: 500;
-  }
-
-  .compare__list li {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-  }
-
-  .compare__list :global(.icon) {
-    color: var(--accent-text);
+    line-height: 1.15;
   }
 
   .pfaq {
@@ -600,5 +736,10 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
       grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
       align-items: start;
     }
+  }
+
+  /* On the white page the list needs a hairline edge to read as a group. */
+  .pfaq :global(.faqs) {
+    border: 1px solid var(--separator);
   }
 </style>
