@@ -2,9 +2,9 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import { capacityError } from '../../shared/capacity';
-import { formatLong, formatShort } from '../../shared/dates';
+import { formatLong, formatShort, todayKey } from '../../shared/dates';
 import type { IconName } from '../../shared/icons';
-import { INQUIRY_STATUSES, type InquiryDetail, type InquiryEvent, type InquiryStatus } from '../../shared/types';
+import { INQUIRY_STATUSES, type CalendarBlock, type InquiryDetail, type InquiryEvent, type InquiryStatus } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
 import { ConfirmDialog } from './Dialog';
@@ -47,6 +47,23 @@ function Section({ id, title, children, action }: { id: string; title: string; c
   );
 }
 
+/** The calendar blocks linked to this request, or null when the API does not send them. */
+function linkedBlocks(d: InquiryDetail): CalendarBlock[] | null {
+  const blocks = (d as InquiryDetail & { blocks?: CalendarBlock[] }).blocks;
+  return Array.isArray(blocks) ? blocks : null;
+}
+
+/** Whether the request's date has its booked block on the calendar; null when the API does not say. */
+function onCalendar(d: InquiryDetail): boolean | null {
+  const blocks = linkedBlocks(d);
+  return blocks ? blocks.some((b) => b.kind === 'booked' && b.date === d.date) : null;
+}
+
+/** Newest first. Entries written together share a timestamp, so the later id goes first. */
+function newestFirst(a: InquiryEvent, b: InquiryEvent): number {
+  return b.createdAt.localeCompare(a.createdAt) || b.id - a.id;
+}
+
 function mailSubject(d: InquiryDetail): string {
   return `Your request for ${formatLong(d.date)} at The Venue at NCC (${d.reference})`;
 }
@@ -79,14 +96,19 @@ export function InquiryView({ id }: { id: number }) {
   const { run, toast, refreshStats, inboxHref } = useAdmin();
   const [detail, setDetail] = useState<InquiryDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The status select only picks a status; Update Status saves it. Saving on every change would save
+  // each status a keyboard user arrows past.
+  const [pending, setPending] = useState<InquiryStatus | null>(null);
   const [statusBusy, setStatusBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [reblock, setReblock] = useState(false);
   const [bookBusy, setBookBusy] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
+  const actionRef = useRef<HTMLAnchorElement>(null);
+  const focusAction = useRef(false);
 
   const load = async () => {
     setError(null);
@@ -103,41 +125,69 @@ export function InquiryView({ id }: { id: number }) {
     load();
   }, [id]);
 
+  useEffect(() => {
+    setPending(detail ? detail.status : null);
+  }, [detail?.status]);
+
+  // After booking, the button that opened the dialog is gone; put focus on View on Calendar instead.
+  useEffect(() => {
+    if (!focusAction.current) return;
+    focusAction.current = false;
+    actionRef.current?.focus();
+  }, [detail]);
+
+  const openBookDialog = () => {
+    if (!detail) return;
+    // Already booked means the block went missing; the dialog then only puts it back.
+    setReblock(detail.status === 'booked');
+    setBookError(null);
+    setConfirmOpen(true);
+  };
+
   const changeStatus = async (next: InquiryStatus) => {
-    if (!detail || next === detail.status) return;
+    if (!detail || statusBusy || next === detail.status) return;
     if (next === 'booked') {
-      if (selectRef.current) selectRef.current.value = detail.status;
-      setBookError(null);
-      setConfirmOpen(true);
+      openBookDialog();
       return;
     }
     setStatusBusy(true);
+    const wasOnCalendar = onCalendar(detail);
     const res = await run(api.admin.setStatus(detail.id, next));
     setStatusBusy(false);
     if (isError(res)) {
-      if (selectRef.current) selectRef.current.value = detail.status;
       toast(res.error, 'error');
       return;
     }
     setDetail(res);
     refreshStats();
-    toast(`Status changed to ${statusLabel(next)}.`);
+    const nowOnCalendar = onCalendar(res);
+    let calendar = '';
+    if (wasOnCalendar && nowOnCalendar === false) calendar = ` The booked block for ${formatShort(res.date)} was removed from the calendar.`;
+    else if (nowOnCalendar && res.date >= todayKey()) calendar = ` ${formatShort(res.date)} is still blocked on the calendar.`;
+    toast(`Status changed to ${statusLabel(next)}.${calendar}`);
   };
 
   const markBooked = async () => {
     if (!detail || bookBusy) return;
     setBookBusy(true);
     setBookError(null);
+    const wasBooked = detail.status === 'booked';
     const res = await run(api.admin.setStatus(detail.id, 'booked'));
     setBookBusy(false);
     if (isError(res)) {
       setBookError(res.error);
       return;
     }
+    focusAction.current = true;
     setDetail(res);
     setConfirmOpen(false);
     refreshStats();
-    toast(`Booked. ${formatShort(res.date)} is now blocked on the calendar.`);
+    const when = formatShort(res.date);
+    if (onCalendar(res) === false) {
+      toast(`${wasBooked ? '' : 'Marked booked, but '}${when} is not blocked on the calendar. Check Activity for the reason.`, 'error');
+    } else {
+      toast(wasBooked ? `${when} is now blocked on the calendar.` : `Booked. ${when} is now blocked on the calendar.`);
+    }
   };
 
   const addNote = async (e: Event) => {
@@ -204,9 +254,16 @@ export function InquiryView({ id }: { id: number }) {
 
   const d = detail;
   const over = capacityError(d.space, d.guests);
-  const events = d.events.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const events = d.events.slice().sort(newestFirst);
   const notes = d.notes.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const est = d.estimate;
+  const selected = pending ?? d.status;
+  const unchanged = selected === d.status;
+  const calendarState = onCalendar(d);
+  // Booked, but its block was deleted: the date shows as open to the public.
+  const needsBlock = d.status === 'booked' && calendarState === false;
+  // No longer booked, but the booked block is still on an upcoming date.
+  const staleBlock = d.status !== 'booked' && calendarState === true && d.date >= todayKey();
 
   return (
     <div class="adm-screen">
@@ -221,19 +278,18 @@ export function InquiryView({ id }: { id: number }) {
         }
       />
 
-      <div class="adm-statusbar">
+      <div class="adm-statusbar" aria-busy={statusBusy ? 'true' : undefined}>
         <div class="adm-statusbar__field">
           <label for="adm-status" class="adm-statusbar__label">
             Status
           </label>
           <div class="adm-selectwrap">
             <select
-              ref={selectRef}
               id="adm-status"
               class="input adm-select"
-              value={d.status}
-              disabled={statusBusy}
-              onChange={(e) => changeStatus((e.target as HTMLSelectElement).value as InquiryStatus)}
+              value={selected}
+              aria-describedby="adm-status-saved"
+              onChange={(e) => setPending((e.target as HTMLSelectElement).value as InquiryStatus)}
             >
               {INQUIRY_STATUSES.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -243,25 +299,54 @@ export function InquiryView({ id }: { id: number }) {
             </select>
             <Icon name="chevron-down" class="adm-selectwrap__icon" />
           </div>
-          <StatusBadge status={d.status} />
+          <button
+            type="button"
+            class="btn btn--gray adm-btn-44"
+            aria-disabled={unchanged || statusBusy ? 'true' : undefined}
+            aria-busy={statusBusy ? 'true' : undefined}
+            onClick={() => {
+              if (!unchanged) changeStatus(selected);
+            }}
+          >
+            {statusBusy ? `Updating${ELLIPSIS}` : 'Update Status'}
+          </button>
+          <span id="adm-status-saved" class="adm-statusbar__saved">
+            <span class="visually-hidden">Saved status: </span>
+            <StatusBadge status={d.status} />
+          </span>
         </div>
-        {d.status === 'booked' ? (
-          <a class="btn btn--tinted" href={calendarHash(d.date.slice(0, 7), d.date)}>
+        {needsBlock ? (
+          <button type="button" class="btn btn--filled" onClick={openBookDialog}>
+            <Icon name="calendar-check" />
+            Block on Calendar
+          </button>
+        ) : d.status === 'booked' ? (
+          <a ref={actionRef} class="btn btn--tinted" href={calendarHash(d.date.slice(0, 7), d.date)}>
             <Icon name="calendar-check" />
             View on Calendar
           </a>
         ) : (
-          <button
-            type="button"
-            class="btn btn--filled"
-            onClick={() => {
-              setBookError(null);
-              setConfirmOpen(true);
-            }}
-          >
+          <button type="button" class="btn btn--filled" onClick={openBookDialog}>
             <Icon name="check" />
             Mark Booked
           </button>
+        )}
+        {needsBlock && (
+          <p class="adm-statusbar__note adm-statusbar__note--warn">
+            <Icon name="info" />
+            <span>
+              {formatShort(d.date)} is not blocked on the calendar, so it shows as open to the public.
+            </span>
+          </p>
+        )}
+        {staleBlock && (
+          <p class="adm-statusbar__note">
+            <Icon name="info" />
+            <span>
+              {formatShort(d.date)} is still blocked on the calendar for this request.{' '}
+              <a href={calendarHash(d.date.slice(0, 7), d.date)}>View on Calendar</a>
+            </span>
+          </p>
         )}
       </div>
 
@@ -301,6 +386,9 @@ export function InquiryView({ id }: { id: number }) {
               </div>
               <Row label="Due to reserve">
                 <span class="adm-num">{formatUSD(est.bookingDeposit)}</span>
+              </Row>
+              <Row label="Balance">
+                <span class="adm-num">{formatUSD(est.total - est.bookingDeposit)}</span>
               </Row>
               <Row label="Refundable damage deposit">
                 <span class="adm-num">{formatUSD(est.refundableDeposit)}</span>
@@ -400,20 +488,32 @@ export function InquiryView({ id }: { id: number }) {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Mark this request booked?"
+        title={reblock ? 'Block this date on the calendar?' : 'Mark this request booked?'}
         body={
-          <p>
-            {d.name}
-            {String.fromCharCode(8217)}s request will be marked booked, and {SPACE_PHRASE[d.space]} on {formatLong(d.date)} will be blocked on
-            the calendar.
-          </p>
+          reblock ? (
+            <p>
+              {SPACE_PHRASE[d.space][0].toUpperCase() + SPACE_PHRASE[d.space].slice(1)} on {formatLong(d.date)} will be blocked on the calendar for{' '}
+              {d.name}
+              {String.fromCharCode(8217)}s booking.
+            </p>
+          ) : (
+            <p>
+              {d.name}
+              {String.fromCharCode(8217)}s request will be marked booked, and {SPACE_PHRASE[d.space]} on {formatLong(d.date)} will be blocked on
+              the calendar.
+            </p>
+          )
         }
-        confirmLabel="Mark Booked"
-        busyLabel={`Booking${ELLIPSIS}`}
+        confirmLabel={reblock ? 'Block on Calendar' : 'Mark Booked'}
+        busyLabel={reblock ? `Blocking${ELLIPSIS}` : `Booking${ELLIPSIS}`}
         busy={bookBusy}
         error={bookError}
         onConfirm={markBooked}
-        onClose={() => setConfirmOpen(false)}
+        onClose={() => {
+          setConfirmOpen(false);
+          // Cancelled: show the saved status again.
+          setPending(d.status);
+        }}
       />
     </div>
   );

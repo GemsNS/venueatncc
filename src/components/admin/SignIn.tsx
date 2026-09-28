@@ -6,8 +6,9 @@ import { SHOW_DEMO, loadDemoCredentials } from './demo-tools';
 import { ELLIPSIS } from './format';
 
 const GENERIC = 'That email and password did not work. Check them and try again.';
-// Messages from src/lib/api/http.ts that are more useful than the generic one.
-const PASS_THROUGH = /too many requests|could not reach the server/i;
+// Messages more useful than the generic one: the server's sign-in lockout ("Too many sign-in attempts..."),
+// and src/lib/api/http.ts's rate limit and network messages.
+const PASS_THROUGH = /too many|could not reach the server/i;
 
 export function SignIn({ notice, onSignedIn }: { notice: string | null; onSignedIn: (user: AdminUser) => void }) {
   const [email, setEmail] = useState('');

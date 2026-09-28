@@ -99,6 +99,13 @@ body.is-bare {
   display: none;
 }
 
+/* Phones: keep focused rows and scrolled-to targets clear of the floating tab bar. */
+@media (max-width: 743.98px) {
+  html:has(.adm-tabbar) {
+    scroll-padding-bottom: calc(var(--adm-tabbar-h) + 28px + env(safe-area-inset-bottom));
+  }
+}
+
 .adm-tabbar {
   position: fixed;
   z-index: 40;
@@ -1113,6 +1120,43 @@ body.is-bare {
   font-size: var(--t-subhead);
 }
 
+.adm-statusbar__saved {
+  display: inline-flex;
+}
+
+.adm-statusbar__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--label-2);
+  font-size: var(--t-subhead);
+}
+
+.adm-statusbar__note .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.adm-statusbar__note a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.adm-statusbar__note--warn {
+  color: var(--label);
+  font-weight: 600;
+}
+
+.adm-statusbar__note--warn .icon {
+  color: var(--adm-orange);
+}
+
 .adm-selectwrap {
   position: relative;
 }
@@ -1176,9 +1220,17 @@ body.is-bare {
   margin: 0;
 }
 
+/* Phones: the label sits above its value, so dates, times, and emails get the full row. */
+@media (max-width: 479.98px) {
+  .adm-kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
 @media (min-width: 744px) {
   .adm-kv {
-    grid-template-columns: minmax(7rem, 38%) minmax(0, 1fr);
+    grid-template-columns: minmax(6rem, 28%) minmax(0, 1fr);
     gap: 4px 16px;
   }
 }
@@ -1510,6 +1562,12 @@ body.is-bare {
     align-self: flex-end;
   }
 
+  /* Day numbers sit at the top right of each cell; the weekday names line up over them. */
+  .adm-cal th {
+    padding-right: 12px;
+    text-align: right;
+  }
+
   .adm-day .adm-chip {
     display: block;
     padding: 3px 6px;
@@ -1524,6 +1582,16 @@ body.is-bare {
 
 .adm-cal__hint {
   margin-top: 10px;
+}
+
+.adm-cal__empty {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.adm-cal__empty > p {
+  flex: 1 1 16rem;
 }
 
 .adm-row--link .adm-chip {
@@ -2009,4 +2077,27 @@ body.is-bare {
 
 .adm-card .input {
   background: var(--fill-2);
+}
+
+/* ---------- Forced colors (Windows High Contrast) ---------- */
+
+/* Backgrounds and shadows are dropped here, so selection and focus need an outline. */
+@media (forced-colors: active) {
+  .adm-segmented .segmented__item[aria-checked='true'],
+  .adm-tab[aria-current='page'],
+  .adm-nav[aria-current='page'] {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
+
+  .adm-day.is-selected .adm-day__num {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .adm .input:focus-visible,
+  .adm-signin .input:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }

@@ -46,9 +46,11 @@ export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-/** "6:00 PM to 11:00 PM (5 hours)" */
+const NBSP = String.fromCharCode(160);
+
+/** "6:00 PM to 11:00 PM (5 hours)". The hour count never wraps apart from its unit. */
 export function timeRange(startTime: string, hours: number): string {
-  return `${formatTime(startTime)} to ${formatTime(addHours(startTime, hours))} (${plural(hours, 'hour')})`;
+  return `${formatTime(startTime)} to ${formatTime(addHours(startTime, hours))} (${plural(hours, 'hour').replace(' ', NBSP)})`;
 }
 
 const stampFmt = new Intl.DateTimeFormat('en-US', {
