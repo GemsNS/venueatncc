@@ -57,7 +57,7 @@ const feature = (name: string, value: boolean | string = true) => ({
 
 /**
  * The venue as a local business and event venue. Emitted on every page and referenced by @id.
- * Capacity, parking, alcohol, and catering facts appear in the page chrome site-wide, so they are included.
+ * Capacity and parking facts appear in the page chrome site-wide, so they are included.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {
   const { fromHourly } = priceSummary();
@@ -90,8 +90,6 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     currenciesAccepted: pricing.currency,
     amenityFeature: [
       feature('On-site parking included', site.policies.parkingIncluded),
-      feature('Alcohol permitted', site.policies.alcoholAllowed),
-      feature('Bring your own caterer', !site.policies.cateringIncluded),
       ...site.spaces.map((s) => feature(`${s.name} for up to ${s.capacity} guests`)),
     ],
   };

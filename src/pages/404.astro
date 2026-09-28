@@ -1,27 +1,32 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ArchFrame from '../components/ArchFrame.astro';
+import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
-import { bookHref } from '../data/nav';
+import { photoByName } from '../data/photos';
+import { bookHref, pricingHref } from '../data/nav';
 import { href } from '../lib/paths';
+
+const photo = photoByName('gazebo');
 ---
-<BaseLayout title={`Page not found | ${site.name}`} description="This page does not exist. Find events, pricing, and open dates at The Venue at NCC, an event venue in Suffolk, VA that anyone can book." noindex>
+<BaseLayout
+  title={`Page not found | ${site.name}`}
+  description="This page does not exist. Find events, pricing, and open dates at The Venue at NCC, an event venue in Suffolk, Virginia."
+  noindex
+>
   <section class="section">
     <div class="container nf">
       <div class="nf__copy">
         <h1 class="t-large-title">This page could not be found.</h1>
-        <p class="t-lead">The link may be out of date, or the address may have a typo. Try one of these instead.</p>
+        <p class="t-lead">The link may be out of date, or the address may have a typo. These pages can help.</p>
         <ul class="list-group nf__links">
-          <li><a class="list-row" href={href('/')}><Icon name="home" /><span class="list-row__main">Home</span><Icon name="chevron-right" /></a></li>
-          <li><a class="list-row" href={href(bookHref)}><Icon name="calendar" /><span class="list-row__main">Check availability</span><Icon name="chevron-right" /></a></li>
-          <li><a class="list-row" href={href('/pricing/')}><Icon name="tag" /><span class="list-row__main">Pricing</span><Icon name="chevron-right" /></a></li>
-          <li><a class="list-row" href={href('/events/')}><Icon name="party-popper" /><span class="list-row__main">Events</span><Icon name="chevron-right" /></a></li>
+          <li><a class="list-row" href={href('/')}><Icon name="home" /><span class="list-row__main">Home</span><Icon name="chevron-right" class="nf__chevron" /></a></li>
+          <li><a class="list-row" href={href(bookHref)}><Icon name="calendar" /><span class="list-row__main">Check availability</span><Icon name="chevron-right" class="nf__chevron" /></a></li>
+          <li><a class="list-row" href={href(pricingHref)}><Icon name="tag" /><span class="list-row__main">Pricing</span><Icon name="chevron-right" class="nf__chevron" /></a></li>
+          <li><a class="list-row" href={href('/events/')}><Icon name="party-popper" /><span class="list-row__main">Events</span><Icon name="chevron-right" class="nf__chevron" /></a></li>
         </ul>
       </div>
-      <div class="nf__media">
-        <ArchFrame variant={2} sizes="280px" />
-      </div>
+      {photo && <Photo photo={photo} tall class="nf__photo" sizes="(min-width: 64rem) 520px, 100vw" />}
     </div>
   </section>
 </BaseLayout>
@@ -29,13 +34,13 @@ import { href } from '../lib/paths';
 <style>
   .nf {
     display: grid;
-    gap: 3rem;
+    gap: 3rem 4rem;
     align-items: center;
   }
 
-  @media (min-width: 820px) {
+  @media (min-width: 64rem) {
     .nf {
-      grid-template-columns: 1.4fr 1fr;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     }
   }
 
@@ -45,8 +50,10 @@ import { href } from '../lib/paths';
   }
 
   .nf__links {
+    max-width: 30rem;
+    margin-top: 0.5rem;
     box-shadow: var(--shadow-1);
-    max-width: 480px;
+    border: 1px solid var(--separator);
   }
 
   .nf__links a {
@@ -58,12 +65,17 @@ import { href } from '../lib/paths';
     background: var(--fill-3);
   }
 
+  /* The list clips its corners, so the focus ring sits inside the row. */
+  .nf__links a:focus-visible {
+    outline-offset: -3px;
+    border-radius: 0;
+  }
+
   .nf__links :global(.icon) {
     color: var(--accent-text);
   }
 
-  .nf__media {
-    width: min(60%, 280px);
-    justify-self: center;
+  .nf__links :global(.nf__chevron) {
+    color: var(--label-3);
   }
 </style>

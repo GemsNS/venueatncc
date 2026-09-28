@@ -1,126 +1,26 @@
 ---
 /**
- * Media frame: a venue photo, or the luminous placeholder scene until photos exist.
- * shape="arch" echoes the church's arched windows; shape="panel" is a large rounded panel.
- * Photos are cropped to the frame's aspect ratio at build time so every srcset candidate is sharp.
+ * DEPRECATED. Use Photo.astro.
+ * A thin wrapper kept only so pages build until their owners switch to <Photo>. The arch shape and the
+ * placeholder scene are gone: it renders the photo as a plain rectangle, and nothing when there is no photo.
+ * The shape, variant, muntins and window props are accepted and ignored.
  */
-import { Picture } from 'astro:assets';
+import Photo from './Photo.astro';
 import type { VenuePhoto } from '../data/photos';
-import ArchScene from './ArchScene.astro';
 
 interface Props {
   photo?: VenuePhoto | null;
-  /** Rendered width at each breakpoint, e.g. "(min-width: 900px) 40vw, 90vw". */
   sizes?: string;
   priority?: boolean;
-  /** Aspect ratio "width / height". */
   ratio?: string;
   shape?: 'arch' | 'panel';
   variant?: number;
   muntins?: boolean;
-  /** Draw a large arched window in the placeholder scene (wide panels). */
   window?: boolean;
   class?: string;
   caption?: string;
 }
 
-const {
-  photo = null,
-  sizes = '(min-width: 1000px) 480px, 90vw',
-  priority = false,
-  ratio = '4 / 5',
-  shape = 'arch',
-  variant = 0,
-  muntins,
-  window: showWindow = false,
-  class: className = '',
-  caption,
-} = Astro.props;
-
-const [rw, rh] = ratio.split('/').map((n) => Number.parseFloat(n));
-const candidateWidths = [360, 540, 720, 960, 1280, 1600, 2000];
-const maxCropW = photo ? Math.min(photo.src.width, Math.floor((photo.src.height * rw) / rh)) : 0;
-const photoWidths = photo
-  ? (() => {
-      const fit = candidateWidths.filter((w) => w <= maxCropW);
-      return fit.length > 0 ? fit : [maxCropW];
-    })()
-  : [];
-const cropW = photoWidths.at(-1) ?? 0;
-const cropH = Math.round((cropW * rh) / rw);
-const figCaption = caption ?? photo?.caption;
-const sceneW = shape === 'panel' ? 1200 : 400;
-const sceneH = Math.round((sceneW * rh) / rw);
+const { photo = null, sizes, priority = false, ratio = '3 / 2', class: className, caption } = Astro.props;
 ---
-<figure class:list={['media', `media--${shape}`, className]} style={`--media-ratio: ${ratio}`}>
-  <div class="media__frame">
-    {
-      photo ? (
-        <Picture
-          src={photo.src}
-          alt={photo.alt}
-          width={cropW}
-          height={cropH}
-          fit="cover"
-          position={photo.crop ?? 'center'}
-          widths={photoWidths}
-          sizes={sizes}
-          formats={['avif', 'webp']}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchpriority={priority ? 'high' : 'auto'}
-          decoding={priority ? 'sync' : 'async'}
-          class="media__img"
-        />
-      ) : (
-        <ArchScene variant={variant} muntins={muntins ?? shape === 'arch'} window={showWindow} width={sceneW} height={sceneH} />
-      )
-    }
-    <slot />
-  </div>
-  {figCaption && <figcaption class="media__caption t-footnote secondary">{figCaption}</figcaption>}
-</figure>
-
-<style>
-  .media {
-    margin: 0;
-  }
-
-  .media__frame {
-    position: relative;
-    aspect-ratio: var(--media-ratio, 4 / 5);
-    overflow: hidden;
-    isolation: isolate;
-    background: var(--night);
-    box-shadow: var(--shadow-2);
-  }
-
-  .media--arch .media__frame {
-    /* Oversized radii collapse to half the width: a true semicircular head. */
-    border-radius: 100vmax 100vmax var(--r-lg) var(--r-lg);
-  }
-
-  .media--panel .media__frame {
-    border-radius: var(--r-xl);
-  }
-
-  .media__frame :global(picture),
-  .media__frame :global(.media__img) {
-    width: 100%;
-    height: 100%;
-  }
-
-  .media__frame :global(.media__img) {
-    object-fit: cover;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .media__frame :global(.media__img) {
-      filter: brightness(0.92);
-    }
-  }
-
-  .media__caption {
-    margin-top: 0.75rem;
-    text-align: center;
-  }
-</style>
+{photo && <Photo photo={photo} sizes={sizes} priority={priority} ratio={ratio} class={className} caption={caption} />}

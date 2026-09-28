@@ -4,9 +4,9 @@
  * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the full
  * nav; compact screens hand navigation to the floating tab bar (TabBar.astro). The breakpoints are
  * in rem so that larger text switches to the compact layout sooner instead of overflowing.
+ * The brand is the full lockup, or the monogram alone where the links need the room (46.5rem to 64rem).
  */
-import { Image } from 'astro:assets';
-import mark from '../assets/brand/ncc-mark.png';
+import Logo from './Logo.astro';
 import { site } from '../data/site';
 import { mainNav, bookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
@@ -20,8 +20,8 @@ const showCta = !current(bookHref);
 <header class="nav" data-nav>
   <div class="nav__inner container">
     <a class="nav__brand" href={href('/')} aria-label={`${site.name}, home`}>
-      <Image src={mark} alt="" width={32} height={32} densities={[1, 2]} loading="eager" class="nav__mark" />
-      <span class="nav__name">{site.name}</span>
+      <Logo variant="lockup" height={36} decorative class="nav__lockup" />
+      <Logo variant="mark" height={36} decorative class="nav__monogram" />
       {isDemo && <span class="badge badge--accent nav__demo">Demo</span>}
     </a>
     <nav class="nav__links" aria-label="Main">
@@ -98,31 +98,9 @@ const showCta = !current(bookHref);
     text-decoration: none;
   }
 
-  .nav__mark {
-    flex: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 1px var(--separator);
-    background: #fff;
-  }
-
-  /* The white disc is dimmed a little in dark mode (HIG: dim bright images on dark backgrounds). */
-  @media (prefers-color-scheme: dark) {
-    .nav__mark {
-      filter: brightness(0.86);
-    }
-  }
-
-  /*
-    One line whenever it fits; at very large text sizes it wraps rather than pushing the page wider.
-    Like an iOS inline navigation title, it stops growing past a point so the bar stays one row; page zoom still scales it.
-  */
-  .nav__name {
-    font-size: min(1.0625rem, 21px);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+  /* The monogram stands in for the lockup only where the links need the room (below). */
+  .nav__brand :global(.nav__monogram) {
+    display: none;
   }
 
   .nav__demo {
@@ -174,7 +152,7 @@ const showCta = !current(bookHref);
   }
 
   /*
-    Regular but narrow (744px to 1023px at default text size): the mark stands in for the name, so
+    Regular but narrow (744px to 1023px at default text size): the monogram stands in for the lockup, so
     the five links and the call to action fit. The brand link keeps its accessible name.
   */
   @media (46.5rem <= width < 64rem) {
@@ -182,8 +160,12 @@ const showCta = !current(bookHref);
       gap: 1rem;
     }
 
-    .nav__name {
+    .nav__brand :global(.nav__lockup) {
       display: none;
+    }
+
+    .nav__brand :global(.nav__monogram) {
+      display: block;
     }
 
     .nav__links a {

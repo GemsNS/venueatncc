@@ -6,8 +6,9 @@
  *
  * Confirmed by the venue team on 2026-09-28:
  *   phone, email (assumed domain, see contact.email), indoor capacity 100, outdoor capacity 150,
- *   open to anyone, alcohol allowed with no venue rules, catering not included (venue-only rental),
- *   parking included, brand colors white and purple.
+ *   open to anyone, catering not included (the rental is the space and parking), parking included,
+ *   brand colors white and purple.
+ * Space names confirmed for the brand on 2026-09-28: The Hall (indoor) and The Grove (outdoor).
  * Confirmed from wearencc.org and OpenStreetMap on 2026-09-27:
  *   church name, address, church phone, founding year, pastor, geo coordinates.
  * Kept from the original venueatncc.org page: the tagline "Unforgettable Events Await You".
@@ -19,8 +20,10 @@ export type SpaceId = 'indoor' | 'outdoor' | 'both';
 
 export interface Space {
   id: SpaceId;
-  /** Display name. The rooms have no official names yet, so these are plain descriptions. */
+  /** Public name, e.g. 'The Hall'. */
   name: string;
+  /** Name without the article, for tight labels, e.g. 'Hall'. */
+  short: string;
   /** One plain sentence. Do not describe finishes or features that are not confirmed. */
   description: string;
   /** Maximum guests. */
@@ -37,7 +40,7 @@ export const site = {
 
   /** Default description used when a page does not set its own. */
   description:
-    'The Venue at NCC is an event venue in Suffolk, Virginia, with an indoor hall for 100 guests and an outdoor space for 150. Open to everyone. Parking included.',
+    'The Venue at NCC is an event venue in Suffolk, Virginia, with The Hall for up to 100 guests, The Grove for up to 150, and on-site parking.',
 
   parent: {
     name: 'New Community Church',
@@ -95,14 +98,16 @@ export const site = {
   spaces: [
     {
       id: 'indoor',
-      name: 'Indoor hall',
-      description: 'The indoor event space at New Community Church.',
+      name: 'The Hall',
+      short: 'Hall',
+      description: 'Our indoor space, with arched windows, a fireplace feature wall, and dark wood-look floors.',
       capacity: 100,
     },
     {
       id: 'outdoor',
-      name: 'Outdoor space',
-      description: 'Open-air event space on the church grounds.',
+      name: 'The Grove',
+      short: 'Grove',
+      description: 'Our outdoor space among tall pines, with a timber gazebo and picnic tables on a paved patio.',
       capacity: 150,
     },
   ] as Space[],
@@ -113,19 +118,17 @@ export const site = {
   policies: {
     /** Anyone can book. Membership is not required. */
     openToPublic: true,
-    /** Alcohol is allowed. The venue has no alcohol rules of its own. */
-    alcoholAllowed: true,
-    /** Catering is not included. Hosts bring their own caterer or food. */
+    /** The rental is the space and on-site parking. Catering is not part of it. */
     cateringIncluded: false,
     /** On-site parking is included with every booking. */
     parkingIncluded: true,
   },
 
   /** What a booking includes. Only confirmed items. */
-  included: ['The venue space you book', 'On-site parking'],
+  included: ['The space you book', 'On-site parking'],
 
   /** What a booking does not include. Only confirmed items. */
-  notIncluded: ['Catering, food, and drinks'],
+  notIncluded: ['Catering and décor, arranged separately by the client'],
 
   /**
    * Office hours for calls and visits (not event hours). Shown on /book/ only.

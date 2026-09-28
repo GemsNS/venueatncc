@@ -1,0 +1,95 @@
+---
+/**
+ * The Venue at NCC logo, inlined from src/assets/brand/ so it follows the theme.
+ *
+ * tone="auto": the ink (#1C1622) becomes var(--logo-ink, var(--label)) and Venue Purple (#4F2A75)
+ * becomes var(--logo-accent, var(--accent-text)), so the logo turns light in dark mode.
+ * tone="white": the white artwork, for photos and Deep Plum. White stays white and "at NCC" is var(--lilac).
+ *
+ * Accessible as an image named "The Venue at NCC", or hidden with `decorative` when it sits inside a link
+ * that already carries the name.
+ */
+import lockup from '../assets/brand/venue-lockup.svg?raw';
+import lockupWhite from '../assets/brand/venue-lockup-white.svg?raw';
+import mark from '../assets/brand/venue-mark.svg?raw';
+import markWhite from '../assets/brand/venue-mark-white.svg?raw';
+import wordmark from '../assets/brand/venue-wordmark.svg?raw';
+import wordmarkWhite from '../assets/brand/venue-wordmark-white.svg?raw';
+
+interface Props {
+  variant?: 'lockup' | 'mark' | 'wordmark';
+  tone?: 'auto' | 'white';
+  /** Rendered height: a number of pixels or any CSS length. Minimum 32px for the lockup. */
+  height?: number | string;
+  class?: string;
+  /** Accessible name. */
+  title?: string;
+  /** Hide from assistive technology, e.g. inside a link labeled "The Venue at NCC, home". */
+  decorative?: boolean;
+}
+
+const { variant = 'lockup', tone = 'auto', height = 36, class: className, title = 'The Venue at NCC', decorative = false } = Astro.props;
+
+const sources = {
+  lockup: { auto: lockup, white: lockupWhite },
+  mark: { auto: mark, white: markWhite },
+  wordmark: { auto: wordmark, white: wordmarkWhite },
+} as const;
+
+const INK = 'var(--logo-ink, var(--label))';
+const ACCENT = 'var(--logo-accent, var(--accent-text))';
+const LILAC = 'var(--lilac, #CDB3EE)';
+
+const recolor = (svg: string) =>
+  tone === 'white'
+    ? svg.replace(/(fill|stroke)="#CDB3EE"/gi, (_m, prop: string) => `style="${prop}:${LILAC}"`)
+    : svg
+        .replace(/(fill|stroke)="#1C1622"/gi, (_m, prop: string) => `style="${prop}:${INK}"`)
+        .replace(/(fill|stroke)="#4F2A75"/gi, (_m, prop: string) => `style="${prop}:${ACCENT}"`);
+
+const raw = sources[variant][tone];
+const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(raw);
+const vbW = Number(viewBox?.[1] ?? 100);
+const vbH = Number(viewBox?.[2] ?? 100);
+const cssHeight = typeof height === 'number' ? `${height}px` : height;
+const width = typeof height === 'number' ? Math.round((height * vbW) / vbH) : undefined;
+
+// The artwork's own name and role are replaced by the ones this component sets.
+const inner = recolor(raw)
+  .replace(/^[\s\S]*?<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .replace(/<title>[\s\S]*?<\/title>/, '');
+---
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox={`0 0 ${vbW} ${vbH}`}
+  class:list={['logo', `logo--${variant}`, className]}
+  width={width}
+  height={typeof height === 'number' ? height : undefined}
+  style={`height: ${cssHeight}; width: auto; aspect-ratio: ${vbW} / ${vbH}`}
+  role={decorative ? undefined : 'img'}
+  aria-label={decorative ? undefined : title}
+  aria-hidden={decorative ? 'true' : undefined}
+  focusable="false"
+  set:html={inner}
+/>
+
+<style>
+  .logo {
+    display: block;
+    flex: none;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  /* Forced colors: draw the whole logo in the text color, so it shows on any system background. */
+  @media (forced-colors: active) {
+    .logo :global(path) {
+      fill: CanvasText !important;
+    }
+
+    .logo :global(circle) {
+      stroke: CanvasText !important;
+    }
+  }
+</style>

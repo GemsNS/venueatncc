@@ -1,7 +1,8 @@
 ---
-/** The venue's key facts as a row of pills. Every item comes from site.ts. */
+/** The venue's key facts as a row of pills: the two spaces, parking, and the lowest rate. */
 import Icon from './Icon.astro';
 import { site } from '../data/site';
+import { priceSummary, formatUSD } from '../shared/pricing';
 import type { IconName } from '../shared/icons';
 
 interface Props {
@@ -9,16 +10,15 @@ interface Props {
   center?: boolean;
 }
 const { class: className, center = false } = Astro.props;
-const indoor = site.spaces.find((s) => s.id === 'indoor');
-const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+const hall = site.spaces.find((s) => s.id === 'indoor');
+const grove = site.spaces.find((s) => s.id === 'outdoor');
+const { fromHourly } = priceSummary();
 
 const facts: { icon: IconName; text: string }[] = [
-  { icon: 'building', text: `Indoors up to ${indoor?.capacity}` },
-  { icon: 'tree', text: `Outdoors up to ${outdoor?.capacity}` },
-  { icon: 'parking', text: 'Parking included' },
-  { icon: 'users', text: 'Open to everyone' },
-  { icon: 'utensils', text: 'Bring your caterer' },
-  { icon: 'wine', text: 'Alcohol welcome' },
+  { icon: 'building', text: `${hall?.name} up to ${hall?.capacity}` },
+  { icon: 'tree', text: `${grove?.name} up to ${grove?.capacity}` },
+  { icon: 'parking', text: 'On-site parking' },
+  { icon: 'tag', text: `Rates from ${formatUSD(fromHourly)} an hour` },
 ];
 ---
 <ul class:list={['facts', { 'facts--center': center }, className]} aria-label="Venue at a glance">

@@ -1,10 +1,8 @@
 ---
 /**
- * Closing call to action on a deep purple band lit by the luminous scene.
- * A scrim darkens the band's lower half, where the scene's glow is brightest, so the white text,
- * the glass button and the white focus ring all keep their contrast.
+ * Closing call to action on a Deep Plum band: a Caslon heading, one sentence, and two actions.
+ * Plain color, no imagery. White text on Deep Plum is 16:1; Lilac is 8.6:1.
  */
-import ArchScene from './ArchScene.astro';
 import Icon from './Icon.astro';
 import { site } from '../data/site';
 import { bookHref, pricingHref } from '../data/nav';
@@ -23,82 +21,57 @@ interface Props {
 }
 
 const path = withoutBase(Astro.url.pathname);
-// A non-breaking space keeps "a few" together, so the default heading breaks before it.
-const nbsp = String.fromCharCode(160);
 const {
-  heading = `Your date is a${nbsp}few taps away.`,
-  body = 'See what is open, get an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
+  heading = 'See which dates are open.',
+  body = 'Choose a date and a space, see an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
   secondary = path === pricingHref ? { label: 'Read the FAQ', href: '/faq/' } : { label: 'See Pricing', href: pricingHref },
 } = Astro.props;
 // Never link to the page the visitor is already on.
 const showSecondary = secondary.href !== path;
 ---
 <section class="cta" aria-labelledby="cta-heading">
-  <div class="cta__bg" aria-hidden="true">
-    <ArchScene variant={2} width={1200} height={520} />
-  </div>
   <div class="container cta__inner">
-    <h2 id="cta-heading" class="t-large-title">{heading}</h2>
-    <p class="cta__body">{body}</p>
-    <div class="btn-row cta__actions">
-      <a class="btn btn--white btn--lg" href={href(bookHref)}>
-        <Icon name="calendar" />
-        Check Availability
-      </a>
-      {showSecondary && <a class="btn btn--glass btn--lg cta__glass" href={href(secondary.href)}>{secondary.label}</a>}
+    <div class="cta__copy">
+      <h2 id="cta-heading" class="t-large-title">{heading}</h2>
+      <p class="cta__body">{body}</p>
     </div>
-    <p class="cta__call">
-      Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
-    </p>
+    <div class="cta__side">
+      <div class="btn-row btn-row--stack cta__actions">
+        <a class="btn btn--white btn--lg" href={href(bookHref)}>
+          <Icon name="calendar" />
+          Check Availability
+        </a>
+        {showSecondary && <a class="btn btn--outline-white btn--lg" href={href(secondary.href)}>{secondary.label}</a>}
+      </div>
+      <p class="cta__call">
+        Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
+      </p>
+    </div>
   </div>
 </section>
 
 <style>
   .cta {
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-    color: var(--on-night);
-    background: var(--night);
-  }
-
-  .cta__bg {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-
-  /* Scrim: the scene's pale glow sits low in the band, right behind the buttons and the call line. */
-  .cta__bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--night) 88%, transparent) 0%,
-      color-mix(in srgb, var(--night) 55%, transparent) 45%,
-      transparent 80%
-    );
-  }
-
-  /* In dark mode the band settles fully into night at its lower edge, next to the dark footer. */
-  @media (prefers-color-scheme: dark) {
-    .cta__bg::after {
-      background: linear-gradient(
-        to top,
-        var(--night) 0%,
-        color-mix(in srgb, var(--night) 60%, transparent) 45%,
-        transparent 80%
-      );
-    }
+    background: var(--brand-deep);
+    color: var(--on-deep);
   }
 
   .cta__inner {
     display: grid;
-    justify-items: center;
-    gap: 1.25rem;
-    padding-block: clamp(4.5rem, 3rem + 6vw, 8rem);
-    text-align: center;
+    gap: 2rem 4rem;
+    padding-block: clamp(4rem, 3rem + 4vw, 6.5rem);
+  }
+
+  @media (min-width: 64rem) {
+    .cta__inner {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+
+  .cta__copy {
+    display: grid;
+    gap: 1rem;
   }
 
   .cta h2 {
@@ -107,30 +80,26 @@ const showSecondary = secondary.href !== path;
   }
 
   .cta__body {
-    max-width: 40rem;
-    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
-    color: #ffffff;
+    max-width: 38rem;
+    color: var(--on-deep-2);
+    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+    line-height: 1.5;
   }
 
+  .cta__side {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+
+  /* Full width, so the stacked buttons on phones span the band. */
   .cta__actions {
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
-
-  /* Glass over bright media is dimmed (HIG); here it is a dark night tint with a white edge. */
-  .cta__glass {
-    color: #ffffff;
-    background-color: color-mix(in srgb, var(--night) 55%, transparent);
-    border-color: #ffffff;
-  }
-
-  .cta__glass:hover {
-    background-color: color-mix(in srgb, var(--night) 70%, transparent);
+    justify-self: stretch;
   }
 
   .cta__call {
     font-size: var(--t-subhead);
-    color: #ffffff;
+    color: var(--on-deep-2);
   }
 
   .cta__call a {
@@ -142,5 +111,11 @@ const showSecondary = secondary.href !== path;
 
   .cta :global(:focus-visible) {
     outline-color: #ffffff;
+  }
+
+  @media (forced-colors: active) {
+    .cta {
+      border-block: 1px solid CanvasText;
+    }
   }
 </style>

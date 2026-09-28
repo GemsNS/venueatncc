@@ -1,6 +1,10 @@
 ---
+import '@fontsource/libre-caslon-display/latin-400.css';
+import '@fontsource/libre-caslon-text/latin-400.css';
+import '@fontsource/libre-caslon-text/latin-400-italic.css';
 import '../styles/global.css';
 import interFont from '@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url';
+import caslonDisplayFont from '@fontsource/libre-caslon-display/files/libre-caslon-display-latin-400-normal.woff2?url';
 import { getImage } from 'astro:assets';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -88,13 +92,15 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     {robots && <meta name="robots" content={robots} />}
 
     <link rel="preload" href={interFont} as="font" type="font/woff2" crossorigin />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    {/* The page titles' face. The admin (bare) sets no titles in it. */}
+    {!bare && <link rel="preload" href={caslonDisplayFont} as="font" type="font/woff2" crossorigin />}
 
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#121015" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href={href('/favicon.ico')} sizes="32x32" />
+    <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
     <link rel="icon" href={href('/favicon-32.png')} type="image/png" sizes="32x32" />
-    <link rel="icon" href={href('/icon-192.png')} type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" href={href('/apple-touch-icon.png')} />
     <link rel="manifest" href={href('/site.webmanifest')} />
     {!isDemo && <link rel="sitemap" href={href('/sitemap-index.xml')} />}
@@ -131,25 +137,5 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     </main>
     {!bare && <Footer />}
     {!bare && tabBar && <TabBar />}
-    <script>
-      // One gentle reveal per marked block, once, when it enters the viewport.
-      const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');
-      if ('IntersectionObserver' in window && targets.length > 0) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const e of entries) {
-              if (e.isIntersecting) {
-                e.target.classList.add('is-revealed');
-                io.unobserve(e.target);
-              }
-            }
-          },
-          { rootMargin: '0px 0px -8% 0px' },
-        );
-        targets.forEach((t) => io.observe(t));
-      } else {
-        targets.forEach((t) => t.classList.add('is-revealed'));
-      }
-    </script>
   </body>
 </html>

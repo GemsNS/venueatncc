@@ -1938,10 +1938,7 @@ body.is-bare {
   gap: 16px;
   min-height: 100dvh;
   padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(60rem 30rem at 15% -10%, color-mix(in srgb, var(--glow-1) 16%, transparent), transparent 70%),
-    radial-gradient(50rem 30rem at 100% 110%, color-mix(in srgb, var(--glow-2) 12%, transparent), transparent 70%),
-    var(--adm-page);
+  background: var(--adm-page);
 }
 
 .adm-signin__card {

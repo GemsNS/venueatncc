@@ -1,7 +1,7 @@
 {
   "name": "The Venue at NCC",
   "short_name": "The Venue",
-  "description": "Event venue in Suffolk, Virginia: indoor hall for 100, outdoor space for 150, parking included.",
+  "description": "An event venue in Suffolk, Virginia, with The Hall for up to 100 guests, The Grove for up to 150, and on-site parking. Transparent rates, and every date confirmed personally.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -18,6 +18,12 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

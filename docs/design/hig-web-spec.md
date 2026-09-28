@@ -1,5 +1,10 @@
 # Venue Web Design Spec (derived from Apple HIG, fetched 2026-09-28)
 
+> **Superseded in part.** [brand.md](brand.md) is the source of truth for color, type, and imagery. It replaces the
+> typefaces in section 3, the palette and contrast values in section 4, and every mention here of purple gradients,
+> system purple, or hero imagery. The interaction rules in this spec (glass, layout, components, motion, accessibility)
+> still apply.
+
 Citation markers: `[slug]` = HIG page `…/human-interface-guidelines/<slug>`; `[ALG]` = Apple doc *Adopting Liquid Glass* (TechnologyOverviews/adopting-liquid-glass); `[UIKit]` = UIKit default, not published in HIG; `[web]` = our web derivation (not Apple guidance).
 
 ## 1. Core principles

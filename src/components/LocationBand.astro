@@ -1,7 +1,9 @@
 ---
-/** Where the venue is: an inset grouped contact list beside a lazily loaded map. */
+/** Arrival: the drive at dusk beside the address, contact rows, parking, and directions. */
 import Icon from './Icon.astro';
+import Photo from './Photo.astro';
 import { site, fullAddress } from '../data/site';
+import { photoByName } from '../data/photos';
 
 interface Props {
   heading?: string;
@@ -9,13 +11,21 @@ interface Props {
 }
 const {
   heading = 'Find us in north Suffolk',
-  lead = 'On Godwin Boulevard at New Community Church, with parking on site.',
+  lead = 'On Godwin Boulevard at New Community Church, a few minutes from downtown Suffolk, with parking on site.',
 } = Astro.props;
-// The address alone, so the pin is not labeled with the church's older Google listing name.
-const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&z=14&output=embed`;
+const photo = photoByName('approach-dusk');
 ---
 <section class="section section--grouped location" aria-labelledby="location-heading">
   <div class="container location__grid">
+    {
+      photo && (
+        <Photo
+          photo={photo}
+          class="location__photo"
+          sizes="(min-width: 75rem) 640px, (min-width: 56rem) 52vw, 100vw"
+        />
+      )
+    }
     <div class="location__copy">
       <div class="section-head">
         <h2 id="location-heading">{heading}</h2>
@@ -23,13 +33,15 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
       </div>
       <ul class="list-group location__list">
         <li>
-          <div class="list-row list-row--icon">
+          <a class="list-row list-row--icon location__link" href={site.address.directionsUrl} rel="noopener" target="_blank">
             <span class="icon-tile"><Icon name="map-pin" /></span>
-            <div class="list-row__main">
-              <div class="t-headline">{site.name}</div>
-              <div class="list-row__detail">{fullAddress}</div>
-            </div>
-          </div>
+            <span class="list-row__main">
+              <span class="t-headline">{site.name}</span>
+              <span class="list-row__detail">{fullAddress}</span>
+            </span>
+            <Icon name="arrow-up-right" class="location__chevron" />
+            <span class="visually-hidden">, directions open in a new tab</span>
+          </a>
         </li>
         <li>
           <a class="list-row list-row--icon location__link" href={`tel:${site.contact.phoneE164}`}>
@@ -53,32 +65,18 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
           <div class="list-row list-row--icon">
             <span class="icon-tile"><Icon name="parking" /></span>
             <div class="list-row__main">
-              <div class="t-headline">Parking included</div>
-              <div class="list-row__detail">On-site parking with every booking</div>
+              <div class="t-headline">On-site parking</div>
+              <div class="list-row__detail">A large paved lot, included with every booking</div>
             </div>
           </div>
         </li>
       </ul>
       <div class="btn-row">
-        <a class="btn btn--tinted" href={site.address.directionsUrl} rel="noopener" target="_blank">
+        <a class="btn btn--filled" href={site.address.directionsUrl} rel="noopener" target="_blank">
           <Icon name="arrow-up-right" />
-          Get Directions<span class="visually-hidden"> (opens in a new tab)</span>
+          Get Directions<span class="visually-hidden">, opens in a new tab</span>
         </a>
       </div>
-    </div>
-    <div class="location__map">
-      {
-        /*
-          Out of the tab order: the map adds focus stops with no visible focus, and the directions
-          link, address and phone beside it carry the same information. Screen readers still get the title.
-        */
-      }
-      <iframe
-        title={`Map showing ${site.name} at ${fullAddress}`}
-        src={mapSrc}
-        loading="lazy"
-        tabindex="-1"
-        referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
   </div>
 </section>
@@ -86,13 +84,13 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
 <style>
   .location__grid {
     display: grid;
-    gap: 2.5rem clamp(2rem, 5vw, 4rem);
+    gap: 2.5rem clamp(2rem, 5vw, 4.5rem);
     align-items: center;
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 56rem) {
     .location__grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     }
   }
 
@@ -105,6 +103,10 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
     margin-bottom: 0.5rem;
   }
 
+  .location__list {
+    box-shadow: var(--shadow-1);
+  }
+
   /* Rows sit inside list items here, so draw the inset separators between items. */
   .location__list > li + li > .list-row::before {
     content: '';
@@ -115,7 +117,7 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
     border-top: 1px solid var(--separator);
   }
 
-  /* The phone and email rows are links end to end, so the whole row is the target. */
+  /* The address, phone and email rows are links end to end, so the whole row is the target. */
   .location__link {
     color: var(--label);
     text-decoration: none;
@@ -142,25 +144,7 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}
     overflow-wrap: anywhere;
   }
 
-  .location__map {
-    aspect-ratio: 4 / 3;
-    border-radius: var(--r-xl);
-    overflow: hidden;
-    background: var(--fill-2);
-    box-shadow: var(--shadow-2);
-  }
-
-  .location__map iframe {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-
-  /* HIG: slightly dim bright imagery in dark mode. No inversion, so the pin keeps its real color. */
-  @media (prefers-color-scheme: dark) {
-    .location__map iframe {
-      filter: brightness(0.82);
-    }
+  .location__link :global(.location__chevron) {
+    color: var(--label-3);
   }
 </style>

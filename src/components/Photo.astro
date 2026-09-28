@@ -1,0 +1,191 @@
+---
+/**
+ * A real photograph of the property: a plain rectangle with a modest radius, or full bleed.
+ * Never masked, never decorated (docs/design/brand.md).
+ *
+ * The file is served as responsive AVIF and WebP at widths up to the source width and cropped with CSS
+ * (object-fit: cover) to the frame's ratio. With `tall`, phones below 46.5rem get the 4:5 portrait file
+ * instead, in a 4:5 frame. A styled concept always carries its "Styled Concept" badge and caption.
+ */
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import type { VenuePhoto } from '../data/photos';
+
+interface Props {
+  photo: VenuePhoto;
+  /** Rendered width at each breakpoint, e.g. "(min-width: 64rem) 40vw, 100vw". */
+  sizes?: string;
+  /** The page's main image: loads eagerly with high fetch priority. */
+  priority?: boolean;
+  /** Frame ratio "width / height", or "fill" to fill a parent that sets the height. */
+  ratio?: string;
+  /** Use the 4:5 portrait file, in a 4:5 frame, on phones (when the photo has one). */
+  tall?: boolean;
+  /** Rounded corners (var(--r-lg)). false for full bleed. */
+  rounded?: boolean;
+  class?: string;
+  /** A caption under the photo. true uses the photo's own caption. */
+  caption?: string | boolean;
+  /** A short label on a small glass pill in the top-left corner, e.g. "Styled Concept". */
+  badge?: string;
+}
+
+const {
+  photo,
+  sizes = '(min-width: 75rem) 1200px, 100vw',
+  priority = false,
+  ratio = '3 / 2',
+  tall = false,
+  rounded = true,
+  class: className,
+  caption,
+  badge,
+} = Astro.props;
+
+const isStyled = photo.styledOf !== undefined;
+const captionText = isStyled ? photo.caption : caption === true ? photo.caption : caption || undefined;
+const badgeText = badge ?? (isStyled ? 'Styled Concept' : undefined);
+const fill = ratio === 'fill';
+const useTall = tall && photo.tall !== undefined;
+
+const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400];
+
+/** Widths up to the source width, always including the source width itself. */
+function widthsFor(img: ImageMetadata): number[] {
+  const fit = CANDIDATES.filter((w) => w < img.width);
+  return [...fit, img.width];
+}
+
+async function sources(img: ImageMetadata) {
+  const widths = widthsFor(img);
+  const fallbackWidth = widths.find((w) => w >= 1280) ?? img.width;
+  const [avif, webp] = await Promise.all([
+    getImage({ src: img, widths, width: fallbackWidth, format: 'avif' }),
+    getImage({ src: img, widths, width: fallbackWidth, format: 'webp' }),
+  ]);
+  return { avif: avif.srcSet.attribute, webp: webp.srcSet.attribute, src: webp.src, width: img.width, height: img.height };
+}
+
+const main = await sources(photo.src);
+const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
+// The portrait file fills the frame on phones, so it is as wide as the screen there.
+const tallSizes = '100vw';
+const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, photo.crop ? `--photo-pos: ${photo.crop}` : ''].filter(Boolean).join('; ');
+---
+<figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
+  <div class="photo__frame">
+    <picture>
+      {
+        portrait && (
+          <>
+            <source media="(width < 46.5rem)" type="image/avif" srcset={portrait.avif} sizes={tallSizes} width={portrait.width} height={portrait.height} />
+            <source media="(width < 46.5rem)" type="image/webp" srcset={portrait.webp} sizes={tallSizes} width={portrait.width} height={portrait.height} />
+          </>
+        )
+      }
+      <source type="image/avif" srcset={main.avif} sizes={sizes} width={main.width} height={main.height} />
+      <img
+        class="photo__img"
+        src={main.src}
+        srcset={main.webp}
+        sizes={sizes}
+        width={main.width}
+        height={main.height}
+        alt={photo.alt}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : undefined}
+        decoding={priority ? undefined : 'async'}
+      />
+    </picture>
+    {badgeText && <span class="photo__badge">{badgeText}</span>}
+    <slot />
+  </div>
+  {captionText && <figcaption class="photo__caption">{captionText}</figcaption>}
+</figure>
+
+<style>
+  .photo {
+    margin: 0;
+  }
+
+  .photo__frame {
+    position: relative;
+    aspect-ratio: var(--photo-ratio, 3 / 2);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--fill-2);
+  }
+
+  .photo--rounded .photo__frame {
+    border-radius: var(--r-lg);
+  }
+
+  .photo--fill,
+  .photo--fill .photo__frame {
+    height: 100%;
+  }
+
+  /* Phones get the 4:5 portrait file, so the frame follows it. */
+  @media (width < 46.5rem) {
+    .photo--tall:not(.photo--fill) .photo__frame {
+      aspect-ratio: 4 / 5;
+    }
+  }
+
+  .photo__frame picture,
+  .photo__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .photo__img {
+    object-fit: cover;
+    object-position: var(--photo-pos, center);
+  }
+
+  /* HIG: slightly dim bright imagery in dark mode. */
+  @media (prefers-color-scheme: dark) {
+    .photo__img {
+      filter: brightness(0.92);
+    }
+  }
+
+  /* A small glass pill over the photo; the dark tint keeps white text legible on any frame. */
+  .photo__badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--r-full);
+    background: rgba(18, 16, 21, 0.58);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    font-size: var(--t-footnote);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .photo__badge {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: rgba(18, 16, 21, 0.88);
+    }
+  }
+
+  .photo__caption {
+    margin-top: 0.75rem;
+    color: var(--label-2);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+</style>

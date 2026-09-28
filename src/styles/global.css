@@ -1,23 +1,28 @@
 /*
-  The Venue at NCC design system, after Apple's Human Interface Guidelines.
+  The Venue at NCC design system. The brand (color, type, imagery) follows docs/design/brand.md;
+  the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
-    Clarity   Large, legible type and plain words. Every screen has one obvious next step.
-    Deference The content leads; chrome stays quiet. Glass is for navigation and controls only.
-    Depth     Layers read through translucency and soft shadow, never decoration.
+    Photographs first, quiet frame. Real photos of the property lead; the white and purple frame stays calm.
+    Clarity   Legible type and plain words. Every screen has one obvious next step.
+    Deference Chrome stays quiet. Glass is for navigation and controls floating over photos only.
 
-  Brand      White and purple.
-    purple   #7B2FBE  fills, links, focus. 7.0:1 on white, and white text on it is 7.0:1.
-    glow     #AF52DE / #BF5AF2  Apple's system purple, decorative light only (never text).
-    night    #1A0B2E  deep purple surfaces for contrast bands.
+  Color      White and purple: a deep, regal plum, never an electric violet.
+    Venue Purple  #4F2A75  buttons, links, focus, selected states. 10.9:1 on white.
+                  Dark mode: fill #7C4DB0 (white text 5.9:1), text #CDB3EE.
+    Deep Plum     #2B1840  footer and CTA band. White text 16:1, Lilac 8.6:1.
+    Lilac         #CDB3EE  accent text and lines on Deep Plum or photos.
+    Ink           #1C1622  text. Ink 2 #5E5566 for secondary text (7.1:1 on white).
+    No gradients as decoration. The only gradients are legibility scrims over photographs.
 
-  Type       SF Pro on Apple devices (system font); Inter with optical sizing everywhere else.
-             Sizes follow the iOS text styles (Large Title 34, Title 1 28, Title 2 22, Title 3 20,
-             Headline 17 semibold, Body 17, Callout 16, Subheadline 15, Footnote 13, Caption 12)
-             plus larger marketing display sizes.
+  Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
+             only at 28px and above where the size allows. Libre Caslon Text 400 and italic for serif
+             leads, captions and large prices. The system stack (SF Pro on Apple, Inter elsewhere) for
+             everything else, sized after the iOS text styles.
 
-  Shape      Concentric radii: inner radius = outer radius - padding. Capsules for buttons and
-             controls. Minimum hit target 44 x 44.
+  Shape      Photos are rectangles with a modest radius (--r-lg) or full bleed. Concentric radii:
+             inner radius = outer radius - padding. Capsules for buttons and controls. Minimum hit
+             target 44 x 44.
 */
 
 @import '@fontsource-variable/inter/opsz.css';
@@ -27,34 +32,34 @@
 
   /* Surfaces */
   --bg: #ffffff;
-  --bg-grouped: #f5f5f7;
+  --bg-grouped: #f7f5f9;
   --bg-elevated: #ffffff;
-  --bg-inset: #f5f5f7;
-  --fill: rgba(120, 120, 128, 0.12);
-  --fill-2: rgba(120, 120, 128, 0.08);
-  --fill-3: rgba(120, 120, 128, 0.05);
+  --bg-inset: #f7f5f9;
+  --fill: rgba(94, 85, 102, 0.13);
+  --fill-2: rgba(94, 85, 102, 0.08);
+  --fill-3: rgba(94, 85, 102, 0.05);
 
   /* Labels */
-  --label: #1d1d1f;
-  --label-2: #6e6e73;
-  --label-3: #86868b;
-  --separator: rgba(60, 60, 67, 0.16);
-  --separator-strong: rgba(60, 60, 67, 0.29);
+  --label: #1c1622;
+  --label-2: #5e5566;
+  --label-3: #736a7c;
+  --separator: rgba(28, 22, 34, 0.12);
+  --separator-strong: rgba(28, 22, 34, 0.24);
 
   /* Brand */
-  --accent: #7b2fbe;
+  --accent: #4f2a75;
   --accent-fill: var(--accent);
-  --accent-hover: #6b21a8;
-  --accent-text: #7b2fbe;
+  --accent-hover: #3e2060;
+  --accent-text: #4f2a75;
   --on-accent: #ffffff;
-  --accent-tint: rgba(123, 47, 190, 0.1);
-  --accent-tint-2: rgba(123, 47, 190, 0.16);
-  --glow-1: #af52de;
-  --glow-2: #5e5ce6;
-  --night: #1a0b2e;
-  --night-2: #2a1147;
-  --on-night: #f5f5f7;
-  --on-night-2: rgba(245, 245, 247, 0.72);
+  /* Lilac Mist, as a tint so it still reads on grouped backgrounds. */
+  --accent-tint: rgba(79, 42, 117, 0.08);
+  --accent-tint-2: rgba(79, 42, 117, 0.14);
+  --lilac-mist: #f4f0f8;
+  --brand-deep: #2b1840;
+  --lilac: #cdb3ee;
+  --on-deep: #ffffff;
+  --on-deep-2: rgba(255, 255, 255, 0.8);
 
   /* Status */
   --green: #248a3d;
@@ -65,21 +70,25 @@
   --red-tint: rgba(255, 59, 48, 0.12);
 
   /* Liquid Glass (navigation and control layer only) */
-  --glass-bg: rgba(255, 255, 255, 0.68);
-  --glass-bg-strong: rgba(255, 255, 255, 0.82);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.86);
   --glass-border: rgba(255, 255, 255, 0.7);
   --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.04);
-  --glass-shadow: 0 8px 32px rgba(38, 14, 74, 0.12), 0 1px 2px rgba(38, 14, 74, 0.08);
+  --glass-shadow: 0 8px 32px rgba(43, 24, 64, 0.12), 0 1px 2px rgba(43, 24, 64, 0.08);
   --glass-blur: blur(24px) saturate(180%);
 
   /* Elevation */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(0, 0, 0, 0.03);
-  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(38, 14, 74, 0.08);
-  --shadow-3: 0 4px 12px rgba(0, 0, 0, 0.06), 0 24px 64px rgba(38, 14, 74, 0.14);
+  --shadow-1: 0 1px 2px rgba(28, 22, 34, 0.05), 0 1px 1px rgba(28, 22, 34, 0.03);
+  --shadow-2: 0 2px 6px rgba(28, 22, 34, 0.04), 0 12px 32px rgba(43, 24, 64, 0.08);
+  --shadow-3: 0 4px 12px rgba(28, 22, 34, 0.06), 0 24px 64px rgba(43, 24, 64, 0.14);
 
   /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
   --font-rounded: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Inter Variable', system-ui, sans-serif;
+  /* Page titles at 28px and above. Never bold: the family has one weight. */
+  --font-display: 'Libre Caslon Display', 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  /* Serif leads, captions (italic), and large prices. */
+  --font-serif: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
   /*
     Title sizes are also capped by screen width (the min() with vw). It only takes effect with very large
     text on phones, where it keeps long words such as "Unforgettable" whole instead of splitting them.
@@ -96,11 +105,11 @@
   --t-footnote: 0.8125rem;
   --t-caption: 0.75rem;
 
-  /* Radii (concentric) */
+  /* Radii (concentric). --r-lg is the photo radius. */
   --r-xs: 8px;
   --r-sm: 12px;
   --r-md: 18px;
-  --r-lg: 24px;
+  --r-lg: 20px;
   --r-xl: 32px;
   --r-2xl: 44px;
   --r-full: 999px;
@@ -132,29 +141,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #000000;
-    --bg-grouped: #0f0f11;
-    --bg-elevated: #1c1c1e;
-    --bg-inset: #1c1c1e;
-    --fill: rgba(120, 120, 128, 0.36);
-    --fill-2: rgba(120, 120, 128, 0.24);
-    --fill-3: rgba(120, 120, 128, 0.14);
+    --bg: #121015;
+    --bg-grouped: #0c0a0e;
+    --bg-elevated: #1c1820;
+    --bg-inset: #1c1820;
+    --fill: rgba(185, 176, 194, 0.24);
+    --fill-2: rgba(185, 176, 194, 0.16);
+    --fill-3: rgba(185, 176, 194, 0.08);
 
-    --label: #f5f5f7;
-    --label-2: #a1a1a6;
-    --label-3: #8e8e93;
-    --separator: rgba(84, 84, 88, 0.55);
-    --separator-strong: rgba(84, 84, 88, 0.8);
+    --label: #f5f2f8;
+    --label-2: #b9b0c2;
+    --label-3: #8f8699;
+    --separator: rgba(245, 242, 248, 0.14);
+    --separator-strong: rgba(245, 242, 248, 0.26);
 
-    --accent: #8b3dd6;
-    --accent-hover: #9b51e0;
-    --accent-text: #c77dff;
-    --accent-tint: rgba(191, 90, 242, 0.16);
-    --accent-tint-2: rgba(191, 90, 242, 0.24);
-    --glow-1: #bf5af2;
-    --glow-2: #5e5ce6;
-    --night: #12071f;
-    --night-2: #1f0c38;
+    /* Fills use the lighter purple so white labels keep 5.9:1; text and links use Lilac. */
+    --accent: #7c4db0;
+    --accent-hover: #6a3f9a;
+    --accent-text: #cdb3ee;
+    --accent-tint: rgba(205, 179, 238, 0.12);
+    --accent-tint-2: rgba(205, 179, 238, 0.2);
+    --lilac-mist: rgba(205, 179, 238, 0.12);
+    --brand-deep: #1a1024;
 
     --green: #30d158;
     --green-tint: rgba(48, 209, 88, 0.18);
@@ -163,8 +171,8 @@
     --red: #ff453a;
     --red-tint: rgba(255, 69, 58, 0.18);
 
-    --glass-bg: rgba(28, 28, 30, 0.62);
-    --glass-bg-strong: rgba(28, 28, 30, 0.8);
+    --glass-bg: rgba(28, 24, 32, 0.64);
+    --glass-bg-strong: rgba(28, 24, 32, 0.82);
     --glass-border: rgba(255, 255, 255, 0.12);
     --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -252,10 +260,8 @@ video {
   max-width: 100%;
 }
 
-h1,
-h2,
-h3,
-h4 {
+/* Zero specificity, so any class can restyle a heading. */
+:where(h1, h2, h3, h4) {
   margin: 0;
   color: var(--label);
   font-weight: 700;
@@ -266,14 +272,12 @@ h4 {
 
 h1 {
   font-size: var(--t-large-title);
-  line-height: 1.07;
-  letter-spacing: -0.028em;
+  line-height: 1.1;
 }
 
 h2 {
   font-size: var(--t-title-1);
-  line-height: 1.1;
-  letter-spacing: -0.024em;
+  line-height: 1.12;
 }
 
 h3 {
@@ -281,6 +285,23 @@ h3 {
   line-height: 1.25;
   letter-spacing: -0.017em;
   font-weight: 600;
+}
+
+/*
+  Page titles are set in Libre Caslon Display, regular weight only (brand.md). The family has one
+  weight, so bold is never synthesized. Caslon Display is for 28px and up: a heading styled smaller
+  should use .t-title-3 or .t-headline (interface family), or set font-family: var(--font).
+  The admin (adm-) and booking app (bk-) headings stay in the interface family.
+*/
+:where(h1, h2):where(:not([class*='adm-'], [class*='bk-'])),
+.t-display,
+.t-large-title,
+.t-title-1,
+.t-title-2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
 }
 
 p {
@@ -331,33 +352,27 @@ main:focus {
 
 .t-display {
   font-size: var(--t-display);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  font-weight: 700;
+  line-height: 1.05;
 }
 
 .t-large-title {
   font-size: var(--t-large-title);
-  line-height: 1.07;
-  letter-spacing: -0.028em;
-  font-weight: 700;
+  line-height: 1.1;
 }
 
 .t-title-1 {
   font-size: var(--t-title-1);
-  line-height: 1.1;
-  letter-spacing: -0.024em;
-  font-weight: 700;
+  line-height: 1.12;
 }
 
 .t-title-2 {
   font-size: var(--t-title-2);
-  line-height: 1.18;
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  line-height: 1.15;
 }
 
+/* Interface family, also when set on an h1 or h2. */
 .t-title-3 {
+  font-family: var(--font);
   font-size: var(--t-title-3);
   line-height: 1.25;
   letter-spacing: -0.017em;
@@ -365,9 +380,28 @@ main:focus {
 }
 
 .t-headline {
+  font-family: var(--font);
   font-size: var(--t-headline);
   line-height: 1.3;
+  letter-spacing: normal;
   font-weight: 600;
+}
+
+/* A short serif statement or lead: Libre Caslon Text. */
+.t-serif-lead {
+  font-family: var(--font-serif);
+  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: var(--label);
+  text-wrap: pretty;
+}
+
+.t-serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
 }
 
 .t-callout {
@@ -394,11 +428,11 @@ main:focus {
 }
 
 .t-lead {
-  font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
-  line-height: 1.38;
-  letter-spacing: -0.018em;
+  font-size: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
   color: var(--label-2);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .secondary {
@@ -491,7 +525,6 @@ main:focus {
 
 .glass {
   background-color: var(--glass-bg);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -605,13 +638,25 @@ main:focus {
   background: var(--fill-3);
 }
 
+/* On Deep Plum and photos: white capsule, Venue Purple label (10.9:1) in both appearances. */
 .btn--white {
   background: #ffffff;
-  color: #1a0b2e;
+  color: #4f2a75;
 }
 
 .btn--white:hover {
-  background: #f5f5f7;
+  background: #f4f0f8;
+}
+
+/* Secondary action on Deep Plum and photos: a white outline. */
+.btn--outline-white {
+  background: transparent;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+}
+
+.btn--outline-white:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn--glass {
@@ -967,29 +1012,5 @@ textarea.input {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* A single reveal used sparingly, driven by the `data-reveal` attribute and a tiny observer. */
-[data-reveal] {
-  opacity: 1;
-  transform: none;
-}
-
-html.js [data-reveal]:not(.is-revealed) {
-  opacity: 0;
-  transform: translateY(16px);
-}
-
-html.js [data-reveal] {
-  transition:
-    opacity var(--dur-3) var(--ease-out),
-    transform var(--dur-3) var(--ease-out);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.js [data-reveal]:not(.is-revealed) {
-    opacity: 1;
-    transform: none;
   }
 }
