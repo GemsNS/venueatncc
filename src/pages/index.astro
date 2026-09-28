@@ -16,7 +16,8 @@ import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
-import { STYLED_CAPTION, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { STYLED_CAPTION, eventPhoto, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { events } from '../data/events';
 import { publishedFaqs } from '../data/faq';
 import { bookHref, pricingHref } from '../data/nav';
 import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
@@ -25,6 +26,8 @@ import { href } from '../lib/paths';
 const hero = photoByName('exterior-dusk') ?? heroPhoto();
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
+// The events row below shows every event's image, so a space card only offers a styled view the row is not already showing.
+const shownByEvents = new Set(events.map((e) => eventPhoto(e.slug)?.file).filter(Boolean));
 const hallName = hall?.name ?? 'The Hall';
 const groveName = grove?.name ?? 'The Grove';
 
@@ -147,7 +150,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       <div class="spaces">
         {
           spaceCards.map((card) => {
-            const styled = card.photo?.styled[0];
+            const styled = card.photo?.styled.find((s) => !shownByEvents.has(s.file));
             return (
               <article class="space card" aria-labelledby={`space-${card.id}`}>
                 {card.photo && (
