@@ -1,7 +1,18 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AdminApp from '../../components/admin/AdminApp';
+import '../../components/admin/admin.css';
 ---
 <BaseLayout title="Venue admin | The Venue at NCC" description="Staff area for The Venue at NCC." noindex bare og="home">
-  <AdminApp client:only="preact" />
+  <AdminApp client:only="preact">
+    <div slot="fallback" class="adm-boot" role="status">
+      <span class="adm-boot__spinner" aria-hidden="true"></span>
+      <span class="visually-hidden">Loading the admin</span>
+    </div>
+  </AdminApp>
+  <noscript>
+    <div class="adm-boot">
+      <p>The admin needs JavaScript. Turn it on and reload this page.</p>
+    </div>
+  </noscript>
 </BaseLayout>
