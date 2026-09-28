@@ -1,0 +1,20 @@
+---
+import { icons, type IconName } from '../shared/icons';
+
+interface Props {
+  name: IconName;
+  /** Accessible label. Omit for decorative icons (the default). */
+  label?: string;
+  class?: string;
+}
+const { name, label, class: className } = Astro.props;
+---
+<svg
+  class:list={['icon', className]}
+  viewBox="0 0 24 24"
+  aria-hidden={label ? undefined : 'true'}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  focusable="false"
+  set:html={icons[name]}
+/>

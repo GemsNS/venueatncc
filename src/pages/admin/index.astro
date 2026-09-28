@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdminApp from '../../components/admin/AdminApp';
+---
+<BaseLayout title="Venue admin | The Venue at NCC" description="Staff area for The Venue at NCC." noindex bare og="home">
+  <AdminApp client:only="preact" />
+</BaseLayout>

@@ -6,7 +6,6 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FaqList from '../../components/FaqList.astro';
 import CtaBand from '../../components/CtaBand.astro';
-import InquiryForm from '../../components/InquiryForm.astro';
 import { events, type EventType } from '../../data/events';
 import { site } from '../../data/site';
 import { eventPhoto } from '../../data/photos';
@@ -112,20 +111,7 @@ const schema = [
     )
   }
 
-  {
-    site.contact.formEndpoint && (
-      <section class="section event-form" aria-labelledby="event-form-heading">
-        <div class="container event-form__grid">
-          <div class="section-head">
-            <h2 id="event-form-heading">Ask about your date</h2>
-            <p>Send a few details and we will follow up about availability.</p>
-          </div>
-          <InquiryForm preselect={event.slug} />
-        </div>
-      </section>
-    )
-  }
-
+  
   {
     related.length > 0 && (
       <section class="section section--tight event-related" aria-labelledby="related-heading">

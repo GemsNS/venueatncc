@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
-import BookingSteps from '../../components/BookingSteps.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import { events } from '../../data/events';
 import { site } from '../../data/site';
@@ -49,16 +48,6 @@ const itemList = {
   <section class="section">
     <div class="container">
       <EventIndex headingLevel="h2" />
-    </div>
-  </section>
-
-  <section class="section section--tight steps-band" aria-labelledby="steps-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="steps-heading">How booking works</h2>
-        <p>Whatever you are planning, booking follows the same three steps.</p>
-      </div>
-      <BookingSteps />
     </div>
   </section>
 

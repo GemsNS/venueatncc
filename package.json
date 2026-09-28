@@ -5,30 +5,45 @@
   "type": "module",
   "description": "Promotional website for The Venue at NCC, the event space of New Community Church in Suffolk, Virginia.",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "check": "astro check"
+    "dev": "node scripts/dev.mjs",
+    "dev:site": "astro dev",
+    "dev:api": "tsx watch server/index.ts",
+    "build": "astro build && npm run build:server",
+    "build:site": "astro build",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/index.mjs",
+    "build:demo": "cross-env PUBLIC_DEMO=true astro build --outDir dist-demo",
+    "start": "node server-dist/index.mjs",
+    "admin:create": "tsx server/cli/create-admin.ts",
+    "test": "tsx --test server/**/*.test.ts",
+    "check": "astro check",
+    "preview:demo": "astro preview --outDir dist-demo"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.6",
     "@astrojs/preact": "^6.0.5",
     "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "@fontsource/marcellus": "^5.3.0",
     "@fontsource/montserrat": "^5.3.0",
+    "@hono/node-server": "^2.1.1",
     "@resvg/resvg-js": "^2.6.2",
     "astro": "^7.3.5",
     "better-sqlite3": "^12.11.1",
+    "hono": "^4.13.9",
     "nodemailer": "^10.0.11",
     "preact": "^10.29.8",
     "satori": "^0.33.5",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/better-sqlite3": "^9.6.0",
     "@types/nodemailer": "^8.0.2",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   }
 }

@@ -1,15 +1,16 @@
 ---
 import '../styles/global.css';
-import marcellusFont from '@fontsource/marcellus/files/marcellus-latin-400-normal.woff2?url';
-import montserratFont from '@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2?url';
+import interFont from '@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url';
 import { getImage } from 'astro:assets';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import MobileCallBar from '../components/MobileCallBar.astro';
+import TabBar from '../components/TabBar.astro';
 import JsonLd from '../components/JsonLd.astro';
 import { site } from '../data/site';
 import { heroPhoto } from '../data/photos';
 import { abs, graph, parentOrganization, venue, website, webPage } from '../lib/schema';
+import { isDemo } from '../lib/env';
+import { href, withoutBase } from '../lib/paths';
 
 interface Props {
   /** Full <title>. Keep under 60 characters. */
@@ -18,15 +19,16 @@ interface Props {
   description?: string;
   /** Share image key from /og/<key>.png. */
   og?: string;
-  /** Alt text for the share image. */
   ogAlt?: string;
   noindex?: boolean;
   /** schema.org WebPage subtype, e.g. 'AboutPage', 'FAQPage', 'ContactPage', 'CollectionPage'. */
   pageType?: string;
-  /** Extra JSON-LD nodes for this page (breadcrumbs, FAQ, service). */
+  /** Extra JSON-LD nodes for this page. */
   schema?: Record<string, unknown>[];
-  /** Include room, capacity, and amenity details in the venue JSON-LD (only where they are visible). */
+  /** Include room and amenity details in the venue JSON-LD (only where they are visible). */
   venueDetails?: boolean;
+  /** Hide the site chrome (used by the admin app). */
+  bare?: boolean;
 }
 
 const {
@@ -38,46 +40,52 @@ const {
   pageType,
   schema = [],
   venueDetails = false,
+  bare = false,
 } = Astro.props;
 
-const canonical = abs(Astro.url.pathname);
-const ogImage = abs(`/og/${og}.png`);
+const path = withoutBase(Astro.url.pathname);
+// Canonical URLs always point at the real domain, including from the demo.
+const canonical = abs(path);
+// Share images must resolve where the page is actually hosted.
+const ogImage = new URL(href(`/og/${og}.png`), Astro.site).href;
 
 const hero = heroPhoto();
 const venueImages: string[] = [];
 if (hero) {
   const img = await getImage({ src: hero.src, width: 1200, format: 'jpg' });
-  venueImages.push(abs(img.src));
+  venueImages.push(abs(withoutBase(img.src)));
 }
 
 const jsonLd = graph(
   venue(venueImages, { details: venueDetails }),
   parentOrganization(),
   website(),
-  webPage({ path: Astro.url.pathname, title, description, type: pageType }),
+  webPage({ path, title, description, type: pageType }),
   ...schema,
 );
+const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : undefined;
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{isDemo ? `Demo: ${title}` : title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
+    {robots && <meta name="robots" content={robots} />}
 
-    <link rel="preload" href={marcellusFont} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={montserratFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interFont} as="font" type="font/woff2" crossorigin />
     <script is:inline>document.documentElement.classList.add('js');</script>
 
-    <meta name="theme-color" content="#14203c" />
-    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
-    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href={href('/favicon-32.png')} type="image/png" sizes="32x32" />
+    <link rel="icon" href={href('/icon-192.png')} type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href={href('/apple-touch-icon.png')} />
+    <link rel="manifest" href={href('/site.webmanifest')} />
+    {!isDemo && <link rel="sitemap" href={href('/sitemap-index.xml')} />}
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={site.name} />
@@ -101,14 +109,35 @@ const jsonLd = graph(
     <meta name="ICBM" content={`${site.address.geo.lat}, ${site.address.geo.lng}`} />
 
     <JsonLd data={jsonLd} />
+    <slot name="head" />
   </head>
-  <body>
+  <body class:list={{ 'is-bare': bare }}>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header />
+    {!bare && <Header />}
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <Footer />
-    <MobileCallBar />
+    {!bare && <Footer />}
+    {!bare && <TabBar />}
+    <script>
+      // One gentle reveal per marked block, once, when it enters the viewport.
+      const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if ('IntersectionObserver' in window && targets.length > 0) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-revealed');
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px' },
+        );
+        targets.forEach((t) => io.observe(t));
+      } else {
+        targets.forEach((t) => t.classList.add('is-revealed'));
+      }
+    </script>
   </body>
 </html>
