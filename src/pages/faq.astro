@@ -2,57 +2,80 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import FaqList from '../components/FaqList.astro';
+import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
 import { publishedFaqs, type Faq } from '../data/faq';
+import { photoByName } from '../data/photos';
 import { breadcrumbs, faqPage } from '../lib/schema';
 
 const title = 'FAQ | Booking The Venue at NCC in Suffolk, VA';
-const description = `Capacity, pricing, alcohol, catering, parking, and booking answers for The Venue at NCC, an event venue in Suffolk, VA that anyone can book.`;
+const description = `Answers about capacity, rates, deposits, parking, and booking at The Venue at NCC, an event venue in Suffolk, Virginia with The Hall for up to ${site.spaces[0].capacity} guests and The Grove for up to ${site.spaces[1].capacity}.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'FAQ', path: '/faq/' },
 ];
-const groups: { topic: Faq['topic']; title: string }[] = [
-  { topic: 'booking', title: 'Booking' },
-  { topic: 'space', title: 'The space' },
-  { topic: 'food', title: 'Food and drink' },
-  { topic: 'pricing', title: 'Pricing' },
-  { topic: 'about', title: 'About the venue' },
-];
+const groups = (
+  [
+    { topic: 'booking', title: 'Booking' },
+    { topic: 'space', title: 'The spaces' },
+    { topic: 'pricing', title: 'Rates and payments' },
+    { topic: 'about', title: 'About the venue' },
+  ] as { topic: Faq['topic']; title: string }[]
+)
+  .map((g) => ({ ...g, id: `faq-${g.topic}`, items: publishedFaqs.filter((f) => f.topic === g.topic) }))
+  .filter((g) => g.items.length > 0);
+const photo = photoByName('grove-path');
 ---
 <BaseLayout title={title} description={description} og="faq" schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}>
   <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__copy">
-        <h1 class="t-large-title">Questions, answered.</h1>
-        <p class="t-lead">
-          Answers to the questions hosts ask most. Still wondering about something? Call <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>.
-        </p>
+      <div class="page-hero__grid">
+        <div class="page-hero__copy">
+          <h1 class="t-large-title">Frequently asked questions.</h1>
+          <p class="t-lead">
+            Answers to the questions we hear most about the spaces, rates, and booking. For anything else, call
+            {' '}<a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or email
+            {' '}<a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+          </p>
+        </div>
+        {photo && <Photo photo={photo} class="page-hero__photo" ratio="8 / 5" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>
     </div>
   </section>
 
-  <section class="section section--grouped">
-    <div class="container faq-groups">
-      {
-        groups.map((g) => {
-          const items = publishedFaqs.filter((f) => f.topic === g.topic);
-          return (
-            items.length > 0 && (
-              <section class="faq-group" aria-labelledby={`faq-${g.topic}`}>
-                <h2 id={`faq-${g.topic}`} class="t-title-2">{g.title}</h2>
-                <FaqList items={items} />
-              </section>
-            )
-          );
-        })
-      }
+  <section class="section section--grouped faq-body">
+    <div class="container faq-layout">
+      <nav class="faq-topics" aria-label="Topics">
+        <ul>
+          {
+            groups.map((g) => (
+              <li>
+                <a class="faq-topics__link" href={`#${g.id}`}>
+                  {g.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <div class="faq-groups">
+        {
+          groups.map((g) => (
+            <section class="faq-group" aria-labelledby={g.id}>
+              <h2 id={g.id} class="faq-group__title">
+                {g.title}
+              </h2>
+              <FaqList items={g.items} />
+            </section>
+          ))
+        }
+      </div>
     </div>
   </section>
 
-  <CtaBand heading="Ready when you are." />
+  <CtaBand />
 </BaseLayout>
 
 <style>
@@ -60,25 +83,127 @@ const groups: { topic: Faq['topic']; title: string }[] = [
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 
+  .page-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem 4rem;
+    align-items: center;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
   .page-hero__copy {
     display: grid;
     gap: 1.25rem;
-    max-width: 46rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    max-width: 40rem;
+  }
+
+  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the questions. */
+  .page-hero__grid > :global(.page-hero__photo) {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .page-hero__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    }
+
+    .page-hero__grid > :global(.page-hero__photo) {
+      display: block;
+    }
+  }
+
+  .faq-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem 4rem;
+  }
+
+  /* Topic links: a wrapping row of capsules on phones, a sticky list beside the questions on wide screens. */
+  .faq-topics ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .faq-topics__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.4rem 1rem;
+    border-radius: var(--r-full);
+    background: var(--bg-elevated);
+    box-shadow: inset 0 0 0 1px var(--separator);
+    color: var(--label);
+    font-size: var(--t-subhead);
+    font-weight: 500;
+    transition: background-color var(--dur-1) ease;
+  }
+
+  .faq-topics__link:hover {
+    background: var(--accent-tint);
+    color: var(--accent-text);
+    text-decoration: none;
+  }
+
+  .faq-topics__link:active {
+    transform: scale(0.97);
+  }
+
+  @media (min-width: 64rem) {
+    .faq-layout {
+      grid-template-columns: 13rem minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .faq-topics {
+      position: sticky;
+      top: calc(var(--nav-h) + 2rem);
+    }
+
+    .faq-topics ul {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+      padding-left: 1rem;
+      border-left: 1px solid var(--separator);
+    }
+
+    .faq-topics__link {
+      padding-inline: 0;
+      background: none;
+      box-shadow: none;
+      border-radius: 0;
+      font-size: var(--t-body);
+    }
+
+    .faq-topics__link:hover {
+      background: none;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
   }
 
   .faq-groups {
     display: grid;
-    gap: clamp(2rem, 1.5rem + 2vw, 3rem);
-    max-width: 860px;
+    gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+    max-width: 50rem;
   }
 
   .faq-group {
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
-  .faq-group h2 {
+  /* A serif label between 18 and 28px is set in Libre Caslon Text (brand.md), not the display cut. */
+  .faq-group__title {
     padding-left: 0.25rem;
+    font-family: var(--font-serif);
+    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
   }
 </style>

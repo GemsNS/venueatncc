@@ -3,6 +3,13 @@
  *
  * Only questions with an answer are published (on /faq/, in llms.txt, and as FAQPage structured data).
  * Questions with `a: null` are a to-do list for the venue team.
+ *
+ * Voice: professional and neutral (docs/design/brand.md). State facts; do not market permissive policies.
+ * Catering is mentioned in exactly one entry, "Is catering provided?".
+ *
+ * The home page looks these questions up by their exact text, so keep them word for word:
+ *   "How many guests can the venue hold?", "Who can book the venue?",
+ *   "How do deposits and payments work?", "How do I check if my date is available?"
  */
 import { site, fullAddress } from './site';
 import { pricing, priceSummary, formatUSD } from '../shared/pricing';
@@ -10,14 +17,14 @@ import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 export interface Faq {
   q: string;
   a: string | null;
-  /** Groups questions on the FAQ page. */
-  topic: 'booking' | 'space' | 'food' | 'pricing' | 'about';
+  /** Groups questions on the FAQ page. The pricing page shows the 'pricing' group. */
+  topic: 'booking' | 'space' | 'pricing' | 'about';
 }
 
 const phone = site.contact.phone;
 const { fromHourly } = priceSummary();
-const indoor = site.spaces.find((s) => s.id === 'indoor');
-const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+const hall = site.spaces.find((s) => s.id === 'indoor');
+const grove = site.spaces.find((s) => s.id === 'outdoor');
 const deposit =
   pricing.bookingDeposit.type === 'percent'
     ? `The booking deposit is ${pricing.bookingDeposit.value}% of your total`
@@ -27,80 +34,84 @@ const payment =
   balanceDays > 0
     ? `${deposit}, and the balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
     : `${deposit}.`;
+const damage =
+  pricing.fees.damageDepositRefundable > 0
+    ? ` A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event if there is no damage.`
+    : '';
+const cleaning = pricing.fees.cleaning > 0 ? ` A cleaning fee of ${formatUSD(pricing.fees.cleaning)} applies to each event.` : '';
 
 export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'How do I check if my date is available?',
-    a: `Open the availability calendar on our booking page. It shows which dates and spaces are open, gives you an instant estimate, and lets you send a request in about two minutes. You can also call ${phone}. We confirm every booking personally.`,
+    a: `Use the availability calendar on our booking page. It shows open dates for ${hall?.name} and ${grove?.name}, gives you an instant estimate, and lets you send a request in about two minutes. You can also call ${phone}. We confirm every booking personally.`,
   },
   {
     topic: 'booking',
-    q: 'Do I need to be a member of New Community Church to book?',
-    a: 'No. Anyone can book The Venue at NCC.',
+    q: 'Who can book the venue?',
+    a: `The Venue at NCC is open to the public. Families, businesses, nonprofits, and churches can all book, and membership at ${site.parent.name} is not required.`,
+  },
+  {
+    topic: 'booking',
+    q: 'Can I see the venue before I book?',
+    a: `Yes. Ask for a visit when you send your request, or call ${phone}, and we will arrange a time to walk through the space with you.`,
   },
   {
     topic: 'space',
     q: 'How many guests can the venue hold?',
-    a: `The indoor hall holds up to ${indoor?.capacity} guests. The outdoor space holds up to ${outdoor?.capacity} guests.`,
+    a: `${hall?.name}, our indoor space, holds up to ${hall?.capacity} guests. ${grove?.name}, our outdoor space, holds up to ${grove?.capacity} guests.`,
   },
   {
     topic: 'space',
-    q: 'Can I use both the indoor hall and the outdoor space?',
-    a: 'Yes, you can request both spaces for the same event when you book. We confirm availability for both when we follow up.',
+    q: `Can I book ${hall?.name} and ${grove?.name} together?`,
+    a: 'Yes. Choose both spaces when you request a date, and we confirm availability for each when we follow up.',
   },
   {
-    topic: 'food',
-    q: 'Is alcohol allowed?',
-    a: "Yes. You can serve alcohol at your event. Virginia ABC may require a banquet license, so check its rules early, and we will talk through the details with you when you book.",
-  },
-  {
-    topic: 'food',
-    q: 'Is catering included?',
-    a: 'No. Catering is not included, so you are free to choose your own caterer or bring your own food.',
+    topic: 'space',
+    q: 'What about tables, chairs, and room setup?',
+    a: 'Please ask when you request a date. Share your guest count and the layout you have in mind, and we will review the setup with you before you reserve.',
   },
   {
     topic: 'space',
     q: 'Is parking included?',
-    a: 'Yes. On-site parking is included with every booking.',
+    a: 'Yes. Every booking includes on-site parking in our paved lot.',
   },
   {
-    topic: 'pricing',
-    q: 'What is included in the rental?',
-    a: 'Your rental includes the space you book and on-site parking. Catering is not included.',
+    topic: 'space',
+    q: 'Is catering provided?',
+    a: 'Rentals include the space and on-site parking. Food service is arranged separately.',
   },
   {
     topic: 'pricing',
     q: 'How much does it cost to rent the venue?',
-    a: `Rates start at ${formatUSD(fromHourly)} per hour and depend on the day, the space, and how long you need it. The pricing page has the full rate card and an instant estimate for your date.`,
+    a: `Rates start at ${formatUSD(fromHourly)} an hour and depend on the space, the day, and the length of your event. Packages for set blocks of time are also available. The pricing page lists every rate and fee and gives an instant estimate for your date.`,
   },
   {
     topic: 'pricing',
-    q: 'How do deposits and payment work?',
-    a: `Send your request, we confirm availability, then your booking deposit reserves the date. ${payment} A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event if there is no damage.`,
+    q: 'How do deposits and payments work?',
+    a: `Once we confirm availability, your booking deposit reserves the date. ${payment}${damage}`,
   },
   {
-    topic: 'booking',
-    q: 'Can I see the space before I book?',
-    a: `Yes. Ask for a visit when you send your request, or call ${phone}, and we will find a time that works.`,
+    topic: 'pricing',
+    q: 'What is included in the rental?',
+    a: `Every rental includes the space you book and on-site parking.${cleaning}`,
   },
   {
     topic: 'about',
     q: 'Where is The Venue at NCC?',
-    a: `The Venue at NCC is at New Community Church, ${fullAddress}.`,
+    a: `The Venue at NCC is at ${site.parent.name}, ${fullAddress}.`,
   },
   {
     topic: 'about',
     q: 'What kinds of events can I host?',
-    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestone parties, repasts and celebrations of life, meetings and workshops, graduations and reunions, and church and community events. If your event is not on the list, ask us.',
+    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and church and community events. For another kind of event, please call us to discuss it.',
   },
   {
     topic: 'about',
-    q: 'Is The Venue at NCC part of New Community Church?',
-    a: `Yes. The Venue at NCC is the event space of New Community Church, which has been part of the Suffolk community since ${site.parent.foundingYear}.`,
+    q: 'Who operates The Venue at NCC?',
+    a: `The Venue at NCC is operated by ${site.parent.name}, part of the Suffolk community since ${site.parent.foundingYear}.`,
   },
   // To answer, then publish:
-  { topic: 'space', q: 'Are tables and chairs included?', a: null },
   { topic: 'space', q: 'Is there a kitchen I can use?', a: null },
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },
   { topic: 'space', q: 'Is the venue wheelchair accessible?', a: null },
