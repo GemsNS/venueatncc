@@ -80,7 +80,7 @@ const rateCapLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : 
         </p>
       </div>
       <div class="estimator">
-        <PriceEstimator client:visible bookHref={href(bookHref)} />
+        <PriceEstimator client:visible bookHref={href(bookHref)} ssrToday={todayKey()} />
       </div>
     </div>
   </section>

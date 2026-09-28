@@ -98,6 +98,10 @@ export interface ApiError {
   ok: false;
   error: string; // human-readable, safe to show
   fields?: Record<string, string>;
+  /** HTTP status when the server answered (the browser client sets it). */
+  status?: number;
+  /** True when the request never got an answer (offline, DNS, server down). */
+  network?: boolean;
 }
 
 export interface InquiryNote {
@@ -127,6 +131,8 @@ export interface InquiryDetail extends Inquiry {
   estimate: Estimate;
   notes: InquiryNote[];
   events: InquiryEvent[];
+  /** Calendar blocks linked to this request (optional so older payloads still type-check). */
+  blocks?: CalendarBlock[];
 }
 
 export type BlockKind = 'booked' | 'held' | 'closed';

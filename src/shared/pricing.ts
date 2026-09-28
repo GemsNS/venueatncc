@@ -227,5 +227,7 @@ export function priceSummary(model: PricingModel = pricing): { fromHourly: numbe
   return { fromHourly: Math.min(...allHourly), lowestPackage };
 }
 
-export const formatUSD = (n: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+const MINUS = String.fromCharCode(0x2212);
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+/** Whole-dollar USD. Negative amounts use a true minus sign, e.g. for discounts. */
+export const formatUSD = (n: number) => (n < 0 ? MINUS + usd.format(-n) : usd.format(n));

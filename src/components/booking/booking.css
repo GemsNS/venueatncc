@@ -2159,3 +2159,31 @@ html:not(.js) .bk-skel {
     outline-offset: 2px;
   }
 }
+
+/* ---------- Narrow screens and large text ----------
+   rem-based queries trigger sooner as text grows, so these also cover 200% text on phones. */
+
+@media (width < 22.5rem) {
+  .bk-seg--days {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: var(--r-md);
+  }
+
+  .bk-seg--days .segmented__item {
+    border-radius: var(--r-sm);
+    white-space: normal;
+  }
+}
+
+@media (width < 22rem) {
+  .bk-dc__spaces {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bk-dc__space-name,
+.bk-dc__space-status,
+.bk-pe__controls label {
+  overflow-wrap: anywhere;
+}

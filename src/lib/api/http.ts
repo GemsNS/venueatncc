@@ -25,7 +25,7 @@ import { apiBase } from '../env';
 import type { AdminUser, ApiError } from '../../shared/types';
 import type { Result, VenueApi } from './types';
 
-const NETWORK_ERROR: ApiError = { ok: false, error: 'We could not reach the server. Check your connection and try again.' };
+const NETWORK_ERROR: ApiError = { ok: false, network: true, error: 'We could not reach the server. Check your connection and try again.' };
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<Result<T>> {
   let res: Response;
@@ -50,8 +50,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     // non-JSON body
   }
   if (!res.ok) {
-    if (data && typeof data === 'object' && (data as ApiError).ok === false) return data as ApiError;
-    return { ok: false, error: res.status === 429 ? 'Too many requests. Wait a minute and try again.' : 'Something went wrong. Try again, or call us.' };
+    if (data && typeof data === 'object' && (data as ApiError).ok === false) return { ...(data as ApiError), status: res.status };
+    return {
+      ok: false,
+      status: res.status,
+      error: res.status === 429 ? 'Too many requests. Wait a minute and try again.' : 'Something went wrong. Try again, or call us.',
+    };
   }
   return data as T;
 }
@@ -71,7 +75,11 @@ export const httpApi: VenueApi = {
   admin: {
     async session() {
       const r = await request<{ user: AdminUser }>('GET', '/api/admin/session');
-      return 'user' in (r as object) ? (r as { user: AdminUser }).user : null;
+      if (r && typeof r === 'object' && 'user' in r) return (r as { user: AdminUser }).user;
+      // Only a 401 means signed out. A network or server error must not end a working session.
+      const err = r as ApiError;
+      if (err.status === 401) return null;
+      throw new Error(err.error);
     },
     login: (email, password) => request('POST', '/api/admin/login', { email, password }),
     async logout() {
@@ -88,7 +96,7 @@ export const httpApi: VenueApi = {
     async exportCsv() {
       try {
         const res = await fetch(`${apiBase}/api/admin/export.csv`, { credentials: 'same-origin' });
-        if (!res.ok) return { ok: false, error: 'Export failed. Sign in again and retry.' };
+        if (!res.ok) return { ok: false, status: res.status, error: res.status === 401 ? 'Your session ended. Sign in again.' : 'Export failed. Try again.' };
         return await res.blob();
       } catch {
         return NETWORK_ERROR;
