@@ -67,12 +67,12 @@ export function planBooking(inquiry: Pick<Inquiry, 'date' | 'space'>, linked: Ca
 
 export const bookingText = {
   clash: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'space' | 'label'>) =>
-    `${formatLong(date)} already has a ${kindLabel[b.kind]} block for ${spaceLabel(b.space).toLowerCase()}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
+    `${formatLong(date)} already has a ${kindLabel[b.kind]} block for ${spaceLabel(b.space)}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
   holdUpgraded: (date: DateKey) => `The hold on ${formatLong(date)} is now marked booked on the calendar.`,
   added: (date: DateKey, space: SpaceChoice, requested: SpaceChoice) =>
     space === requested
       ? `Added to the calendar as booked for ${formatLong(date)}.`
-      : `Added to the calendar as booked for ${formatLong(date)} (${spaceLabel(space).toLowerCase()}).`,
+      : `Added to the calendar as booked for ${formatLong(date)} (${spaceLabel(space)}).`,
   released: (date: DateKey) => `Removed the booked block for ${formatLong(date)} from the calendar, so the date is open again.`,
 };
 
@@ -348,7 +348,7 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     }
     const clash = repo.conflictingBlocks(input.date, input.space)[0];
     if (clash) {
-      const message = `${formatLong(input.date)} already has a ${kindLabel[clash.kind]} block for ${spaceLabel(clash.space).toLowerCase()}${
+      const message = `${formatLong(input.date)} already has a ${kindLabel[clash.kind]} block for ${spaceLabel(clash.space)}${
         clash.label ? ` (${clash.label})` : ''
       }. Remove that block first, or choose another date or space.`;
       return apiError(c, 409, message, { date: message });

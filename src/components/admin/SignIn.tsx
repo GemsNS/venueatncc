@@ -4,6 +4,7 @@ import type { AdminUser } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { SHOW_DEMO, loadDemoCredentials } from './demo-tools';
 import { ELLIPSIS } from './format';
+import { Monogram } from './ui';
 
 const GENERIC = 'That email and password did not work. Check them and try again.';
 // Messages more useful than the generic one: the server's sign-in lockout ("Too many sign-in attempts..."),
@@ -60,9 +61,7 @@ export function SignIn({ notice, onSignedIn }: { notice: string | null; onSigned
   return (
     <div class="adm-signin">
       <div class="adm-signin__card card">
-        <div class="adm-signin__mark" aria-hidden="true">
-          <Icon name="lock" />
-        </div>
+        <Monogram class="adm-signin__mark" />
         <h1 class="adm-signin__title" tabIndex={-1} ref={titleRef}>
           Sign in
         </h1>

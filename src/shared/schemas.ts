@@ -68,7 +68,6 @@ export const inquiryInputSchema = z.object({
   message: multiLine(4000).optional(),
   wantsVisit: z.coerce.boolean().default(false),
   visitNotes: multiLine(500).optional(),
-  servingAlcohol: z.coerce.boolean().default(false),
   formToken: z.string().min(10).max(400),
   website: z.string().max(0, 'Leave this field empty.').optional(),
 }).superRefine((v, ctx) => {

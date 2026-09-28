@@ -31,7 +31,7 @@ import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
 import { estimate } from '../../src/shared/pricing';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
-import type { CalendarBlock, Inquiry } from '../../src/shared/types';
+import { SPACE_NAMES, type CalendarBlock, type Inquiry } from '../../src/shared/types';
 import { silentLog } from './helpers';
 
 describe('passwords', () => {
@@ -170,8 +170,9 @@ describe('client address buckets', () => {
 
 describe('request helpers', () => {
   test('normalizeInquiryBody turns form strings into booleans and drops empty optionals', () => {
-    const out = normalizeInquiryBody({ wantsVisit: 'false', servingAlcohol: 'on', altDate: '', phone: '  ', message: 'hi', estimate: { total: 1 } });
-    assert.deepEqual(out, { wantsVisit: false, servingAlcohol: true, message: 'hi' });
+    const out = normalizeInquiryBody({ wantsVisit: 'false', altDate: '', phone: '  ', message: 'hi', estimate: { total: 1 } });
+    assert.deepEqual(out, { wantsVisit: false, message: 'hi' });
+    assert.deepEqual(normalizeInquiryBody({ wantsVisit: 'on' }), { wantsVisit: true });
   });
 
   test('latest bookable date is two years out', () => {
@@ -317,7 +318,6 @@ describe('email templates', () => {
     phone: '757-555-0101',
     message: 'Line one' + String.fromCharCode(10) + 'Line <two>',
     wantsVisit: true,
-    servingAlcohol: true,
     estimateTotal: 0,
     createdAt: '2026-10-01T15:00:00.000Z',
     updatedAt: '2026-10-01T15:00:00.000Z',
@@ -333,7 +333,11 @@ describe('email templates', () => {
         assert.ok(!part.includes(String.fromCharCode(8211)), 'no en dash');
       }
       assert.ok(!mail.html.includes('<script>'));
-      assert.ok(mail.html.includes('#7B2FBE'));
+      assert.ok(mail.html.includes('#4F2A75'), 'Venue Purple');
+      assert.ok(mail.html.includes('<img src="https://venueatncc.org/brand/email-lockup.png" width="256" height="48" alt="The Venue at NCC"'), 'lockup header');
+      assert.ok(mail.html.includes('Georgia'), 'serif headings');
+      assert.ok(!mail.html.includes('uppercase'), 'no all-caps labels');
+      assert.ok(mail.html.includes(SPACE_NAMES.both) && mail.text.includes(`Space: ${SPACE_NAMES.both}`), 'spaces by their public names');
       assert.ok(mail.html.includes(inquiry.reference));
       assert.ok(mail.text.includes(inquiry.reference));
     }
@@ -442,7 +446,6 @@ describe('CSV export', () => {
     phone: '757-555-0142',
     contactPreference: 'text',
     wantsVisit: true,
-    servingAlcohol: false,
     estimateTotal: 1100,
     // 01:40 UTC on the 28th is still the 27th in Suffolk.
     createdAt: '2026-09-28T01:40:00.000Z',
@@ -460,11 +463,11 @@ describe('CSV export', () => {
     const col = (label: string) => cells[CSV_COLUMNS.findIndex((c) => c.label === label)];
     assert.equal(col('Status'), 'Booked');
     assert.equal(col('Received (Eastern)'), '2026-09-27 21:40');
-    assert.equal(col('Space'), 'Indoor and outdoor');
+    assert.equal(col('Space'), SPACE_NAMES.both);
     assert.equal(col('Event type'), 'Weddings & receptions');
     assert.equal(col('Contact preference'), 'Text message');
     assert.equal(col('Name'), 'Zoë Ångström');
-    assert.ok(second.includes('Visit scheduled') && second.includes('Indoor hall') && second.includes('Other event,Quinceañera') && second.includes(',Email,'));
+    assert.ok(second.includes('Visit scheduled') && second.includes(SPACE_NAMES.indoor) && second.includes('Other event,Quinceañera') && second.includes(',Email,'));
   });
 
   test('midnight reads 00:00, not 24:00', () => {

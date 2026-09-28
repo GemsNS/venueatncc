@@ -55,7 +55,6 @@ export const MIGRATIONS: string[] = [
     message TEXT,
     wants_visit INTEGER NOT NULL DEFAULT 0,
     visit_notes TEXT,
-    serving_alcohol INTEGER NOT NULL DEFAULT 0,
     estimate_json TEXT NOT NULL,
     estimate_total INTEGER NOT NULL,
     ip_hash TEXT,

@@ -35,14 +35,14 @@ export const inquiryText = {
   created: 'Request received through the website.',
   conflict: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) => {
     const what = b.label ? `${b.kind}: ${b.label}` : b.kind;
-    return `The calendar already shows ${formatLong(date)} as taken for ${spaceLabel(b.space).toLowerCase()} (${what}). Check it before you confirm this request.`;
+    return `The calendar already shows ${formatLong(date)} as taken for ${spaceLabel(b.space)} (${what}). Check it before you confirm this request.`;
   },
 };
 
 export const FORM_TOO_FAST = 'That was quick. Wait a few seconds, then send your request again.';
 export const FORM_EXPIRED = 'This form has expired. Refresh the page and send your request again.';
 
-const BOOLEAN_FIELDS = ['wantsVisit', 'servingAlcohol'] as const;
+const BOOLEAN_FIELDS = ['wantsVisit'] as const;
 const OPTIONAL_TEXT_FIELDS = ['eventTypeOther', 'altDate', 'phone', 'message', 'visitNotes'] as const;
 const TRUE_WORDS = new Set(['true', 'on', '1', 'yes']);
 
@@ -269,7 +269,6 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
               message: input.message || undefined,
               wantsVisit: input.wantsVisit,
               visitNotes: input.visitNotes || undefined,
-              servingAlcohol: input.servingAlcohol,
               estimate: est,
               ipHash,
               userAgent,

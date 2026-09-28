@@ -1,7 +1,7 @@
 /**
  * Controls shared by the booking islands, built to the HIG web spec (docs/design/hig-web-spec.md):
- * segmented control (radiogroup with arrow keys), stepper, guest count field, list-row switch,
- * spinner, per-space status, and the estimate breakdown.
+ * segmented control and choice list (radiogroups with arrow keys), stepper, guest count field,
+ * list-row switch, spinner, per-space status, and the estimate breakdown.
  */
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -11,30 +11,14 @@ import { formatUSD } from '../../shared/pricing';
 import type { Estimate } from '../../shared/types';
 import { clamp, formatMoney } from './lib';
 
-/* ---------- Segmented control ---------- */
+/* ---------- Radio group keys ---------- */
 
-export interface SegOption<T extends string> {
-  value: T;
-  label: string;
-  disabled?: boolean;
-}
-
-export function Segmented<T extends string>(props: {
-  id?: string;
-  labelId?: string;
-  label?: string;
-  options: SegOption<T>[];
-  value: T | '';
-  onChange: (value: T) => void;
-  describedBy?: string;
-  invalid?: boolean;
-  full?: boolean;
-  class?: string;
-}) {
-  const { options, value, onChange } = props;
+/**
+ * Arrow keys, Home, and End in a radio group, skipping disabled options: picks the option,
+ * moves focus to it, and keeps the page from scrolling. Other keys pass through.
+ */
+function useRadioKeys<T extends string>(options: { value: T; disabled?: boolean }[], onChange: (value: T) => void) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const checkedIdx = options.findIndex((o) => o.value === value && !o.disabled);
-  const tabIdx = checkedIdx >= 0 ? checkedIdx : options.findIndex((o) => !o.disabled);
 
   const move = (from: number, dir: 1 | -1) => {
     let i = from;
@@ -62,6 +46,39 @@ export function Segmented<T extends string>(props: {
       move(0, -1);
     }
   };
+
+  return { refs, onKeyDown };
+}
+
+/** The option that takes the Tab stop: the checked one, or the first that can be chosen. */
+function tabIndexOf<T extends string>(options: { value: T; disabled?: boolean }[], value: T | ''): number {
+  const checkedIdx = options.findIndex((o) => o.value === value && !o.disabled);
+  return checkedIdx >= 0 ? checkedIdx : options.findIndex((o) => !o.disabled);
+}
+
+/* ---------- Segmented control ---------- */
+
+export interface SegOption<T extends string> {
+  value: T;
+  label: string;
+  disabled?: boolean;
+}
+
+export function Segmented<T extends string>(props: {
+  id?: string;
+  labelId?: string;
+  label?: string;
+  options: SegOption<T>[];
+  value: T | '';
+  onChange: (value: T) => void;
+  describedBy?: string;
+  invalid?: boolean;
+  full?: boolean;
+  class?: string;
+}) {
+  const { options, value, onChange } = props;
+  const { refs, onKeyDown } = useRadioKeys(options, onChange);
+  const tabIdx = tabIndexOf(options, value);
 
   const cls = ['segmented', 'bk-seg', props.full ? 'bk-seg--full' : '', props.class ?? ''].filter(Boolean).join(' ');
   return (
@@ -95,6 +112,85 @@ export function Segmented<T extends string>(props: {
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Choice list: radio rows with a title and a hint ---------- */
+
+export interface ChoiceOption<T extends string> {
+  value: T;
+  title: string;
+  hint: string;
+  disabled?: boolean;
+  /** Shown in place of the radio when the option cannot be chosen, such as "Booked". */
+  disabledNote?: string;
+}
+
+/** An inset grouped list of radio rows, for choices that need a line of explanation each. */
+export function ChoiceList<T extends string>(props: {
+  id: string;
+  labelId: string;
+  options: ChoiceOption<T>[];
+  value: T | '';
+  onChange: (value: T) => void;
+  describedBy?: string;
+  invalid?: boolean;
+}) {
+  const { id, options, value, onChange } = props;
+  const { refs, onKeyDown } = useRadioKeys(options, onChange);
+  const tabIdx = tabIndexOf(options, value);
+
+  return (
+    <div
+      role="radiogroup"
+      id={id}
+      class="bk-choice list-group"
+      aria-labelledby={props.labelId}
+      aria-describedby={props.describedBy || undefined}
+      aria-invalid={props.invalid ? 'true' : undefined}
+    >
+      {options.map((o, i) => {
+        const on = o.value === value;
+        const base = `${id}-${o.value}`;
+        const note = o.disabled && o.disabledNote;
+        return (
+          <button
+            key={o.value}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            class="bk-choice__item"
+            aria-checked={on ? 'true' : 'false'}
+            aria-disabled={o.disabled ? 'true' : undefined}
+            aria-labelledby={`${base}-t`}
+            aria-describedby={note ? `${base}-h ${base}-n` : `${base}-h`}
+            tabIndex={i === tabIdx ? 0 : -1}
+            onClick={() => {
+              if (!o.disabled) onChange(o.value);
+            }}
+            onKeyDown={(e) => onKeyDown(e, i)}
+          >
+            <span class="bk-choice__text">
+              <span class="bk-choice__title" id={`${base}-t`}>
+                {o.title}
+              </span>
+              <span class="bk-choice__hint" id={`${base}-h`}>
+                {o.hint}
+              </span>
+            </span>
+            {note ? (
+              <span class="bk-choice__note" id={`${base}-n`}>
+                {o.disabledNote}
+              </span>
+            ) : (
+              <span class="bk-choice__radio" aria-hidden="true" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

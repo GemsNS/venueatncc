@@ -1,7 +1,7 @@
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addDays, todayKey } from '../../src/shared/dates';
-import type { AdminStats, AvailabilityResponse, CalendarBlock, Inquiry, InquiryCreated, InquiryDetail } from '../../src/shared/types';
+import { SPACE_NAMES, type AdminStats, type AvailabilityResponse, type CalendarBlock, type Inquiry, type InquiryCreated, type InquiryDetail } from '../../src/shared/types';
 import { LOGIN_ATTEMPTS_PER_ADDRESS } from '../app';
 import { hashPassword, useFastPasswordHashingForTests } from '../security';
 import { ADMIN_EMAIL, ADMIN_PASSWORD, createHarness, freshIp, login, sessionCookie, submitInquiry, type Harness } from './helpers';
@@ -277,7 +277,10 @@ describe('admin API', () => {
       assert.equal(res.status, 409);
       const body = await res.json();
       assert.equal(body.ok, false);
-      assert.match(body.error, /already has a closed block for indoor and outdoor [(]Church retreat[)][.] Remove or change that block on the calendar, then mark this request booked[.]/);
+      assert.ok(
+        body.error.includes(`already has a closed block for ${SPACE_NAMES.both} (Church retreat). Remove or change that block on the calendar, then mark this request booked.`),
+        body.error,
+      );
       const detail = (await (await h.request(`/api/admin/inquiries/${id}`, { cookie })).json()) as InquiryDetail;
       assert.equal(detail.status, 'new', 'the status is unchanged');
       assert.ok(!detail.events.some((e) => e.kind === 'status'));
@@ -291,7 +294,7 @@ describe('admin API', () => {
       const { id } = await createInquiry(h, { date, space: 'both', guests: 140 });
       const res = await patchStatus(id, 'booked', cookie);
       assert.equal(res.status, 409);
-      assert.match((await res.json()).error, /held block for indoor hall [(]Smith family hold[)]/);
+      assert.ok(((await res.json()).error as string).includes(`held block for ${SPACE_NAMES.indoor} (Smith family hold)`));
       assert.equal((await blocksOn(date, cookie)).length, 1);
       assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', outdoor: 'free' });
       const detail = (await (await h.request(`/api/admin/inquiries/${id}`, { cookie })).json()) as InquiryDetail;
@@ -315,7 +318,7 @@ describe('admin API', () => {
       ]);
       assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', outdoor: 'taken' }, 'every requested space is taken');
       assert.ok(detail.events.some((e) => e.detail.includes('The hold on')));
-      assert.ok(detail.events.some((e) => e.detail.includes('(outdoor space)')));
+      assert.ok(detail.events.some((e) => e.detail.includes(`(${SPACE_NAMES.outdoor})`)));
       assert.equal(detail.blocks.length, 2, 'the detail lists the linked blocks');
     });
 
@@ -384,7 +387,7 @@ describe('admin API', () => {
       assert.ok(!/(^|,)=HYPERLINK/m.test(csv));
       // Readable labels rather than internal values.
       assert.ok(csv.includes(',Weddings & receptions,'));
-      assert.ok(csv.includes(',Indoor hall,'));
+      assert.ok(csv.includes(`,${SPACE_NAMES.indoor},`));
       assert.ok(csv.includes(',Booked,') && csv.includes(',New,'));
       assert.ok(!/,weddings,|,indoor,|,booked,/.test(csv));
     });

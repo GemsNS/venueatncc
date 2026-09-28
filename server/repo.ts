@@ -48,7 +48,6 @@ interface InquiryRow {
   message: string | null;
   wants_visit: number;
   visit_notes: string | null;
-  serving_alcohol: number;
   estimate_json: string;
   estimate_total: number;
   created_at: string;
@@ -91,7 +90,6 @@ export function toInquiry(r: InquiryRow): Inquiry {
     email: r.email,
     contactPreference: r.contact_preference,
     wantsVisit: r.wants_visit === 1,
-    servingAlcohol: r.serving_alcohol === 1,
     estimateTotal: r.estimate_total,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -128,7 +126,6 @@ export interface NewInquiry {
   message?: string;
   wantsVisit: boolean;
   visitNotes?: string;
-  servingAlcohol: boolean;
   estimate: Estimate;
   ipHash: string | null;
   userAgent: string | null;
@@ -173,10 +170,10 @@ export class Repo {
     const info = this.db
       .prepare(
         `INSERT INTO inquiries (reference, status, event_type, event_type_other, date, alt_date, start_time, hours, space, guests,
-          name, email, phone, contact_preference, message, wants_visit, visit_notes, serving_alcohol,
+          name, email, phone, contact_preference, message, wants_visit, visit_notes,
           estimate_json, estimate_total, ip_hash, user_agent, created_at, updated_at)
          VALUES (@reference, 'new', @eventType, @eventTypeOther, @date, @altDate, @startTime, @hours, @space, @guests,
-          @name, @email, @phone, @contactPreference, @message, @wantsVisit, @visitNotes, @servingAlcohol,
+          @name, @email, @phone, @contactPreference, @message, @wantsVisit, @visitNotes,
           @estimateJson, @estimateTotal, @ipHash, @userAgent, @now, @now)`,
       )
       .run({
@@ -196,7 +193,6 @@ export class Repo {
         message: input.message ?? null,
         wantsVisit: input.wantsVisit ? 1 : 0,
         visitNotes: input.visitNotes ?? null,
-        servingAlcohol: input.servingAlcohol ? 1 : 0,
         estimateJson: JSON.stringify(input.estimate),
         estimateTotal: input.estimate.total,
         ipHash: input.ipHash,

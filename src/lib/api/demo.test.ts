@@ -12,7 +12,7 @@ import { addDays, dayOfWeek, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
 import { referencePattern } from '../../shared/reference';
 import { DATE_TOO_FAR, latestBookableDate } from '../../shared/schemas';
-import { INQUIRY_STATUSES } from '../../shared/types';
+import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
 import type { InquiryInput, SpaceChoice } from '../../shared/types';
 import { DEMO_STORAGE_KEY, demoApi as api, demoMessages, resetDemoData, setDemoLatency, type DemoInquiryDetail } from './demo';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from './demo-credentials';
@@ -71,7 +71,6 @@ async function validInput(overrides: Partial<InquiryInput> = {}): Promise<Inquir
     email: 'test.person@example.com',
     contactPreference: 'email',
     wantsVisit: false,
-    servingAlcohol: false,
     formToken: token,
     website: '',
     ...overrides,
@@ -345,7 +344,10 @@ test('Mark Booked with another block on part of the request is refused, and noth
   const [mine] = ok(await api.admin.listInquiries({ q: created.reference }));
   const res = await api.admin.setStatus(mine.id, 'booked');
   assert.ok(isError(res));
-  assert.match(res.error, /already has a held block for indoor hall [(]Smith family hold[)][.] Remove or change that block on the calendar, then mark this request booked[.]/);
+  assert.ok(
+    res.error.includes(`already has a held block for ${SPACE_NAMES.indoor} (Smith family hold). Remove or change that block on the calendar, then mark this request booked.`),
+    res.error,
+  );
   const detail = ok(await api.admin.getInquiry(mine.id));
   assert.equal(detail.status, 'new');
   assert.equal(ok(await api.admin.listBlocks(date, date)).length, 1);
@@ -392,7 +394,7 @@ test('exportCsv returns a text/csv Blob that starts with the shared header', asy
   const all = ok(await api.admin.listInquiries({ status: 'all' }));
   assert.equal(lines.filter((l) => l.length > 0).length, all.length + 1);
   assert.ok(text.includes(',Birthdays & milestones,'), 'event types by name');
-  assert.ok(text.includes(',Indoor hall,'), 'spaces by name');
+  assert.ok(text.includes(`,${SPACE_NAMES.indoor},`), 'spaces by name');
   assert.ok(!/,birthday-parties,|,indoor,/.test(text));
 });
 

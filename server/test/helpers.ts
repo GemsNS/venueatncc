@@ -155,7 +155,6 @@ export function inquiryBody(h: Harness, token: string, overrides: Partial<Inquir
     contactPreference: 'email',
     message: 'Hoping for a spring reception.',
     wantsVisit: true,
-    servingAlcohol: false,
     formToken: token,
     ...overrides,
   };

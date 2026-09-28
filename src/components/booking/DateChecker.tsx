@@ -7,9 +7,8 @@ import './booking.css';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
-import { CAPACITY } from '../../shared/capacity';
 import type { DateKey } from '../../shared/types';
-import { SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
+import { SINGLE_SPACES, SPACE_HINT, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
@@ -205,7 +204,7 @@ export default function DateChecker(props: { bookHref?: string }) {
                 <span class="bk-dc__space-name">{spaceLabel(s)}</span>
                 <span class="bk-dc__radio" aria-hidden="true" />
               </span>
-              <span class="bk-dc__space-cap">Up to {CAPACITY[s]} guests</span>
+              <span class="bk-dc__space-cap">{SPACE_HINT[s]}</span>
               <span class="bk-dc__space-status">
                 {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">{date ? (statusPending ? 'Checking' : '') : 'Pick a date'}</span>}
               </span>

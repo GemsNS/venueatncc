@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import { addDays, dayOfWeek, formatLong, formatShort, monthGrid, parseKey, toKey, todayKey } from '../../shared/dates';
-import type { BlockKind, CalendarBlock, DateKey, SpaceChoice } from '../../shared/types';
+import { SPACE_NAMES, type BlockKind, type CalendarBlock, type DateKey, type SpaceChoice } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
 import { Sheet } from './Dialog';
@@ -20,8 +20,8 @@ const WEEKDAYS = [
 ];
 
 const SPACE_OPTIONS: { id: SpaceChoice; label: string }[] = [
-  { id: 'indoor', label: 'Indoor' },
-  { id: 'outdoor', label: 'Outdoor' },
+  { id: 'indoor', label: SPACE_NAMES.indoor },
+  { id: 'outdoor', label: SPACE_NAMES.outdoor },
   { id: 'both', label: 'Both' },
 ];
 

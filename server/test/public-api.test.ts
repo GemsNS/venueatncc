@@ -109,14 +109,14 @@ describe('public API', () => {
       ]);
     });
 
-    test('accepts form-encoded bodies and reads "false" as false', async () => {
+    test('accepts form-encoded bodies, reads "false" as false, and ignores fields it does not know', async () => {
       const token = await formToken(h);
       h.clock.advance(4_000);
       const b = inquiryBody(h, token);
       const form = new URLSearchParams({
         ...Object.fromEntries(Object.entries(b).map(([k, v]) => [k, String(v)])),
         wantsVisit: 'false',
-        servingAlcohol: 'on',
+        retiredField: 'on',
         altDate: '',
         website: '',
       });
@@ -128,8 +128,8 @@ describe('public API', () => {
       });
       assert.equal(res.status, 201, await res.clone().text());
       const { reference } = (await res.json()) as InquiryCreated;
-      const row = h.db.prepare('SELECT wants_visit, serving_alcohol, alt_date FROM inquiries WHERE reference = ?').get(reference) as Record<string, unknown>;
-      assert.deepEqual(row, { wants_visit: 0, serving_alcohol: 1, alt_date: null });
+      const row = h.db.prepare('SELECT wants_visit, alt_date FROM inquiries WHERE reference = ?').get(reference) as Record<string, unknown>;
+      assert.deepEqual(row, { wants_visit: 0, alt_date: null });
     });
 
     test('honeypot: a filled "website" field is rejected and nothing is stored', async () => {

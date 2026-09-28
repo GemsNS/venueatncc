@@ -18,7 +18,7 @@ import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
 import { makeReference } from '../../shared/reference';
-import { INQUIRY_STATUSES } from '../../shared/types';
+import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
 import type {
   AdminStats,
   AdminUser,
@@ -45,12 +45,6 @@ const loadSchemas = (): Promise<Schemas> => import('../../shared/schemas');
 export const DEMO_STORAGE_KEY = 'ncc-demo-v1';
 export const DEMO_SESSION_KEY = 'ncc-demo-session';
 
-const SPACE_PHRASE: Record<SpaceChoice, string> = {
-  indoor: 'the indoor hall',
-  outdoor: 'the outdoor space',
-  both: 'the indoor hall and outdoor space',
-};
-
 /**
  * Every message this backend can return. The API server should use the same wording
  * so the demo and production read identically.
@@ -71,7 +65,7 @@ export const demoMessages = {
   inquiryNotFound: 'We could not find that inquiry.',
   blockNotFound: 'We could not find that calendar block.',
   passwordDemo: 'Password changes are turned off in the demo.',
-  blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_PHRASE[space]}.`,
+  blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_NAMES[space]}.`,
   /** Mark Booked refused because another block is in the way (the server's 409). */
   bookClash: timelineText.booked.clash,
 };
@@ -434,7 +428,6 @@ export const demoApi: VenueApi = {
         message: blank(data.message),
         wantsVisit: data.wantsVisit,
         visitNotes: data.wantsVisit ? blank(data.visitNotes) : undefined,
-        servingAlcohol: data.servingAlcohol,
         estimateTotal: est.total,
         createdAt: now,
         updatedAt: now,
