@@ -38,6 +38,7 @@ export function normalizeInquiryBody(raw: Record<string, unknown>): Record<strin
     const v = out[key];
     if (v === null || (typeof v === 'string' && v.trim() === '')) delete out[key];
   }
+  if (out.website === null || (typeof out.website === 'string' && out.website.trim() === '')) delete out.website;
   // Never let a client-side estimate or status through, even though zod strips unknown keys.
   delete out.estimate;
   delete out.status;
