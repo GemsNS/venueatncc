@@ -11,7 +11,8 @@ const {
   heading = 'Find us in north Suffolk',
   lead = 'On Godwin Boulevard at New Community Church, with parking on site.',
 } = Astro.props;
-const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Community Church, ${fullAddress}`)}&z=14&output=embed`;
+// The address alone, so the pin is not labeled with the church's older Google listing name.
+const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&z=14&output=embed`;
 ---
 <section class="section section--grouped location" aria-labelledby="location-heading">
   <div class="container location__grid">
@@ -20,33 +21,41 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Communit
         <h2 id="location-heading">{heading}</h2>
         <p class="t-lead">{lead}</p>
       </div>
-      <ul class="list-group">
-        <li class="list-row list-row--icon">
-          <span class="icon-tile"><Icon name="map-pin" /></span>
-          <div class="list-row__main">
-            <div class="t-headline">{site.name}</div>
-            <div class="list-row__detail">{fullAddress}</div>
+      <ul class="list-group location__list">
+        <li>
+          <div class="list-row list-row--icon">
+            <span class="icon-tile"><Icon name="map-pin" /></span>
+            <div class="list-row__main">
+              <div class="t-headline">{site.name}</div>
+              <div class="list-row__detail">{fullAddress}</div>
+            </div>
           </div>
         </li>
-        <li class="list-row list-row--icon">
-          <span class="icon-tile"><Icon name="phone" /></span>
-          <div class="list-row__main">
-            <a class="t-headline" href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
-            <div class="list-row__detail">Call us</div>
-          </div>
+        <li>
+          <a class="list-row list-row--icon location__link" href={`tel:${site.contact.phoneE164}`}>
+            <span class="icon-tile"><Icon name="phone" /></span>
+            <span class="list-row__main">
+              <span class="t-headline location__value">{site.contact.phone}</span>
+              <span class="list-row__detail">Call us</span>
+            </span>
+          </a>
         </li>
-        <li class="list-row list-row--icon">
-          <span class="icon-tile"><Icon name="mail" /></span>
-          <div class="list-row__main">
-            <a class="t-headline" href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
-            <div class="list-row__detail">We reply by email</div>
-          </div>
+        <li>
+          <a class="list-row list-row--icon location__link" href={`mailto:${site.contact.email}`}>
+            <span class="icon-tile"><Icon name="mail" /></span>
+            <span class="list-row__main">
+              <span class="t-headline location__value">{site.contact.email}</span>
+              <span class="list-row__detail">We reply by email</span>
+            </span>
+          </a>
         </li>
-        <li class="list-row list-row--icon">
-          <span class="icon-tile"><Icon name="parking" /></span>
-          <div class="list-row__main">
-            <div class="t-headline">Parking included</div>
-            <div class="list-row__detail">On-site parking with every booking</div>
+        <li>
+          <div class="list-row list-row--icon">
+            <span class="icon-tile"><Icon name="parking" /></span>
+            <div class="list-row__main">
+              <div class="t-headline">Parking included</div>
+              <div class="list-row__detail">On-site parking with every booking</div>
+            </div>
           </div>
         </li>
       </ul>
@@ -58,10 +67,17 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Communit
       </div>
     </div>
     <div class="location__map">
+      {
+        /*
+          Out of the tab order: the map adds focus stops with no visible focus, and the directions
+          link, address and phone beside it carry the same information. Screen readers still get the title.
+        */
+      }
       <iframe
         title={`Map showing ${site.name} at ${fullAddress}`}
         src={mapSrc}
         loading="lazy"
+        tabindex="-1"
         referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
   </div>
@@ -89,6 +105,43 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Communit
     margin-bottom: 0.5rem;
   }
 
+  /* Rows sit inside list items here, so draw the inset separators between items. */
+  .location__list > li + li > .list-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: calc(1.1rem + 44px + 0.9rem);
+    right: 0;
+    border-top: 1px solid var(--separator);
+  }
+
+  /* The phone and email rows are links end to end, so the whole row is the target. */
+  .location__link {
+    color: var(--label);
+    text-decoration: none;
+    transition: background-color var(--dur-1) ease;
+  }
+
+  .location__link:hover {
+    text-decoration: none;
+    background: var(--fill-3);
+  }
+
+  /* The list clips its corners, so the focus ring sits inside the row. */
+  .location__link:focus-visible {
+    outline-offset: -3px;
+    border-radius: 0;
+  }
+
+  .location__link .list-row__main {
+    display: grid;
+  }
+
+  .location__value {
+    color: var(--accent-text);
+    overflow-wrap: anywhere;
+  }
+
   .location__map {
     aspect-ratio: 4 / 3;
     border-radius: var(--r-xl);
@@ -104,9 +157,10 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(`New Communit
     border: 0;
   }
 
+  /* HIG: slightly dim bright imagery in dark mode. No inversion, so the pin keeps its real color. */
   @media (prefers-color-scheme: dark) {
     .location__map iframe {
-      filter: invert(0.9) hue-rotate(180deg) saturate(0.8);
+      filter: brightness(0.82);
     }
   }
 </style>

@@ -9,29 +9,11 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { site } from '../../data/site';
-import { events } from '../../data/events';
 import { archSceneSvg } from '../../lib/archScene';
-import { priceSummary, formatUSD } from '../../shared/pricing';
-
-interface Card {
-  kicker: string;
-  title: string;
-}
-
-const { fromHourly } = priceSummary();
-const cards: Record<string, Card> = {
-  home: { kicker: 'Event venue in Suffolk, Virginia', title: 'Unforgettable events await you.' },
-  events: { kicker: 'Events', title: 'Every kind of event, one welcoming venue.' },
-  'the-space': { kicker: 'The space', title: 'A hall for 100. The open air for 150.' },
-  pricing: { kicker: 'Pricing', title: `Upfront rates from ${formatUSD(fromHourly)} an hour.` },
-  book: { kicker: 'Check availability', title: 'Find your date.' },
-  faq: { kicker: 'FAQ', title: 'Questions, answered.' },
-  about: { kicker: 'About', title: 'A place for the moments people remember.' },
-};
-for (const e of events) cards[e.slug] = { kicker: e.name, title: e.h1 };
+import { shareCards, sharePills, type ShareCard as Card } from './_cards';
 
 export const getStaticPaths = (() =>
-  Object.entries(cards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
+  Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
 
 const root = process.cwd();
 const read = (p: string) => fs.readFile(path.join(root, 'node_modules', p));
@@ -81,7 +63,7 @@ export const GET: APIRoute = async ({ props }) => {
         h('div', { fontSize: 28, fontWeight: 600, color: '#7b2fbe' }, card.kicker),
         h('div', { fontSize: titleSize, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2.2, maxWidth: 700 }, card.title),
       ]),
-      h('div', { display: 'flex', gap: 12 }, [pill('Indoors up to 100'), pill('Outdoors up to 150'), pill('Parking included')]),
+      h('div', { display: 'flex', gap: 12 }, sharePills.map(pill)),
     ]),
     h('div', { display: 'flex', alignItems: 'flex-end', justifyContent: 'center', width: 400, paddingTop: 56 }, [
       h(

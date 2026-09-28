@@ -1,19 +1,37 @@
 ---
-/** Closing call to action on a deep purple band lit by the luminous scene. */
+/**
+ * Closing call to action on a deep purple band lit by the luminous scene.
+ * A scrim darkens the band's lower half, where the scene's glow is brightest, so the white text,
+ * the glass button and the white focus ring all keep their contrast.
+ */
 import ArchScene from './ArchScene.astro';
 import Icon from './Icon.astro';
 import { site } from '../data/site';
 import { bookHref, pricingHref } from '../data/nav';
-import { href } from '../lib/paths';
+import { href, withoutBase } from '../lib/paths';
+
+interface Link {
+  label: string;
+  href: string;
+}
 
 interface Props {
   heading?: string;
   body?: string;
+  /** The second button. Defaults to See Pricing, or Read the FAQ on the pricing page itself. */
+  secondary?: Link;
 }
+
+const path = withoutBase(Astro.url.pathname);
+// A non-breaking space keeps "a few" together, so the default heading breaks before it.
+const nbsp = String.fromCharCode(160);
 const {
-  heading = 'Your date is a few taps away.',
+  heading = `Your date is a${nbsp}few taps away.`,
   body = 'See what is open, get an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
+  secondary = path === pricingHref ? { label: 'Read the FAQ', href: '/faq/' } : { label: 'See Pricing', href: pricingHref },
 } = Astro.props;
+// Never link to the page the visitor is already on.
+const showSecondary = secondary.href !== path;
 ---
 <section class="cta" aria-labelledby="cta-heading">
   <div class="cta__bg" aria-hidden="true">
@@ -27,7 +45,7 @@ const {
         <Icon name="calendar" />
         Check Availability
       </a>
-      <a class="btn btn--glass btn--lg cta__glass" href={href(pricingHref)}>See Pricing</a>
+      {showSecondary && <a class="btn btn--glass btn--lg cta__glass" href={href(secondary.href)}>{secondary.label}</a>}
     </div>
     <p class="cta__call">
       Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
@@ -50,6 +68,31 @@ const {
     z-index: -1;
   }
 
+  /* Scrim: the scene's pale glow sits low in the band, right behind the buttons and the call line. */
+  .cta__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--night) 88%, transparent) 0%,
+      color-mix(in srgb, var(--night) 55%, transparent) 45%,
+      transparent 80%
+    );
+  }
+
+  /* In dark mode the band settles fully into night at its lower edge, next to the dark footer. */
+  @media (prefers-color-scheme: dark) {
+    .cta__bg::after {
+      background: linear-gradient(
+        to top,
+        var(--night) 0%,
+        color-mix(in srgb, var(--night) 60%, transparent) 45%,
+        transparent 80%
+      );
+    }
+  }
+
   .cta__inner {
     display: grid;
     justify-items: center;
@@ -66,7 +109,7 @@ const {
   .cta__body {
     max-width: 40rem;
     font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
-    color: rgba(255, 255, 255, 0.86);
+    color: #ffffff;
   }
 
   .cta__actions {
@@ -74,19 +117,20 @@ const {
     margin-top: 0.5rem;
   }
 
+  /* Glass over bright media is dimmed (HIG); here it is a dark night tint with a white edge. */
   .cta__glass {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.35);
+    background-color: color-mix(in srgb, var(--night) 55%, transparent);
+    border-color: #ffffff;
   }
 
   .cta__glass:hover {
-    background-color: rgba(255, 255, 255, 0.24);
+    background-color: color-mix(in srgb, var(--night) 70%, transparent);
   }
 
   .cta__call {
     font-size: var(--t-subhead);
-    color: rgba(255, 255, 255, 0.8);
+    color: #ffffff;
   }
 
   .cta__call a {

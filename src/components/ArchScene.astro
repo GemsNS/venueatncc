@@ -32,4 +32,11 @@ const svg = archSceneSvg({
     width: 100%;
     height: 100%;
   }
+
+  /* HIG: slightly dim bright imagery in dark mode. The scene's pale glow would otherwise glare. */
+  @media (prefers-color-scheme: dark) {
+    :global(.scene) {
+      filter: brightness(0.78) saturate(1.05);
+    }
+  }
 </style>

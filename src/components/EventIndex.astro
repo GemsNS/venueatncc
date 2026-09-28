@@ -9,7 +9,7 @@ interface Props {
   exclude?: string[];
   only?: string[];
   headingLevel?: 'h2' | 'h3';
-  /** 'grid' wraps; 'shelf' scrolls horizontally with snap points. */
+  /** 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px. */
   layout?: 'grid' | 'shelf';
 }
 const { exclude = [], only, headingLevel = 'h3', layout = 'grid' } = Astro.props;
@@ -40,6 +40,17 @@ const Heading = headingLevel;
   )
 }
 
+<script>
+  // Browsers leave a partly visible card where it is when it takes keyboard focus. In the shelf,
+  // bring the focused card fully into view (the scroll snaps to its start).
+  document.querySelectorAll<HTMLElement>('.events--shelf').forEach((shelf) => {
+    shelf.addEventListener('focusin', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.event-card');
+      if (card && shelf.scrollWidth > shelf.clientWidth) card.scrollIntoView({ block: 'nearest', inline: 'start' });
+    });
+  });
+</script>
+
 <style>
   .events {
     margin: 0;
@@ -63,15 +74,36 @@ const Heading = headingLevel;
     scroll-padding-inline: var(--gutter);
     padding: 0.5rem var(--gutter) 1.5rem;
     margin-inline: calc(-1 * var(--gutter));
-    scrollbar-width: none;
+    /* With a mouse there is no swipe, so a thin scrollbar stays as the cue and the handle. */
+    scrollbar-width: thin;
   }
 
-  .events--shelf::-webkit-scrollbar {
-    display: none;
+  /* Touch screens swipe, and the peeking next card is the cue. */
+  @media (pointer: coarse) {
+    .events--shelf {
+      scrollbar-width: none;
+    }
+
+    .events--shelf::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .events--shelf .events__item {
     scroll-snap-align: start;
+  }
+
+  /* Wide screens have room for every card: no hidden overflow, no clipped shadows. */
+  @media (min-width: 900px) {
+    .events--shelf {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      overflow: visible;
+      scroll-snap-type: none;
+      margin-inline: 0;
+      padding: 0;
+    }
   }
 
   .event-card {

@@ -2,18 +2,20 @@
   "name": "The Venue at NCC",
   "short_name": "The Venue",
   "description": "Event venue in Suffolk, Virginia: indoor hall for 100, outdoor space for 150, parking included.",
-  "start_url": "/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "browser",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
