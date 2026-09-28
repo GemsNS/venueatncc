@@ -99,7 +99,7 @@ export const GET: APIRoute = () => {
     `- Directions: ${site.address.directionsUrl}`,
     `- Phone: ${site.contact.phone}`,
     `- Email: ${site.contact.email}`,
-    `- Operator: ${site.parent.name}, ${site.parent.url}, part of the ${site.address.city} community since ${site.parent.foundingYear}`,
+    `- Operator: ${site.parent.name}, ${site.parent.url}, founded in ${site.parent.foundingYear}`,
     '',
     '## Events we host',
     '',

@@ -590,6 +590,8 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   .space__media {
     position: relative;
     display: grid;
+    /* The view control's layout follows the photo's width (see the container query below). */
+    container-type: inline-size;
   }
 
   .space__media > :global(.photo) {
@@ -660,7 +662,8 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     background-color: var(--glass-bg-strong);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
-    box-shadow: var(--glass-edge), var(--glass-shadow);
+    /* A tight shadow, so it stays on the photo instead of hazing the card below it. */
+    box-shadow: var(--glass-edge), 0 2px 8px rgb(0 0 0 / 0.18);
   }
 
   .space__seg {
@@ -668,7 +671,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     align-items: center;
     justify-content: center;
     min-height: 36px;
-    padding-inline: 0.85rem;
+    padding-inline: 0.75rem;
     text-align: center;
     line-height: 1.2;
     white-space: nowrap;
@@ -683,10 +686,11 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   /*
-    Very large text (20rem is 320px at the default size, so this never applies there): the labels no longer
-    fit on the photo, so the control moves under it, full width, with the segments stacked.
+    When the photo is too narrow for both labels on one line (under about 332px at the default text size,
+    so on 320 and 375 phones, and at any width with large text), the control moves under the photo, full
+    width, with the segments stacked. The query is in rem, so it follows the text size.
   */
-  @media (width < 20rem) {
+  @container (width < 20.75rem) {
     .space__view {
       position: static;
       grid-auto-flow: row;

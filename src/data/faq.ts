@@ -110,7 +110,7 @@ export const faqs: Faq[] = [
   {
     topic: 'about',
     q: 'Who operates The Venue at NCC?',
-    a: `The Venue at NCC is operated by ${site.parent.name}, part of the Suffolk community since ${site.parent.foundingYear}.`,
+    a: `The Venue at NCC is operated by ${site.parent.name}, founded in ${site.parent.foundingYear}.`,
   },
   // To answer, then publish:
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },
