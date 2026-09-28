@@ -51,7 +51,7 @@ export default defineConfig({
         configureServer(server) {
           return () => {
             const stack = server.middlewares.stack;
-            const i = stack.findIndex((layer) => layer.handle && layer.handle.name === 'viteProxyMiddleware');
+            const i = stack.findIndex((layer) => /** @type {{ name?: string }} */ (/** @type {unknown} */ (layer.handle))?.name === 'viteProxyMiddleware');
             if (i > 0) stack.unshift(...stack.splice(i, 1));
           };
         },

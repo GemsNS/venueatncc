@@ -29,6 +29,13 @@ export const inquiryInputSchema = z.object({
   servingAlcohol: z.coerce.boolean().default(false),
   formToken: z.string().min(10).max(400),
   website: z.string().max(0, 'Leave this field empty.').optional(),
+}).superRefine((v, ctx) => {
+  if ((v.contactPreference === 'phone' || v.contactPreference === 'text') && !v.phone) {
+    ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Add a phone number so we can reach you that way.' });
+  }
+  if (v.eventType === 'other' && !v.eventTypeOther) {
+    ctx.addIssue({ code: 'custom', path: ['eventTypeOther'], message: 'Tell us what kind of event you are planning.' });
+  }
 });
 
 export type InquiryInputParsed = z.infer<typeof inquiryInputSchema>;
