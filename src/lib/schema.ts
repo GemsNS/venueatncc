@@ -9,6 +9,12 @@ import { pricing, priceSummary } from '../shared/pricing';
 const venueId = `${site.url}/#venue`;
 const orgId = `${site.url}/#parent`;
 const websiteId = `${site.url}/#website`;
+const ratesId = `${site.url}/pricing/#rates`;
+
+/** The places the venue serves, typed for schema.org. Shared by the venue and every event Service. */
+function areaServed() {
+  return site.areaServed.map((a) => ({ '@type': a.type, name: a.name }));
+}
 
 /** Absolute URL on the production domain (canonical URLs and structured data). */
 export function abs(path: string): string {
@@ -33,7 +39,12 @@ export function parentOrganization() {
     name: site.parent.name,
     url: site.parent.url,
     foundingDate: String(site.parent.foundingYear),
-    founder: { '@type': 'Person', name: site.parent.pastor },
+    founder: {
+      '@type': 'Person',
+      name: site.parent.pastorName,
+      honorificPrefix: site.parent.pastorHonorific,
+      jobTitle: site.parent.pastorTitle,
+    },
     address: postalAddress(),
     telephone: site.parent.phoneE164,
   };
@@ -68,8 +79,10 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
       longitude: site.address.geo.lng,
     },
     hasMap: site.address.mapsUrl,
-    areaServed: site.areaServed.map((name) => ({ '@type': 'Place', name })),
+    areaServed: areaServed(),
     parentOrganization: { '@id': orgId },
+    // STOPGAP: until real venue photos exist (src/data/photos.ts), the image is the home share card.
+    // Replace it with a photo of the venue as soon as one is added.
     image: imageUrls.length > 0 ? imageUrls : [abs('/og/home.png')],
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,
@@ -101,7 +114,7 @@ export function website() {
     '@id': websiteId,
     url: `${site.url}/`,
     name: site.name,
-    alternateName: ['Venue at NCC', 'NCC Venue'],
+    alternateName: 'Venue at NCC',
     inLanguage: 'en-US',
     publisher: { '@id': venueId },
   };
@@ -154,7 +167,7 @@ export function eventService(opts: { name: string; description: string; path: st
     description: opts.description,
     url: abs(opts.path),
     provider: { '@id': venueId },
-    areaServed: { '@type': 'City', name: 'Suffolk, Virginia' },
+    areaServed: areaServed(),
     offers: {
       '@type': 'Offer',
       priceCurrency: pricing.currency,
@@ -170,13 +183,18 @@ export function eventService(opts: { name: string; description: string; path: st
   };
 }
 
-/** The rate card as an OfferCatalog, for the pricing page. */
+/**
+ * The rate card as an OfferCatalog, for the pricing page: hourly rates, packages, and the cleaning fee.
+ * Pair it with venueRates() so the venue node points at the catalog.
+ */
 export function rateCatalog() {
-  const items = (Object.keys(pricing.hourly) as (keyof typeof pricing.hourly)[]).flatMap((space) =>
+  const offeredBy = { '@id': venueId };
+  const hourly = (Object.keys(pricing.hourly) as (keyof typeof pricing.hourly)[]).flatMap((space) =>
     (Object.keys(pricing.hourly[space]) as (keyof (typeof pricing.hourly)['indoor'])[]).map((day) => ({
       '@type': 'Offer',
       name: `${pricing.spaces[space].label}, ${pricing.dayTypes[day].label}`,
       priceCurrency: pricing.currency,
+      offeredBy,
       priceSpecification: {
         '@type': 'UnitPriceSpecification',
         price: pricing.hourly[space][day],
@@ -185,11 +203,39 @@ export function rateCatalog() {
       },
     })),
   );
+  const packages = pricing.packages.map((p) => ({
+    '@type': 'Offer',
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    priceCurrency: pricing.currency,
+    offeredBy,
+    eligibleDuration: { '@type': 'QuantitativeValue', value: p.hours, unitCode: 'HUR' },
+  }));
+  const fees =
+    pricing.fees.cleaning > 0
+      ? [
+          {
+            '@type': 'Offer',
+            name: 'Cleaning fee',
+            description: 'Charged once per event.',
+            price: pricing.fees.cleaning,
+            priceCurrency: pricing.currency,
+            offeredBy,
+          },
+        ]
+      : [];
   return {
     '@type': 'OfferCatalog',
+    '@id': ratesId,
     name: `${site.name} rental rates`,
-    itemListElement: items,
+    itemListElement: [...hourly, ...packages, ...fees],
   };
+}
+
+/** Links the venue node (emitted by the layout) to the rate catalog on the pricing page. Merged by @id. */
+export function venueRates() {
+  return { '@id': venueId, hasOfferCatalog: { '@id': ratesId } };
 }
 
 /** Wrap several nodes in one @graph document. */

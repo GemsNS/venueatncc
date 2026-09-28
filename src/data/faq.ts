@@ -20,8 +20,13 @@ const indoor = site.spaces.find((s) => s.id === 'indoor');
 const outdoor = site.spaces.find((s) => s.id === 'outdoor');
 const deposit =
   pricing.bookingDeposit.type === 'percent'
-    ? `A ${pricing.bookingDeposit.value}% deposit reserves your date`
-    : `A ${formatUSD(pricing.bookingDeposit.value)} deposit reserves your date`;
+    ? `The booking deposit is ${pricing.bookingDeposit.value}% of your total`
+    : `The booking deposit is ${formatUSD(pricing.bookingDeposit.value)}`;
+const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
+const payment =
+  balanceDays > 0
+    ? `${deposit}, and the balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
+    : `${deposit}.`;
 
 export const faqs: Faq[] = [
   {
@@ -72,7 +77,7 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How do deposits and payment work?',
-    a: `${deposit}, and the balance is due ${pricing.bookingDeposit.balanceDueDaysBefore} days before your event. A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event.`,
+    a: `Send your request, we confirm availability, then your booking deposit reserves the date. ${payment} A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event if there is no damage.`,
   },
   {
     topic: 'booking',

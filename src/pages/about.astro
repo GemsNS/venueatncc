@@ -46,8 +46,8 @@ const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero
         <span class="icon-tile"><Icon name="church" /></span>
         <h2 class="t-title-2">Part of New Community Church</h2>
         <p>
-          {site.parent.name} has been part of the Suffolk community since {site.parent.foundingYear}. {site.parent.pastor} is the
-          church's {site.parent.pastorTitle.toLowerCase()}. The church describes its mission simply: to know Christ, love people
+          {site.parent.name} has been part of the Suffolk community since {site.parent.foundingYear}. The church was founded by
+          {' '}{site.parent.pastor}, who serves as its pastor. The church describes its mission simply: to know Christ, love people
           well, and walk in hope together.
         </p>
         <a class="link-more" href={site.parent.url} rel="noopener">Visit wearencc.org <Icon name="arrow-up-right" /></a>
@@ -64,8 +64,8 @@ const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero
         <span class="icon-tile"><Icon name="calendar-check" /></span>
         <h2 class="t-title-2">Simple to book</h2>
         <p>
-          Check the live calendar, see your estimate, and send a request. {site.contact.contactName} and the team follow up
-          personally to confirm your date.
+          Check the live calendar, see your estimate, and send your request. {site.contact.contactName} and the team confirm
+          availability personally, then your booking deposit reserves the date.
         </p>
       </article>
     </div>
