@@ -44,7 +44,7 @@ export function TodayView() {
   const openCount = stats ? OPEN_STATUSES.reduce((sum, s) => sum + (stats.byStatus[s] ?? 0), 0) : 0;
   const tiles = stats
     ? [
-        { label: 'New this week', value: String(stats.newThisWeek), note: 'Requests received in the last 7 days' },
+        { label: 'New this week', value: String(stats.newThisWeek), note: 'Requests received this week' },
         { label: 'Open requests', value: String(openCount), note: 'New, contacted, visit, or quoted' },
         { label: 'Pipeline value', value: formatUSD(stats.pipelineValue), note: 'Estimates on open requests' },
         { label: 'Booked value', value: formatUSD(stats.bookedValue), note: 'Estimates on booked requests' },

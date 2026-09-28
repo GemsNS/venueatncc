@@ -57,7 +57,8 @@ export function Shell({
 }) {
   const current = currentSection(route);
   const newCount = stats?.byStatus.new ?? 0;
-  const hrefFor = (item: NavItem) => (item.id === 'inbox' && current !== 'inbox' ? inboxHref : item.href);
+  // Inbox keeps its last filter and search, except when you are already on it (then it resets).
+  const hrefFor = (item: NavItem) => (item.id === 'inbox' && route.name !== 'inbox' ? inboxHref : item.href);
 
   return (
     <div class="adm">
