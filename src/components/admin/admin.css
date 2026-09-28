@@ -1,9 +1,9 @@
 /*
   Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md):
-  Venue Purple for selection and new items, the palette grays and surfaces, and the interface family
-  throughout except the brand name beside the monogram.
+  Caramel for selection and new items (Caramel Deep for accent text and rings), the palette's warm
+  neutrals and surfaces, and the interface family throughout except the brand name beside the monogram.
   Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
-  Glass only on the sidebar, tab bar, sheets, menus, and toasts. Purple only for interactive or selected.
+  Glass only on the sidebar, tab bar, sheets, menus, and toasts. Caramel only for interactive or selected.
 */
 
 :root {
@@ -13,7 +13,7 @@
   --adm-radius-sidebar: 28px;
   --adm-radius-section: var(--r-lg);
 
-  /* Status colors with 4.5:1 text on their tints, in both appearances. New items use Venue Purple. */
+  /* Status colors with 4.5:1 text on their tints over Linen and Card, in both appearances. New items use Caramel. */
   --adm-green: #1b6e30;
   --adm-green-tint: rgba(52, 199, 89, 0.16);
   --adm-orange: #b52f00;
@@ -176,7 +176,7 @@ body.is-bare {
   height: 20px;
   padding: 0 6px;
   border-radius: var(--r-full);
-  /* New requests: Venue Purple with a white count (5.9:1 or better in both appearances). */
+  /* New requests: Caramel with an Ink count (6.3:1 in both appearances). */
   background: var(--accent);
   color: var(--on-accent);
   font-size: 0.75rem;
@@ -893,10 +893,10 @@ body.is-bare {
   width: 100%;
 }
 
-/* Dark mode: the selected segment is a plum-tinted gray raised above the track. */
+/* Dark mode: the selected segment is an olive-tinted gray raised above the track. */
 @media (prefers-color-scheme: dark) {
   .adm-segmented .segmented__item[aria-checked='true'] {
-    background: #3d3645;
+    background: #3a3f2c;
   }
 }
 
@@ -1638,8 +1638,8 @@ body.is-bare {
 
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
-  /* A dim tinted toward Deep Plum. */
-  background: rgba(26, 16, 36, 0.4);
+  /* A dim tinted toward Deep Olive. */
+  background: rgba(23, 25, 15, 0.45);
 }
 
 .adm-sheet {
@@ -1971,7 +1971,7 @@ body.is-bare {
   }
 }
 
-/* The monogram in Venue Purple (Lilac in dark mode). */
+/* The monogram in Caramel Deep (Caramel in dark mode). */
 .adm-signin__mark {
   width: 64px;
   height: 64px;

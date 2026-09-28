@@ -271,14 +271,14 @@ describe('admin API', () => {
     test('booking a date that is already blocked is refused with 409, and nothing changes', async () => {
       const cookie = await login(h);
       const date = addDays(today(), 61);
-      await h.request('/api/admin/blocks', { body: { date, space: 'both', kind: 'closed', label: 'Church retreat' }, cookie });
+      await h.request('/api/admin/blocks', { body: { date, space: 'both', kind: 'closed', label: 'Staff retreat' }, cookie });
       const { id } = await createInquiry(h, { date, space: 'outdoor' });
       const res = await patchStatus(id, 'booked', cookie);
       assert.equal(res.status, 409);
       const body = await res.json();
       assert.equal(body.ok, false);
       assert.ok(
-        body.error.includes(`already has a closed block for ${SPACE_NAMES.both} (Church retreat). Remove or change that block on the calendar, then mark this request booked.`),
+        body.error.includes(`already has a closed block for ${SPACE_NAMES.both} (Staff retreat). Remove or change that block on the calendar, then mark this request booked.`),
         body.error,
       );
       const detail = (await (await h.request(`/api/admin/inquiries/${id}`, { cookie })).json()) as InquiryDetail;

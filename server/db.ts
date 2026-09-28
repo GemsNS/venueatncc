@@ -126,6 +126,10 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX form_token_uses_used ON form_token_uses(used_at);
   CREATE INDEX email_log_kind_created ON email_log(kind, created_at);
   `,
+  // 3: the event type church-community-events was renamed community-events (docs/design/brand.md)
+  `
+  UPDATE inquiries SET event_type = 'community-events' WHERE event_type = 'church-community-events';
+  `,
 ];
 
 export function migrate(db: Db): number {

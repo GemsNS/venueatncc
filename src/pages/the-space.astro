@@ -1,11 +1,7 @@
 ---
 /**
- * The Space: The Hall, The Grove, and the campus, each as a short spec sheet beside a small gallery of real photos.
- *
- * Only facts the photos show (docs/design/brand.md). Styled concepts are an opt-in view behind an
- * "As Photographed" and "Styled Concept" control, rendered only for a space that has one. The control is
- * two native radio buttons, so it works with the keyboard and without JavaScript; CSS :has() swaps each
- * photo for its styled version. Browsers without :has() keep the real photos and never see the control.
+ * The Space: The Hall, The Grove, and the grounds, each as a short spec sheet beside a small gallery of
+ * real photos. Real photos only, and only facts the photos show (docs/design/brand.md, Photography).
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -41,8 +37,7 @@ function galleryFor(space: 'hall' | 'grove'): VenuePhoto[] {
 
 /**
  * Crops for the pair of portrait frames a two-photo gallery uses: the fireplace wall, and the double doors
- * with the windows beside them, so neither reads as a second copy of the hero. A styled concept follows
- * the crop of the photo it was made from.
+ * with the windows beside them, so neither reads as a second copy of the hero.
  */
 const PAIR_CROPS: Record<string, string> = { 'hall-fireplace': '85% 50%', 'hall-doors': '100% 50%' };
 
@@ -116,10 +111,9 @@ const sections: Section[] = [
     rows: [
       { label: 'Parking', value: 'On site, included with every booking' },
       { label: 'Address', value: fullAddress },
-      { label: 'Operated by', value: site.parent.name, link: href('/about/') },
     ],
     actions: [{ label: 'Get Directions', href: site.address.directionsUrl, kind: 'tinted', external: true }],
-    photos: ['approach-dusk', 'driveway', 'gable'].map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null),
+    photos: ['approach-dusk', 'driveway'].map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null),
     flip: false,
     grouped: true,
   },
@@ -128,7 +122,7 @@ const sections: Section[] = [
 const LEAD_SIZES = '(min-width: 81.25rem) 680px, (min-width: 60rem) 56vw, 94vw';
 const SMALL_SIZES = '(min-width: 81.25rem) 335px, (min-width: 60rem) 28vw, (min-width: 36rem) 46vw, 94vw';
 
-// Structured data lists the real photos on this page, never the styled concepts.
+// Structured data lists the photos on this page.
 const pagePhotos = [...new Set([heroPhoto, ...sections.flatMap((s) => s.photos)].filter((p): p is VenuePhoto => p !== null))];
 const fullImages = await Promise.all(
   pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
@@ -172,7 +166,6 @@ const gallerySchema =
 
   {
     sections.map((s) => {
-      const hasStyled = s.photos.some((p) => p.styled.length > 0);
       return (
         <section id={s.id} class:list={['section', { 'section--grouped': s.grouped }]} aria-labelledby={`${s.id}-heading`}>
           <div class:list={['container', 'sp-space', { 'sp-space--flip': s.flip }]}>
@@ -183,22 +176,8 @@ const gallerySchema =
 
             {s.photos.length > 0 && (
               <div class="sp-view">
-                {hasStyled && (
-                  <fieldset class="sp-toggle">
-                    <legend class="visually-hidden">Photos of {s.heading}</legend>
-                    <label class="sp-toggle__item">
-                      <input class="visually-hidden" type="radio" name={`${s.id}-view`} value="photo" checked />
-                      As Photographed
-                    </label>
-                    <label class="sp-toggle__item">
-                      <input class="visually-hidden" type="radio" name={`${s.id}-view`} value="styled" />
-                      Styled Concept
-                    </label>
-                  </fieldset>
-                )}
                 <ul class:list={['sp-gallery', { 'sp-gallery--pair': s.photos.length === 2 }]}>
                   {s.photos.map((p, i) => {
-                    const styled = p.styled[0];
                     // Two photos sit side by side as equal portraits; three or more lead with one wide photo.
                     const pair = s.photos.length === 2;
                     const lead = !pair && i === 0;
@@ -207,8 +186,7 @@ const gallerySchema =
                     const crop = pair ? PAIR_CROPS[p.name] : undefined;
                     return (
                       <li class:list={['sp-gallery__item', { 'sp-gallery__lead': lead }]}>
-                        <Photo photo={p} caption ratio={ratio} crop={crop} sizes={sizes} class={styled ? 'sp-shot--paired' : undefined} />
-                        {styled && <Photo photo={styled} ratio={ratio} crop={crop} sizes={sizes} class="sp-shot--styled" />}
+                        <Photo photo={p} caption ratio={ratio} crop={crop} sizes={sizes} />
                       </li>
                     );
                   })}
@@ -510,7 +488,7 @@ const gallerySchema =
     /* In px at the low end, so very large text keeps room for the words inside the card. */
     padding: max(24px, min(5vw, 2.75rem));
     border-radius: var(--r-xl);
-    background: var(--lilac-mist);
+    background: var(--mist);
   }
 
   .sp-visit__actions {
@@ -521,103 +499,6 @@ const gallerySchema =
   @media (forced-colors: active) {
     .sp-visit {
       border: 1px solid CanvasText;
-    }
-  }
-</style>
-
-<style is:global>
-  /*
-    "As Photographed" and "Styled Concept": a segmented control made of two native radio buttons.
-    Global because the photos it swaps are rendered by Photo.astro, and :has() reaches across that boundary.
-  */
-  .sp-toggle {
-    display: inline-grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    gap: 2px;
-    min-inline-size: 0;
-    max-width: 100%;
-    margin: 0;
-    padding: 3px;
-    border: 0;
-    border-radius: var(--r-full);
-    background: var(--fill);
-  }
-
-  .sp-toggle__item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    min-height: 44px;
-    padding: 0.25rem 1.1rem;
-    border-radius: var(--r-full);
-    color: var(--label);
-    font-size: var(--t-subhead);
-    font-weight: 500;
-    line-height: 1.2;
-    text-align: center;
-    overflow-wrap: anywhere;
-    cursor: pointer;
-    transition:
-      background-color var(--dur-2) var(--ease-spring),
-      box-shadow var(--dur-2) var(--ease-spring);
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* The selected thumb carries a 2px accent ring, as in the site's other segmented controls (WCAG 1.4.11). */
-  .sp-toggle__item:has(input:checked) {
-    background: var(--bg-elevated);
-    box-shadow:
-      inset 0 0 0 2px var(--accent-text),
-      0 3px 8px rgba(0, 0, 0, 0.12),
-      0 3px 1px rgba(0, 0, 0, 0.04);
-    font-weight: 600;
-  }
-
-  /*
-    Very large text on a phone (150% and up): the two labels no longer fit side by side, so the segments
-    stack instead of breaking words. 20rem is 320px at the default text size, so it never triggers there.
-  */
-  @media (width < 20rem) {
-    .sp-toggle {
-      grid-auto-flow: row;
-      border-radius: var(--r-lg);
-    }
-
-    .sp-toggle__item {
-      border-radius: calc(var(--r-lg) - 3px);
-    }
-  }
-
-  .sp-toggle__item:has(input:focus-visible) {
-    outline: 3px solid var(--accent-text);
-    outline-offset: 2px;
-  }
-
-  @media (forced-colors: active) {
-    .sp-toggle__item:has(input:checked) {
-      outline: 3px solid Highlight;
-      outline-offset: -3px;
-    }
-  }
-
-  .sp-view .sp-shot--styled {
-    display: none;
-  }
-
-  .sp-view:has(.sp-toggle input[value='styled']:checked) .sp-shot--styled {
-    display: block;
-  }
-
-  .sp-view:has(.sp-toggle input[value='styled']:checked) .sp-shot--paired {
-    display: none;
-  }
-
-  /* Without :has() the control could not switch anything, so it is not shown. */
-  @supports not selector(:has(*)) {
-    .sp-toggle {
-      display: none;
     }
   }
 </style>

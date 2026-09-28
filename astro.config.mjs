@@ -31,7 +31,6 @@ function pageSources(pathname) {
   if (p === 'pricing') return ['src/pages/pricing.astro', facts, 'src/shared/pricing.ts'];
   if (p === 'faq') return ['src/pages/faq.astro', facts, 'src/data/faq.ts'];
   if (p === 'the-space') return ['src/pages/the-space.astro', facts, 'src/data/photos.ts'];
-  if (p === 'about') return ['src/pages/about.astro', facts, 'src/data/events.ts'];
   return [`src/pages/${p}.astro`, facts];
 }
 

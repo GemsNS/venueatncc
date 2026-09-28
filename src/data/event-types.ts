@@ -18,7 +18,7 @@ export const eventTypes: EventTypeLite[] = [
   { slug: 'repasts-memorials', name: 'Repasts & celebrations of life', icon: 'flower' },
   { slug: 'meetings-trainings', name: 'Meetings & workshops', icon: 'briefcase' },
   { slug: 'graduations-reunions', name: 'Graduations & reunions', icon: 'graduation-cap' },
-  { slug: 'church-community-events', name: 'Church & community events', icon: 'church' },
+  { slug: 'community-events', name: 'Community events', icon: 'users' },
 ];
 
 export const OTHER_EVENT = { slug: 'other', name: 'Something else', icon: 'party-popper' as IconName };

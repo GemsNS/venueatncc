@@ -1,7 +1,7 @@
 ---
 /**
- * Closing call to action on a Deep Plum band: a Caslon heading, one sentence, and two actions.
- * Plain color, no imagery. White text on Deep Plum is 16:1; Lilac is 8.6:1.
+ * Closing call to action on a Deep Olive band: a Caslon heading, one sentence, and two actions.
+ * Plain color, no imagery. Cream text on Deep Olive is 11.1:1; the Caramel button keeps Ink text (6.3:1).
  */
 import Icon from './Icon.astro';
 import { site } from '../data/site';
@@ -37,11 +37,11 @@ const showSecondary = secondary.href !== path;
     </div>
     <div class="cta__side">
       <div class="btn-row btn-row--stack cta__actions">
-        <a class="btn btn--white btn--lg" href={href(bookHref)}>
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>
           <Icon name="calendar" />
           Check Availability
         </a>
-        {showSecondary && <a class="btn btn--outline-white btn--lg" href={href(secondary.href)}>{secondary.label}</a>}
+        {showSecondary && <a class="btn btn--outline-light btn--lg" href={href(secondary.href)}>{secondary.label}</a>}
       </div>
       <p class="cta__call">
         Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
@@ -52,14 +52,14 @@ const showSecondary = secondary.href !== path;
 
 <style>
   .cta {
-    background: var(--brand-deep);
+    background: var(--olive-deep);
     color: var(--on-deep);
   }
 
-  /* Dark mode: Deep Plum sits close to the page color, so a faint lilac hairline marks where the band begins. */
+  /* Dark mode: Deep Olive sits close to the page color, so a faint sage hairline marks where the band begins. */
   @media (prefers-color-scheme: dark) {
     .cta {
-      border-top: 1px solid rgb(205 179 238 / 0.14);
+      border-top: 1px solid var(--on-deep-line);
     }
   }
 
@@ -82,7 +82,7 @@ const showSecondary = secondary.href !== path;
   }
 
   .cta h2 {
-    color: #ffffff;
+    color: var(--on-deep);
     max-width: 18ch;
   }
 
@@ -110,14 +110,14 @@ const showSecondary = secondary.href !== path;
   }
 
   .cta__call a {
-    color: #ffffff;
+    color: var(--on-deep);
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 0.2em;
   }
 
   .cta :global(:focus-visible) {
-    outline-color: #ffffff;
+    outline-color: var(--on-deep);
   }
 
   @media (forced-colors: active) {

@@ -1,21 +1,18 @@
 ---
 /**
- * Site footer on Deep Plum: the white lockup, the address and contact details, navigation, and the
- * church that operates the venue. The address appears once, in "Visit and contact".
+ * Site footer on Deep Olive: the light lockup, contact details, the event pages, and a short list of help
+ * links. It does not repeat the header navigation (brand.md, "Redundancy rules"); FAQ is here because the
+ * phone tab bar has no FAQ tab. The address appears once, in "Visit and contact".
  */
-import { Image } from 'astro:assets';
 import Logo from './Logo.astro';
-import nccSeal from '../assets/brand/ncc-mark.png';
 import { site } from '../data/site';
 import { events } from '../data/events';
-import { mainNav, bookHref } from '../data/nav';
+import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
 const year = new Date().getFullYear();
-const hall = site.spaces.find((s) => s.id === 'indoor');
-const grove = site.spaces.find((s) => s.id === 'outdoor');
 ---
 <footer class="footer">
   <div class="container">
@@ -23,10 +20,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
       <a class="footer__brand" href={href('/')} aria-label={`${site.name}, home`}>
         <Logo variant="lockup" tone="white" height={40} decorative />
       </a>
-      <p class="footer__intro">
-        An event venue in {site.address.city}, {site.address.regionName}, with {hall?.name} for up to {hall?.capacity} guests
-        and {grove?.name} for up to {grove?.capacity}.
-      </p>
+      <p class="footer__intro">An event venue in {site.address.city}, {site.address.regionName}.</p>
     </div>
 
     <div class="footer__grid">
@@ -40,21 +34,20 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
           <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
           <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
         </address>
+        {
+          site.social.length > 0 && (
+            <ul class="footer__social">
+              {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
+            </ul>
+          )
+        }
       </section>
-
-      <nav class="footer__col" aria-labelledby="f-explore">
-        <h2 id="f-explore" class="footer__head">Explore</h2>
-        <ul>
-          {mainNav.map((item) => <li><a href={href(item.href)}>{item.label}</a></li>)}
-          <li><a href={href(bookHref)}>Check Availability</a></li>
-        </ul>
-      </nav>
 
       {
         events.length > 0 && (
-          <nav class="footer__col" aria-labelledby="f-events">
+          <nav class="footer__col footer__col--events" aria-labelledby="f-events">
             <h2 id="f-events" class="footer__head">Plan an event</h2>
-            <ul>
+            <ul class="footer__events">
               {events.map((e) => (
                 <li>
                   <a href={href(`/events/${e.slug}/`)}>{e.name}</a>
@@ -65,23 +58,13 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
         )
       }
 
-      <section class="footer__col" aria-labelledby="f-church">
-        <h2 id="f-church" class="footer__head">The church</h2>
-        <a class="footer__parent" href={site.parent.url} rel="noopener">
-          <span class="footer__seal">
-            <Image src={nccSeal} alt="" width={28} height={28} densities={[1, 2]} />
-          </span>
-          <span>Operated by {site.parent.name}</span>
-        </a>
-        <p>Founded in {site.parent.foundingYear}.</p>
-        {
-          site.social.length > 0 && (
-            <ul>
-              {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
-            </ul>
-          )
-        }
-      </section>
+      <nav class="footer__col" aria-labelledby="f-help">
+        <h2 id="f-help" class="footer__head">Help</h2>
+        <ul>
+          <li><a href={href('/faq/')}>Frequently asked questions</a></li>
+          <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
+        </ul>
+      </nav>
     </div>
 
     <div class="footer__legal">
@@ -100,7 +83,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
 
 <style>
   .footer {
-    background: var(--brand-deep);
+    background: var(--olive-deep);
     color: var(--on-deep-2);
     font-size: var(--t-footnote);
     line-height: 1.5;
@@ -109,12 +92,12 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
   }
 
   .footer :focus-visible {
-    outline-color: #ffffff;
+    outline-color: var(--on-deep);
   }
 
   /*
-    After the Deep Plum call to action the two bands meet, so the footer drops its top padding
-    and a hairline separates them instead.
+    After the Deep Olive closing band the two meet, so the footer drops its top padding and a hairline
+    separates them instead.
   */
   :global(main:has(> .cta:last-child)) + .footer {
     padding-top: 0;
@@ -122,13 +105,13 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
 
   :global(main:has(> .cta:last-child)) + .footer .footer__top {
     padding-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 1px solid var(--on-deep-line);
   }
 
-  /* Dark mode, on pages without the closing band: a faint lilac hairline sets the footer off from the page. */
+  /* Dark mode, on pages without the closing band: a faint sage hairline sets the footer off from the page. */
   @media (prefers-color-scheme: dark) {
     :global(main:not(:has(> .cta:last-child))) + .footer {
-      border-top: 1px solid rgb(205 179 238 / 0.14);
+      border-top: 1px solid var(--on-deep-line);
     }
   }
 
@@ -138,7 +121,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
     justify-items: start;
     padding-bottom: 2.5rem;
     margin-bottom: 2.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    border-bottom: 1px solid var(--on-deep-line);
   }
 
   @media (min-width: 64rem) {
@@ -161,7 +144,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
 
   .footer__intro {
     max-width: 34rem;
-    color: #ffffff;
+    color: var(--on-deep);
     font-family: var(--font-serif);
     font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
     line-height: 1.45;
@@ -170,23 +153,29 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
   .footer__grid {
     display: grid;
     gap: 2rem 2.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.25rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   }
 
+  /* Wide screens: the event list runs in two columns in the middle. */
   @media (min-width: 64rem) {
     .footer__grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    }
+
+    .footer__events {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2.5rem;
     }
   }
 
-  /* Interface family: Caslon Display is for titles at 28px and up. */
+  /* Interface family: Caslon Display is for titles at 28px and up. Caramel on Deep Olive is 5.2:1. */
   .footer__head {
     margin-bottom: 0.7rem;
     font-family: var(--font);
     font-size: var(--t-footnote);
     font-weight: 600;
     letter-spacing: 0;
-    color: var(--lilac);
+    color: var(--on-deep-accent);
   }
 
   /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
@@ -223,7 +212,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
   }
 
   .footer a:hover {
-    color: #ffffff;
+    color: var(--on-deep);
   }
 
   .footer address {
@@ -238,45 +227,8 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
     overflow-wrap: anywhere;
   }
 
-  .footer__col p + ul {
-    margin-top: calc(0.7rem - 5px);
-  }
-
-  .footer__parent {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7rem;
-    min-height: 44px;
-    margin: -4px 0 0.35rem;
-    color: #ffffff;
-    font-weight: 500;
-  }
-
-  .footer__parent:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.18em;
-  }
-
-  /* The church seal sits on a white disc, dimmed a little in dark mode (HIG). */
-  .footer__seal {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #ffffff;
-  }
-
-  .footer__seal img {
-    width: 28px;
-    height: 28px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .footer__seal {
-      filter: brightness(0.9);
-    }
+  .footer .footer__social {
+    margin-top: 0.7rem;
   }
 
   .footer__legal a {
@@ -290,7 +242,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
     gap: 0.4rem 1.5rem;
     margin-top: 2.5rem;
     padding-top: 1.1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 1px solid var(--on-deep-line);
     font-size: var(--t-caption);
   }
 
@@ -298,8 +250,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
     margin-top: 0;
   }
 
-
-  /* Forced colors: the band becomes the system background, and the white lockup follows the text color. */
+  /* Forced colors: the band becomes the system background, and the light lockup follows the text color. */
   @media (forced-colors: active) {
     .footer {
       border-top: 1px solid CanvasText;

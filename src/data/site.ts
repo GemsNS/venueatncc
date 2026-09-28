@@ -6,11 +6,13 @@
  *
  * Confirmed by the venue team on 2026-09-28:
  *   phone, email (assumed domain, see contact.email), indoor capacity 100, outdoor capacity 150,
- *   open to anyone, catering not included (the rental is the space and parking), parking included,
- *   brand colors white and purple.
+ *   open to anyone, catering not included (the rental is the space and parking), parking included.
  * Space names confirmed for the brand on 2026-09-28: The Hall (indoor) and The Grove (outdoor).
- * Confirmed from wearencc.org and OpenStreetMap on 2026-09-27:
- *   church name, address, church phone, founding year, pastor, geo coordinates.
+ * Palette confirmed by the owner on 2026-09-28: cream, linen, mist, sage, and caramel (docs/design/brand.md).
+ * Confirmed from OpenStreetMap and the US Census geocoder on 2026-09-27: address and geo coordinates.
+ *
+ * The venue is its own business. Nothing here, or anywhere on the site, connects it to another
+ * organization (brand.md, "Separation").
  * The tagline is the brand line from docs/design/brand.md, also the home page headline. It replaces
  * "Unforgettable Events Await You" from the original venueatncc.org page.
  *
@@ -43,22 +45,6 @@ export const site = {
   description:
     'The Venue at NCC is an event venue in Suffolk, Virginia, with The Hall for up to 100 guests, The Grove for up to 150, and on-site parking.',
 
-  parent: {
-    name: 'New Community Church',
-    shortName: 'NCC',
-    url: 'https://wearencc.org',
-    foundingYear: 1997,
-    /** Display form, with the honorific. */
-    pastor: 'Rev. Anthony M. VanDyke',
-    /** The same person split for structured data (schema.org Person name and honorificPrefix). */
-    pastorName: 'Anthony M. VanDyke',
-    pastorHonorific: 'Rev.',
-    pastorTitle: 'Pastor and Founder',
-    /** The church office line. The venue has its own number below. */
-    phone: '(757) 338-3432',
-    phoneE164: '+17573383432',
-  },
-
   contact: {
     phone: '(948) 205-2934',
     phoneE164: '+19482052934',
@@ -67,9 +53,6 @@ export const site = {
     contactName: 'Faith',
   },
 
-  /**
-   * ASSUMPTION: the venue is on the New Community Church campus.
-   */
   address: {
     street: '5112 Godwin Blvd',
     city: 'Suffolk',
@@ -80,7 +63,7 @@ export const site = {
     /** OpenStreetMap and US Census geocoder, checked 2026-09-27. */
     geo: { lat: 36.8371166, lng: -76.5852516 },
     mapsUrl:
-      'https://www.google.com/maps/search/?api=1&query=New+Community+Church%2C+5112+Godwin+Blvd%2C+Suffolk%2C+VA+23434',
+      'https://www.google.com/maps/search/?api=1&query=5112+Godwin+Blvd%2C+Suffolk%2C+VA+23434',
     directionsUrl:
       'https://www.google.com/maps/dir/?api=1&destination=5112+Godwin+Blvd%2C+Suffolk%2C+VA+23434',
   },

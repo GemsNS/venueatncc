@@ -1,8 +1,9 @@
 /*
   Booking islands: wizard, date checker, price estimator.
   Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md) and the
-  interaction rules of the HIG web spec (docs/design/hig-web-spec.md). Venue Purple marks
-  interactive or selected things only; status uses green and orange with an icon or text. Glass
+  interaction rules of the HIG web spec (docs/design/hig-web-spec.md). Caramel fills mark interactive
+  or selected things only, always with Ink labels, and selection borders and rings use Caramel Deep
+  (--accent-text) so they keep 3:1 against the page; status uses green and orange with an icon or text. Glass
   appears only on the phone action bar (a control layer). Headings and controls use the interface
   family; large prices use Libre Caslon Text and the confirmation title Libre Caslon Display.
   Radii are concentric: inner radius = outer radius - inset.
@@ -22,12 +23,12 @@
   font-size: var(--t-body);
 }
 
-/* Dark mode: raised controls in plum-tinted grays that sit on the Elevated surface (#1C1820). */
+/* Dark mode: raised controls in olive-tinted grays that sit on the Elevated surface (#22251A). */
 @media (prefers-color-scheme: dark) {
   .bk,
   .bk-app {
-    --bk-thumb: #3d3645;
-    --bk-step-bg: #2d2733;
+    --bk-thumb: #3a3f2c;
+    --bk-step-bg: #2c3021;
     --bk-green-text: var(--green);
     --bk-orange-text: var(--orange);
   }
@@ -302,14 +303,15 @@
   width: 27px;
   height: 27px;
   border-radius: 50%;
-  background: #ffffff;
+  /* Card, in both appearances, like the light knob of a system switch. */
+  background: #fffdf2;
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.15),
     0 3px 1px rgba(0, 0, 0, 0.06);
   transition: transform var(--dur-2) var(--ease-spring);
 }
 
-/* On is a selected state, so it takes Venue Purple; the knob position and the row text carry it too. */
+/* On is a selected state, so it takes Caramel; the knob position and the row text carry it too. */
 [aria-checked='true'] > .bk-switch {
   background: var(--accent);
 }
@@ -396,8 +398,8 @@
 }
 
 .bk-choice__item[aria-checked='true'] .bk-choice__radio {
-  border: 7px solid var(--accent);
-  background: var(--on-accent);
+  border: 7px solid var(--accent-text);
+  background: var(--bg-elevated);
 }
 
 .bk-choice__item[aria-disabled='true'] {
@@ -1364,9 +1366,9 @@ button.bk-progress__item:hover {
 }
 
 .bk-tile[aria-checked='true'] {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   background: var(--accent-tint);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 
 .bk-tile[aria-checked='true'] .bk-tile__icon {
@@ -1584,7 +1586,7 @@ button.bk-progress__item:hover {
   height: 64px;
   border-radius: 50%;
   background: var(--green);
-  color: #ffffff;
+  color: var(--bg-elevated);
 }
 
 .bk-success__badge .icon {
@@ -1823,7 +1825,7 @@ html:not(.js) .bk-skel {
 */
 .bk-dc__input:focus-within:not(:focus-visible) {
   background: var(--bg-elevated);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 4px var(--accent-tint-2);
 }
 
@@ -1889,8 +1891,8 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__space[aria-checked='true'] {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  border-color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 
 .bk-dc__space[aria-disabled='true'] {
@@ -1926,8 +1928,8 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__space[aria-checked='true'] .bk-dc__radio {
-  border: 6px solid var(--accent);
-  background: var(--on-accent);
+  border: 6px solid var(--accent-text);
+  background: var(--bg-elevated);
 }
 
 .bk-dc__space[aria-disabled='true'] .bk-dc__radio {

@@ -3,8 +3,8 @@
  * line. Kept apart from the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro).
  * The underscore keeps Astro from routing this file.
  *
- * Only real photographs. A styled concept is never a share image, so pick() uses the real photo it was made
- * from (realPhoto), and the hero photo when there is none.
+ * Only real photographs (brand.md, Photography). A staged event photo is never a share image, so pick() uses
+ * the real photo it was made from (realPhoto), and the hero photo when there is none.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
@@ -19,12 +19,7 @@ export interface ShareCard {
   line: string;
   /** The photo behind the text: a file in src/assets/venue/ and its caption. */
   photo: { file: string; caption?: string };
-  /** A deeper scrim, for a pale photo with strong lines behind the title (the white cross on the gable). */
-  deepScrim?: boolean;
 }
-
-/** Photos that need the deeper scrim behind the title. */
-const DEEP_SCRIM = new Set(['gable.jpg']);
 
 function pick(photo: VenuePhoto | null): ShareCard['photo'] {
   const real = realPhoto(photo) ?? heroPhoto();
@@ -56,11 +51,6 @@ export const shareCards: Record<string, ShareCard> = {
     line: 'A planning guide and a checklist for each occasion',
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
-  about: {
-    title: `A venue of ${site.parent.name}`,
-    line: `${hall} and ${grove}, on the church campus in ${site.address.city}`,
-    photo: byName('gable'),
-  },
   faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
   book: { title: 'Check availability', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
 };
@@ -68,9 +58,6 @@ export const shareCards: Record<string, ShareCard> = {
 for (const e of events) {
   const line = offBrandPhrase(e.summary) ? bothSpaces : withoutPeriod(e.summary);
   shareCards[e.slug] = { title: e.name, line, photo: pick(eventPhoto(e.slug)) };
-}
-for (const card of Object.values(shareCards)) {
-  if (DEEP_SCRIM.has(card.photo.file)) card.deepScrim = true;
 }
 
 /** og:image:alt for a card: what the image shows, in reading order. */

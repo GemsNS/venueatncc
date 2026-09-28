@@ -46,7 +46,7 @@ export const GET: APIRoute = () => {
     '',
     `> ${site.description}`,
     '',
-    `${site.name} is operated by ${site.parent.name}. We rent two distinct spaces by the hour in a wooded setting minutes from downtown ${site.address.city}, and we confirm every booking personally.`,
+    `We rent two distinct spaces by the hour in a wooded setting minutes from downtown ${site.address.city}, and we confirm every booking personally.`,
     '',
     '## The spaces',
     '',
@@ -85,7 +85,7 @@ export const GET: APIRoute = () => {
       : []),
     '## Booking',
     '',
-    `- Booking is open to the public. Membership in ${site.parent.name} is not required.`,
+    '- Booking is open to the public.',
     `- How it works: choose a date and a space, send a request, and we confirm availability. The booking deposit of ${deposit} then reserves the date.`,
     ...(balanceDays > 0
       ? [`- Balance: due ${balanceDays} days before the event. For an event within ${balanceDays} days, the full amount is due when you reserve.`]
@@ -99,7 +99,6 @@ export const GET: APIRoute = () => {
     `- Directions: ${site.address.directionsUrl}`,
     `- Phone: ${site.contact.phone}`,
     `- Email: ${site.contact.email}`,
-    `- Operator: ${site.parent.name}, ${site.parent.url}, founded in ${site.parent.foundingYear}`,
     '',
     '## Events we host',
     '',

@@ -10,9 +10,9 @@
  *   bringing your own anything. Catering appears only on the pricing page and in one FAQ entry.
  * - Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark
  *   wood-look floors, recessed lighting, double doors. The Grove: a timber gazebo, open lawn, picnic
- *   tables on a paved patio, tall pines, paved paths. The campus: a long paved drive and a paved lot.
+ *   tables on a paved patio, tall pines, paved paths. The grounds: a long paved drive and a paved lot.
  *   Never claim or ask about a kitchen, sound, screens, a stage, tables and chairs, or setup times.
- * - Venue facts (space names, capacity, phone, address, church details) come from site.ts through the
+ * - Venue facts (space names, capacity, phone, address) come from site.ts through the
  *   constants below, so a change there flows into every page. Never type them in by hand.
  * - Never type a price or a percentage. Rates live in src/shared/pricing.ts; point to the pricing
  *   page, or build the sentence from `pricing` as the deposit and special-rate sentences below do.
@@ -61,10 +61,6 @@ const OUTDOOR = spaceOf('outdoor').capacity;
 const PHONE = site.contact.phone;
 const ADDRESS = fullAddress;
 const STREET = site.address.street;
-const CHURCH = site.parent.name;
-const FOUNDED = site.parent.foundingYear;
-const FOUNDER = site.parent.pastor;
-const CHURCH_SITE = site.parent.url.replace('https://', '');
 
 /** The reserving sentence, worded the same everywhere on the site. */
 const RESERVE = 'We confirm availability, then your booking deposit reserves the date.';
@@ -188,10 +184,6 @@ export const events: EventType[] = [
         a: `When you reserve both spaces, ${HALL} is ready for up to ${INDOOR} guests if the weather turns. For a larger outdoor wedding, talk through a weather plan with us before you book.`,
       },
       {
-        q: 'Do we need to be members of New Community Church?',
-        a: `No. The Venue at NCC is open to the public, and membership at ${CHURCH} is not required.`,
-      },
-      {
         q: 'How much does a wedding at The Venue at NCC cost?',
         a: 'Rates depend on the day, the space, and the hours you need. The pricing page lists the full rate card and gives an instant estimate for your date, and on-site parking is included with every booking.',
       },
@@ -204,7 +196,7 @@ export const events: EventType[] = [
         a: `Yes. ${VISIT}`,
       },
     ],
-    related: ['receptions-banquets', 'baby-bridal-showers', 'church-community-events'],
+    related: ['receptions-banquets', 'baby-bridal-showers', 'community-events'],
     keywords: [
       'wedding venue Suffolk VA',
       'wedding reception venue Suffolk VA',
@@ -519,10 +511,6 @@ export const events: EventType[] = [
         a: 'A repast is a gathering after a funeral or memorial service, usually with family, friends, and members of the church community. It gives people time to rest, visit, and share memories together.',
       },
       {
-        q: 'Do we need to be members of New Community Church to hold a repast here?',
-        a: 'No. The Venue at NCC is open to the public. Families from every church, and families without a church home, are welcome.',
-      },
-      {
         q: 'Can we hold a repast at The Venue at NCC right after the funeral?',
         a: `Check the date on the availability calendar or call ${PHONE}, and share the time of the service. We will talk through timing with you and confirm what works.`,
       },
@@ -532,7 +520,7 @@ export const events: EventType[] = [
         a: `Repasts are often arranged within a few days of a funeral, while celebrations of life can be planned weeks or months ahead. Either way, check your date on the availability calendar or call ${PHONE}, and we will talk it through.`,
       },
     ],
-    related: ['church-community-events', 'receptions-banquets', 'meetings-trainings'],
+    related: ['community-events', 'receptions-banquets', 'meetings-trainings'],
     keywords: [
       'repast venue Suffolk VA',
       'celebration of life venue Suffolk VA',
@@ -613,7 +601,7 @@ export const events: EventType[] = [
         a: `Pick your date on the availability calendar and send a request with your meeting details, which takes about two minutes. ${RESERVE}`,
       },
     ],
-    related: ['church-community-events', 'receptions-banquets', 'graduations-reunions'],
+    related: ['community-events', 'receptions-banquets', 'graduations-reunions'],
     keywords: [
       'meeting space Suffolk VA',
       'meeting room rental Suffolk VA',
@@ -693,7 +681,7 @@ export const events: EventType[] = [
         a: 'Many families hold the party the same weekend as the ceremony or within a few weeks after, so relatives can make one trip.',
       },
     ],
-    related: ['birthday-parties', 'receptions-banquets', 'church-community-events'],
+    related: ['birthday-parties', 'receptions-banquets', 'community-events'],
     keywords: [
       'graduation party venue Suffolk VA',
       'family reunion venue Suffolk VA',
@@ -703,15 +691,15 @@ export const events: EventType[] = [
     ],
   },
   {
-    slug: 'church-community-events',
-    name: 'Church & community events',
+    slug: 'community-events',
+    name: 'Community events',
     summary: 'Conferences, fellowship events, youth nights, and community meetings.',
-    metaTitle: 'Church event venue in Suffolk, VA | The Venue at NCC',
+    metaTitle: 'Community event venue in Suffolk, VA | The Venue at NCC',
     metaDescription: `Plan a church conference, youth night, or community day at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
-    h1: 'Church and community events in Suffolk',
+    h1: 'Community events in Suffolk',
     intro: [
       `Much of the life of a church or community happens outside Sunday morning. ${HALL} holds up to ${INDOOR} guests for a conference session or a youth night, and ${GROVE} holds up to ${OUTDOOR} for a fellowship picnic or a community day.`,
-      `The Venue at NCC is operated by ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. Other churches, ministries, and neighborhood groups are welcome to book.`,
+      'Nonprofits, schools, faith groups, and neighborhood associations are welcome to book.',
     ],
     sections: [
       {
@@ -744,7 +732,7 @@ export const events: EventType[] = [
       },
     ],
     checklist: {
-      heading: 'Church and community event checklist',
+      heading: 'Community event checklist',
       items: [
         'Write one sentence that explains the purpose of the event and who it is for.',
         'Set a date, a headcount, and a budget.',
@@ -758,12 +746,8 @@ export const events: EventType[] = [
     },
     faqs: [
       {
-        q: 'Which church operates The Venue at NCC?',
-        a: `The Venue at NCC is operated by ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. You can learn more about the church at ${CHURCH_SITE}.`,
-      },
-      {
-        q: 'Can other churches and community groups book the venue?',
-        a: `Yes. The Venue at NCC is open to the public, including other churches, ministries, schools, and neighborhood groups. Membership at ${CHURCH} is not required.`,
+        q: 'Can community groups and nonprofits book the venue?',
+        a: 'Yes. The Venue at NCC is open to the public, including nonprofits, faith groups, schools, and neighborhood associations.',
       },
       ...nonprofitRateFaq('Is there a rate for churches and nonprofits?'),
       {

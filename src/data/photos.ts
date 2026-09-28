@@ -1,28 +1,32 @@
 /**
- * Venue photos: real photographs of the property, and nothing else.
+ * Venue photos, under one rule (docs/design/brand.md, "Photography"):
+ *
+ *   Real photographs show the spaces. The home hero, the space cards, The Space, the arrival band, share
+ *   images, and structured data use real photos only.
+ *   Staged photographs show events. Every event tile and event page hero uses a staged image of that event,
+ *   all eight in one décor style, or none of them do: if any staged image is missing, every event falls back
+ *   to a real photo (eventsStaged, below). There are no toggles between the two.
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)
- *   <name>.jpg                  3:2 landscape, 2400px wide. One entry in `photos`.
- *   <name>-tall.jpg             4:5 portrait, 1600px wide. Attached to <name>.jpg as `tall` for art
- *                               direction on phones. Never listed on its own.
- *   styled-<base>-<scene>.jpg   A styled concept of a real photo (virtual staging: furniture, linens,
- *                               florals and lighting added, architecture unchanged). Needs a photoDetails
- *                               entry with styledOf: '<base>.jpg'. Attached to that photo as `styled`.
- *                               Never listed on its own. It may illustrate an event tile or an event
- *                               page (always with its badge, and its caption on the event page), but it
- *                               is never the home hero, a share image, structured data, or the only
- *                               image of a space. realPhoto() gives the photo it was made from.
+ *   <name>.jpg                   3:2 landscape, 2400px wide. One entry in `photos`.
+ *   <name>-tall.jpg              4:5 portrait, 1600px wide. Attached to <name>.jpg as `tall` for art
+ *                                direction on phones. Never listed on its own.
+ *   styled-event-<slug>.jpg      The staged photo of one event (virtual staging: furniture, linens, florals,
+ *                                and lighting added; architecture, fixtures, and trees unchanged). Its
+ *                                photoDetails entry names the real photo it was made from (styledOf) and the
+ *                                event (event). Shown only through eventPhoto(), always with its badge.
  *
  * Describe each photo in `photoDetails`: precise, factual alt text that says only what the photo shows,
- * a short caption, tags, and the space it belongs to. The build warns about files with no entry, entries
- * with no file, and files smaller than 1600px on the long edge.
+ * a short caption, tags, and the part of the property it shows. The build warns about files with no entry,
+ * real photos listed with no file, and files smaller than 1600px on the long edge.
  *
  * Helpers: photoByName('hall-windows'), photosFor('hall'), heroPhoto(), eventPhoto('weddings'), realPhoto(p).
  */
 import type { ImageMetadata } from 'astro';
+import { eventTypes } from './event-types';
 
 /** Which part of the property a photo shows. */
-export type PhotoSpace = 'hall' | 'grove' | 'campus';
+export type PhotoSpace = 'hall' | 'grove' | 'grounds';
 
 export interface PhotoDetail {
   /** What the photo shows, for someone who cannot see it. Only what is visible; no claimed features. */
@@ -33,8 +37,10 @@ export interface PhotoDetail {
   space?: PhotoSpace;
   /** CSS object-position for frames whose ratio differs from the file, e.g. 'center 70%'. Defaults to 'center'. */
   crop?: string;
-  /** For a styled concept only: the file name of the real photo it was made from, e.g. 'hall-windows.jpg'. */
+  /** For a staged photo only: the file name of the real photo it was made from, e.g. 'hall-windows.jpg'. */
   styledOf?: string;
+  /** For a staged photo only: the event it shows, e.g. 'weddings'. */
+  event?: string;
 }
 
 export interface VenuePhoto {
@@ -50,14 +56,14 @@ export interface VenuePhoto {
   tags: string[];
   space?: PhotoSpace;
   crop?: string;
-  /** Set on a styled concept: the file name of the real photo it was made from. */
+  /** Set on a staged photo: the file name of the real photo it was made from. */
   styledOf?: string;
-  /** Styled concepts of this photo, if any. Always empty on a styled concept itself. */
-  styled: VenuePhoto[];
 }
 
-/** Every styled concept carries this caption, and its alt text starts with "Styled concept:". */
-export const STYLED_CAPTION = 'Styled concept. Décor shown is not included with the rental.';
+/** The one line beside the event tiles, on the home page and /events/, while the event photos are staged. */
+export const EVENTS_STYLED_NOTE = 'Event photos show our spaces styled for each occasion. Décor is not included.';
+/** The caption under a staged event page hero. Every staged photo carries it. */
+export const STYLED_CAPTION = 'Styled concept. Décor is not included.';
 const STYLED_ALT_PREFIX = 'Styled concept:';
 
 export const photoDetails: Record<string, PhotoDetail> = {
@@ -65,7 +71,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     alt: 'The venue building at dusk: tan stucco walls, a lit covered entry, arched windows, and a white cross on the front gable, with tall pines behind',
     caption: 'The building at blue hour',
     tags: ['hero', 'exterior'],
-    space: 'campus',
+    space: 'grounds',
   },
   'hall-windows.jpg': {
     alt: 'The Hall: an open room with dark wood-look floors, arched windows along the far wall, a dark fireplace feature wall on the right, double doors on the left, and recessed ceiling lights',
@@ -107,60 +113,84 @@ export const photoDetails: Record<string, PhotoDetail> = {
     alt: 'A long paved drive curving past a mown lawn toward the venue building at dusk, with a wall of tall pines behind',
     caption: 'The drive and lot at dusk',
     tags: ['arrival', 'parking'],
-    space: 'campus',
+    space: 'grounds',
   },
   'driveway.jpg': {
     alt: 'A wide paved drive and parking lot in daylight, with landscaped islands and lawn on both sides, leading to the venue building among tall trees',
     caption: 'On-site parking on the paved lot',
     tags: ['parking'],
-    space: 'campus',
+    space: 'grounds',
   },
-  'gable.jpg': {
-    alt: 'The stucco front gable with a tall white cross between two narrow arched windows of leaded glass, under a blue sky',
-    caption: 'The front gable, with its white cross',
-    tags: ['about', 'church'],
-    space: 'campus',
-  },
-  // Styled concepts: generated from the real photo above them, with furniture, linens, flowers, and lighting added.
-  'styled-hall-windows-reception.jpg': {
-    alt: 'Styled concept: The Hall set for a reception, with round tables in white floor-length linens, gold chiavari chairs, white and lavender centerpieces, and a head table under the arched windows',
-    styledOf: 'hall-windows.jpg',
-    space: 'hall',
-  },
-  'styled-hall-fireplace-dinner.jpg': {
-    alt: 'Styled concept: The Hall set for a milestone dinner, with two long banquet tables in white linens and lavender runners, white chairs, candles, and a cake table by the fireplace wall',
-    styledOf: 'hall-fireplace.jpg',
-    space: 'hall',
-  },
-  'styled-gazebo-ceremony.jpg': {
-    alt: 'Styled concept: white ceremony chairs in two sections on the lawn facing the gazebo, with a white aisle runner and white and lavender flowers on the gazebo posts',
+
+  // Staged event photos, one per event, in one décor style (brand.md). Registered ahead of their files:
+  // until all eight are in src/assets/venue/, every event shows its real photo instead (eventsStaged).
+  'styled-event-weddings.jpg': {
+    alt: 'Styled concept: ceremony seating on the lawn facing the timber gazebo in The Grove, with an ivory aisle runner and ivory, peach, and eucalyptus florals',
     styledOf: 'gazebo.jpg',
+    event: 'weddings',
     space: 'grove',
   },
-  'styled-grove-tables-reunion.jpg': {
-    alt: 'Styled concept: the picnic tables in The Grove dressed in white linens with lavender runners, lanterns, and small flower jars, with string lights above the patio',
+  'styled-event-receptions-banquets.jpg': {
+    alt: 'Styled concept: The Hall set for a reception, with round tables in ivory linens, natural wood chairs, low ivory and peach centerpieces, and a head table under the arched windows',
+    styledOf: 'hall-windows.jpg',
+    event: 'receptions-banquets',
+    space: 'hall',
+  },
+  'styled-event-baby-bridal-showers.jpg': {
+    alt: 'Styled concept: The Hall set for a shower, with brunch tables and a dessert table by the fireplace wall',
+    styledOf: 'hall-fireplace.jpg',
+    event: 'baby-bridal-showers',
+    space: 'hall',
+  },
+  'styled-event-birthday-parties.jpg': {
+    alt: 'Styled concept: The Hall set for a milestone dinner, with a long table lit with candles by the fireplace wall',
+    styledOf: 'hall-windows.jpg',
+    event: 'birthday-parties',
+    space: 'hall',
+  },
+  'styled-event-repasts-memorials.jpg': {
+    alt: 'Styled concept: The Hall set for a repast, with quiet round tables and a guest book table by the arched windows',
+    styledOf: 'hall-doors.jpg',
+    event: 'repasts-memorials',
+    space: 'hall',
+  },
+  'styled-event-meetings-trainings.jpg': {
+    alt: 'Styled concept: The Hall set for a training, with classroom seating facing the wall-mounted screen',
+    styledOf: 'hall-doors.jpg',
+    event: 'meetings-trainings',
+    space: 'hall',
+  },
+  'styled-event-graduations-reunions.jpg': {
+    alt: 'Styled concept: the picnic tables in The Grove dressed in cream linens, with lanterns and string lights above the patio',
     styledOf: 'grove-tables.jpg',
+    event: 'graduations-reunions',
+    space: 'grove',
+  },
+  'styled-event-community-events.jpg': {
+    alt: 'Styled concept: round tables and a welcome table on the lawn near the path to the gazebo in The Grove',
+    styledOf: 'grove-path.jpg',
+    event: 'community-events',
     space: 'grove',
   },
 };
 
 /**
- * Which photo leads each event page and its tile. Every slug in src/data/events.ts is listed, each with a
- * different image; any other slug gets hall-windows. Styled concepts are allowed here, with their badge
- * (Photo.astro adds it), and their caption on the event page. Share images and structured data use the
- * real photo instead (realPhoto).
+ * The real photo for each event, used for every event while the staged set is incomplete. Every event type
+ * in src/data/event-types.ts is listed; any other slug gets hall-windows.
  */
-const EVENT_PHOTOS: Record<string, string> = {
-  weddings: 'styled-gazebo-ceremony',
-  'receptions-banquets': 'styled-hall-windows-reception',
-  'birthday-parties': 'styled-hall-fireplace-dinner',
-  'graduations-reunions': 'styled-grove-tables-reunion',
-  'baby-bridal-showers': 'hall-windows',
+const REAL_EVENT_PHOTOS: Record<string, string> = {
+  weddings: 'gazebo',
+  'receptions-banquets': 'hall-windows',
+  'baby-bridal-showers': 'hall-fireplace',
+  'birthday-parties': 'hall-doors',
+  'repasts-memorials': 'hall-fireplace',
   'meetings-trainings': 'hall-doors',
-  'repasts-memorials': 'gable',
-  'church-community-events': 'grove-path',
+  'graduations-reunions': 'grove-tables',
+  'community-events': 'grove-path',
 };
 const EVENT_PHOTO_FALLBACK = 'hall-windows';
+/** The staged photo of an event, by file stem. */
+const stagedName = (slug: string) => `styled-event-${slug}`;
 
 const modules = import.meta.glob<{ default: ImageMetadata }>(
   '../assets/venue/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
@@ -200,7 +230,7 @@ function toPhoto(file: string, src: ImageMetadata): VenuePhoto {
   const styledOf = detail?.styledOf;
   let alt = detail?.alt ?? altFromFilename(file);
   if (styledOf && !alt.startsWith(STYLED_ALT_PREFIX)) {
-    console.warn(`[photos] ${file} is a styled concept, so its alt text must start with "${STYLED_ALT_PREFIX}". Added it.`);
+    console.warn(`[photos] ${file} is a staged photo, so its alt text must start with "${STYLED_ALT_PREFIX}". Added it.`);
     alt = `${STYLED_ALT_PREFIX} ${alt.charAt(0).toLowerCase()}${alt.slice(1)}`;
   }
   return {
@@ -214,7 +244,6 @@ function toPhoto(file: string, src: ImageMetadata): VenuePhoto {
     space: detail?.space,
     crop: detail?.crop,
     styledOf,
-    styled: [],
   };
 }
 
@@ -227,23 +256,20 @@ const byDetailOrder = (a: VenuePhoto, b: VenuePhoto) => {
 };
 
 const all = files.filter((f) => !stemOf(f.file).endsWith(TALL_SUFFIX)).map((f) => toPhoto(f.file, f.src));
-const styledConcepts = all.filter((p) => p.name.startsWith(STYLED_PREFIX) || p.styledOf !== undefined).sort(byDetailOrder);
+const staged = all.filter((p) => p.name.startsWith(STYLED_PREFIX) || p.styledOf !== undefined).sort(byDetailOrder);
 
-/** The real photographs, in photoDetails order. Tall versions and styled concepts are attached, not listed. */
-export const photos: VenuePhoto[] = all.filter((p) => !styledConcepts.includes(p)).sort(byDetailOrder);
+/** The real photographs, in photoDetails order. Tall versions are attached; staged photos are never listed. */
+export const photos: VenuePhoto[] = all.filter((p) => !staged.includes(p)).sort(byDetailOrder);
 
-for (const s of styledConcepts) {
-  const base = s.styledOf ? photos.find((p) => p.file === s.styledOf) : undefined;
+for (const s of staged) {
   if (!s.styledOf) {
-    console.warn(`[photos] ${s.file} looks like a styled concept but has no styledOf in photoDetails, so it is not shown. Add styledOf: '<base>.jpg'.`);
-  } else if (!base) {
-    console.warn(`[photos] ${s.file} is a styled concept of ${s.styledOf}, but that photo is not in src/assets/venue/, so it is not shown.`);
-  } else {
-    base.styled.push(s);
+    console.warn(`[photos] ${s.file} looks like a staged photo but has no styledOf in photoDetails, so it is not shown. Add styledOf: '<base>.jpg'.`);
+  } else if (!photos.some((p) => p.file === s.styledOf)) {
+    console.warn(`[photos] ${s.file} is a staged photo of ${s.styledOf}, but that photo is not in src/assets/venue/.`);
   }
 }
 
-for (const p of [...photos, ...styledConcepts]) {
+for (const p of [...photos, ...staged]) {
   if (Math.max(p.src.width, p.src.height) < 1600) {
     console.warn(`[photos] ${p.file} is ${p.src.width}x${p.src.height}. Use an original at least 1600px on the long edge or it will look soft.`);
   }
@@ -254,8 +280,12 @@ for (const p of [...photos, ...styledConcepts]) {
 for (const stem of tallByStem.keys()) {
   if (!all.some((p) => p.name === stem)) console.warn(`[photos] ${stem}${TALL_SUFFIX} has no matching ${stem} photo, so it is not shown.`);
 }
-for (const file of detailOrder) {
-  if (!all.some((p) => p.file === file)) console.warn(`[photos] photoDetails lists ${file}, but no such file is in src/assets/venue/.`);
+// Staged entries are registered before their files exist, so only real photos are checked here.
+for (const [file, detail] of Object.entries(photoDetails)) {
+  if (!detail.event && !all.some((p) => p.file === file)) console.warn(`[photos] photoDetails lists ${file}, but no such file is in src/assets/venue/.`);
+}
+for (const e of eventTypes) {
+  if (!REAL_EVENT_PHOTOS[e.slug]) console.warn(`[photos] The event ${e.slug} has no real photo in REAL_EVENT_PHOTOS, so it falls back to ${EVENT_PHOTO_FALLBACK}.`);
 }
 
 export const hasPhotos = photos.length > 0;
@@ -263,10 +293,23 @@ export const hasPhotos = photos.length > 0;
 /** A photo by name, with or without its extension: photoByName('gazebo') or photoByName('gazebo.jpg'). */
 export function photoByName(name: string): VenuePhoto | null {
   const stem = stemOf(name);
-  return photos.find((p) => p.name === stem) ?? styledConcepts.find((p) => p.name === stem) ?? null;
+  return photos.find((p) => p.name === stem) ?? staged.find((p) => p.name === stem) ?? null;
 }
 
-/** The real photos of one part of the property, in photoDetails order. */
+/**
+ * All or nothing: true only when every event type has its staged photo in src/assets/venue/. Then every
+ * event tile and event page hero is staged; otherwise every one of them is a real photo.
+ */
+export const eventsStaged = eventTypes.every((e) => staged.some((p) => p.name === stagedName(e.slug)));
+
+{
+  const present = eventTypes.filter((e) => staged.some((p) => p.name === stagedName(e.slug))).length;
+  if (present > 0 && !eventsStaged) {
+    console.info(`[photos] ${present} of ${eventTypes.length} staged event photos are in src/assets/venue/, so every event shows its real photo until the set is complete.`);
+  }
+}
+
+/** The real photos of one part of the property, in photoDetails order. Never a staged photo. */
 export function photosFor(space: PhotoSpace): VenuePhoto[] {
   return photos.filter((p) => p.space === space);
 }
@@ -281,14 +324,15 @@ export function heroPhoto(): VenuePhoto | null {
 }
 
 /**
- * The photo that leads an event page and its tile, from the event photo map; hall-windows when the slug is
- * not mapped. It may be a styled concept: use realPhoto() wherever only a real photograph is allowed.
+ * The photo that leads an event page and its tile: the staged photo of that event when the whole set is
+ * staged (eventsStaged), otherwise its real photo. Use realPhoto() wherever only a real photograph is allowed.
  */
 export function eventPhoto(slug: string): VenuePhoto | null {
-  return photoByName(EVENT_PHOTOS[slug] ?? EVENT_PHOTO_FALLBACK) ?? photoByName(EVENT_PHOTO_FALLBACK);
+  const real = () => photoByName(REAL_EVENT_PHOTOS[slug] ?? EVENT_PHOTO_FALLBACK) ?? photoByName(EVENT_PHOTO_FALLBACK);
+  return (eventsStaged ? photoByName(stagedName(slug)) : null) ?? real();
 }
 
-/** The real photograph behind a photo: the photo itself, or for a styled concept the photo it was made from. */
+/** The real photograph behind a photo: the photo itself, or for a staged photo the photo it was made from. */
 export function realPhoto(photo: VenuePhoto | null): VenuePhoto | null {
   if (!photo || !photo.styledOf) return photo;
   return photos.find((p) => p.file === photo.styledOf) ?? null;

@@ -2,9 +2,10 @@
 /**
  * The Venue at NCC logo, inlined from src/assets/brand/ so it follows the theme.
  *
- * tone="auto": the ink (#1C1622) becomes var(--logo-ink, var(--label)) and Venue Purple (#4F2A75)
- * becomes var(--logo-accent, var(--accent-text)), so the logo turns light in dark mode.
- * tone="white": the white artwork, for photos and Deep Plum. White stays white and "at NCC" is var(--lilac).
+ * tone="auto": Ink (#2F2A1F) becomes var(--logo-ink, var(--label)) and Caramel Deep (#8A5A2B) becomes
+ * var(--logo-accent, var(--accent-text)), so the logo turns Cream and Caramel in dark mode.
+ * tone="white": the light artwork, for photos and Deep Olive. Cream (#FEFAE0) becomes var(--on-deep) and
+ * Caramel (#D4A373) becomes var(--on-deep-accent), the same in both appearances.
  *
  * Accessible as an image named "The Venue at NCC", or hidden with `decorative` when it sits inside a link
  * that already carries the name.
@@ -36,16 +37,23 @@ const sources = {
   wordmark: { auto: wordmark, white: wordmarkWhite },
 } as const;
 
-const INK = 'var(--logo-ink, var(--label))';
-const ACCENT = 'var(--logo-accent, var(--accent-text))';
-const LILAC = 'var(--lilac, #CDB3EE)';
+/** The artwork's colors (brand.md, Logo) and the theme variables that replace them. */
+const COLORS: Record<'auto' | 'white', Record<string, string>> = {
+  auto: {
+    '#2F2A1F': 'var(--logo-ink, var(--label))',
+    '#8A5A2B': 'var(--logo-accent, var(--accent-text))',
+  },
+  white: {
+    '#FEFAE0': 'var(--logo-light-ink, var(--on-deep, #FEFAE0))',
+    '#D4A373': 'var(--logo-light-accent, var(--on-deep-accent, #D4A373))',
+  },
+};
 
 const recolor = (svg: string) =>
-  tone === 'white'
-    ? svg.replace(/(fill|stroke)="#CDB3EE"/gi, (_m, prop: string) => `style="${prop}:${LILAC}"`)
-    : svg
-        .replace(/(fill|stroke)="#1C1622"/gi, (_m, prop: string) => `style="${prop}:${INK}"`)
-        .replace(/(fill|stroke)="#4F2A75"/gi, (_m, prop: string) => `style="${prop}:${ACCENT}"`);
+  Object.entries(COLORS[tone]).reduce(
+    (out, [hex, value]) => out.replace(new RegExp(`(fill|stroke)="${hex}"`, 'gi'), (_m, prop: string) => `style="${prop}:${value}"`),
+    svg,
+  );
 
 const raw = sources[variant][tone];
 const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(raw);

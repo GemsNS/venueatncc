@@ -4,9 +4,9 @@
  * estimate, read as estimate() wrote them: bookingDeposit is due to reserve the date and the
  * rest (total minus bookingDeposit) is the balance.
  *
- * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
- * render SVG), a thin Venue Purple rule, Georgia for headings in place of Caslon, the system
- * sans stack for body text, and the palette's Ink, Ink 2, and Lilac Mist.
+ * Brand (docs/design/brand.md): the email lockup as a PNG header on Cream (many clients do not
+ * render SVG), a thin Caramel rule, Georgia for headings in place of Caslon, the system sans
+ * stack for body text, Caramel Deep links, and the palette's Ink, Ink 2, and Linen.
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
@@ -27,15 +27,19 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-/** Venue Purple: links, the rule under the header, the button. 10.9:1 on white. */
-const PURPLE = '#4F2A75';
-/** Ink and Ink 2: text and secondary text (7.1:1 on white). */
-const INK = '#1C1622';
-const MUTED = '#5E5566';
-/** Hairlines: the palette's separator over white. */
-const RULE = '#E4E1E8';
-/** Lilac Mist: the reference box. */
-const TINT = '#F4F0F8';
+/** Cream: the page. */
+const CREAM = '#FEFAE0';
+/** Caramel: the rule under the header and the button fill, always with Ink text (6.3:1). */
+const CARAMEL = '#D4A373';
+/** Caramel Deep: links and the reference number. 5.6:1 on Cream. */
+const LINK = '#8A5A2B';
+/** Ink and Ink 2: text and secondary text (13.6:1 and 7.1:1 on Cream). */
+const INK = '#2F2A1F';
+const MUTED = '#5C5443';
+/** Hairlines: the palette's separator over Cream. */
+const RULE = '#E5E1C9';
+/** Linen: the reference box. */
+const TINT = '#FAEDCD';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 /** Headings: Georgia stands in for Libre Caslon, which email clients do not have. */
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;
@@ -118,24 +122,24 @@ function layout(opts: { preheader: string; body: string; origin: string }): stri
 <meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(site.name)}</title>
 </head>
-<body style="margin:0;padding:0;background:#ffffff;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#ffffff;">${escapeHtml(opts.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;">
+<body style="margin:0;padding:0;background:${CREAM};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${CREAM};">${escapeHtml(opts.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM};">
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:${FONT};color:${INK};">
 <tr><td style="padding:0 0 20px 0;">
-<a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${PURPLE};"></a>
+<a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${LINK};"></a>
 </td></tr>
-<tr><td height="1" style="height:1px;padding:0;background:${PURPLE};font-size:1px;line-height:1px;">&nbsp;</td></tr>
+<tr><td height="1" style="height:1px;padding:0;background:${CARAMEL};font-size:1px;line-height:1px;">&nbsp;</td></tr>
 ${opts.body}
 <tr><td style="padding:24px 0 0 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${MUTED};">
-${escapeHtml(site.name)} is operated by ${escapeHtml(site.parent.name)}.<br>
+${escapeHtml(site.name)}<br>
 ${escapeHtml(fullAddress)}<br>
-<a href="tel:${site.contact.phoneE164}" style="color:${PURPLE};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
+<a href="tel:${site.contact.phoneE164}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
 &nbsp;&middot;&nbsp;
-<a href="mailto:${escapeHtml(site.contact.email)}" style="color:${PURPLE};text-decoration:none;">${escapeHtml(site.contact.email)}</a>
+<a href="mailto:${escapeHtml(site.contact.email)}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.email)}</a>
 &nbsp;&middot;&nbsp;
-<a href="${escapeHtml(opts.origin)}/" style="color:${PURPLE};text-decoration:none;">${escapeHtml(host)}</a>
+<a href="${escapeHtml(opts.origin)}/" style="color:${LINK};text-decoration:none;">${escapeHtml(host)}</a>
 </td></tr>
 </table>
 </td></tr>
@@ -158,7 +162,7 @@ function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${TINT};border-radius:12px;">
 <tr><td style="padding:12px 18px;font-size:14px;line-height:20px;color:${MUTED};">Reference<br>
-<span style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:1px;color:${PURPLE};">${escapeHtml(reference)}</span></td></tr>
+<span style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:1px;color:${LINK};">${escapeHtml(reference)}</span></td></tr>
 </table>
 </td></tr>`;
 }
@@ -195,7 +199,7 @@ function bulletList(items: string[]): string {
 function button(href: string, label: string): string {
   return `<tr><td style="padding:16px 0 8px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="border-radius:999px;background:${PURPLE};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
+<td style="border-radius:999px;background:${CARAMEL};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:600;color:${INK};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
 </tr></table>
 </td></tr>`;
 }
@@ -215,7 +219,7 @@ function estimateText(est: Estimate): string {
 function footerText(origin: string): string {
   return [
     '--',
-    `${site.name} is operated by ${site.parent.name}.`,
+    site.name,
     fullAddress,
     `${site.contact.phone} | ${site.contact.email}`,
     `${origin}/`,
@@ -253,8 +257,8 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
 
   const esc = (rows: [string, string][]) => rows.map(([k, v]) => [k, multiline(v)] as [string, string]);
   const contactHtml = contactRows.map(([k, v]): [string, string] => {
-    if (k === 'Email') return [k, `<a href="mailto:${escapeHtml(v)}" style="color:${PURPLE};">${escapeHtml(v)}</a>`];
-    if (k === 'Phone') return [k, `<a href="tel:${escapeHtml(dialable(v))}" style="color:${PURPLE};">${escapeHtml(v)}</a>`];
+    if (k === 'Email') return [k, `<a href="mailto:${escapeHtml(v)}" style="color:${LINK};">${escapeHtml(v)}</a>`];
+    if (k === 'Phone') return [k, `<a href="tel:${escapeHtml(dialable(v))}" style="color:${LINK};">${escapeHtml(v)}</a>`];
     return [k, multiline(v)];
   });
 
@@ -263,7 +267,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     paragraph(`${escapeHtml(name)} sent a request through the website. Reply to this email to answer them directly.`),
     referenceBox(i.reference),
     ctx.conflict
-      ? paragraph(`<strong style="color:${PURPLE};">Calendar conflict:</strong> ${escapeHtml(ctx.conflict)}`)
+      ? paragraph(`<strong style="color:${LINK};">Calendar conflict:</strong> ${escapeHtml(ctx.conflict)}`)
       : '',
     sectionTitle('Event'),
     detailTable(esc(detailRows)),
@@ -339,7 +343,7 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
       .join('')}</ol></td></tr>`,
     sectionTitle('Questions'),
     paragraph(
-      `Call <a href="tel:${site.contact.phoneE164}" style="color:${PURPLE};">${escapeHtml(site.contact.phone)}</a> or reply to this email. ` +
+      `Call <a href="tel:${site.contact.phoneE164}" style="color:${LINK};">${escapeHtml(site.contact.phone)}</a> or reply to this email. ` +
         `We are at ${escapeHtml(fullAddress)}.`,
     ),
   ].join(NL);

@@ -6,7 +6,6 @@ export const mainNav = [
   { label: 'The Space', href: '/the-space/' },
   { label: 'Pricing', href: '/pricing/' },
   { label: 'FAQ', href: '/faq/' },
-  { label: 'About', href: '/about/' },
 ];
 
 /** Mobile tab bar: five tabs at most, per the HIG. */

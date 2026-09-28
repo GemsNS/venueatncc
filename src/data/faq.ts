@@ -50,7 +50,7 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'Who can book the venue?',
-    a: `The Venue at NCC is open to the public. Families, businesses, nonprofits, and churches can all book, and membership at ${site.parent.name} is not required.`,
+    a: 'The Venue at NCC is open to the public. Families, businesses, nonprofits, and faith groups can all book.',
   },
   {
     topic: 'booking',
@@ -100,17 +100,12 @@ export const faqs: Faq[] = [
   {
     topic: 'about',
     q: 'Where is The Venue at NCC?',
-    a: `The Venue at NCC is at ${site.parent.name}, ${fullAddress}.`,
+    a: `The Venue at NCC is at ${fullAddress}.`,
   },
   {
     topic: 'about',
     q: 'What kinds of events can I host?',
-    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and church and community events. For another kind of event, please call us to discuss it.',
-  },
-  {
-    topic: 'about',
-    q: 'Who operates The Venue at NCC?',
-    a: `The Venue at NCC is operated by ${site.parent.name}, founded in ${site.parent.foundingYear}.`,
+    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and community events. For another kind of event, please call us to discuss it.',
   },
   // To answer, then publish:
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },

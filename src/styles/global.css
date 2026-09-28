@@ -3,16 +3,26 @@
   the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
-    Photographs first, quiet frame. Real photos of the property lead; the white and purple frame stays calm.
+    Photographs first, quiet frame. Real photos of the property lead; the cream and sage frame stays calm.
     Clarity   Legible type and plain words. Every screen has one obvious next step.
     Deference Chrome stays quiet. Glass is for navigation and controls floating over photos only.
 
-  Color      White and purple: a deep, regal plum, never an electric violet.
-    Venue Purple  #4F2A75  buttons, links, focus, selected states. 10.9:1 on white.
-                  Dark mode: fill #7C4DB0 (white text 5.9:1), text #CDB3EE.
-    Deep Plum     #2B1840  footer and CTA band. White text 16:1, Lilac 8.6:1.
-    Lilac         #CDB3EE  accent text and lines on Deep Plum or photos.
-    Ink           #1C1622  text. Ink 2 #5E5566 for secondary text (7.1:1 on white).
+  Color      The owner's palette: Cream, Linen, Mist, Sage, and Caramel, with two derived darks and one
+             derived deeper caramel. Nothing else is added.
+    Cream         #FEFAE0  page background.
+    Linen         #FAEDCD  alternate sections (--bg-grouped).
+    Mist          #E9EDC9  quiet panels, selected rows, chips.
+    Sage          #CCD5AE  tags and subtle surfaces; hairlines on Deep Olive. Never text on light.
+    Caramel       #D4A373  the one saturated color: primary fills, always with Ink text (6.3:1), and
+                           the accent on dark surfaces. Never text on Cream (2.2:1).
+    Caramel Deep  #8A5A2B  links and accent text on light surfaces, focus rings, selection outlines (5.6:1).
+    Ink           #2F2A1F  text (13.6:1 on Cream). Ink 2 #5C5443 for secondary text (7.1:1).
+    Deep Olive    #343B24  footer, closing band, photo scrims. Cream text 11.1:1, Caramel 5.2:1.
+    Card          #FFFDF2  cards and inputs on Cream or Linen.
+    Dark mode: page #17190F, grouped #101209, cards #22251A, text Cream, secondary Sage, fills Caramel
+    with Ink text, accent text Caramel.
+    --accent is a fill. Anything that is text, a link, a focus ring, or a selection border uses
+    --accent-text, which keeps 3:1 or better against the page (WCAG 1.4.11).
     No gradients as decoration. The only gradients are legibility scrims over photographs.
 
   Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
@@ -30,57 +40,67 @@
 :root {
   color-scheme: light dark;
 
+  /* Palette colors that read the same in both appearances */
+  --caramel: #d4a373;
+  --caramel-deep: #8a5a2b;
+  --sage: #ccd5ae;
+  --ink: #2f2a1f;
+
   /* Surfaces */
-  --bg: #ffffff;
-  --bg-grouped: #f7f5f9;
-  --bg-elevated: #ffffff;
-  --bg-inset: #f7f5f9;
-  --fill: rgba(94, 85, 102, 0.13);
-  --fill-2: rgba(94, 85, 102, 0.08);
-  --fill-3: rgba(94, 85, 102, 0.05);
+  --bg: #fefae0;
+  --bg-grouped: #faedcd;
+  --bg-elevated: #fffdf2;
+  --fill: rgba(92, 84, 67, 0.13);
+  --fill-2: rgba(92, 84, 67, 0.08);
+  --fill-3: rgba(92, 84, 67, 0.05);
+  /* Quiet panels and chips (Mist), and warm alternate surfaces (Linen). */
+  --mist: #e9edc9;
+  --linen: #faedcd;
 
   /* Labels */
-  --label: #1c1622;
-  --label-2: #5e5566;
-  --label-3: #736a7c;
-  --separator: rgba(28, 22, 34, 0.12);
-  --separator-strong: rgba(28, 22, 34, 0.24);
+  --label: #2f2a1f;
+  --label-2: #5c5443;
+  --label-3: #736a58;
+  --separator: rgba(47, 42, 31, 0.12);
+  --separator-strong: rgba(47, 42, 31, 0.24);
 
   /* Brand */
-  --accent: #4f2a75;
+  --accent: var(--caramel);
   --accent-fill: var(--accent);
-  --accent-hover: #3e2060;
-  --accent-text: #4f2a75;
-  --on-accent: #ffffff;
-  /* Lilac Mist, as a tint so it still reads on grouped backgrounds. */
-  --accent-tint: rgba(79, 42, 117, 0.08);
-  --accent-tint-2: rgba(79, 42, 117, 0.14);
-  --lilac-mist: #f4f0f8;
-  --brand-deep: #2b1840;
-  --lilac: #cdb3ee;
-  --on-deep: #ffffff;
-  --on-deep-2: rgba(255, 255, 255, 0.8);
+  --accent-hover: #cb9764;
+  --accent-text: var(--caramel-deep);
+  --on-accent: var(--ink);
+  /* Caramel tints. Caramel Deep text keeps 4.5:1 on both over Cream and Linen. */
+  --accent-tint: rgba(212, 163, 115, 0.14);
+  --accent-tint-2: rgba(212, 163, 115, 0.2);
+
+  /* Deep Olive: the footer, the closing band, and photo scrims, with Cream text and Caramel accents. */
+  --olive-deep: #343b24;
+  --on-deep: #fefae0;
+  --on-deep-2: rgba(254, 250, 224, 0.8);
+  --on-deep-accent: var(--caramel);
+  --on-deep-line: rgba(204, 213, 174, 0.22);
 
   /* Status */
-  --green: #248a3d;
+  --green: #1b6e30;
   --green-tint: rgba(52, 199, 89, 0.14);
-  --orange: #c93400;
+  --orange: #b52f00;
   --orange-tint: rgba(255, 149, 0, 0.16);
-  --red: #d70015;
+  --red: #c4001a;
   --red-tint: rgba(255, 59, 48, 0.12);
 
   /* Liquid Glass (navigation and control layer only) */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-strong: rgba(255, 255, 255, 0.86);
-  --glass-border: rgba(255, 255, 255, 0.7);
-  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.04);
-  --glass-shadow: 0 8px 32px rgba(43, 24, 64, 0.12), 0 1px 2px rgba(43, 24, 64, 0.08);
+  --glass-bg: rgba(254, 250, 224, 0.72);
+  --glass-bg-strong: rgba(254, 250, 224, 0.86);
+  --glass-border: rgba(255, 253, 242, 0.7);
+  --glass-edge: inset 0 1px 0 rgba(255, 253, 242, 0.9), inset 0 -1px 0 rgba(47, 42, 31, 0.04);
+  --glass-shadow: 0 8px 32px rgba(52, 59, 36, 0.12), 0 1px 2px rgba(52, 59, 36, 0.08);
   --glass-blur: blur(24px) saturate(180%);
 
   /* Elevation */
-  --shadow-1: 0 1px 2px rgba(28, 22, 34, 0.05), 0 1px 1px rgba(28, 22, 34, 0.03);
-  --shadow-2: 0 2px 6px rgba(28, 22, 34, 0.04), 0 12px 32px rgba(43, 24, 64, 0.08);
-  --shadow-3: 0 4px 12px rgba(28, 22, 34, 0.06), 0 24px 64px rgba(43, 24, 64, 0.14);
+  --shadow-1: 0 1px 2px rgba(47, 42, 31, 0.06), 0 1px 1px rgba(47, 42, 31, 0.03);
+  --shadow-2: 0 2px 6px rgba(47, 42, 31, 0.05), 0 12px 32px rgba(52, 59, 36, 0.08);
+  --shadow-3: 0 4px 12px rgba(47, 42, 31, 0.07), 0 24px 64px rgba(52, 59, 36, 0.14);
 
   /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
@@ -141,40 +161,41 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121015;
-    --bg-grouped: #0c0a0e;
-    --bg-elevated: #1c1820;
-    --bg-inset: #1c1820;
-    --fill: rgba(185, 176, 194, 0.24);
-    --fill-2: rgba(185, 176, 194, 0.16);
-    --fill-3: rgba(185, 176, 194, 0.08);
+    --bg: #17190f;
+    --bg-grouped: #101209;
+    --bg-elevated: #22251a;
+    --fill: rgba(204, 213, 174, 0.22);
+    --fill-2: rgba(204, 213, 174, 0.14);
+    --fill-3: rgba(204, 213, 174, 0.07);
+    --mist: #232719;
+    --linen: #1c1f13;
 
-    --label: #f5f2f8;
-    --label-2: #b9b0c2;
-    --label-3: #8f8699;
-    --separator: rgba(245, 242, 248, 0.14);
-    --separator-strong: rgba(245, 242, 248, 0.26);
+    --label: #fefae0;
+    --label-2: #ccd5ae;
+    --label-3: #9a9f86;
+    --separator: rgba(254, 250, 224, 0.14);
+    --separator-strong: rgba(254, 250, 224, 0.26);
 
-    /* Fills use the lighter purple so white labels keep 5.9:1; text and links use Lilac. */
-    --accent: #7c4db0;
-    --accent-hover: #6a3f9a;
-    --accent-text: #cdb3ee;
-    --accent-tint: rgba(205, 179, 238, 0.12);
-    --accent-tint-2: rgba(205, 179, 238, 0.2);
-    --lilac-mist: rgba(205, 179, 238, 0.12);
-    --brand-deep: #1a1024;
+    /* Caramel fills keep Ink labels (6.3:1); Caramel is also the accent text (7.9:1 on the page). */
+    --accent-hover: #ddb287;
+    --accent-text: var(--caramel);
+    --accent-tint: rgba(212, 163, 115, 0.16);
+    --accent-tint-2: rgba(212, 163, 115, 0.2);
 
-    --green: #30d158;
-    --green-tint: rgba(48, 209, 88, 0.18);
-    --orange: #ff9f0a;
-    --orange-tint: rgba(255, 159, 10, 0.18);
-    --red: #ff453a;
+    /* Deep Olive steps down toward the page, and a sage hairline marks where it begins. */
+    --olive-deep: #1e2214;
+
+    --green: #4cd97b;
+    --green-tint: rgba(48, 209, 88, 0.16);
+    --orange: #ffb340;
+    --orange-tint: rgba(255, 159, 10, 0.16);
+    --red: #ff7a70;
     --red-tint: rgba(255, 69, 58, 0.18);
 
-    --glass-bg: rgba(28, 24, 32, 0.64);
-    --glass-bg-strong: rgba(28, 24, 32, 0.82);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(34, 37, 26, 0.64);
+    --glass-bg-strong: rgba(34, 37, 26, 0.84);
+    --glass-border: rgba(254, 250, 224, 0.12);
+    --glass-edge: inset 0 1px 0 rgba(254, 250, 224, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -645,25 +666,15 @@ main:focus {
   background: var(--fill-3);
 }
 
-/* On Deep Plum and photos: white capsule, Venue Purple label (10.9:1) in both appearances. */
-.btn--white {
-  background: #ffffff;
-  color: #4f2a75;
-}
-
-.btn--white:hover {
-  background: #f4f0f8;
-}
-
-/* Secondary action on Deep Plum and photos: a white outline. */
-.btn--outline-white {
+/* Secondary action on Deep Olive and photos: a Cream outline. The primary stays .btn--filled (Caramel). */
+.btn--outline-light {
   background: transparent;
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  color: var(--on-deep);
+  box-shadow: inset 0 0 0 1.5px rgba(254, 250, 224, 0.85);
 }
 
-.btn--outline-white:hover {
-  background: rgba(255, 255, 255, 0.1);
+.btn--outline-light:hover {
+  background: rgba(254, 250, 224, 0.1);
 }
 
 .btn--glass {
@@ -914,9 +925,9 @@ a.link-more {
   outline: 2px solid transparent;
   outline-offset: 2px;
   background: var(--bg-elevated);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow:
-    0 0 0 1px var(--accent),
+    0 0 0 1px var(--accent-text),
     0 0 0 5px var(--accent-tint-2);
 }
 

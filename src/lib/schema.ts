@@ -2,7 +2,8 @@
  * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts and
  * src/shared/pricing.ts, so a fact changed there changes the search-engine markup too.
  * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall and The Grove. Structured
- * data never mentions alcohol or catering.
+ * data never mentions alcohol or catering, and the venue is a stand-alone business with no parent
+ * organization.
  */
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
@@ -10,7 +11,6 @@ import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 import type { SpaceChoice } from '../shared/types';
 
 const venueId = `${site.url}/#venue`;
-const orgId = `${site.url}/#parent`;
 const websiteId = `${site.url}/#website`;
 const ratesId = `${site.url}/pricing/#rates`;
 
@@ -75,23 +75,6 @@ function postalAddress() {
   };
 }
 
-export function parentOrganization() {
-  return {
-    '@type': 'Organization',
-    '@id': orgId,
-    name: site.parent.name,
-    url: site.parent.url,
-    foundingDate: String(site.parent.foundingYear),
-    founder: {
-      '@type': 'Person',
-      name: site.parent.pastorName,
-      honorificPrefix: site.parent.pastorHonorific,
-      jobTitle: site.parent.pastorTitle,
-    },
-    address: postalAddress(),
-  };
-}
-
 const feature = (name: string, value: boolean | string = true) => ({
   '@type': 'LocationFeatureSpecification',
   name,
@@ -123,7 +106,6 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     },
     hasMap: site.address.mapsUrl,
     areaServed: areaServed(),
-    parentOrganization: { '@id': orgId },
     image: [...new Set([...imageUrls, ...VENUE_SHARE_IMAGES.map(abs)])],
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,

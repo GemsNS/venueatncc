@@ -333,7 +333,8 @@ describe('email templates', () => {
         assert.ok(!part.includes(String.fromCharCode(8211)), 'no en dash');
       }
       assert.ok(!mail.html.includes('<script>'));
-      assert.ok(mail.html.includes('#4F2A75'), 'Venue Purple');
+      assert.ok(mail.html.includes('#D4A373') && mail.html.includes('#8A5A2B'), 'Caramel rule and Caramel Deep links');
+      assert.ok(!mail.html.includes('#4F2A75') && !mail.html.includes('New Community Church'), 'no retired color or church');
       assert.ok(mail.html.includes('<img src="https://venueatncc.org/brand/email-lockup.png" width="256" height="48" alt="The Venue at NCC"'), 'lockup header');
       assert.ok(mail.html.includes('Georgia'), 'serif headings');
       assert.ok(!mail.html.includes('uppercase'), 'no all-caps labels');

@@ -16,8 +16,7 @@ import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
-import { STYLED_CAPTION, eventPhoto, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { events } from '../data/events';
+import { heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { publishedFaqs } from '../data/faq';
 import { bookHref, pricingHref } from '../data/nav';
 import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
@@ -26,8 +25,6 @@ import { href } from '../lib/paths';
 const hero = photoByName('exterior-dusk') ?? heroPhoto();
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
-// The events row below shows every event's image, so a space card only offers a styled view the row is not already showing.
-const shownByEvents = new Set(events.map((e) => eventPhoto(e.slug)?.file).filter(Boolean));
 const hallName = hall?.name ?? 'The Hall';
 const groveName = grove?.name ?? 'The Grove';
 
@@ -108,8 +105,8 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
         Gather up to {hall?.capacity} guests in {hallName} or {grove?.capacity} in {groveName}, with on-site parking included.
       </p>
       <div class="btn-row btn-row--stack hero__actions">
-        <a class="btn btn--white btn--lg" href={href(bookHref)}>Check Availability</a>
-        <a class="btn btn--outline-white btn--lg" href={href('/the-space/')}>Tour the Space</a>
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+        <a class="btn btn--outline-light btn--lg" href={href('/the-space/')}>Tour the Space</a>
       </div>
     </div>
     <div class="hero__checker">
@@ -121,7 +118,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     <div class="container">
       <h2 id="intro-heading" class="visually-hidden">About the venue</h2>
       <p class="intro__statement">
-        {site.name} is an event venue on a wooded campus in north Suffolk, operated by {site.parent.name}. We host weddings,
+        {site.name} is an event venue among the pines in north Suffolk. We host weddings,
         banquets, showers, reunions, and meetings in two distinct spaces, and we confirm every booking personally.
       </p>
       <dl class="intro__facts">
@@ -150,45 +147,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       <div class="spaces">
         {
           spaceCards.map((card) => {
-            const styled = card.photo?.styled.find((s) => !shownByEvents.has(s.file));
             return (
               <article class="space card" aria-labelledby={`space-${card.id}`}>
                 {card.photo && (
-                  <div class="space__media">
-                    <Photo
-                      photo={card.photo}
-                      class="space__pane space__pane--real"
-                      caption={false}
-                      sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw"
-                    />
-                    {styled && (
-                      <Photo
-                        photo={styled}
-                        class="space__pane space__pane--styled"
-                        caption={false}
-                        sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw"
-                      />
-                    )}
-                    {styled && (
-                      <fieldset class="segmented space__view">
-                        <legend class="visually-hidden">Photo of {card.name}</legend>
-                        <label class="segmented__item space__seg">
-                          <input class="visually-hidden space__radio" type="radio" name={`view-${card.id}`} value="real" checked />
-                          As Photographed
-                        </label>
-                        <label class="segmented__item space__seg">
-                          <input class="visually-hidden space__radio space__radio--styled" type="radio" name={`view-${card.id}`} value="styled" />
-                          Styled Concept
-                        </label>
-                      </fieldset>
-                    )}
-                  </div>
-                )}
-                {styled && (
-                  <p class="space__caption">
-                    <span class="space__caption--real">{card.photo?.caption}</span>
-                    <span class="space__caption--styled">{STYLED_CAPTION}</span>
-                  </p>
+                  <Photo photo={card.photo} caption={false} sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw" />
                 )}
                 <div class="space__body">
                   <h3 id={`space-${card.id}`} class="space__name t-title-1">
@@ -353,7 +315,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   /*
-    Legibility scrim, tinted toward Deep Plum and strongest at the bottom left where the copy sits
+    Legibility scrim in Deep Olive (its deeper dark-mode value, 30 34 20), strongest at the bottom left where the copy sits
     over the pale paving. The only gradients on the site are scrims like this one.
   */
   .hero__scrim {
@@ -362,12 +324,12 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     background:
       linear-gradient(
         to top,
-        rgb(26 16 36 / 0.86) 0%,
-        rgb(26 16 36 / 0.62) 30%,
-        rgb(26 16 36 / 0.22) 55%,
-        rgb(26 16 36 / 0) 72%
+        rgb(30 34 20 / 0.86) 0%,
+        rgb(30 34 20 / 0.62) 30%,
+        rgb(30 34 20 / 0.22) 55%,
+        rgb(30 34 20 / 0) 72%
       ),
-      linear-gradient(to right, rgb(26 16 36 / 0.62) 0%, rgb(26 16 36 / 0.32) 40%, rgb(26 16 36 / 0) 66%);
+      linear-gradient(to right, rgb(30 34 20 / 0.62) 0%, rgb(30 34 20 / 0.32) 40%, rgb(30 34 20 / 0) 66%);
   }
 
   .hero__copy {
@@ -379,13 +341,13 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     gap: 1.25rem;
     max-width: 42rem;
     padding-block: clamp(6rem, 20svh, 12rem) clamp(2rem, 1.5rem + 2vw, 3.5rem);
-    color: #ffffff;
+    color: var(--on-deep);
   }
 
   .hero__h1 {
     display: grid;
     gap: 0.9rem;
-    color: #ffffff;
+    color: var(--on-deep);
   }
 
   .hero__kicker {
@@ -394,22 +356,22 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: normal;
-    color: var(--lilac);
-    text-shadow: 0 1px 2px rgb(26 16 36 / 0.6);
+    color: var(--on-deep-accent);
+    text-shadow: 0 1px 2px rgb(30 34 20 / 0.6);
   }
 
   /* With very large text the title stays well above the lead's size, not just the vw cap. */
   .hero__title {
     font-size: max(var(--t-display), 1.7rem);
-    color: #ffffff;
-    text-shadow: 0 1px 24px rgb(26 16 36 / 0.35);
+    color: var(--on-deep);
+    text-shadow: 0 1px 24px rgb(30 34 20 / 0.35);
   }
 
   .hero__lead {
     max-width: 34rem;
     font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
     line-height: 1.5;
-    color: rgb(255 255 255 / 0.92);
+    color: rgb(254 250 224 / 0.92);
   }
 
   .hero__actions {
@@ -417,7 +379,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   .hero :global(:focus-visible) {
-    outline-color: #ffffff;
+    outline-color: var(--on-deep);
   }
 
   .hero__checker :global(:focus-visible) {
@@ -444,18 +406,18 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     .hero__scrim {
       background: linear-gradient(
         to top,
-        rgb(26 16 36 / 0.9) 0%,
-        rgb(26 16 36 / 0.76) 30%,
-        rgb(26 16 36 / 0.52) 55%,
-        rgb(26 16 36 / 0.18) 75%,
-        rgb(26 16 36 / 0) 90%
+        rgb(30 34 20 / 0.9) 0%,
+        rgb(30 34 20 / 0.76) 30%,
+        rgb(30 34 20 / 0.52) 55%,
+        rgb(30 34 20 / 0.18) 75%,
+        rgb(30 34 20 / 0) 90%
       );
     }
   }
 
   /*
-    Phones: no text over the building. The photo is a square block cropped to the lit entry and the
-    gable cross, the copy follows on a Deep Plum panel that continues from it, then the date checker.
+    Phones: no text over the building. The photo is a square block cropped to the lit entry, and the
+    copy follows on a Deep Olive panel that continues from it, then the date checker.
   */
   @media (width < 46.5rem) {
     .hero {
@@ -477,7 +439,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       max-width: none;
       gap: 1rem;
       padding: 1.75rem var(--gutter) 2rem;
-      background: var(--brand-deep);
+      background: var(--olive-deep);
     }
 
     .hero__title,
@@ -589,57 +551,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     border-radius: var(--r-xl);
   }
 
-  /* Both views share one cell, so switching never moves the text below. The view control sits on the photo. */
-  .space__media {
-    position: relative;
-    display: grid;
-    /* The view control's layout follows the photo's width (see the container query below). */
-    container-type: inline-size;
-  }
-
-  .space__media > :global(.photo) {
-    grid-area: 1 / 1;
-    align-self: start;
-    transition:
-      opacity var(--dur-2) ease,
-      visibility var(--dur-2);
-  }
-
-  .space__media > :global(.space__pane--styled) {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  .space:has(.space__radio--styled:checked) .space__media > :global(.space__pane--styled) {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .space:has(.space__radio--styled:checked) .space__media > :global(.space__pane--real) {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  /* One caption line under the photo, in step with the view: the photo's own, or the styled-concept note. */
-  .space__caption {
-    margin-top: 0.75rem;
-    padding-inline: 0.75rem;
-    color: var(--label-2);
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-
-  .space__caption--styled,
-  .space:has(.space__radio--styled:checked) .space__caption--real {
-    display: none;
-  }
-
-  .space:has(.space__radio--styled:checked) .space__caption--styled {
-    display: inline;
-  }
-
   .space__body {
     display: grid;
     flex: 1;
@@ -647,101 +558,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     justify-items: start;
     gap: 0.75rem;
     padding: 1.25rem 0.75rem 0.5rem;
-  }
-
-  /*
-    The As Photographed and Styled Concept control: native radios, so arrow keys and Tab work as expected.
-    It floats on the photo's lower left as a small glass control (brand.md allows glass on controls over photos).
-  */
-  .space__view {
-    position: absolute;
-    left: 0.75rem;
-    bottom: 0.75rem;
-    z-index: 2;
-    max-width: calc(100% - 1.5rem);
-    margin: 0;
-    border: 0;
-    min-inline-size: 0;
-    background-color: var(--glass-bg-strong);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    /* A tight shadow, so it stays on the photo instead of hazing the card below it. */
-    box-shadow: var(--glass-edge), 0 2px 8px rgb(0 0 0 / 0.18);
-  }
-
-  .space__seg {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    padding-inline: 0.75rem;
-    text-align: center;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow-wrap: normal;
-    hyphens: manual;
-  }
-
-  @media (pointer: coarse) {
-    .space__seg {
-      min-height: 44px;
-    }
-  }
-
-  /*
-    When the photo is too narrow for both labels on one line (under about 332px at the default text size,
-    so on 320 and 375 phones, and at any width with large text), the control moves under the photo, full
-    width, with the segments stacked. The query is in rem, so it follows the text size.
-  */
-  @container (width < 20.75rem) {
-    .space__view {
-      position: static;
-      grid-auto-flow: row;
-      max-width: none;
-      margin-top: 0.75rem;
-      border-radius: var(--r-lg);
-      background: var(--fill);
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      box-shadow: none;
-    }
-
-    .space__seg {
-      white-space: normal;
-      border-radius: calc(var(--r-lg) - 3px);
-    }
-  }
-
-  .space__seg:hover {
-    background: var(--fill-3);
-  }
-
-  .space__seg:has(:checked) {
-    background: var(--bg-elevated);
-    box-shadow:
-      inset 0 0 0 2px var(--accent-text),
-      0 3px 8px rgb(0 0 0 / 0.12),
-      0 3px 1px rgb(0 0 0 / 0.04);
-    font-weight: 600;
-  }
-
-  .space__seg:has(:focus-visible) {
-    outline: 3px solid var(--accent-text);
-    outline-offset: 2px;
-  }
-
-  @media (forced-colors: active) {
-    .space__seg:has(:checked) {
-      outline: 3px solid Highlight;
-      outline-offset: -3px;
-    }
-  }
-
-  /* Without :has() the control could not switch the photo, so it is not offered. */
-  @supports not selector(:has(*)) {
-    .space__view {
-      display: none;
-    }
   }
 
   .space__name {

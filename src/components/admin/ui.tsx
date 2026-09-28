@@ -8,7 +8,7 @@ import { statusLabel, statusTone } from './format';
 
 /**
  * The monogram from src/assets/brand/venue-mark.svg, inlined in currentColor so it follows the
- * theme: Venue Purple in light mode and Lilac in dark mode, both palette colors (brand.md).
+ * theme: Caramel Deep in light mode and Caramel in dark mode (brand.md).
  */
 export function Monogram(props: { class?: string }) {
   return (

@@ -1,9 +1,9 @@
 # The Venue at NCC
 
-Website and booking system for **The Venue at NCC** (venueatncc.org), the event space of
-[New Community Church](https://wearencc.org) at 5112 Godwin Blvd, Suffolk, VA 23434.
+Website and booking system for **The Venue at NCC** (venueatncc.org), an event venue at
+5112 Godwin Blvd, Suffolk, VA 23434.
 
-- A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in white and purple with full dark mode.
+- A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in the owner's cream, sage, and caramel palette with full dark mode.
 - A live availability calendar, instant price estimates, and a four-step booking request.
 - The venue's own backend: an API server with a SQLite database, email notifications, and a staff admin app. No third-party form services.
 - A static demo of everything on GitHub Pages, where bookings and the admin run in the browser with sample data.
@@ -57,7 +57,8 @@ Preact islands:                        Hono API  /api/*  ───────�
 | Questions and answers (answer the `a: null` ones to publish them) | `src/data/faq.ts` |
 | Photos | `src/assets/venue/` plus `src/data/photos.ts` |
 | Design tokens (colors, type, radii, glass) | `src/styles/global.css` |
-| Design rules we follow | `docs/design/hig-web-spec.md` |
+| Brand: palette, logo, photo rule, voice (binding) | `docs/design/brand.md` |
+| Interaction rules we follow | `docs/design/hig-web-spec.md` |
 | Deployment, DNS, SMTP, backups | `docs/deploy.md` |
 
 Change a rate in `pricing.ts` and the pricing page, every estimate, the booking wizard, the
@@ -65,8 +66,8 @@ confirmation emails, and the structured data all update.
 
 ### Facts that are still assumptions
 
-- The email is assumed to be `faith@venueatncc.org`, and the venue is assumed to be on the church campus.
-- Catering is not included; the copy says hosts choose their own caterer or bring food.
+- The email is assumed to be `faith@venueatncc.org`.
+- Catering is not included. The site says so only in the pricing page's rental terms and one FAQ entry.
 - "Request a visit" and "both spaces" are offered as requests that the team confirms.
 - Rates are **recommended** from a study of 59 Hampton Roads venues. Confirm them before launch.
 - Unanswered in `faq.ts`: tables and chairs, kitchen, decorating and setup times, accessibility,
@@ -75,21 +76,13 @@ confirmation emails, and the structured data all update.
 ## Photos
 
 Every image in `src/assets/venue/` is published, so keep reference-only images elsewhere.
-Use originals at least 1600px on the long edge. Describe each one in `src/data/photos.ts`:
+Use originals at least 1600px on the long edge, and describe each one in `photoDetails` in
+`src/data/photos.ts` (see `src/assets/venue/README.md`).
 
-```ts
-export const photoDetails = {
-  'fellowship-hall-reception-tables.jpg': {
-    alt: 'Round tables set for a reception in the indoor hall',
-    tags: ['hero', 'indoor', 'weddings'],
-    crop: 'center',
-  },
-};
-```
-
-Tags: `hero` (home page panel), `indoor` and `outdoor` (the two space cards), `space` (home photo row),
-`about`, or an event slug such as `weddings`. Photos are cropped to their frames and converted to
-AVIF and WebP at build time. Until photos exist, frames show an illustrated arched window.
+One rule, enforced in code (`docs/design/brand.md`, Photography): real photographs show the spaces,
+and staged photographs show events. Event tiles and event page heroes use `styled-event-<slug>.jpg`
+only when all eight staged files are present (`eventsStaged`); otherwise every event uses a real
+photo. Photos are cropped to their frames and converted to AVIF and WebP at build time.
 
 ## Before launch
 
