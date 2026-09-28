@@ -113,7 +113,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             id={fieldId('wantsVisit')}
             icon="map-pin"
             title="I'd like to see the space first"
-            hint="We can set up a time to show you around."
+            hint="Tell us which days and times work for you."
             checked={d.wantsVisit}
             onChange={(wantsVisit) => update({ wantsVisit })}
           />
