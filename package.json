@@ -14,9 +14,9 @@
     "build:demo": "cross-env PUBLIC_DEMO=true astro build --outDir dist-demo",
     "start": "node server-dist/index.mjs",
     "admin:create": "tsx server/cli/create-admin.ts",
-    "test": "tsx --test server/**/*.test.ts",
+    "test": "tsx --test server/**/*.test.ts src/**/*.test.ts",
     "check": "astro check",
-    "preview:demo": "astro preview --outDir dist-demo"
+    "preview:demo": "cross-env PUBLIC_DEMO=true astro preview --outDir dist-demo"
   },
   "dependencies": {
     "@astrojs/preact": "^6.0.5",
