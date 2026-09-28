@@ -1,82 +1,144 @@
 ---
+/**
+ * About: the venue as a business operated by New Community Church. The building at dusk, the church's
+ * gable and seal, the church facts from site.parent, and how booking works, in plain terms.
+ */
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import ArchFrame from '../components/ArchFrame.astro';
-import FactStrip from '../components/FactStrip.astro';
-import EventIndex from '../components/EventIndex.astro';
+import Photo from '../components/Photo.astro';
+import Icon from '../components/Icon.astro';
 import LocationBand from '../components/LocationBand.astro';
 import CtaBand from '../components/CtaBand.astro';
-import Icon from '../components/Icon.astro';
+import nccSeal from '../assets/brand/ncc-mark.png';
 import { site } from '../data/site';
-import { photos, heroPhoto, photosTagged } from '../data/photos';
+import { photoByName, heroPhoto } from '../data/photos';
+import { pricingHref } from '../data/nav';
 import { breadcrumbs } from '../lib/schema';
+import { href } from '../lib/paths';
 
-const title = 'About The Venue at NCC | New Community Church, Suffolk';
-const description = `The Venue at NCC is the event space of New Community Church, part of Suffolk, VA since ${site.parent.foundingYear}. Anyone can book it for weddings, parties, and gatherings.`;
+const hall = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
+const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[1];
+
+const title = 'About The Venue at NCC | Suffolk, VA';
+const description = `The Venue at NCC is an event venue in Suffolk, VA, operated by ${site.parent.name}. ${hall.name} and ${grove.name} are open to the public for private events.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about/' },
 ];
-const hero = heroPhoto();
-const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero;
+
+const exterior = photoByName('exterior-dusk') ?? heroPhoto();
+// The gable in its 4:5 portrait version, which keeps both arched windows beside the cross.
+const gable = photoByName('gable');
+const gablePortrait = gable?.tall ? { ...gable, src: gable.tall, tall: undefined } : gable;
+const churchSite = site.parent.url.replace(/^https?:\/\//, '');
+
+const principles = [
+  {
+    title: 'Who can book',
+    body: `The venue is open to the public. You do not need to be a member of ${site.parent.name} to book.`,
+  },
+  {
+    title: 'What a rental includes',
+    body: 'The space you book and on-site parking, at one address in north Suffolk.',
+  },
+  {
+    title: 'Published rates',
+    body: 'Every rate is on our pricing page, and the booking form gives an instant estimate for your date.',
+    link: { label: 'See pricing', href: href(pricingHref) },
+  },
+  {
+    title: 'Confirmed personally',
+    body: `${site.contact.contactName} and our team review each request and confirm availability with you. A booking deposit then reserves your date.`,
+  },
+];
 ---
 <BaseLayout title={title} description={description} og="about" pageType="AboutPage" schema={[breadcrumbs(crumbs)]}>
-  <section class="page-hero">
+  <section class="ab-hero" aria-labelledby="about-title">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="about-grid">
-        <div class="about-copy">
-          <h1 class="t-large-title">A place for the moments people remember.</h1>
-          <p class="t-lead">
-            The Venue at NCC is the event space of {site.parent.name} in Suffolk, Virginia. Anyone can book it, for
-            celebrations, milestones, and gatherings of every kind.
-          </p>
-          <FactStrip />
-        </div>
-        <div class="about-media">
-          <ArchFrame photo={photo} variant={1} sizes="(min-width: 960px) 380px, 72vw" priority />
-        </div>
+      <div class="ab-hero__head">
+        <h1 id="about-title" class="t-large-title">A venue of {site.parent.name}.</h1>
+        <p class="t-lead ab-hero__lead">
+          An event venue in Suffolk, Virginia, with {hall.name} for up to {hall.capacity} guests and {grove.name} for up to
+          {' '}{grove.capacity}. We host weddings, receptions, showers, reunions, meetings, and memorials, and we confirm every
+          booking personally.
+        </p>
       </div>
+      {exterior && <Photo photo={exterior} priority ratio="2 / 1" caption class="ab-hero__photo" sizes="(min-width: 81.25rem) 1200px, 94vw" />}
     </div>
   </section>
 
-  <section class="section section--grouped">
-    <div class="container story">
-      <article class="card story__card">
-        <span class="icon-tile"><Icon name="church" /></span>
-        <h2 class="t-title-2">Part of New Community Church</h2>
-        <p>
-          {site.parent.name} has been part of the Suffolk community since {site.parent.foundingYear}. The church was founded by
-          {' '}{site.parent.pastor}, who serves as its pastor. The church describes its mission simply: to know Christ, love people
-          well, and walk in hope together.
+  <section class="section section--grouped" aria-labelledby="church-heading">
+    <div class="container ab-church">
+      <div class="ab-church__text">
+        <Image src={nccSeal} alt={`${site.parent.name} seal`} width={88} densities={[1, 2]} class="ab-seal" />
+        <div class="ab-church__head">
+          <h2 id="church-heading">{site.parent.name}</h2>
+          <p class="t-serif-lead">
+            The Venue at NCC is operated by {site.parent.name}, part of the Suffolk community since {site.parent.foundingYear}.
+          </p>
+        </div>
+        <dl class="ab-spec">
+          <div>
+            <dt>Founded</dt>
+            <dd>{site.parent.foundingYear}</dd>
+          </div>
+          <div>
+            <dt>{site.parent.pastorTitle}</dt>
+            <dd>{site.parent.pastor}</dd>
+          </div>
+          <div>
+            <dt>Website</dt>
+            <dd>
+              <a href={site.parent.url} rel="noopener" target="_blank">
+                {churchSite}<span class="visually-hidden">, opens in a new tab</span>
+              </a>
+            </dd>
+          </div>
+        </dl>
+        <p class="secondary">
+          The church opens {hall.name} and {grove.name} on its campus to families, businesses, nonprofits, and congregations
+          for their events.
         </p>
-        <a class="link-more" href={site.parent.url} rel="noopener">Visit wearencc.org <Icon name="arrow-up-right" /></a>
-      </article>
-      <article class="card story__card">
-        <span class="icon-tile"><Icon name="users" /></span>
-        <h2 class="t-title-2">Open to everyone</h2>
-        <p>
-          You do not need to be a member to book. Families, friends, businesses, nonprofits, and churches are all welcome to
-          host their events here.
-        </p>
-      </article>
-      <article class="card story__card">
-        <span class="icon-tile"><Icon name="calendar-check" /></span>
-        <h2 class="t-title-2">Simple to book</h2>
-        <p>
-          Check the live calendar, see your estimate, and send your request. {site.contact.contactName} and the team confirm
-          availability personally, then your booking deposit reserves the date.
-        </p>
-      </article>
+      </div>
+      {
+        gablePortrait && (
+          <Photo
+            photo={gablePortrait}
+            ratio={gable?.tall ? '4 / 5' : '3 / 2'}
+            class="ab-church__photo"
+            sizes="(min-width: 60rem) 460px, (min-width: 36rem) 28rem, 94vw"
+          />
+        )
+      }
     </div>
   </section>
 
-  <section class="section" aria-labelledby="about-events">
+  <section class="section" aria-labelledby="work-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="about-events">Events we host</h2>
+        <h2 id="work-heading">How we work</h2>
+        <p class="t-lead">What to expect when you book with us.</p>
       </div>
-      <EventIndex layout="shelf" />
+      <ul class="ab-principles">
+        {
+          principles.map((p) => (
+            <li class="ab-principle">
+              <h3 class="t-headline">{p.title}</h3>
+              <p class="secondary">{p.body}</p>
+              {p.link && (
+                <a class="link-more" href={p.link.href}>
+                  {p.link.label} <Icon name="chevron-right" />
+                </a>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+      <p class="ab-more">
+        <a class="link-more" href={href('/events/')}>See the events we host <Icon name="chevron-right" /></a>
+      </p>
     </div>
   </section>
 
@@ -85,58 +147,149 @@ const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero
 </BaseLayout>
 
 <style>
-  .page-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  .ab-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
   }
 
-  .about-grid {
-    display: grid;
-    gap: clamp(2rem, 1.5rem + 3vw, 4rem);
-    align-items: center;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
-  }
-
-  @media (min-width: 960px) {
-    .about-grid {
-      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    }
-  }
-
-  .about-copy {
-    display: grid;
-    gap: 1.25rem;
-  }
-
-  .about-media {
-    width: min(100%, 380px);
-    justify-self: center;
-  }
-
-  @media (max-width: 959.98px) {
-    .about-media {
-      width: min(72%, 340px);
-    }
-  }
-
-  .story {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  }
-
-  .story__card {
+  .ab-hero__head {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    gap: 0.75rem;
-    padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+    gap: 1.25rem 3rem;
+    margin-block: clamp(1.5rem, 1rem + 2vw, 3rem) clamp(2rem, 1.5rem + 2vw, 3rem);
   }
 
-  .story__card .icon-tile {
-    margin-bottom: 0.25rem;
+  @media (min-width: 60rem) {
+    .ab-hero__head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: end;
+    }
   }
 
-  .story__card p {
+  .ab-hero h1 {
+    max-width: 16ch;
+  }
+
+  .ab-hero__lead {
+    max-width: 36rem;
+  }
+
+  @media (width < 48rem) {
+    .ab-hero :global(.ab-hero__photo .photo__frame) {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  /* The church: the gable beside its seal and facts. */
+  .ab-church {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem clamp(2.5rem, 6vw, 6rem);
+    align-items: center;
+  }
+
+  .ab-church :global(.ab-church__photo) {
+    width: 100%;
+    max-width: 28rem;
+  }
+
+  /* The gable sits left of the text on wide screens. It holds no links, so focus order is unchanged. */
+  @media (min-width: 60rem) {
+    .ab-church {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+
+    .ab-church :global(.ab-church__photo) {
+      order: -1;
+    }
+  }
+
+  .ab-church__text {
+    display: grid;
+    gap: 1.75rem;
+    justify-items: start;
+    max-width: 36rem;
+  }
+
+  .ab-church__head {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .ab-seal {
+    width: 88px;
+    height: auto;
+  }
+
+  .ab-spec {
+    width: 100%;
+    margin: 0;
+    border-top: 1px solid var(--separator);
+  }
+
+  .ab-spec > div {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 0.25rem 1rem;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  @media (width < 30rem) {
+    .ab-spec > div {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .ab-spec dt {
     color: var(--label-2);
+    font-size: var(--t-subhead);
+    line-height: 1.5;
+    padding-top: 0.08em;
+  }
+
+  .ab-spec dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ab-spec a {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  /* How we work: four plain facts under hairlines. Not a sequence, so no numbers. */
+  .ab-principles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem clamp(1.5rem, 3vw, 2.5rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 40rem) {
+    .ab-principles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 70rem) {
+    .ab-principles {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .ab-principle {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    justify-items: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator-strong);
+  }
+
+  .ab-more {
+    margin-top: 2.5rem;
   }
 </style>

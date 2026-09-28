@@ -1,37 +1,138 @@
 ---
+/**
+ * The Space: The Hall, The Grove, and the campus, each as a short spec sheet beside a small gallery of real photos.
+ *
+ * Only facts the photos show (docs/design/brand.md). Styled concepts are an opt-in view behind an
+ * "As Photographed" and "Styled Concept" control, rendered only for a space that has one. The control is
+ * two native radio buttons, so it works with the keyboard and without JavaScript; CSS :has() swaps each
+ * photo for its styled version. Browsers without :has() keep the real photos and never see the control.
+ */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import ArchFrame from '../components/ArchFrame.astro';
+import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
-import LocationBand from '../components/LocationBand.astro';
 import CtaBand from '../components/CtaBand.astro';
-import CapacityPlanner from '../components/booking/CapacityPlanner';
-import { site } from '../data/site';
-import { photos, hasPhotos, photosTagged } from '../data/photos';
-import { bookHref } from '../data/nav';
+import { site, fullAddress } from '../data/site';
+import { photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { bookHref, pricingHref } from '../data/nav';
+import { pricing, formatUSD } from '../shared/pricing';
 import { breadcrumbs, abs } from '../lib/schema';
 import { href, withoutBase } from '../lib/paths';
 
-const title = 'Indoor hall and outdoor space, Suffolk | The Venue at NCC';
-const description = `An indoor hall for up to ${site.spaces[0].capacity} guests and an outdoor space for up to ${site.spaces[1].capacity} at The Venue at NCC in Suffolk, VA. Parking included. Anyone can book.`;
+const hall = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
+const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[1];
+
+const title = 'The Hall and The Grove in Suffolk, VA | The Venue at NCC';
+const description = `The Hall for up to ${hall.capacity} guests and The Grove for up to ${grove.capacity} at The Venue at NCC in Suffolk, VA. See both spaces, the campus, and on-site parking.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'The Space', path: '/the-space/' },
 ];
-const indoor = site.spaces.find((s) => s.id === 'indoor');
-const outdoor = site.spaces.find((s) => s.id === 'outdoor');
-const indoorPhoto = photosTagged('indoor')[0] ?? null;
-const outdoorPhoto = photosTagged('outdoor')[0] ?? null;
 
-const fullImages = await Promise.all(photos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })));
+const heroPhoto = photoByName('hall-windows') ?? photosFor('hall')[0] ?? null;
+
+/** A space's real photos in data order, with the hero photo moved out of the lead position. */
+function galleryFor(space: 'hall' | 'grove'): VenuePhoto[] {
+  const list = photosFor(space);
+  const [first, ...rest] = list;
+  return first && first === heroPhoto && rest.length > 0 ? [...rest, first] : list;
+}
+
+/** The lowest hourly rate for a space, from the rate card. */
+const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
+
+interface Row {
+  label: string;
+  value: string;
+  link?: string;
+}
+
+interface Action {
+  label: string;
+  href: string;
+  kind: 'filled' | 'tinted' | 'more';
+  external?: boolean;
+}
+
+interface Section {
+  id: string;
+  heading: string;
+  lead: string;
+  rows: Row[];
+  actions: Action[];
+  photos: VenuePhoto[];
+  /** Gallery first on wide screens, for rhythm down the page. */
+  flip: boolean;
+  grouped: boolean;
+}
+
+const sections: Section[] = [
+  {
+    id: 'hall',
+    heading: hall.name,
+    lead: 'Our indoor space: a bright, open room for receptions, dinners, showers, and meetings.',
+    rows: [
+      { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
+      { label: 'In the room', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
+      { label: 'Rates', value: `From ${fromRate('indoor')} an hour` },
+    ],
+    actions: [
+      { label: `Check ${hall.short} Dates`, href: `${href(bookHref)}?space=indoor`, kind: 'filled' },
+      { label: 'See all rates', href: href(pricingHref), kind: 'more' },
+    ],
+    photos: galleryFor('hall'),
+    flip: false,
+    grouped: true,
+  },
+  {
+    id: 'grove',
+    heading: grove.name,
+    lead: 'Our outdoor space: a wooded setting among tall pines for ceremonies, reunions, and gatherings in the open air.',
+    rows: [
+      { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
+      { label: 'On the grounds', value: 'A timber gazebo with a metal roof, picnic tables on a paved patio, open lawn, and paved paths' },
+      { label: 'Rates', value: `From ${fromRate('outdoor')} an hour` },
+    ],
+    actions: [
+      { label: `Check ${grove.short} Dates`, href: `${href(bookHref)}?space=outdoor`, kind: 'filled' },
+      { label: 'See all rates', href: href(pricingHref), kind: 'more' },
+    ],
+    photos: galleryFor('grove'),
+    flip: true,
+    grouped: false,
+  },
+  {
+    id: 'campus',
+    heading: 'The campus',
+    lead: 'A long paved drive leads past open lawn to the building and a large paved lot, a few minutes from downtown Suffolk.',
+    rows: [
+      { label: 'Parking', value: 'On site, included with every booking' },
+      { label: 'Address', value: fullAddress },
+      { label: 'Operated by', value: site.parent.name, link: href('/about/') },
+    ],
+    actions: [{ label: 'Get Directions', href: site.address.directionsUrl, kind: 'tinted', external: true }],
+    photos: ['approach-dusk', 'driveway', 'gable'].map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null),
+    flip: false,
+    grouped: true,
+  },
+];
+
+const LEAD_SIZES = '(min-width: 81.25rem) 680px, (min-width: 60rem) 56vw, 94vw';
+const SMALL_SIZES = '(min-width: 81.25rem) 335px, (min-width: 60rem) 28vw, (min-width: 36rem) 46vw, 94vw';
+
+// Structured data lists the real photos on this page, never the styled concepts.
+const pagePhotos = [...new Set([heroPhoto, ...sections.flatMap((s) => s.photos)].filter((p): p is VenuePhoto => p !== null))];
+const fullImages = await Promise.all(
+  pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
+);
 const gallerySchema =
-  photos.length > 0
+  pagePhotos.length > 0
     ? [
         {
           '@type': 'ImageGallery',
           name: `${site.name} photos`,
-          image: photos.map((p, i) => ({
+          image: pagePhotos.map((p, i) => ({
             '@type': 'ImageObject',
             name: p.caption ?? p.alt,
             description: p.alt,
@@ -42,305 +143,460 @@ const gallerySchema =
     : [];
 ---
 <BaseLayout title={title} description={description} og="the-space" venueDetails schema={[breadcrumbs(crumbs), ...gallerySchema]}>
-  <section class="page-hero">
+  <section class="sp-hero" aria-labelledby="space-title">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__copy">
-        <h1 class="hero-h1">
-          <span class="kicker">The space<span class="visually-hidden">:</span></span>
-          <span class="t-large-title">A hall for {indoor?.capacity}. The open air for {outdoor?.capacity}.</span>
-        </h1>
-        <p class="t-lead">Book the indoor hall, the outdoor space, or ask for both. Parking is included, and anyone can book.</p>
-        <div class="btn-row">
-          <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+      <div class="sp-hero__head">
+        <h1 id="space-title" class="t-large-title">Two spaces, indoors and out.</h1>
+        <div class="sp-hero__side">
+          <p class="t-lead">
+            {hall.name} welcomes up to {hall.capacity} guests indoors, and {grove.name} up to {grove.capacity} among tall pines. Both
+            are at one address in Suffolk, with parking on site.
+          </p>
+          <div class="btn-row btn-row--stack sp-hero__actions">
+            <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+            <a class="btn btn--tinted btn--lg" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-label="The two spaces">
-    <div class="container spaces">
-      <article class="space card">
-        <ArchFrame photo={indoorPhoto} variant={1} ratio="4 / 5" sizes="(min-width: 900px) 360px, 80vw" class="space__media" />
-        <div class="space__body">
-          <span class="icon-tile"><Icon name="building" /></span>
-          <h2 class="t-title-1">{indoor?.name}</h2>
-          <p class="space__cap num">Up to {indoor?.capacity} guests</p>
-          <p class="secondary">{indoor?.description} A fit for receptions, showers, banquets, repasts, and meetings.</p>
-          <a class="btn btn--tinted" href={`${href(bookHref)}?space=indoor`}>Check Indoor Dates</a>
-        </div>
-      </article>
-      <article class="space card">
-        <ArchFrame photo={outdoorPhoto} variant={2} ratio="4 / 5" sizes="(min-width: 900px) 360px, 80vw" class="space__media" />
-        <div class="space__body">
-          <span class="icon-tile"><Icon name="tree" /></span>
-          <h2 class="t-title-1">{outdoor?.name}</h2>
-          <p class="space__cap num">Up to {outdoor?.capacity} guests</p>
-          <p class="secondary">{outdoor?.description} A fit for ceremonies, receptions, reunions, and graduation parties.</p>
-          <a class="btn btn--tinted" href={`${href(bookHref)}?space=outdoor`}>Check Outdoor Dates</a>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="planner-heading">
-    <div class="container planner">
-      <div class="section-head">
-        <h2 id="planner-heading">Will your guest list fit?</h2>
-        <p class="t-lead">Enter your guest count to see which space works best.</p>
-      </div>
-      <div class="planner__card">
-        <CapacityPlanner client:visible bookHref={href(bookHref)} />
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-labelledby="included-heading">
-    <div class="container">
-      <div class="section-head section-head--center">
-        <h2 id="included-heading">What comes with your booking</h2>
-        <p class="t-lead">The space and parking are included, and anyone can book. You bring the celebration.</p>
-      </div>
-      <div class="incl">
-        <div>
-          <h3 class="incl__title">Included</h3>
-          <ul class="list-group">
-            {
-              site.included.map((item) => (
-                <li class="list-row">
-                  <Icon name="check-circle" class="incl__yes" />
-                  <span>{item}</span>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-        <div>
-          <h3 class="incl__title">Your choice</h3>
-          <ul class="list-group">
-            <li class="list-row">
-              <Icon name="utensils" class="incl__you" />
-              <span>Your caterer, or food you bring yourself</span>
-            </li>
-            <li class="list-row">
-              <Icon name="wine" class="incl__you" />
-              <span>Alcohol is welcome</span>
-            </li>
-          </ul>
-        </div>
-        {
-          site.notIncluded.length > 0 && (
-            <div>
-              <h3 class="incl__title">Not included</h3>
-              <ul class="list-group">
-                {site.notIncluded.map((item) => (
-                  <li class="list-row">
-                    <Icon name="info" class="incl__no" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        }
-      </div>
-      <p class="incl__note secondary t-subhead">
-        Questions about tables, chairs, kitchen use, or decorating? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a> and we will walk you through it.
-      </p>
+      {heroPhoto && <Photo photo={heroPhoto} priority ratio="2 / 1" caption class="sp-hero__photo" sizes="(min-width: 81.25rem) 1200px, 94vw" />}
     </div>
   </section>
 
   {
-    hasPhotos ? (
-      <section class="section" aria-labelledby="gallery-heading">
-        <div class="container">
-          <div class="section-head">
-            <h2 id="gallery-heading">Photos</h2>
-            <p class="t-lead">Select a photo to see it full size.</p>
-          </div>
-          <ul class="gallery">
-            {photos.map((p, i) => (
-              <li>
-                <a class="gallery__link" href={fullImages[i].src} target="_blank" rel="noopener">
-                  <ArchFrame photo={p} shape="panel" ratio="4 / 3" sizes="(min-width: 1224px) 390px, (min-width: 640px) 45vw, 92vw" />
-                  <span class="visually-hidden"> (opens the full photo in a new tab)</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    ) : (
-      <section class="section section--tight" aria-labelledby="visit-heading">
-        <div class="container">
-          <div class="card visit">
-            <span class="icon-tile"><Icon name="map-pin" /></span>
-            <div class="visit__copy">
-              <h2 id="visit-heading" class="t-title-2">See it in person</h2>
-              <p class="secondary">
-                Photos of the venue are on the way. Call us to set up a visit, or ask for one when you send your request.
-              </p>
+    sections.map((s) => {
+      const hasStyled = s.photos.some((p) => p.styled.length > 0);
+      return (
+        <section id={s.id} class:list={['section', { 'section--grouped': s.grouped }]} aria-labelledby={`${s.id}-heading`}>
+          <div class:list={['container', 'sp-space', { 'sp-space--flip': s.flip }]}>
+            <div class="sp-space__head">
+              <h2 id={`${s.id}-heading`} class="t-large-title">{s.heading}</h2>
+              <p class="t-serif-lead">{s.lead}</p>
             </div>
-            <div class="btn-row visit__actions">
-              <a class="btn btn--filled" href={`tel:${site.contact.phoneE164}`}>
-                <Icon name="phone" /> Call {site.contact.phone}
-              </a>
-              <a class="btn btn--tinted" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
+
+            {s.photos.length > 0 && (
+              <div class="sp-view">
+                {hasStyled && (
+                  <fieldset class="sp-toggle">
+                    <legend class="visually-hidden">Photos of {s.heading}</legend>
+                    <label class="sp-toggle__item">
+                      <input class="visually-hidden" type="radio" name={`${s.id}-view`} value="photo" checked />
+                      As Photographed
+                    </label>
+                    <label class="sp-toggle__item">
+                      <input class="visually-hidden" type="radio" name={`${s.id}-view`} value="styled" />
+                      Styled Concept
+                    </label>
+                  </fieldset>
+                )}
+                <ul class="sp-gallery">
+                  {s.photos.map((p, i) => {
+                    const styled = p.styled[0];
+                    const sizes = i === 0 ? LEAD_SIZES : SMALL_SIZES;
+                    return (
+                      <li class:list={['sp-gallery__item', { 'sp-gallery__lead': i === 0 }]}>
+                        <Photo photo={p} caption sizes={sizes} class={styled ? 'sp-shot--paired' : undefined} />
+                        {styled && <Photo photo={styled} sizes={sizes} class="sp-shot--styled" />}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            <div class="sp-space__details">
+              <dl class="sp-spec">
+                {s.rows.map((r) => (
+                  <div>
+                    <dt>{r.label}</dt>
+                    <dd>{r.link ? <a href={r.link}>{r.value}</a> : r.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div class="btn-row sp-space__actions">
+                {s.actions.map((a) =>
+                  a.kind === 'more' ? (
+                    <a class="link-more" href={a.href}>
+                      {a.label} <Icon name="chevron-right" />
+                    </a>
+                  ) : a.external ? (
+                    <a class:list={['btn', `btn--${a.kind}`]} href={a.href} target="_blank" rel="noopener">
+                      <Icon name="arrow-up-right" />
+                      {a.label}
+                      <span class="visually-hidden">, opens in a new tab</span>
+                    </a>
+                  ) : (
+                    <a class:list={['btn', `btn--${a.kind}`]} href={a.href}>
+                      {a.label}
+                    </a>
+                  ),
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    )
+        </section>
+      );
+    })
   }
 
-  <LocationBand heading="Where the venue is" />
+  <section class="section" aria-labelledby="included-heading">
+    <div class="container sp-incl">
+      <div class="sp-incl__main">
+        <h2 id="included-heading">What the rental includes</h2>
+        <p class="t-lead">Book {hall.name}, {grove.name}, or both. Every rental includes:</p>
+        <ul class="list-group list-group--on-white sp-incl__list">
+          {
+            site.included.map((item) => (
+              <li class="list-row">
+                <Icon name="check-circle" class="sp-incl__icon" />
+                <span>{item}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="secondary t-subhead">
+          Rates, deposits, and rental terms are on the <a href={href(pricingHref)}>pricing page</a>.
+        </p>
+      </div>
+      <div class="sp-visit">
+        <h2 id="visit-heading" class="t-title-1">Visit before you book</h2>
+        <p class="secondary">
+          See {hall.name} and {grove.name} in person. Send a visit request and we will arrange a time with you.
+        </p>
+        <div class="btn-row btn-row--stack sp-visit__actions">
+          <a class="btn btn--filled" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
+          <a class="btn btn--tinted" href={`tel:${site.contact.phoneE164}`}>
+            <Icon name="phone" />
+            Call {site.contact.phone}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <CtaBand />
 </BaseLayout>
 
 <style>
-  .page-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  /* Hero: the title beside a short lead, then The Hall in a wide rectangle. */
+  .sp-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
   }
 
-  .page-hero__copy {
+  .sp-hero__head {
     display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-    max-width: 52rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem 3rem;
+    margin-block: clamp(1.5rem, 1rem + 2vw, 3rem) clamp(2rem, 1.5rem + 2vw, 3rem);
   }
 
-  .hero-h1 {
-    display: grid;
-    gap: 0.6rem;
-  }
-
-  .kicker {
-    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
-    font-weight: 600;
-    color: var(--accent-text);
-    letter-spacing: -0.01em;
-  }
-
-  .spaces {
-    display: grid;
-    gap: 1.25rem;
-  }
-
-  @media (min-width: 900px) {
-    .spaces {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (min-width: 60rem) {
+    .sp-hero__head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: end;
     }
   }
 
-  .space {
+  .sp-hero h1 {
+    max-width: 14ch;
+  }
+
+  .sp-hero__side {
     display: grid;
     gap: 1.5rem;
-    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    justify-items: start;
+    max-width: 36rem;
+  }
+
+  /* Full width, so the stacked buttons on phones span the column. */
+  .sp-hero__actions {
+    justify-self: stretch;
+  }
+
+  /* Wide on large screens; a calmer 4:3 on phones, where 2:1 is only a sliver. */
+  @media (width < 48rem) {
+    .sp-hero :global(.sp-hero__photo .photo__frame) {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  /*
+    Each space: its heading, its photos, then the spec sheet. On wide screens the heading and the spec
+    sheet share one column beside the gallery. Source order matches the phone layout, so focus order does too.
+  */
+  .sp-space {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .sp-space {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'head view'
+        'details view';
+      gap: 2rem clamp(2.5rem, 5vw, 5rem);
+    }
+
+    .sp-space--flip {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      grid-template-areas:
+        'view head'
+        'view details';
+    }
+
+    .sp-space__head {
+      grid-area: head;
+    }
+
+    .sp-view {
+      grid-area: view;
+    }
+
+    .sp-space__details {
+      grid-area: details;
+    }
+  }
+
+  .sp-space__details {
+    display: grid;
+    gap: 1.75rem;
     align-content: start;
-  }
-
-  .space :global(.space__media) {
-    width: min(100%, 320px);
-    justify-self: center;
-  }
-
-  .space__body {
-    display: grid;
-    gap: 0.6rem;
     justify-items: start;
   }
 
-  .space__cap {
-    font-size: var(--t-title-3);
-    font-weight: 600;
-    color: var(--accent-text);
-  }
-
-  .space__body .btn {
-    margin-top: 0.5rem;
-  }
-
-  /* The planner (.bk-cp) is its own card; no second card around it. */
-  .planner__card {
-    min-width: 0;
-  }
-
-  .incl {
+  .sp-space__head {
     display: grid;
-    gap: 1.5rem;
-    max-width: 1040px;
-    margin-inline: auto;
+    gap: 1rem;
+    max-width: 34rem;
   }
 
-  @media (min-width: 760px) {
-    .incl {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+  .sp-spec {
+    width: 100%;
+    max-width: 34rem;
+    margin: 0;
+    border-top: 1px solid var(--separator);
+  }
+
+  .sp-spec > div {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: 0.25rem 1rem;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  /* Narrow screens and large text: the label sits above its value. */
+  @media (width < 30rem) {
+    .sp-spec > div {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
-  .incl__title {
+  .sp-spec dt {
+    color: var(--label-2);
     font-size: var(--t-subhead);
-    color: var(--label-2);
-    margin: 0 0 0.6rem 1.1rem;
+    line-height: 1.5;
+    padding-top: 0.08em;
   }
 
-  .incl :global(.incl__yes) {
-    color: var(--green);
+  .sp-spec dd {
+    margin: 0;
+    color: var(--label);
   }
 
-  .incl :global(.incl__you) {
-    color: var(--accent-text);
-  }
-
-  .incl :global(.incl__no) {
-    color: var(--label-2);
-  }
-
-  .incl__note {
-    margin-top: 1.5rem;
-    text-align: center;
-  }
-
-  /* An inline link needs more than color to stand out from the text around it. */
-  .incl__note a {
+  /* A link beside plain values needs more than color to stand out (WCAG 1.4.1). */
+  .sp-spec a {
     text-decoration: underline;
+    text-decoration-thickness: 1px;
     text-underline-offset: 0.18em;
   }
 
-  .visit {
+  .sp-space__actions {
+    gap: 0.75rem 1.5rem;
+  }
+
+  .sp-view {
     display: grid;
-    gap: 1rem 1.5rem;
-    align-items: center;
-    padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+    gap: 1.25rem;
+    justify-items: start;
   }
 
-  @media (min-width: 900px) {
-    .visit {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-    }
-  }
-
-  .visit__copy {
+  .sp-gallery {
     display: grid;
-    gap: 0.35rem;
-  }
-
-  .visit__actions {
-    gap: 0.75rem;
-  }
-
-  .gallery {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 1.5rem 1rem;
+    width: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .gallery__link {
-    display: block;
+  @media (min-width: 36rem) {
+    .sp-gallery {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sp-gallery__lead {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .sp-gallery__item {
+    min-width: 0;
+  }
+
+  /* Small tiles keep their captions short enough to sit under a half-width photo. */
+  .sp-gallery__item:not(.sp-gallery__lead) :global(.photo__caption) {
+    font-size: 0.9375rem;
+  }
+
+  /* What the rental includes, beside the visit request. */
+  .sp-incl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem clamp(2.5rem, 5vw, 5rem);
+  }
+
+  @media (min-width: 60rem) {
+    .sp-incl {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  .sp-incl__main {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+    max-width: 36rem;
+  }
+
+  .sp-incl__list {
+    margin-top: 0.25rem;
+  }
+
+  .sp-incl :global(.sp-incl__icon) {
+    color: var(--accent-text);
+  }
+
+  .sp-visit {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    justify-items: start;
+    /* In px at the low end, so very large text keeps room for the words inside the card. */
+    padding: max(24px, min(5vw, 2.75rem));
     border-radius: var(--r-xl);
+    background: var(--lilac-mist);
+  }
+
+  .sp-visit__actions {
+    justify-self: stretch;
+    margin-top: 0.5rem;
+  }
+
+  @media (forced-colors: active) {
+    .sp-visit {
+      border: 1px solid CanvasText;
+    }
+  }
+</style>
+
+<style is:global>
+  /*
+    "As Photographed" and "Styled Concept": a segmented control made of two native radio buttons.
+    Global because the photos it swaps are rendered by Photo.astro, and :has() reaches across that boundary.
+  */
+  .sp-toggle {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 2px;
+    min-inline-size: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 3px;
+    border: 0;
+    border-radius: var(--r-full);
+    background: var(--fill);
+  }
+
+  .sp-toggle__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.25rem 1.1rem;
+    border-radius: var(--r-full);
+    color: var(--label);
+    font-size: var(--t-subhead);
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-2) var(--ease-spring),
+      box-shadow var(--dur-2) var(--ease-spring);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The selected thumb carries a 2px accent ring, as in the site's other segmented controls (WCAG 1.4.11). */
+  .sp-toggle__item:has(input:checked) {
+    background: var(--bg-elevated);
+    box-shadow:
+      inset 0 0 0 2px var(--accent-text),
+      0 3px 8px rgba(0, 0, 0, 0.12),
+      0 3px 1px rgba(0, 0, 0, 0.04);
+    font-weight: 600;
+  }
+
+  /*
+    Very large text on a phone (150% and up): the two labels no longer fit side by side, so the segments
+    stack instead of breaking words. 20rem is 320px at the default text size, so it never triggers there.
+  */
+  @media (width < 20rem) {
+    .sp-toggle {
+      grid-auto-flow: row;
+      border-radius: var(--r-lg);
+    }
+
+    .sp-toggle__item {
+      border-radius: calc(var(--r-lg) - 3px);
+    }
+  }
+
+  .sp-toggle__item:has(input:focus-visible) {
+    outline: 3px solid var(--accent-text);
+    outline-offset: 2px;
+  }
+
+  @media (forced-colors: active) {
+    .sp-toggle__item:has(input:checked) {
+      outline: 3px solid Highlight;
+      outline-offset: -3px;
+    }
+  }
+
+  .sp-view .sp-shot--styled {
+    display: none;
+  }
+
+  .sp-view:has(.sp-toggle input[value='styled']:checked) .sp-shot--styled {
+    display: block;
+  }
+
+  .sp-view:has(.sp-toggle input[value='styled']:checked) .sp-shot--paired {
+    display: none;
+  }
+
+  /* Without :has() the control could not switch anything, so it is not shown. */
+  @supports not selector(:has(*)) {
+    .sp-toggle {
+      display: none;
+    }
   }
 </style>
