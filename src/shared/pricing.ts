@@ -174,8 +174,12 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
   }
 
   total = Math.max(0, money(total));
-  const bookingDeposit =
-    model.bookingDeposit.type === 'percent'
+  const daysUntilEvent = daysBetween(today, input.date);
+  // Inside the balance window there is no separate balance: the full amount reserves the date.
+  const payInFull = model.bookingDeposit.balanceDueDaysBefore > 0 && daysUntilEvent <= model.bookingDeposit.balanceDueDaysBefore;
+  const bookingDeposit = payInFull
+    ? total
+    : model.bookingDeposit.type === 'percent'
       ? money((total * model.bookingDeposit.value) / 100)
       : Math.min(total, model.bookingDeposit.value);
 
@@ -184,12 +188,11 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
   if (applicable.length > 1) notes.push('Discounts do not combine, so your estimate uses the best one.');
   notes.push('Catering is not included. Bring the caterer of your choice.');
   notes.push('On-site parking is included.');
-  const daysOut = daysBetween(today, input.date);
   if (model.bookingDeposit.balanceDueDaysBefore > 0) {
     notes.push(
-      daysOut > model.bookingDeposit.balanceDueDaysBefore
-        ? `The balance is due ${model.bookingDeposit.balanceDueDaysBefore} days before your event.`
-        : 'Your event is soon, so the full amount is due when you reserve.',
+      payInFull
+        ? `Your event is within ${model.bookingDeposit.balanceDueDaysBefore} days, so the full amount is due when you reserve.`
+        : `The balance of ${formatUSD(total - bookingDeposit)} is due ${model.bookingDeposit.balanceDueDaysBefore} days before your event.`,
     );
   }
   notes.push('This is an estimate. We confirm your final quote.');

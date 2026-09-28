@@ -153,13 +153,10 @@ const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
     }
   }
 
-  @media (max-width: 380px) {
-    .nav__name {
-      font-size: 0.95rem;
-    }
-
+  /* On phones the floating tab bar's Book tab is the primary action, so the header stays uncluttered. */
+  @media (max-width: 479.98px) {
     .nav__cta {
-      padding-inline: 0.8rem;
+      display: none;
     }
   }
 </style>
