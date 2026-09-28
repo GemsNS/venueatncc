@@ -9,22 +9,31 @@ import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
 import { CAPACITY } from '../../shared/capacity';
 import type { DateKey } from '../../shared/types';
-import { SINGLE_SPACES, bookUrl, parseDate, spaceLabel } from './lib';
+import { SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
-import { useAvailability } from './useAvailability';
+import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
 type Single = 'indoor' | 'outdoor';
 
 const WINDOW_DAYS = 120;
 
+/** Typing a date fires an input event per keystroke; speak the result once it settles. */
+const SPEAK_AFTER_MS = 500;
+
+const TOO_EARLY_MESSAGE = 'Choose a date from today on.';
+
 export default function DateChecker(props: { bookHref?: string }) {
   const [today, setToday] = useState<DateKey>('');
   const [date, setDate] = useState<DateKey | ''>('');
   const [raw, setRaw] = useState('');
+  const [touched, setTouched] = useState(false);
   const [space, setSpace] = useState<Single | ''>('');
   const { days, loading, error, load, retry } = useAvailability();
   const [windowReady, setWindowReady] = useState(false);
+  const [spoken, setSpoken] = useState('');
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const latest = today ? latestBookableDate(today) : '';
 
   useEffect(() => {
     const t = todayKey();
@@ -37,18 +46,28 @@ export default function DateChecker(props: { bookHref?: string }) {
     if (date && today && !days[date] && date > addDays(today, WINDOW_DAYS)) void load(date, date);
   }, [date, today]);
 
+  // Coming back to the tab: dates may have been booked meanwhile.
+  useRefreshOnReturn(() => {
+    if (!today) return;
+    void load(today, addDays(today, WINDOW_DAYS));
+    if (date && date > addDays(today, WINDOW_DAYS)) void load(date, date);
+  });
+
   const day = date ? days[date] : undefined;
   const isFree = (s: Single) => (day ? day.spaces[s] === 'free' && day.status !== 'past' : true);
 
   // The person's pick when it is free on this date; otherwise the first free space once the date is known.
   const chosen: Single | '' = space && isFree(space) ? space : day ? (SINGLE_SPACES.find((s) => isFree(s)) ?? '') : '';
 
-  const tooEarly = Boolean(raw && today && parseDate(raw) && raw < today);
+  const typed = parseDate(raw);
+  // While the year is still being typed it passes through years like 0002; wait for a four-digit year or a blur.
+  const tooEarly = Boolean(typed && today && typed < today && (touched || Number(typed.slice(0, 4)) >= 1000));
+  const tooLate = Boolean(typed && latest && typed > latest);
 
   const onDate = (value: string) => {
     setRaw(value);
     const k = parseDate(value);
-    setDate(k && (!today || k >= today) ? k : '');
+    setDate(k && (!today || (k >= today && k <= latestBookableDate(today))) ? k : '');
   };
 
   const saturdays: DateKey[] = [];
@@ -84,6 +103,31 @@ export default function DateChecker(props: { bookHref?: string }) {
   const statusPending = Boolean(date && !day && loading);
   const statusError = Boolean(date && !day && !loading && error);
 
+  // What the day means, space by space (the radios carry the same, but this is what gets announced).
+  let dayNews = '';
+  if (date && day) {
+    const free = SINGLE_SPACES.filter((s) => isFree(s));
+    if (free.length === 2) dayNews = 'Both spaces are open.';
+    else if (free.length === 1) {
+      const other = SINGLE_SPACES.find((s) => s !== free[0]) ?? 'indoor';
+      dayNews = `${spaceLabel(free[0])} is open. ${spaceLabel(other)} is booked.`;
+    } else dayNews = 'Both spaces are booked. Try one of the open Saturdays below.';
+  }
+
+  const errorText = tooEarly ? TOO_EARLY_MESSAGE : tooLate ? TOO_LATE_MESSAGE : '';
+  const speech = errorText
+    ? errorText
+    : statusError
+      ? 'We could not check that date right now.'
+      : date && day
+        ? `${formatLong(date)}. ${dayNews}`
+        : '';
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSpoken(speech), SPEAK_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, [speech]);
+
   return (
     <div class="bk bk-dc">
       <div class="field">
@@ -97,18 +141,20 @@ export default function DateChecker(props: { bookHref?: string }) {
             class="input bk-dc__input"
             type="date"
             min={today || undefined}
+            max={latest || undefined}
             value={raw}
             aria-describedby="bk-dc-status"
-            aria-invalid={tooEarly ? 'true' : undefined}
+            aria-invalid={errorText ? 'true' : undefined}
             onInput={(e) => onDate(e.currentTarget.value)}
             onChange={(e) => onDate(e.currentTarget.value)}
+            onBlur={() => setTouched(true)}
           />
         </div>
       </div>
 
-      <div id="bk-dc-status" class="bk-dc__status" aria-live="polite">
-        {tooEarly ? (
-          <p class="field__error">Choose a date from today on.</p>
+      <div id="bk-dc-status" class="bk-dc__status">
+        {errorText ? (
+          <p class="field__error">{errorText}</p>
         ) : !date ? (
           <p class="bk-dc__hint">Pick a date to see which spaces are open.</p>
         ) : statusPending ? (
@@ -120,11 +166,15 @@ export default function DateChecker(props: { bookHref?: string }) {
           <p class="bk-dc__hint">We could not check that date right now.</p>
         ) : day ? (
           <p class="bk-dc__hint">
-            <strong>{formatLong(date)}</strong>
-            {bothTaken ? '. Both spaces are booked. Try one of the open Saturdays below.' : ''}
+            <span>
+              <strong>{formatLong(date)}</strong>. {dayNews}
+            </span>
           </p>
         ) : null}
       </div>
+      <p class="visually-hidden" aria-live="polite">
+        {spoken}
+      </p>
 
       {statusError && (
         <button type="button" class="btn btn--tinted btn--sm bk-dc__retry" onClick={retry}>

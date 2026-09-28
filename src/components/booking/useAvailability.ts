@@ -1,8 +1,9 @@
 /**
  * Public availability, fetched in windows and merged into one map by date.
- * The calendar asks for three months at a time and refetches as people navigate.
+ * The calendar asks for three months at a time and refetches as people navigate,
+ * and again when the tab comes back into view (dates may have been booked meanwhile).
  */
-import { useCallback, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import { toKey } from '../../shared/dates';
 import type { AvailabilityDay, DateKey } from '../../shared/types';
@@ -74,5 +75,31 @@ export function useAvailability() {
     if (last.current) void load(last.current.from, last.current.to);
   }, [load]);
 
-  return { days, loading, error, load, ensureMonths, retry };
+  /** Forget which months were loaded, so the next ensureMonths fetches them again. */
+  const invalidate = useCallback(() => {
+    requested.current.clear();
+  }, []);
+
+  return { days, loading, error, load, ensureMonths, retry, invalidate };
+}
+
+/**
+ * Call `refresh` when the tab becomes visible again. In the demo, where another tab (the demo
+ * admin) changes the same browser storage, also call it when that storage changes.
+ */
+export function useRefreshOnReturn(refresh: () => void) {
+  const latest = useRef(refresh);
+  latest.current = refresh;
+  useEffect(() => {
+    const run = () => latest.current();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') run();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    if (api.demo) window.addEventListener('storage', run);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      if (api.demo) window.removeEventListener('storage', run);
+    };
+  }, []);
 }

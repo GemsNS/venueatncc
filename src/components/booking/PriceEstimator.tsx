@@ -7,13 +7,45 @@ import './booking.css';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { OTHER_EVENT, eventTypes } from '../../data/event-types';
+import { CAPACITY, capacityLabel } from '../../shared/capacity';
 import { formatLong, todayKey } from '../../shared/dates';
 import { dayTypeOf, estimate, formatUSD, pricing, type DayType } from '../../shared/pricing';
 import type { DateKey, SpaceChoice } from '../../shared/types';
-import { DAY_SHORT, DAY_TYPES, HOURS_MAX, HOURS_MIN, SPACE_SHORT, SPACES, bookUrl, hoursLabel, minimumHoursNote, parseDate, representativeDate, spaceLabel } from './lib';
+import {
+  DAY_SHORT,
+  DAY_TYPES,
+  HOURS_MAX,
+  HOURS_MIN,
+  SPACE_SHORT,
+  SPACES,
+  bookUrl,
+  hoursLabel,
+  latestBookableDate,
+  minimumHoursNote,
+  parseDate,
+  representativeDate,
+  spaceLabel,
+} from './lib';
 import { EstimateView, Segmented, Stepper } from './ui';
 
-export default function PriceEstimator(props: { bookHref?: string }) {
+const ROOT_ID = 'bk-pe-root';
+
+/**
+ * The day the page was rendered on. The server render (at build time) prices against it, and the
+ * first client render reads it back from that markup, so hydration matches and the static HTML
+ * already carries the offers that apply today.
+ */
+function useRenderDay(ssrToday?: DateKey): DateKey {
+  const [day] = useState<DateKey>(() => {
+    if (ssrToday) return ssrToday;
+    if (typeof document === 'undefined') return todayKey();
+    return parseDate(document.getElementById(ROOT_ID)?.getAttribute('data-basis')) ?? todayKey();
+  });
+  return day;
+}
+
+export default function PriceEstimator(props: { bookHref?: string; ssrToday?: DateKey }) {
+  const renderDay = useRenderDay(props.ssrToday);
   const [today, setToday] = useState<DateKey>('');
   const [space, setSpace] = useState<SpaceChoice>('indoor');
   const [dayType, setDayType] = useState<DayType>('saturday');
@@ -23,8 +55,8 @@ export default function PriceEstimator(props: { bookHref?: string }) {
 
   useEffect(() => setToday(todayKey()), []);
 
-  // Before mount, price against a fixed far-off day so the server render matches the first client render.
-  const basis = today || '2030-01-01';
+  const basis = today || renderDay;
+  const latest = today ? latestBookableDate(today) : '';
   const priceDate = date || representativeDate(dayType, basis);
   const est = useMemo(
     () => estimate({ date: priceDate, space, hours, eventType: eventType || undefined }, undefined, basis),
@@ -34,7 +66,7 @@ export default function PriceEstimator(props: { bookHref?: string }) {
 
   const onDate = (value: string) => {
     const k = parseDate(value);
-    if (k && (!today || k >= today)) {
+    if (k && (!today || (k >= today && k <= latestBookableDate(today)))) {
       setDate(k);
       setDayType(dayTypeOf(k));
     } else {
@@ -45,7 +77,7 @@ export default function PriceEstimator(props: { bookHref?: string }) {
   const cta = bookUrl(props.bookHref, { space, hours, event: eventType || undefined, date: date || undefined });
 
   return (
-    <div class="bk bk-pe">
+    <div class="bk bk-pe" id={ROOT_ID} data-basis={renderDay}>
       <div class="bk-pe__controls">
         <div class="field">
           <span class="field__label" id="bk-pe-space">
@@ -60,7 +92,7 @@ export default function PriceEstimator(props: { bookHref?: string }) {
             full
           />
           <p class="field__hint" id="bk-pe-space-hint">
-            {spaceLabel(space)}, up to {pricing.spaces[space].capacity} guests.
+            {space === 'both' ? `Both spaces. ${capacityLabel('both')}.` : `${spaceLabel(space)}, up to ${CAPACITY[space]} guests.`}
           </p>
         </div>
 
@@ -88,6 +120,7 @@ export default function PriceEstimator(props: { bookHref?: string }) {
               class="input bk-pe__dateinput"
               type="date"
               min={today || undefined}
+              max={latest || undefined}
               value={date}
               onChange={(e) => onDate(e.currentTarget.value)}
             />
@@ -142,9 +175,10 @@ export default function PriceEstimator(props: { bookHref?: string }) {
           <p class="bk-pe__big num" aria-live="polite" aria-atomic="true">
             <span class="visually-hidden">Estimated total </span>
             {formatUSD(est.total)}
+            {hours < minHours && <span class="visually-hidden">, billed as {hoursLabel(minHours)}</span>}
           </p>
         </div>
-        <EstimateView est={est} date={priceDate} today={today} showTotal={false} />
+        <EstimateView est={est} showTotal={false} />
         <a class="btn btn--filled btn--lg bk-pe__cta" href={cta}>
           Check Availability
           <Icon name="arrow-right" />

@@ -7,10 +7,9 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import type { IconName } from '../../shared/icons';
-import { daysBetween } from '../../shared/dates';
-import { formatUSD, pricing } from '../../shared/pricing';
-import type { DateKey, Estimate } from '../../shared/types';
-import { clamp } from './lib';
+import { formatUSD } from '../../shared/pricing';
+import type { Estimate } from '../../shared/types';
+import { clamp, formatMoney } from './lib';
 
 /* ---------- Segmented control ---------- */
 
@@ -155,9 +154,15 @@ export function CountField(props: {
   invalid?: boolean;
   decLabel: string;
   incLabel: string;
+  /**
+   * Announce the new count after a step (the buttons keep focus, so the change is otherwise silent).
+   * Leave it out where the page already announces the result, as the capacity planner does.
+   */
+  announceAs?: (n: number) => string;
 }) {
   const { value, min, max, onChange } = props;
   const [text, setText] = useState(String(value));
+  const [stepped, setStepped] = useState('');
 
   useEffect(() => {
     if (Number(text) !== value) setText(String(value));
@@ -168,6 +173,7 @@ export function CountField(props: {
     const next = clamp(value + dir * (big ? 10 : 1), min, max);
     setText(String(next));
     onChange(next);
+    if (props.announceAs) setStepped(props.announceAs(next));
   };
 
   return (
@@ -204,6 +210,11 @@ export function CountField(props: {
         }}
       />
       <StepButton dir={1} label={props.incLabel} atLimit={value >= max} onStep={step} />
+      {props.announceAs && (
+        <span class="visually-hidden" aria-live="polite">
+          {stepped}
+        </span>
+      )}
     </div>
   );
 }
@@ -284,23 +295,25 @@ export function Note(props: { tone?: 'info' | 'warn'; id?: string; children: Com
 
 /* ---------- Estimate breakdown ---------- */
 
-/** True when the event is close enough that the whole amount is due when reserving. */
-export function dueInFull(date: DateKey, today: DateKey): boolean {
-  const before = pricing.bookingDeposit.balanceDueDaysBefore;
-  return before > 0 && daysBetween(today, date) <= before;
+/**
+ * What the estimate says is due. estimate() already folds the balance window in: close to the
+ * event, bookingDeposit equals the total. Never recompute it from dates here.
+ */
+export function payment(est: Estimate): { reserve: number; balance: number; full: boolean } {
+  const balance = Math.max(0, est.total - est.bookingDeposit);
+  return { reserve: est.bookingDeposit, balance, full: est.total > 0 && balance === 0 };
 }
 
-export function EstimateView(props: { est: Estimate; date: DateKey; today: DateKey; notes?: boolean; live?: boolean; showTotal?: boolean }) {
+export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boolean; showTotal?: boolean }) {
   const { est } = props;
-  const full = props.today ? dueInFull(props.date, props.today) : false;
-  const balance = Math.max(0, est.total - est.bookingDeposit);
+  const { reserve, balance, full } = payment(est);
   return (
     <div class="bk-est">
       <ul class="bk-est__lines">
         {est.lines.map((l) => (
           <li class="bk-est__line" data-kind={l.kind} key={l.label}>
             <span class="bk-est__label">{l.label}</span>
-            <span class="bk-est__amt num">{formatUSD(l.amount)}</span>
+            <span class="bk-est__amt num">{formatMoney(l.amount)}</span>
           </li>
         ))}
       </ul>
@@ -316,13 +329,13 @@ export function EstimateView(props: { est: Estimate; date: DateKey; today: DateK
         {full ? (
           <div class="bk-est__payrow">
             <dt>Due when you reserve</dt>
-            <dd class="num">{formatUSD(est.total)}</dd>
+            <dd class="num">{formatUSD(reserve)}</dd>
           </div>
         ) : (
           <>
             <div class="bk-est__payrow">
               <dt>Booking deposit to reserve</dt>
-              <dd class="num">{formatUSD(est.bookingDeposit)}</dd>
+              <dd class="num">{formatUSD(reserve)}</dd>
             </div>
             {balance > 0 && (
               <div class="bk-est__payrow">
