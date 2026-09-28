@@ -1,218 +1,197 @@
-# The Venue at NCC: brand and redesign spec
+# The Venue at NCC: brand and redesign spec (version 2)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: floating tab bar on phones,
 capsule buttons, Title Case button labels, sentence-case headings, 44px targets, dark mode, reduced motion,
 glass only on navigation and floating controls, no em or en dashes anywhere in copy.
 
-## Why the redesign
+## What changed in version 2, and why
 
-The owner reviewed the first build and rejected it. Two reasons, both binding:
+The owner reviewed version 1 and asked for four things. All are binding.
 
-1. **No decorative placeholder art.** The generated purple "arched window" scene is gone for good. Every image
-   on the site is a real photograph of the property, or a clearly labeled styled concept of a real photo.
-   No illustrations, no generated scenery, no arch-shaped masks, no decorative blobs or gradients standing in
-   for content.
-2. **It must read as a business.** The venue is a professional rental. Do not market permissive policies.
-   Alcohol is never mentioned. Outside catering is not a selling point. See "Voice" below.
+1. **New palette.** The site is rethemed to the owner's palette: `#CCD5AE`, `#E9EDC9`, `#FEFAE0`, `#FAEDCD`,
+   `#D4A373` (coolors.co/palette/ccd5ae-e9edc9-fefae0-faedcd-d4a373). White and purple are retired.
+2. **One photo system.** Mixing real and AI-staged photos "seemed random and sloppy." There is now one rule,
+   described under Photography, and it is enforced in code.
+3. **No redundancy.** Every page is audited so facts, calls to action, sections, and photos are not repeated.
+4. **The venue is a separate business from New Community Church.** Nothing on the site, in the brand, in
+   structured data, emails, or share images connects the two.
+
+Still binding from version 1: no decorative placeholder art; a professional business voice; never mention
+alcohol; catering only in the two neutral places listed under Voice.
 
 ## Concept
 
-**Photographs first, quiet frame.** The site is a gallery of the real property in a restrained white and
-purple frame. Caslon headings give it the feel of a printed invitation; the interface stays crisp and
+**Photographs first, in a warm, quiet frame.** The site is a gallery of the real property set in cream, sage,
+and natural caramel. Caslon headings give it the feel of a printed invitation; the interface stays crisp and
 Apple-like. Spend boldness in one place: the full-bleed hero photograph of the building at blue hour.
-Everything else is calm, generous, and aligned.
+
+Cream, Caslon, and a warm tan accent is a common look, so avoid its other tells: no accent bars or rails on
+cards, no eyebrow labels above headings (the single hero kicker is the only exception), no tinted or decorative
+gradients, no all-caps labels. Sage and mist appear only as surfaces and chip fills, never as text on light.
 
 ## Names
 
 | Thing | Public name | Notes |
 |---|---|---|
-| The business | The Venue at NCC | Never "NCC Spaces" or "NCC Venues". |
+| The business | The Venue at NCC | Stand-alone business. Never "NCC Spaces" or "NCC Venues". |
 | Indoor space | The Hall | Up to 100 guests. Data slug stays `indoor`. |
 | Outdoor space | The Grove | Up to 150 guests. Data slug stays `outdoor`. |
-| Both | The Hall and The Grove | Data slug stays `both`. Capacity copy: "The Hall up to 100, The Grove up to 150". |
-| Parent | New Community Church | "The Venue at NCC is operated by New Community Church." |
+| Both | The Hall and The Grove | Data slug stays `both`. |
+| The land around them | The grounds | Replaces "campus", which reads as a church campus. |
 
-Descriptors are fine next to names where clarity helps: "The Hall, our indoor space".
+## Separation from New Community Church
+
+The venue shares a property with a church but is its own business. Remove and never reintroduce:
+"operated by New Community Church", the church seal (`ncc-mark.png`), church history, founding year, pastor,
+church phone, `site.parent`, `parentOrganization` in JSON-LD, links to wearencc.org, "at New Community Church"
+in location copy, membership questions, and the demo inquiries that reference a church ("Church family day").
+The `church-community-events` event becomes `community-events` ("Community events": nonprofit, civic, faith,
+and neighborhood gatherings hosted by clients). A discount that names churches as a kind of customer is fine;
+that is not a connection to this church. Copy advising a family to "coordinate with your pastor" refers to the
+client's own clergy and is fine.
+
+The cross on the building is part of the property and may appear in photos of the building, but no photo
+features it as the subject: `gable.jpg` is removed from the site.
 
 ## Logo
 
-Files live in `src/assets/brand/` (SVG, outlined paths, no font dependency):
+Files in `src/assets/brand/` (outlined SVG, no font dependency). A Caslon "V" inside a double ring, with
+"The Venue" in Libre Caslon Display and "at NCC" in Libre Caslon Text italic. The ring frames the monogram the
+way a wax seal or an embossed invitation mark would.
 
-| File | Use |
-|---|---|
-| `venue-lockup.svg` | Primary. Monogram roundel plus wordmark. Header, email, print. |
-| `venue-lockup-white.svg` | On photos and on Deep Plum. |
-| `venue-mark.svg` / `venue-mark-white.svg` | The monogram alone: avatars, admin sidebar, OG badge. |
-| `venue-wordmark.svg` / `-white.svg` | Wordmark alone where the mark would repeat. |
-| `ncc-mark.png` | Parent church seal. Only in the "operated by New Community Church" context. |
+| File | Colors | Use |
+|---|---|---|
+| `venue-lockup.svg` | ink `#2F2A1F`, accent `#8A5A2B` | Header, email, print on light surfaces |
+| `venue-lockup-white.svg` | cream `#FEFAE0`, caramel `#D4A373` | On Deep Olive and over photos |
+| `venue-mark.svg` / `-white.svg` | as above | Monogram alone: admin sidebar, avatars |
+| `venue-wordmark.svg` / `-white.svg` | as above | Wordmark alone |
 
-The monogram is a Caslon "V" inside a double ring that echoes the church's circular NCC seal. The wordmark
-is "The Venue" in Libre Caslon Display with "at NCC" in Libre Caslon Text italic in Venue Purple.
-
-Rules: minimum lockup height 32px on screen; clear space equal to the ring's inner radius; never recolor
-outside the palette, stretch, add effects, or place the purple lockup on a photo (use the white one over a
-dark scrim). The header uses `venue-lockup.svg` at 36 to 40px tall with `alt="The Venue at NCC"`.
-
-Icons in `public/`: `favicon.ico` (16 and 32), `favicon.svg` (bold V on purple, for small sizes),
-`favicon-32.png`, `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`.
-`public/brand/email-lockup.png` is the email header image (many email clients do not render SVG).
+`src/components/Logo.astro` recolors the SVG through CSS variables by matching these exact hex values
+(`#2F2A1F` ink, `#8A5A2B` accent, `#FEFAE0` light ink, `#D4A373` light accent). Minimum lockup height 32px.
+Over photos use the light lockup on a dark scrim. Icons in `public/`: favicon.ico, favicon.svg, favicon-32.png,
+apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Deep Olive with a cream monogram);
+`public/brand/email-lockup.png` is the email header.
 
 ## Color
 
-White and purple, as the owner asked. Purple is a deep, regal plum rather than an electric violet.
+The five palette colors are the brand. The palette has no dark and no white, so two darks are derived from it
+for text and dark surfaces, and one deeper caramel is derived for links. Nothing else is added.
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| Venue Purple | `#4F2A75` | fill `#7C4DB0`, text `#CDB3EE` | Primary buttons, links, focus, selected states |
-| Purple Pressed | `#3E2060` | `#6A3F9A` | Hover and pressed fills |
-| Deep Plum | `#2B1840` | `#1A1024` | Footer, CTA band, dark scrims tinted toward brand |
-| Lilac | `#CDB3EE` | `#CDB3EE` | Accent text and lines on Deep Plum or photos |
-| Lilac Mist | `#F4F0F8` | `rgba(205,179,238,0.12)` | Tinted cards, selected rows, badges |
-| Ink | `#1C1622` | `#F5F2F8` | Primary text |
-| Ink 2 | `#5E5566` | `#B9B0C2` | Secondary text (7:1 on white) |
-| Background | `#FFFFFF` | `#121015` | Page |
-| Grouped | `#F7F5F9` | `#0C0A0E` | Grouped sections behind cards |
-| Elevated | `#FFFFFF` | `#1C1820` | Cards |
-| Separator | `rgba(28,22,34,0.12)` | `rgba(245,242,248,0.14)` | Hairlines |
+| Token | Hex | Role |
+|---|---|---|
+| Cream | `#FEFAE0` | Page background |
+| Linen | `#FAEDCD` | Alternate section background, warm tints |
+| Mist | `#E9EDC9` | Selected rows, chips, quiet panels |
+| Sage | `#CCD5AE` | Tags, capacity chips, subtle surfaces, hairline accents on dark |
+| Caramel | `#D4A373` | The one saturated color: primary button fill (with Ink text), active states, the accent on dark surfaces |
+| Ink (derived) | `#2F2A1F` | Primary text, text on Caramel buttons |
+| Ink 2 (derived) | `#5C5443` | Secondary text |
+| Caramel Deep (derived) | `#8A5A2B` | Links and accent text on light surfaces, focus ring, logo accent |
+| Deep Olive (derived) | `#343B24` | Footer, closing band, photo scrims, favicon |
+| Card | `#FFFDF2` | Cards and inputs on Cream or Linen, a hair lighter than the page |
 
-Contrast checked: Venue Purple on white 10.9:1, Ink 2 on white 7.1:1, white on Deep Plum 16:1, Lilac on
-Deep Plum 8.6:1, white on dark fill `#7C4DB0` 5.9:1. Map these onto the existing token names in
-`src/styles/global.css` (`--accent`, `--accent-text`, `--accent-tint`, `--label`, `--label-2`, `--bg`,
-`--bg-grouped`, `--bg-elevated`, `--separator`) so components keep working, and add `--brand-deep` and
-`--lilac`. Status colors (success, warning, error) keep their system values.
+Contrast (checked): Ink on Cream 13.6:1, Ink 2 on Cream 7.1:1, Ink 2 on Linen 6.4:1, Caramel Deep on Cream
+5.6:1, Ink on Caramel 6.3:1, Cream on Deep Olive 11.1:1, Caramel on Deep Olive 5.2:1, Sage on Deep Olive 7.6:1.
+Never put white or cream text on Caramel, and never use Caramel as text on Cream (2.3:1).
 
-No gradients as decoration. The only gradients allowed are legibility scrims over photographs.
+Dark mode uses the same family: page `#17190F`, grouped `#101209`, cards `#22251A`, text Cream `#FEFAE0`,
+secondary Sage `#CCD5AE`, accent fill Caramel `#D4A373` with Ink text, accent text Caramel `#D4A373`,
+separators `rgba(254,250,224,0.14)`. Map everything onto the existing token names in `global.css`; rename
+purple-specific tokens (for example `--lilac`) to palette names and update every use.
 
 ## Type
 
-| Role | Family | Notes |
-|---|---|---|
-| Display and page titles (h1, h2, hero) | Libre Caslon Display 400 | Only at 28px and above; hairlines get too thin below that. Never bold or faux-bold. Letter-spacing about -0.01em, line-height 1.05 to 1.15. |
-| Serif text accents | Libre Caslon Text 400 and 400 italic | Lead statements, pull quotes, captions in italic, prices set large, serif labels between 18 and 28px. |
-| Interface and body | The existing system stack (SF Pro on Apple, Inter fallback) | Body, h3 and smaller headings, buttons, forms, navigation, tables, admin. |
-
-Self-host with `@fontsource/libre-caslon-display` (latin 400) and `@fontsource/libre-caslon-text` (latin 400
-and 400 italic) as devDependencies, `font-display: swap`, and preload the Caslon Display woff2 used by the
-hero headline. Keep the existing type tokens and their `min(..., vw)` caps; point h1, h2, `.t-display`,
-`.t-large-title`, `.t-title-1`, and `.t-title-2` at the display family. The admin stays entirely in the
-interface family except its brand name.
-
-Avoid: italicizing or recoloring a single word inside a headline, all-caps labels, eyebrow labels above
-every heading. One small kicker line is allowed in the home hero only.
-
-## Shape, layout, motion
-
-- Photos are rectangles with a modest radius (`--r-lg`, about 20px) or full bleed. No masks, no arches.
-- Cards keep concentric radii. Capsule buttons. Glass only on the nav, the tab bar, and controls floating
-  over photos (the hero date checker).
-- Generous whitespace; left-aligned text blocks, max line length about 70 characters.
-- Numbered markers only for real sequences (the booking steps).
-- No entrance animations or scroll reveals. Hover and press feedback only.
+Unchanged from version 1: Libre Caslon Display for h1, h2 and display sizes from 28px; Libre Caslon Text for
+serif leads, prices, and italic captions; the system interface stack for body, forms, buttons, tables, admin.
 
 ## Photography
 
-Only files in `src/assets/venue/`. Each exists as a 3:2 landscape (`name.jpg`, 2400px wide) and a 4:5
-portrait (`name-tall.jpg`, 1600px wide) for art direction on phones.
+### The rule
 
-| File | Subject | Primary uses |
+- **Real photographs show the spaces.** Everything that shows what a client rents uses real photos only: the
+  home hero, the home space cards, The Space page, the arrival band, share images, and structured data.
+- **Staged photographs show events.** Every event tile and every event page hero uses a staged image of that
+  event, all eight in one décor style, each with the same small "Styled Concept" badge. The events section on
+  the home page and the /events/ page carry one line: "Event photos show our spaces styled for each occasion.
+  Décor is not included." Event page heroes carry the caption "Styled concept. Décor is not included."
+- **All or nothing.** If a staged image is missing for any event, every event falls back to real photos. This is
+  computed in `src/data/photos.ts` from which files exist, so a half-staged grid can never ship.
+- **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
+- **No repeats.** No image appears twice on the same page.
+
+### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`)
+
+| File | Subject | Uses |
 |---|---|---|
-| `exterior-dusk` | The building at blue hour, lit entry, white cross on the gable, pines behind | Home hero, About |
-| `approach-dusk` | Long paved drive and lawn toward the building at dusk | Arrival and location band, parking |
-| `driveway` | Wide paved drive and lot in daylight | Parking, campus |
-| `gable` | Stucco gable with the white cross and arched windows | About, church relationship, repasts and memorials |
-| `hall-windows` | The Hall: arched windows, fireplace feature wall, wood-look floor | The Hall primary, The Space hero, showers |
-| `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall on the home page and The Space gallery, pricing |
-| `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | Meetings and trainings |
-| `grove-tables` | The Grove: gazebo and picnic tables on a paved patio under pines | The Grove primary |
-| `gazebo` | The Grove: timber gazebo with a metal roof on open lawn | The Grove gallery, ceremonies |
-| `grove-path` | The Grove: paved path to the gazebo through the trees | Church and community events |
+| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Home hero |
+| `approach-dusk` | The long drive and lawn toward the building at dusk | Arrival band, The grounds |
+| `driveway` | The paved drive and lot in daylight | Parking, The grounds |
+| `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
+| `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall gallery |
+| `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | The Hall gallery |
+| `grove-tables` | The Grove: gazebo and picnic tables on the patio | The Grove primary |
+| `gazebo` | The timber gazebo on open lawn | The Grove gallery |
+| `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
 
-No image appears twice on one page. A styled concept counts as a different image from the photo it was
-made from.
+Describe only what the photos show. Do not claim a kitchen, sound system, stage, bridal suite, rentable tables
+or chairs, Wi-Fi, or AV unless phrased as "ask us". The sanctuary is not part of the rental and is not shown.
 
-Event photos (`EVENT_PHOTOS` in `src/data/photos.ts`), one different image per event: weddings
-`styled-gazebo-ceremony`, receptions and banquets `styled-hall-windows-reception`, birthdays
-`styled-hall-fireplace-dinner`, graduations and reunions `styled-grove-tables-reunion`, showers
-`hall-windows`, meetings and trainings `hall-doors`, repasts and memorials `gable`, church and community
-events `grove-path`.
+### Staged event photos
 
-Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark wood-look
-floors, recessed lighting, double doors. The Grove: a timber gazebo, picnic tables on a paved patio, open
-lawn, tall pines, paved paths. The campus: a long paved drive and a large paved lot. Do not claim a kitchen,
-sound system, stage, bridal suite, tables and chairs for rent, or anything else not confirmed.
+File `styled-event-<slug>.jpg` with a `photoDetails` entry `{ styledOf: '<real base>.jpg', event: '<slug>' }`.
+One décor language across all eight, matched to the palette: ivory and cream linens, sage eucalyptus and
+greenery, natural wood or cream chairs, amber candlelight, ivory, peach, and soft caramel blooms. Architecture,
+windows, doors, floors, fixtures, the gazebo, and trees stay exactly as photographed.
 
-The sanctuary is not part of the rental and is not shown.
+| Event slug | Base | Scene |
+|---|---|---|
+| `weddings` | gazebo | Ceremony seating facing the gazebo |
+| `receptions-banquets` | hall-windows | Formal reception rounds and a head table |
+| `baby-bridal-showers` | hall-fireplace | Shower brunch tables and a dessert table |
+| `birthday-parties` | hall-windows (fireplace corner crop) | Milestone dinner party |
+| `repasts-memorials` | hall-doors (window corner crop) | Quiet rounds and a guest book table |
+| `meetings-trainings` | hall-doors | Classroom seating facing the screen |
+| `graduations-reunions` | grove-tables | Picnic tables dressed, lanterns, string lights |
+| `community-events` | grove-path | An outdoor community gathering on the lawn |
 
-### Styled concepts (virtual staging)
+## Redundancy rules
 
-Some photos may gain a styled version generated from the real photo (furniture, linens, florals, lighting
-added; architecture unchanged). Rules:
-
-- File name `styled-<base>-<scene>.jpg`, with a `photoDetails` entry `{ styledOf: '<base>.jpg', ... }`.
-- Always shown with a visible "Styled Concept" badge on the image. The alt text starts with "Styled
-  concept:". Wherever the image is shown at size (galleries, space cards, event pages) it also carries the
-  caption "Styled concept. Décor shown is not included with the rental." Event tiles show the badge alone.
-- On The Hall and The Grove cards and galleries it is an opt-in view: a segmented control "As
-  Photographed" and "Styled Concept". The real photo is the default. Render the control only when a styled
-  version exists.
-- Allowed on event tiles and event pages (the tile, and the hero of that event's page), with the badge,
-  and the caption on the event page.
-- Never the home hero, a share image, structured data, or the only image of a space. Share images and
-  structured data use the real photo it was made from (`realPhoto()` in `src/data/photos.ts`).
+- State each fact once per page, in the place it does the most work. Capacities belong to the space cards and
+  The Space; the hero names the two spaces without repeating numbers already shown a scroll later.
+- One primary call to action per viewport. The header CTA plus one in-page CTA near the end of the page is
+  enough; do not stack Check Availability buttons in hero, steps, band, and footer.
+- A block that repeats across many pages (planning timelines, rates and deposit paragraphs, "how booking
+  works") lives in one place and is linked, not copied.
+- Footer navigation does not duplicate the header navigation item for item.
+- A section that only restates another page (for example a home FAQ that repeats /faq/) earns its place only if
+  it answers something the visitor needs before scrolling on; otherwise it is cut.
 
 ## Voice
 
-Professional hospitality: confident, warm, precise, brief. The venue speaks in the first person plural
-("we confirm every booking personally"); guidance is second person ("choose a date"). No exclamation
-points, slang, or jokes.
-
-**Never in public copy** (pages, data, booking UI, emails, structured data, llms.txt, OG text, demo
-content): alcohol, drinks, bar, beer, wine, mimosas, toast, "raise a glass", Virginia ABC, BYO,
-"bring your own", "your own caterer", "caterer of your choice", "the freedom to", "your menu, your way",
-and advice to "ask whether there is a kitchen". Do not collect alcohol plans in the booking form.
-
-**Catering** appears exactly twice, neutrally: in the pricing page's rental terms ("Catering and décor are
-arranged separately by the client.") and in one FAQ entry ("Is catering provided? Rentals include the
-space and on-site parking. Food service is arranged separately."). Nowhere else: not in the hero, fact
-rows, feature tiles, event pages, booking form, estimate notes, schema, or llms.txt.
-
-**Open to the public** appears as a plain fact where booking eligibility matters (FAQ, about), not as a
-tagline. "Anyone can book" is not used as a headline.
-
-Useful facts to lead with: two distinct spaces, capacities, on-site parking, transparent rates with an
-instant estimate, dates confirmed personally, a wooded setting minutes from downtown Suffolk.
+Professional hospitality: confident, warm, precise, brief. "We" for the venue, "you" for guidance. No
+exclamation points, slang, or jokes. Never in public copy: alcohol, drinks, bar, beer, wine, mimosas, toast,
+"raise a glass", Virginia ABC, BYO, "bring your own", "your own caterer", "caterer of your choice", "the freedom
+to", advice to "ask whether there is a kitchen", and any connection to New Community Church. Catering appears
+exactly twice, neutrally: the pricing page's rental terms and one FAQ entry.
 
 ## Page direction
 
-**Home.** (1) Full-bleed hero, `exterior-dusk`, height about min(88svh, 56rem), bottom-left scrim for
-legibility. Kicker "Event venue in Suffolk, Virginia"; H1 "Celebrate among the pines."; one-sentence lead
-naming The Hall for 100, The Grove for 150, and on-site parking; "Check Availability" filled and "Tour the
-Space" secondary. The date checker floats as a glass panel at the bottom right from 64rem, and sits below
-the hero otherwise. Below 46.5rem no text sits on the photo: the photo is a block cropped to the building
-(the lit entry and the gable cross), and the kicker, headline, lead, and buttons follow on a Deep Plum
-panel that continues from it, then the date checker. (2) A short Caslon Text statement about the
-venue with three plain facts. (3) The two spaces as large photo cards with capacity, a sentence, three real
-features, and a link. (4) Events hosted, as photo tiles. (5) Rates teaser linking to pricing. (6) How
-booking works, three numbered steps. (7) Arrival band with `approach-dusk`, address, directions link.
-(8) Four FAQs. (9) CTA band on Deep Plum.
+**Home.** Full-bleed `exterior-dusk` hero (the phone layout shows the photo first with the text on a Deep Olive
+panel below), kicker, "Celebrate among the pines.", one lead sentence, one primary button; the date checker.
+Then the two spaces as real-photo cards, events as staged tiles with the one-line note, a short rates teaser,
+the arrival band, and one closing band. Cut anything the audit finds repeated.
 
-**The Space.** Hero on `hall-windows`. Sections for The Hall and The Grove, each with a small gallery of
-its photos, capacity, real features, and the styled-concept toggle when available. The Hall gallery leaves
-out the hero photo, so no photo appears twice. A Campus section with
-`approach-dusk`, `driveway`, `gable` and parking. What the rental includes (the space you book and
-on-site parking) and a visit request CTA.
+**The Space.** Real photos only. The Hall, The Grove, and The grounds (formerly Campus), what the rental
+includes, and a visit request.
 
-**Events.** Index as photo tiles. Each event page: rectangular photo hero from the photo map, rewritten
-professional copy, a planning checklist that contains only practical venue items (date, space, guest
-count, visit, timeline), and neutral FAQs.
+**Events.** Staged hero per event with badge and caption, the event's unique copy, and links to shared
+information instead of repeated blocks.
 
-**Pricing, FAQ, About, Book, 404.** Same frame and type. Pricing keeps the estimator and tables; its
-included list is "The space you book" and "On-site parking"; the rental terms carry the one catering line.
+**About.** Without the church story the page has little of its own; fold any unique, useful content into The
+Space or FAQ and remove the page and its nav item unless the audit finds a clear reason to keep it.
 
-**Admin.** Interface family throughout; the sidebar shows the monogram and "The Venue at NCC".
+**Share images.** Real photo background, Deep Olive scrim, light lockup, page title in Caslon.
 
-**Share images.** Photo background with a dark scrim, the white lockup, and the page title in Caslon.
-
-**Emails.** `email-lockup.png` header on white, a thin Venue Purple rule, Georgia as the serif fallback
-for headings, the interface stack for body text.
+**Emails.** `email-lockup.png` header on Cream, a thin Caramel rule, Georgia for headings, the interface stack
+for body text.
