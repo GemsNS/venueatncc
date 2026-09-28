@@ -146,6 +146,14 @@ export interface EmailLogEntry {
   error?: string | null;
 }
 
+/** InquiryDetail plus the calendar blocks linked to the inquiry. */
+export type InquiryDetailWithBlocks = InquiryDetail & { blocks: CalendarBlock[] };
+
+export interface FormTokenUse {
+  inquiryId: number;
+  bodyHash: string;
+}
+
 export interface SessionRecord {
   sessionId: string;
   expiresAt: string;
@@ -216,7 +224,11 @@ export class Repo {
     return row ? toInquiry(row) : null;
   }
 
-  getInquiryDetail(id: number): InquiryDetail | null {
+  /**
+   * An inquiry with its estimate, notes, timeline, and the calendar blocks linked to it (so the
+   * admin can tell when a booked request has lost its block).
+   */
+  getInquiryDetail(id: number): InquiryDetailWithBlocks | null {
     const row = this.inquiryRow(id);
     if (!row) return null;
     const notes = (
@@ -235,7 +247,14 @@ export class Repo {
         created_at: string;
       }[]
     ).map((e): InquiryEvent => ({ id: e.id, kind: e.kind, detail: e.detail, createdAt: e.created_at }));
-    return { ...toInquiry(row), estimate: JSON.parse(row.estimate_json) as Estimate, notes, events };
+    const detail: InquiryDetailWithBlocks = {
+      ...toInquiry(row),
+      estimate: JSON.parse(row.estimate_json) as Estimate,
+      notes,
+      events,
+      blocks: this.blocksForInquiry(id),
+    };
+    return detail;
   }
 
   listInquiries(filter: { status?: InquiryStatus | 'open' | 'all'; q?: string }, limit = 1000): Inquiry[] {
@@ -361,14 +380,15 @@ export class Repo {
       .run(s.id, s.adminId, now, s.expiresAt, now, s.ip, s.userAgent);
   }
 
-  findSession(id: string, now: string): SessionRecord | null {
+  /** A session that has not expired and was last used after `idleSince`. */
+  findSession(id: string, now: string, idleSince: string): SessionRecord | null {
     const row = this.db
       .prepare(
         `SELECT s.id AS session_id, s.expires_at, s.last_seen_at, a.id, a.email, a.name
          FROM sessions s JOIN admins a ON a.id = s.admin_id
-         WHERE s.id = ? AND s.expires_at > ?`,
+         WHERE s.id = ? AND s.expires_at > ? AND s.last_seen_at > ?`,
       )
-      .get(id, now) as { session_id: string; expires_at: string; last_seen_at: string; id: number; email: string; name: string } | undefined;
+      .get(id, now, idleSince) as { session_id: string; expires_at: string; last_seen_at: string; id: number; email: string; name: string } | undefined;
     if (!row) return null;
     return { sessionId: row.session_id, expiresAt: row.expires_at, lastSeenAt: row.last_seen_at, user: { id: row.id, email: row.email, name: row.name } };
   }
@@ -389,8 +409,28 @@ export class Repo {
     return this.db.prepare('DELETE FROM sessions WHERE admin_id = ?').run(adminId).changes;
   }
 
-  deleteExpiredSessions(now: string): number {
-    return this.db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now).changes;
+  /** Delete sessions that have expired or have not been used since `idleSince`. */
+  deleteExpiredSessions(now: string, idleSince?: string): number {
+    if (idleSince === undefined) return this.db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now).changes;
+    return this.db.prepare('DELETE FROM sessions WHERE expires_at <= ? OR last_seen_at <= ?').run(now, idleSince).changes;
+  }
+
+  // ------------------------------------------------------------ form tokens
+
+  /** The inquiry a form token's nonce already created, if any. */
+  findFormTokenUse(nonce: string): FormTokenUse | null {
+    const row = this.db.prepare('SELECT inquiry_id, body_hash FROM form_token_uses WHERE nonce = ?').get(nonce) as
+      | { inquiry_id: number; body_hash: string }
+      | undefined;
+    return row ? { inquiryId: row.inquiry_id, bodyHash: row.body_hash } : null;
+  }
+
+  /** Remember which inquiry a nonce created (the first one wins), and forget uses older than `forgetBefore`. */
+  recordFormTokenUse(nonce: string, inquiryId: number, bodyHash: string, now: string, forgetBefore: string): void {
+    this.db.prepare('DELETE FROM form_token_uses WHERE used_at < ?').run(forgetBefore);
+    this.db
+      .prepare('INSERT OR IGNORE INTO form_token_uses (nonce, inquiry_id, body_hash, used_at) VALUES (?, ?, ?, ?)')
+      .run(nonce, inquiryId, bodyHash, now);
   }
 
   // ------------------------------------------------------------ email log
@@ -402,6 +442,11 @@ export class Repo {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(e.inquiryId, e.kind, e.to, e.subject, e.status, e.transport, e.messageId ?? null, e.location ?? null, e.error ?? null, now);
+  }
+
+  /** How many emails of a kind were attempted since a moment (any outcome). */
+  countEmailsSince(kind: string, sinceIso: string): number {
+    return (this.db.prepare('SELECT COUNT(*) AS n FROM email_log WHERE kind = ? AND created_at >= ?').get(kind, sinceIso) as { n: number }).n;
   }
 
   // ------------------------------------------------------------ stats

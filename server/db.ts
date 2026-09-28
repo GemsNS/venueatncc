@@ -115,6 +115,18 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX email_log_inquiry ON email_log(inquiry_id);
   `,
+  // 2: form token nonces already used, so a retried request returns the inquiry it created
+  // instead of creating a duplicate; and a faster count of recent emails by kind
+  `
+  CREATE TABLE form_token_uses (
+    nonce TEXT PRIMARY KEY,
+    inquiry_id INTEGER NOT NULL REFERENCES inquiries(id) ON DELETE CASCADE,
+    body_hash TEXT NOT NULL,
+    used_at TEXT NOT NULL
+  );
+  CREATE INDEX form_token_uses_used ON form_token_uses(used_at);
+  CREATE INDEX email_log_kind_created ON email_log(kind, created_at);
+  `,
 ];
 
 export function migrate(db: Db): number {

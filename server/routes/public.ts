@@ -6,20 +6,41 @@ import { Hono } from 'hono';
 import { site } from '../../src/data/site';
 import { availabilityFor, MAX_RANGE_DAYS } from '../../src/shared/availability';
 import { capacityError } from '../../src/shared/capacity';
-import { addDays, daysBetween, formatLong, isDateKey, parseKey, toKey, todayKey } from '../../src/shared/dates';
+import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
 import { estimate } from '../../src/shared/pricing';
 import { makeReference } from '../../src/shared/reference';
-import { availabilityQuerySchema, fieldErrors, inquiryInputSchema } from '../../src/shared/schemas';
-import type { AvailabilityResponse, DateKey, Estimate, InquiryCreated, SpaceChoice } from '../../src/shared/types';
-import { apiError, clientIp, iso, readBody, type AppEnv, type ServerContext } from '../context';
+import { availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, inquiryInputSchema, latestBookableDate } from '../../src/shared/schemas';
+import type { AvailabilityResponse, CalendarBlock, DateKey, Estimate, InquiryCreated } from '../../src/shared/types';
+import { apiError, clientBucket, iso, readBody, type AppEnv, type ServerContext } from '../context';
 import { guestConfirmationEmail, spaceLabel, venueNotificationEmail } from '../email/templates';
 import type { EmailMessage } from '../email/mailer';
-import { checkFormToken, issueFormToken } from '../security';
+import { checkFormToken, FORM_TOKEN_MAX_AGE_MS, issueFormToken, sha256 } from '../security';
+
+export { latestBookableDate } from '../../src/shared/schemas';
 
 export const INQUIRY_LIMITS = { perHour: 5, perDay: 20 } as const;
 
+/**
+ * Guest confirmations the venue sends in an hour, across all visitors. The form mails whatever
+ * address is typed in, so this caps how much mail a spammer spread over many addresses could
+ * make the venue send. The venue notification always goes out.
+ */
+export const GUEST_CONFIRMATIONS_PER_HOUR = 50;
+
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
+
+/** Timeline wording, matched by the demo backend (src/lib/api/demo-seed.ts timelineText). */
+export const inquiryText = {
+  created: 'Request received through the website.',
+  conflict: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) => {
+    const what = b.label ? `${b.kind}: ${b.label}` : b.kind;
+    return `The calendar already shows ${formatLong(date)} as taken for ${spaceLabel(b.space).toLowerCase()} (${what}). Check it before you confirm this request.`;
+  },
+};
+
+export const FORM_TOO_FAST = 'That was quick. Wait a few seconds, then send your request again.';
+export const FORM_EXPIRED = 'This form has expired. Refresh the page and send your request again.';
 
 const BOOLEAN_FIELDS = ['wantsVisit', 'servingAlcohol'] as const;
 const OPTIONAL_TEXT_FIELDS = ['eventTypeOther', 'altDate', 'phone', 'message', 'visitNotes'] as const;
@@ -45,18 +66,13 @@ export function normalizeInquiryBody(raw: Record<string, unknown>): Record<strin
   return out;
 }
 
-/** The latest bookable date: the same calendar day two years from today. */
-export function latestBookableDate(today: DateKey): DateKey {
-  const { y, m, d } = parseKey(today);
-  return toKey(y + 2, m, d);
-}
-
-function conflictNote(ctx: ServerContext, date: DateKey, space: SpaceChoice): string | null {
-  const conflicts = ctx.repo.conflictingBlocks(date, space);
-  if (conflicts.length === 0) return null;
-  const b = conflicts[0];
-  const what = b.label ? `${b.kind}: ${b.label}` : b.kind;
-  return `The calendar already shows ${formatLong(date)} as taken for ${spaceLabel(b.space).toLowerCase()} (${what}). Check it before you confirm this request.`;
+/** A stable fingerprint of a validated request, without its form token. */
+export function requestFingerprint(input: Record<string, unknown>): string {
+  const rest: Record<string, unknown> = { ...input };
+  delete rest.formToken;
+  delete rest.website;
+  const keys = Object.keys(rest).sort();
+  return sha256(JSON.stringify(keys.map((k) => [k, rest[k] ?? null])));
 }
 
 async function deliver(ctx: ServerContext, inquiryId: number, kind: string, label: string, message: EmailMessage): Promise<void> {
@@ -95,6 +111,17 @@ export async function sendInquiryEmails(ctx: ServerContext, inquiryId: number, e
     ...venue,
     tag: `${inquiry.reference}-venue`,
   });
+  const sentLastHour = ctx.repo.countEmailsSince('guest_confirmation', iso(ctx.now() - HOUR));
+  if (sentLastHour >= GUEST_CONFIRMATIONS_PER_HOUR) {
+    ctx.log.warn(`[email] ${sentLastHour} guest confirmations in the last hour; not sending one for ${inquiry.reference}.`);
+    ctx.repo.addEvent(
+      inquiryId,
+      'email',
+      `Confirmation email not sent: ${GUEST_CONFIRMATIONS_PER_HOUR} confirmations already went out in the last hour, which can mean the form is being misused. Contact the guest directly.`,
+      iso(ctx.now()),
+    );
+    return;
+  }
   const guest = guestConfirmationEmail(inquiry, est, { origin });
   await deliver(ctx, inquiryId, 'guest_confirmation', 'Confirmation email', {
     to: inquiry.email,
@@ -147,30 +174,17 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
       return apiError(c, 400, `We could not send your request. Call us at ${site.contact.phone} and we will help.`);
     }
 
-    // 2. Rate limits per client IP, counted from stored inquiries so they survive restarts.
+    // 2. Signed form token: proves the form was loaded here, at least a few seconds ago. The
+    //    formToken field tells the browser to fetch a new token before it tries again.
     const nowMs = now();
-    const ipHash = ctx.hashIp(clientIp(c, config.trustProxy));
-    const lastHour = repo.countInquiriesFromIp(ipHash, iso(nowMs - HOUR));
-    const lastDay = repo.countInquiriesFromIp(ipHash, iso(nowMs - DAY));
-    if (lastHour >= INQUIRY_LIMITS.perHour || lastDay >= INQUIRY_LIMITS.perDay) {
-      c.header('Retry-After', String(lastHour >= INQUIRY_LIMITS.perHour ? 3600 : 86400));
-      return apiError(c, 429, `You have sent several requests already. Call us at ${site.contact.phone} and we will help.`);
-    }
-
-    // 3. Signed form token: proves the form was loaded here, at least a few seconds ago.
     const token = typeof raw.formToken === 'string' ? raw.formToken : '';
     const check = checkFormToken(config.formTokenSecret, token, nowMs);
     if (!check.ok) {
-      return apiError(
-        c,
-        400,
-        check.reason === 'too-fast'
-          ? 'That was quick. Wait a few seconds, then send your request again.'
-          : 'This form has expired. Refresh the page and send your request again.',
-      );
+      const message = check.reason === 'too-fast' ? FORM_TOO_FAST : FORM_EXPIRED;
+      return apiError(c, 400, message, { formToken: message });
     }
 
-    // 4. Validate with the shared schema, then the rules that depend on today and capacity.
+    // 3. Validate with the shared schema.
     const parsed = inquiryInputSchema.safeParse(normalizeInquiryBody(raw));
     if (!parsed.success) {
       const fields = fieldErrors(parsed.error);
@@ -178,11 +192,35 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
       return apiError(c, 400, messages.length === 1 ? messages[0] : 'Check the highlighted fields.', fields);
     }
     const input = parsed.data;
+
+    // 4. A retry of a request that already went through (the answer was lost on the way back)
+    //    gets the same reference instead of creating a duplicate.
+    const fingerprint = requestFingerprint(input);
+    const used = repo.findFormTokenUse(check.nonce);
+    if (used && used.bodyHash === fingerprint) {
+      const earlier = repo.getInquiryDetail(used.inquiryId);
+      if (earlier) {
+        const again: InquiryCreated = { ok: true, reference: earlier.reference, estimate: earlier.estimate };
+        return c.json(again, 200);
+      }
+    }
+
+    // 5. Rate limits per client address (IPv6 per /64), counted from stored inquiries so they
+    //    survive restarts.
+    const ipHash = ctx.hashIp(clientBucket(c, config.trustProxy));
+    const lastHour = repo.countInquiriesFromIp(ipHash, iso(nowMs - HOUR));
+    const lastDay = repo.countInquiriesFromIp(ipHash, iso(nowMs - DAY));
+    if (lastHour >= INQUIRY_LIMITS.perHour || lastDay >= INQUIRY_LIMITS.perDay) {
+      c.header('Retry-After', String(lastHour >= INQUIRY_LIMITS.perHour ? 3600 : 86400));
+      return apiError(c, 429, `You have sent several requests already. Call us at ${site.contact.phone} and we will help.`);
+    }
+
+    // 6. The rules that depend on today and capacity.
     const today = todayKey(new Date(nowMs));
     const latest = latestBookableDate(today);
     const fields: Record<string, string> = {};
     if (input.date < today) fields.date = 'Choose a date that has not passed.';
-    else if (input.date > latest) fields.date = 'Choose a date within the next two years.';
+    else if (input.date > latest) fields.date = DATE_TOO_FAR;
     if (input.altDate && input.altDate < today) fields.altDate = 'Choose an alternate date that has not passed.';
     else if (input.altDate && input.altDate > latest) fields.altDate = 'Choose an alternate date within the next two years.';
     const tooMany = capacityError(input.space, input.guests);
@@ -190,9 +228,10 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
     const messages = Object.values(fields);
     if (messages.length > 0) return apiError(c, 400, messages.length === 1 ? messages[0] : 'Check the highlighted fields.', fields);
 
-    // 5. Price it here; never trust a client-side estimate.
+    // 7. Price it here; never trust a client-side estimate.
     const est = estimate({ date: input.date, space: input.space, hours: input.hours, eventType: input.eventType }, undefined, today);
-    const conflict = conflictNote(ctx, input.date, input.space);
+    const clash = repo.conflictingBlocks(input.date, input.space)[0];
+    const conflict = clash ? inquiryText.conflict(input.date, clash) : null;
     const userAgent = (c.req.header('user-agent') ?? '').slice(0, 400) || null;
 
     let id = 0;
@@ -227,8 +266,9 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
             },
             stamp,
           );
-          repo.addEvent(newId, 'created', 'Request received through the website.', stamp);
+          repo.addEvent(newId, 'created', inquiryText.created, stamp);
           if (conflict) repo.addEvent(newId, 'block', conflict, stamp);
+          repo.recordFormTokenUse(check.nonce, newId, fingerprint, stamp, iso(nowMs - FORM_TOKEN_MAX_AGE_MS));
           return newId;
         })();
       } catch (err) {

@@ -34,6 +34,8 @@ export interface Config {
   mailFrom: string;
   notifyTo: string;
   outboxDir: string;
+  /** Delete outbox files after this many days; null keeps them (the default). */
+  outboxRetentionDays: number | null;
   admin: { email: string; password: string; name: string } | null;
 }
 
@@ -131,6 +133,7 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
     mailFrom: str(env, 'MAIL_FROM', `${site.name} <${site.contact.email}>`),
     notifyTo: str(env, 'NOTIFY_TO', site.contact.email),
     outboxDir: path.resolve(str(env, 'OUTBOX_DIR', './data/outbox')),
+    outboxRetentionDays: int(env, 'OUTBOX_RETENTION_DAYS', 0) || null,
     admin:
       adminEmail && adminPassword
         ? { email: adminEmail.toLowerCase(), password: adminPassword, name: str(env, 'ADMIN_NAME', site.contact.contactName) }

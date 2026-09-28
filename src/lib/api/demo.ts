@@ -30,7 +30,6 @@ import type {
   InquiryStatus,
   SpaceChoice,
 } from '../../shared/types';
-import { OTHER_EVENT, eventTypes } from '../../data/event-types';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_NAME, DEMO_ADMIN_PASSWORD } from './demo-credentials';
 import { DEMO_DB_VERSION, blockLabelFor, buildSeed, eventLabel, timelineText, type DemoDb } from './demo-seed';
 import type { VenueApi } from './types';
@@ -57,11 +56,15 @@ const SPACE_PHRASE: Record<SpaceChoice, string> = {
  * so the demo and production read identically.
  */
 export const demoMessages = {
-  invalid: 'Check the highlighted fields and try again.',
+  /** More than one field is wrong (with one, that field's own message is the error). */
+  invalid: 'Check the highlighted fields.',
   honeypot: 'We could not send your request. Call us and we will help.',
-  formExpired: 'This form expired. Reload the page and try again.',
-  pastDate: 'That date has passed. Choose another.',
-  unknownEventType: 'Choose the kind of event.',
+  formExpired: 'This form has expired. Refresh the page and send your request again.',
+  pastDate: 'Choose a date that has not passed.',
+  pastAltDate: 'Choose an alternate date that has not passed.',
+  /** The same words as DATE_TOO_FAR in shared/schemas.ts (not imported: see loadSchemas). */
+  tooFar: 'Choose a date within the next two years.',
+  altTooFar: 'Choose an alternate date within the next two years.',
   badRange: 'Choose a valid date range.',
   signedOut: 'Your session ended. Sign in again.',
   badLogin: 'That email and password do not match.',
@@ -69,7 +72,15 @@ export const demoMessages = {
   blockNotFound: 'We could not find that calendar block.',
   passwordDemo: 'Password changes are turned off in the demo.',
   blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_PHRASE[space]}.`,
+  /** Mark Booked refused because another block is in the way (the server's 409). */
+  bookClash: timelineText.booked.clash,
 };
+
+/** The server's rule for a validation failure: one field's own message, or a general one. */
+function invalid(fields: Record<string, string>): ApiError {
+  const messages = Object.values(fields);
+  return fail(messages.length === 1 ? messages[0] : demoMessages.invalid, fields);
+}
 
 const OPEN_STATUSES: InquiryStatus[] = ['new', 'contacted', 'visit', 'quoted'];
 const UPCOMING_BOOKED_LIMIT = 5;
@@ -232,8 +243,6 @@ const adminUser = (): AdminUser => ({ id: 1, email: DEMO_ADMIN_EMAIL, name: DEMO
 
 const blank = (value: string | undefined): string | undefined => (value && value.trim() !== '' ? value : undefined);
 
-const isKnownEventType = (slug: string) => slug === OTHER_EVENT.slug || eventTypes.some((e) => e.slug === slug);
-
 /** Whether two space choices overlap: 'both' overlaps everything. */
 const overlaps = (a: SpaceChoice, b: SpaceChoice) => a === 'both' || b === 'both' || a === b;
 
@@ -246,18 +255,22 @@ function conflictFor(db: DemoDb, date: DateKey, space: SpaceChoice, ignoreId?: n
 }
 
 function toInquiry(detail: InquiryDetail): Inquiry {
-  const copy: Partial<InquiryDetail> = { ...detail };
+  const copy: Partial<DemoInquiryDetail> = { ...detail };
   delete copy.estimate;
   delete copy.notes;
   delete copy.events;
+  delete copy.blocks;
   return copy as Inquiry;
 }
 
 const byCreatedDesc = (a: Inquiry, b: Inquiry) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : b.id - a.id);
 const byDate = (a: CalendarBlock, b: CalendarBlock) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id);
 
-function detailOf(record: InquiryDetail): InquiryDetail {
-  const out = clone(record);
+/** InquiryDetail plus its linked calendar blocks, as the API server returns it. */
+export type DemoInquiryDetail = InquiryDetail & { blocks: CalendarBlock[] };
+
+function detailOf(db: DemoDb, record: InquiryDetail): DemoInquiryDetail {
+  const out: DemoInquiryDetail = { ...clone(record), blocks: db.blocks.filter((b) => b.inquiryId === record.id).sort(byDate).map((b) => ({ ...b })) };
   out.notes.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id - b.id));
   out.events.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id - b.id));
   return out;
@@ -274,32 +287,63 @@ function randomHex(bytes: number): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** When an inquiry is marked booked: make sure it is on the calendar as booked. */
-function ensureBookedBlock(db: DemoDb, record: InquiryDetail, at: string): void {
-  const linked = db.blocks.find((b) => b.inquiryId === record.id);
-  if (linked) {
-    if (linked.kind !== 'booked') {
-      linked.kind = 'booked';
-      addEvent(db, record, 'block', timelineText.blockUpgraded(linked.date), at);
-    }
-    return;
+type Part = 'indoor' | 'outdoor';
+const partsOf = (space: SpaceChoice): Part[] => (space === 'both' ? ['indoor', 'outdoor'] : [space]);
+const spaceOf = (parts: Part[]): SpaceChoice | null => (parts.length === 2 ? 'both' : (parts[0] ?? null));
+
+type BookingPlan = { ok: true; upgrade: CalendarBlock[]; add: SpaceChoice | null } | { ok: false; clash: CalendarBlock };
+
+/**
+ * What marking a request booked must change so every space it asked for is taken on the
+ * calendar; the same rule as planBooking() in server/routes/admin.ts. Linked booked or held
+ * blocks cover the request; any other block on what they leave uncovered is a clash.
+ */
+function planBooking(db: DemoDb, record: InquiryDetail): BookingPlan {
+  const mine = db.blocks.filter((b) => b.inquiryId === record.id && b.date === record.date && overlaps(b.space, record.space) && b.kind !== 'closed');
+  const covered = new Set(mine.flatMap((b) => partsOf(b.space)));
+  const add = spaceOf(partsOf(record.space).filter((p) => !covered.has(p)));
+  if (add) {
+    const clash = db.blocks.find((b) => b.date === record.date && overlaps(b.space, add) && !mine.includes(b));
+    if (clash) return { ok: false, clash };
   }
-  const conflict = conflictFor(db, record.date, record.space);
-  if (conflict) {
-    addEvent(db, record, 'block', timelineText.blockSkipped(demoMessages.blockConflict(record.date, sharedSpace(conflict.space, record.space))), at);
-    return;
-  }
-  db.blocks.push({
-    id: db.nextBlockId++,
-    date: record.date,
-    space: record.space,
-    kind: 'booked',
-    label: blockLabelFor(record),
-    inquiryId: record.id,
-    createdAt: at,
-  });
-  addEvent(db, record, 'block', timelineText.blockAdded('booked', record.date), at);
+  return { ok: true, upgrade: mine.filter((b) => b.kind === 'held'), add };
 }
+
+function applyBooking(db: DemoDb, record: InquiryDetail, plan: Extract<BookingPlan, { ok: true }>, at: string): void {
+  const label = blockLabelFor(record);
+  for (const held of plan.upgrade) {
+    held.kind = 'booked';
+    held.label = label;
+    addEvent(db, record, 'block', timelineText.booked.holdUpgraded(record.date), at);
+  }
+  if (plan.add) {
+    db.blocks.push({ id: db.nextBlockId++, date: record.date, space: plan.add, kind: 'booked', label, inquiryId: record.id, createdAt: at });
+    addEvent(db, record, 'block', timelineText.booked.added(record.date, plan.add, record.space), at);
+  }
+}
+
+/** No longer booked: take the request's booked blocks for today and later off the calendar. */
+function releaseBooking(db: DemoDb, record: InquiryDetail, today: DateKey, at: string): void {
+  const released = db.blocks.filter((b) => b.inquiryId === record.id && b.kind === 'booked' && b.date >= today).sort(byDate);
+  if (released.length === 0) return;
+  db.blocks = db.blocks.filter((b) => !released.includes(b));
+  for (const b of released) addEvent(db, record, 'block', timelineText.booked.released(b.date), at);
+}
+
+/** A stable fingerprint of a validated request, without its form token (see requestFingerprint on the server). */
+function fingerprintOf(input: Record<string, unknown>): string {
+  const rest: Record<string, unknown> = { ...input };
+  delete rest.formToken;
+  delete rest.website;
+  return JSON.stringify(
+    Object.keys(rest)
+      .sort()
+      .map((k) => [k, rest[k] ?? null]),
+  );
+}
+
+/** Form tokens older than this are forgotten, like the server's 24-hour token lifetime. */
+const TOKEN_MEMORY_MS = 24 * 3600 * 1000;
 
 /** Run an admin call after the simulated latency, or refuse when signed out. */
 async function admin<T>(fn: (schemas: Schemas) => T | ApiError): Promise<T | ApiError> {
@@ -331,25 +375,37 @@ export const demoApi: VenueApi = {
   },
 
   async submitInquiry(input) {
-    const { inquiryInputSchema, fieldErrors } = await loadSchemas();
+    const { inquiryInputSchema, fieldErrors, latestBookableDate } = await loadSchemas();
     await delay();
     // Honeypot: people never see this field, so anything in it came from a bot.
     const honeypot = (input as { website?: unknown } | null)?.website;
     if (typeof honeypot === 'string' && honeypot.trim() !== '') return fail(demoMessages.honeypot);
 
+    // The form token first, like the server; the formToken field asks the page for a new one.
+    const token = (input as { formToken?: unknown } | null)?.formToken;
+    if (typeof token !== 'string' || !TOKEN_PATTERN.test(token)) return fail(demoMessages.formExpired, { formToken: demoMessages.formExpired });
+
     const parsed = inquiryInputSchema.safeParse(input);
-    if (!parsed.success) return fail(demoMessages.invalid, fieldErrors(parsed.error));
+    if (!parsed.success) return invalid(fieldErrors(parsed.error));
     const data = parsed.data;
 
-    if (!TOKEN_PATTERN.test(data.formToken)) return fail(demoMessages.formExpired);
-    if (!isKnownEventType(data.eventType)) return fail(demoMessages.unknownEventType, { eventType: demoMessages.unknownEventType });
+    // A retry of a request that already went through returns the same reference.
+    const fingerprint = fingerprintOf(data);
+    const earlier = load();
+    const used = earlier.formTokenUses?.[data.formToken];
+    const repeat = used && used.fingerprint === fingerprint ? earlier.inquiries.find((i) => i.id === used.inquiryId) : undefined;
+    if (repeat) return { ok: true as const, reference: repeat.reference, estimate: repeat.estimate, demo: true };
 
     const today = todayKey();
-    if (data.date < today) return fail(demoMessages.pastDate, { date: demoMessages.pastDate });
-    if (data.altDate && data.altDate < today) return fail(demoMessages.pastDate, { altDate: demoMessages.pastDate });
-
+    const latest = latestBookableDate(today);
+    const fields: Record<string, string> = {};
+    if (data.date < today) fields.date = demoMessages.pastDate;
+    else if (data.date > latest) fields.date = demoMessages.tooFar;
+    if (data.altDate && data.altDate < today) fields.altDate = demoMessages.pastAltDate;
+    else if (data.altDate && data.altDate > latest) fields.altDate = demoMessages.altTooFar;
     const tooMany = capacityError(data.space, data.guests);
-    if (tooMany) return fail(tooMany, { guests: tooMany });
+    if (tooMany) fields.guests = tooMany;
+    if (Object.keys(fields).length > 0) return invalid(fields);
 
     const est = estimate({ date: data.date, space: data.space, hours: data.hours, eventType: data.eventType });
 
@@ -387,8 +443,15 @@ export const demoApi: VenueApi = {
         events: [],
       };
       addEvent(db, record, 'created', timelineText.created, now);
+      // Like the server: warn the team when the calendar already shows the space as taken.
+      const clash = conflictFor(db, data.date, data.space);
+      if (clash) addEvent(db, record, 'block', timelineText.conflict(data.date, clash), now);
       addEvent(db, record, 'email', timelineText.demoEmail, now);
       db.inquiries.push(record);
+      const cutoff = new Date(Date.now() - TOKEN_MEMORY_MS).toISOString();
+      const uses = Object.fromEntries(Object.entries(db.formTokenUses ?? {}).filter(([, u]) => u.usedAt >= cutoff));
+      uses[data.formToken] ??= { inquiryId: record.id, fingerprint, usedAt: now };
+      db.formTokenUses = uses;
       return { ok: true as const, reference, estimate: est, demo: true };
     });
   },
@@ -460,8 +523,9 @@ export const demoApi: VenueApi = {
 
     getInquiry: (id) =>
       admin<InquiryDetail>(() => {
-        const record = load().inquiries.find((i) => i.id === id);
-        return record ? detailOf(record) : fail(demoMessages.inquiryNotFound);
+        const db = load();
+        const record = db.inquiries.find((i) => i.id === id);
+        return record ? detailOf(db, record) : fail(demoMessages.inquiryNotFound);
       }),
 
     setStatus: (id, status) =>
@@ -472,14 +536,20 @@ export const demoApi: VenueApi = {
         return mutate((db) => {
           const record = db.inquiries.find((i) => i.id === id);
           if (!record) return fail(demoMessages.inquiryNotFound);
+          // Booked means every requested space is taken on the calendar; refuse, changing
+          // nothing, when another block is in the way (the server answers 409).
+          const plan = next === 'booked' ? planBooking(db, record) : null;
+          if (plan && !plan.ok) return fail(demoMessages.bookClash(record.date, plan.clash));
           const now = new Date().toISOString();
-          if (record.status !== next) {
-            addEvent(db, record, 'status', timelineText.status(record.status, next), now);
+          const was = record.status;
+          if (was !== next) {
+            addEvent(db, record, 'status', timelineText.status(was, next), now);
             record.status = next;
             record.updatedAt = now;
           }
-          if (next === 'booked') ensureBookedBlock(db, record, now);
-          return detailOf(record);
+          if (plan?.ok) applyBooking(db, record, plan, now);
+          else if (was === 'booked' && next !== 'booked') releaseBooking(db, record, todayKey(), now);
+          return detailOf(db, record);
         });
       }),
 
@@ -494,7 +564,7 @@ export const demoApi: VenueApi = {
           record.notes.push({ id: db.nextEntryId++, body: parsed.data.body, author: DEMO_ADMIN_NAME, createdAt: now });
           addEvent(db, record, 'note', timelineText.note(DEMO_ADMIN_NAME), now);
           record.updatedAt = now;
-          return detailOf(record);
+          return detailOf(db, record);
         });
       }),
 

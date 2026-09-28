@@ -49,7 +49,14 @@ export interface ServerContext {
   log: Logger;
   tasks: Tasks;
   hashIp: (ip: string) => string;
-  limits: { login: RateLimiter; password: RateLimiter };
+  limits: {
+    /** Sign-in attempts per client network and account. */
+    login: RateLimiter;
+    /** Sign-in attempts per client network, whatever email is tried. */
+    loginIp: RateLimiter;
+    /** Current-password checks per admin. */
+    password: RateLimiter;
+  };
 }
 
 export const iso = (ms: number) => new Date(ms).toISOString();
@@ -78,6 +85,57 @@ export function clientIp(c: AppContextT, trustProxy: boolean): string {
   }
   return c.env?.incoming?.socket?.remoteAddress ?? 'unknown';
 }
+
+const DOTTED_QUAD = /^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})$/;
+const HEXTET = /^[0-9a-f]{1,4}$/;
+
+/** The eight 16-bit groups of an IPv6 address, or null when it does not parse. */
+function ipv6Groups(address: string): number[] | null {
+  let ip = address;
+  // A trailing dotted quad (::ffff:192.0.2.1, 64:ff9b::192.0.2.1) is the last two groups.
+  const lastColon = ip.lastIndexOf(':');
+  const quad = DOTTED_QUAD.exec(ip.slice(lastColon + 1));
+  if (quad) {
+    const [a, b, c, d] = quad.slice(1).map(Number);
+    if ([a, b, c, d].some((n) => n > 255)) return null;
+    ip = `${ip.slice(0, lastColon + 1)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const halves = ip.split('::');
+  if (halves.length > 2) return null;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const fill = 8 - head.length - tail.length;
+  if (halves.length === 1 ? fill !== 0 : fill < 0) return null;
+  const groups = [...head, ...Array<string>(fill).fill('0'), ...tail];
+  if (!groups.every((g) => HEXTET.test(g))) return null;
+  return groups.map((g) => parseInt(g, 16));
+}
+
+/**
+ * The rate-limit bucket for a client address. IPv4 (including IPv4-mapped IPv6) is kept as is;
+ * IPv6 is cut to its /64, because one home or server usually holds a whole /64 and could
+ * otherwise rotate addresses to get a fresh allowance on every request.
+ */
+export function ipBucket(address: string): string {
+  let ip = address.trim().toLowerCase();
+  if (ip.startsWith('[') && ip.endsWith(']')) ip = ip.slice(1, -1);
+  const zone = ip.indexOf('%');
+  if (zone >= 0) ip = ip.slice(0, zone);
+  if (!ip.includes(':')) return ip || 'unknown';
+  const groups = ipv6Groups(ip);
+  if (!groups) return ip;
+  // ::ffff:a.b.c.d is an IPv4 client on a dual-stack socket.
+  if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) {
+    return [groups[6] >> 8, groups[6] & 255, groups[7] >> 8, groups[7] & 255].join('.');
+  }
+  return `${groups
+    .slice(0, 4)
+    .map((g) => g.toString(16))
+    .join(':')}::/64`;
+}
+
+/** clientIp() reduced to its rate-limit bucket (see ipBucket). */
+export const clientBucket = (c: AppContextT, trustProxy: boolean): string => ipBucket(clientIp(c, trustProxy));
 
 /** Parse a JSON or form-encoded body into a plain object; null when it cannot be read. */
 export async function readBody(c: AppContextT, allowForm: boolean): Promise<Record<string, unknown> | null> {

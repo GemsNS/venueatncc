@@ -1,6 +1,8 @@
 /**
  * Email templates: table-based HTML with inline styles (renders in Gmail, Outlook, Apple Mail),
- * plus a plain-text version of each. Facts come from src/data/site.ts; prices from the stored estimate.
+ * plus a plain-text version of each. Facts come from src/data/site.ts; prices from the stored
+ * estimate, read as estimate() wrote them: bookingDeposit is due to reserve the date and the
+ * rest (total minus bookingDeposit) is the balance.
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
@@ -30,8 +32,27 @@ const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (m) => ENTITIES[m]);
 
+const CR = String.fromCharCode(13);
+const LINE_SEPARATORS = [CR + NL, CR, String.fromCharCode(0x2028), String.fromCharCode(0x2029)];
+
+/** The lines of a text, whatever line endings it uses. */
+function linesOf(s: string): string[] {
+  let out = s;
+  for (const sep of LINE_SEPARATORS) out = out.split(sep).join(NL);
+  return out.split(NL);
+}
+
 /** Escape, keeping the writer's line breaks. */
-const multiline = (s: string) => s.replace(/\r/g, '').split(NL).map(escapeHtml).join('<br>');
+const multiline = (s: string) => linesOf(s).map(escapeHtml).join('<br>');
+
+/** One line of text: any line breaks become spaces. */
+export const oneLine = (s: string) => linesOf(s).join(' ');
+
+/**
+ * Plain-text value that continues on indented lines, so nothing a guest typed can start a line
+ * of its own and pass for one of our labels (a forged "Email:" row, for example).
+ */
+export const continued = (s: string, indent = '    ') => linesOf(s).join(NL + indent);
 
 const CONTACT_LABEL: Record<ContactPreference, string> = { email: 'Email', phone: 'Phone call', text: 'Text message' };
 const CONTACT_HOW: Record<ContactPreference, string> = { email: 'email', phone: 'phone', text: 'text message' };
@@ -41,7 +62,35 @@ export const eventLabel = (i: Pick<Inquiry, 'eventType' | 'eventTypeOther'>) => 
 export const timeRange = (i: Pick<Inquiry, 'startTime' | 'hours'>) =>
   `${formatTime(i.startTime)} to ${formatTime(addHours(i.startTime, i.hours))} (${i.hours} ${i.hours === 1 ? 'hour' : 'hours'})`;
 const yesNo = (b: boolean) => (b ? 'Yes' : 'No');
-const firstName = (name: string) => name.trim().split(/\s+/)[0] || name.trim();
+
+/** A dialable number for tel: links, the same rule as the admin's dialable(): +1 for 10-digit US numbers. */
+export function dialable(phone: string): string {
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (phone.trim().startsWith('+')) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  return digits;
+}
+
+/**
+ * The money rows under an estimate. estimate() already sets bookingDeposit to the whole total
+ * when the event is inside the balance window, so these rows only read it, never recompute it.
+ */
+export function paymentRows(est: Estimate): [string, string][] {
+  const balance = Math.max(0, est.total - est.bookingDeposit);
+  const rows: [string, string][] = [['Due to reserve the date', formatUSD(est.bookingDeposit)]];
+  if (balance > 0) rows.push(['Balance', formatUSD(balance)]);
+  rows.push(['Refundable damage deposit, returned if there is no damage', formatUSD(est.refundableDeposit)]);
+  return rows;
+}
+
+/** The last step in the guest email, in the site's wording: we confirm availability, then the deposit reserves the date. */
+export function reserveStep(est: Estimate): string {
+  const full = est.total > 0 && est.bookingDeposit >= est.total;
+  return full
+    ? `We confirm availability, then your payment of ${formatUSD(est.bookingDeposit)}, the full amount, reserves the date.`
+    : `We confirm availability, then your booking deposit of ${formatUSD(est.bookingDeposit)} reserves the date.`;
+}
 
 // ---------------------------------------------------------------- HTML building blocks
 
@@ -117,8 +166,7 @@ function estimateTable(est: Estimate): string {
   const rows = [
     ...est.lines.map((l) => line(l.label, formatUSD(l.amount))),
     line('Estimated total', formatUSD(est.total), true),
-    line('Deposit to reserve the date', formatUSD(est.bookingDeposit)),
-    line('Refundable damage deposit, returned after the event', formatUSD(est.refundableDeposit)),
+    ...paymentRows(est).map(([label, amount]) => line(label, amount)),
   ];
   return `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows.join(NL)}</table></td></tr>`;
 }
@@ -138,14 +186,13 @@ function button(href: string, label: string): string {
 
 // ---------------------------------------------------------------- plain text helpers
 
-const textRows = (rows: [string, string][]) => rows.map(([k, v]) => `${k}: ${v}`).join(NL);
+const textRows = (rows: [string, string][]) => rows.map(([k, v]) => `${k}: ${continued(v)}`).join(NL);
 
 function estimateText(est: Estimate): string {
   return [
     ...est.lines.map((l) => `${l.label}: ${formatUSD(l.amount)}`),
     `Estimated total: ${formatUSD(est.total)}`,
-    `Deposit to reserve the date: ${formatUSD(est.bookingDeposit)}`,
-    `Refundable damage deposit, returned after the event: ${formatUSD(est.refundableDeposit)}`,
+    ...paymentRows(est).map(([label, amount]) => `${label}: ${amount}`),
   ].join(NL);
 }
 
@@ -161,9 +208,13 @@ function footerText(origin: string): string {
 
 // ---------------------------------------------------------------- the two emails
 
-function eventRows(i: Inquiry): [string, string][] {
+/**
+ * The request summary. The guest's copy names the event type from our list only: the form
+ * sends the confirmation to whatever address was typed in, so it never repeats free text.
+ */
+function eventRows(i: Inquiry, audience: 'venue' | 'guest'): [string, string][] {
   const rows: [string, string][] = [
-    ['Event', eventLabel(i)],
+    ['Event', audience === 'venue' ? eventLabel(i) : eventTypeName(i.eventType)],
     ['Date', formatLong(i.date)],
   ];
   if (i.altDate) rows.push(['Alternate date', formatLong(i.altDate)]);
@@ -173,9 +224,10 @@ function eventRows(i: Inquiry): [string, string][] {
 
 /** To the venue team: everything the guest sent, with Reply-To set to the guest. */
 export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailContext & { conflict?: string | null }): RenderedEmail {
-  const subject = `New inquiry ${i.reference}: ${eventLabel(i)}, ${formatLong(i.date)}`;
+  const name = oneLine(i.name);
+  const subject = `New inquiry ${i.reference}: ${oneLine(eventLabel(i))}, ${formatLong(i.date)}`;
   const detailRows: [string, string][] = [
-    ...eventRows(i),
+    ...eventRows(i, 'venue'),
     ['Serving alcohol', yesNo(i.servingAlcohol)],
     ['Wants a visit', yesNo(i.wantsVisit)],
   ];
@@ -184,16 +236,16 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
   if (i.phone) contactRows.push(['Phone', i.phone]);
   contactRows.push(['Prefers', CONTACT_LABEL[i.contactPreference]]);
 
-  const esc = (rows: [string, string][]) => rows.map(([k, v]) => [k, escapeHtml(v)] as [string, string]);
+  const esc = (rows: [string, string][]) => rows.map(([k, v]) => [k, multiline(v)] as [string, string]);
   const contactHtml = contactRows.map(([k, v]): [string, string] => {
     if (k === 'Email') return [k, `<a href="mailto:${escapeHtml(v)}" style="color:${PURPLE};">${escapeHtml(v)}</a>`];
-    if (k === 'Phone') return [k, `<a href="tel:${escapeHtml(v.replace(/[^0-9+]/g, ''))}" style="color:${PURPLE};">${escapeHtml(v)}</a>`];
-    return [k, escapeHtml(v)];
+    if (k === 'Phone') return [k, `<a href="tel:${escapeHtml(dialable(v))}" style="color:${PURPLE};">${escapeHtml(v)}</a>`];
+    return [k, multiline(v)];
   });
 
   const body = [
     heading('New booking inquiry'),
-    paragraph(`${escapeHtml(i.name)} sent a request through the website. Reply to this email to answer them directly.`),
+    paragraph(`${escapeHtml(name)} sent a request through the website. Reply to this email to answer them directly.`),
     referenceBox(i.reference),
     ctx.conflict
       ? paragraph(`<strong style="color:${PURPLE};">Heads up:</strong> ${escapeHtml(ctx.conflict)}`)
@@ -206,13 +258,14 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     i.message ? paragraph(multiline(i.message)) : '',
     sectionTitle('Estimate shown to the guest'),
     estimateTable(est),
+    bulletList(est.notes),
     button(`${ctx.origin}/admin/`, 'Open Admin'),
   ].join(NL);
 
   const text = [
     `New booking inquiry ${i.reference}`,
     '',
-    `${i.name} sent a request through the website. Reply to this email to answer them directly.`,
+    `${name} sent a request through the website. Reply to this email to answer them directly.`,
     ...(ctx.conflict ? ['', `Heads up: ${ctx.conflict}`] : []),
     '',
     'EVENT',
@@ -220,10 +273,12 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     '',
     'CONTACT',
     textRows(contactRows),
-    ...(i.message ? ['', 'MESSAGE', i.message] : []),
+    // The guest's own words, indented so no line can pass for one of ours.
+    ...(i.message ? ['', 'MESSAGE', `    ${continued(i.message)}`] : []),
     '',
     'ESTIMATE SHOWN TO THE GUEST',
     estimateText(est),
+    ...est.notes.map((n) => `* ${n}`),
     '',
     `Open the admin: ${ctx.origin}/admin/`,
     '',
@@ -232,29 +287,34 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
 
   return {
     subject,
-    html: layout({ preheader: `${i.name}, ${formatLong(i.date)}, ${i.guests} guests, ${spaceLabel(i.space)}`, body, origin: ctx.origin }),
+    html: layout({ preheader: `${name}, ${formatLong(i.date)}, ${i.guests} guests, ${spaceLabel(i.space)}`, body, origin: ctx.origin }),
     text,
   };
 }
 
-/** To the guest: reference, summary, estimate, deposit, and what happens next. */
+/**
+ * To the guest: reference, summary, estimate, deposit, and what happens next. The form sends
+ * this to whatever address was typed in, so it repeats nothing the sender wrote: no name, and
+ * the event type only as named in our own list.
+ */
 export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailContext): RenderedEmail {
   const subject = `We received your request (${i.reference})`;
   const how = CONTACT_HOW[i.contactPreference];
   const steps = [
-    `${site.contact.contactName} from our team will contact you by ${how} to confirm the date and details.`,
+    `${site.contact.contactName} from our team will contact you by ${how} about your date and details.`,
     ...(i.wantsVisit ? ['We will find a time for your visit to see the space.'] : []),
-    `Your date is reserved once we confirm it with you and receive the ${formatUSD(est.bookingDeposit)} deposit.`,
+    reserveStep(est),
   ];
-  const intro = `We received your request for ${formatLong(i.date)}. Your date is not reserved yet. We will be in touch to confirm it.`;
+  const intro = `We received your request for ${formatLong(i.date)}. Your date is not reserved yet. We will be in touch to confirm availability.`;
+  const thanks = 'Thank you for your request.';
 
   const body = [
-    heading(`Thank you, ${firstName(i.name)}.`),
+    heading(thanks),
     paragraph(escapeHtml(intro)),
     referenceBox(i.reference),
     paragraph(`<span style="color:${MUTED};font-size:14px;">Mention this reference when you call or write to us.</span>`),
     sectionTitle('Your request'),
-    detailTable(eventRows(i).map(([k, v]) => [k, escapeHtml(v)])),
+    detailTable(eventRows(i, 'guest').map(([k, v]) => [k, escapeHtml(v)])),
     sectionTitle('Your estimate'),
     estimateTable(est),
     bulletList(est.notes),
@@ -270,7 +330,7 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
   ].join(NL);
 
   const text = [
-    `Thank you, ${firstName(i.name)}.`,
+    thanks,
     '',
     intro,
     '',
@@ -278,7 +338,7 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     'Mention this reference when you call or write to us.',
     '',
     'YOUR REQUEST',
-    textRows(eventRows(i)),
+    textRows(eventRows(i, 'guest')),
     '',
     'YOUR ESTIMATE',
     estimateText(est),

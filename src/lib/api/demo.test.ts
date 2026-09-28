@@ -11,11 +11,12 @@ import { CSV_COLUMNS } from '../../shared/csv';
 import { addDays, dayOfWeek, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
 import { referencePattern } from '../../shared/reference';
+import { DATE_TOO_FAR, latestBookableDate } from '../../shared/schemas';
 import { INQUIRY_STATUSES } from '../../shared/types';
 import type { InquiryInput, SpaceChoice } from '../../shared/types';
-import { DEMO_STORAGE_KEY, demoApi as api, demoMessages, resetDemoData, setDemoLatency } from './demo';
+import { DEMO_STORAGE_KEY, demoApi as api, demoMessages, resetDemoData, setDemoLatency, type DemoInquiryDetail } from './demo';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from './demo-credentials';
-import { blockLabelFor } from './demo-seed';
+import { blockLabelFor, timelineText } from './demo-seed';
 import { isError, type Result } from './types';
 
 function memoryStorage(): Storage {
@@ -144,6 +145,7 @@ test('submitInquiry enforces capacity, past dates, validation, and the form toke
   const forged = await api.submitInquiry(await validInput({ formToken: 'x'.repeat(20) }));
   assert.ok(isError(forged));
   assert.equal(forged.error, demoMessages.formExpired);
+  assert.ok(forged.fields?.formToken, 'the formToken field asks the page for a new token');
 });
 
 test('admin calls need a session; login fails generically and then succeeds', async () => {
@@ -220,6 +222,37 @@ test('the submitted inquiry is stored as new and found by filters and search', a
   assert.ok(isError(await api.admin.getInquiry(99999)));
 });
 
+test('submitInquiry applies the same rules as the server: event types, phone digits, one-line fields, two-year window', async () => {
+  const unknown = await api.submitInquiry(await validInput({ eventType: 'rave-party' }));
+  assert.ok(isError(unknown));
+  assert.equal(unknown.error, 'Choose the kind of event.');
+  assert.equal(unknown.fields?.eventType, 'Choose the kind of event.');
+
+  const shortPhone = await api.submitInquiry(await validInput({ contactPreference: 'text', phone: '1' }));
+  assert.ok(isError(shortPhone));
+  assert.equal(shortPhone.fields?.phone, 'Enter your phone number with the area code.');
+
+  const crlf = await api.submitInquiry(await validInput({ name: 'Eve' + String.fromCharCode(13, 10) + 'Bcc: x@example.net' }));
+  assert.ok(isError(crlf));
+  assert.equal(crlf.fields?.name, 'Remove line breaks and special characters.');
+
+  const far = await api.submitInquiry(await validInput({ date: addDays(latestBookableDate(today), 1) }));
+  assert.ok(isError(far));
+  assert.equal(far.fields?.date, DATE_TOO_FAR);
+  assert.equal(demoMessages.tooFar, DATE_TOO_FAR);
+  ok(await api.submitInquiry(await validInput({ date: latestBookableDate(today), name: 'Last Day' })));
+});
+
+test('a retried request with the same token returns the first reference', async () => {
+  // A week after quietWednesday, so later tests that block quietWednesday are unaffected.
+  const input = await validInput({ name: 'Riley Retry', email: 'riley.retry@example.com', date: addDays(quietWednesday, 7) });
+  const first = ok(await api.submitInquiry(input));
+  const again = ok(await api.submitInquiry(input));
+  assert.equal(again.reference, first.reference);
+  const edited = ok(await api.submitInquiry({ ...input, guests: 60 }));
+  assert.notEqual(edited.reference, first.reference);
+});
+
 test('marking an inquiry booked adds a booked block once, and upgrades a linked hold', async () => {
   const all = ok(await api.admin.listInquiries({ status: 'all' }));
   const blocks = ok(await api.admin.listBlocks(today, future(365)));
@@ -293,15 +326,74 @@ test('createBlock rejects a date whose space is already blocked', async () => {
   assert.equal(freed.status, 'open');
 });
 
+test('a request for a taken space is accepted with the same conflict warning as the server', async () => {
+  const date = addDays(quietWednesday, 14);
+  ok(await api.admin.createBlock({ date, space: 'both', kind: 'booked', label: 'Smith wedding' }));
+  const created = ok(await api.submitInquiry(await validInput({ date, space: 'outdoor', name: 'Conflict Case' })));
+  const [mine] = ok(await api.admin.listInquiries({ q: created.reference }));
+  const detail = ok(await api.admin.getInquiry(mine.id));
+  const events = detail.events.map((e) => e.detail);
+  assert.equal(events[0], 'Request received through the website.');
+  assert.ok(events.includes(timelineText.conflict(date, { kind: 'booked', label: 'Smith wedding', space: 'both' })));
+  assert.ok(events.some((e) => e.includes('Smith wedding') && e.startsWith('The calendar already shows')));
+});
+
+test('Mark Booked with another block on part of the request is refused, and nothing changes', async () => {
+  const date = addDays(quietWednesday, 21);
+  ok(await api.admin.createBlock({ date, space: 'indoor', kind: 'held', label: 'Smith family hold' }));
+  const created = ok(await api.submitInquiry(await validInput({ date, space: 'both', guests: 140, name: 'Partial Clash' })));
+  const [mine] = ok(await api.admin.listInquiries({ q: created.reference }));
+  const res = await api.admin.setStatus(mine.id, 'booked');
+  assert.ok(isError(res));
+  assert.match(res.error, /already has a held block for indoor hall [(]Smith family hold[)][.] Remove or change that block on the calendar, then mark this request booked[.]/);
+  const detail = ok(await api.admin.getInquiry(mine.id));
+  assert.equal(detail.status, 'new');
+  assert.equal(ok(await api.admin.listBlocks(date, date)).length, 1);
+  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', outdoor: 'free' });
+});
+
+test('Mark Booked with a linked hold on one space upgrades it and adds the rest; unbooking reopens the date', async () => {
+  const date = addDays(quietWednesday, 28);
+  const created = ok(await api.submitInquiry(await validInput({ date, space: 'both', guests: 140, name: 'Pat Partial' })));
+  const [mine] = ok(await api.admin.listInquiries({ q: created.reference }));
+  ok(await api.admin.createBlock({ date, space: 'indoor', kind: 'held', label: 'Pat hold', inquiryId: mine.id }));
+
+  const booked = ok(await api.admin.setStatus(mine.id, 'booked')) as DemoInquiryDetail;
+  assert.equal(booked.status, 'booked');
+  assert.deepEqual(booked.blocks.map((b) => [b.space, b.kind]).sort(), [
+    ['indoor', 'booked'],
+    ['outdoor', 'booked'],
+  ]);
+  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', outdoor: 'taken' });
+
+  const declined = ok(await api.admin.setStatus(mine.id, 'declined')) as DemoInquiryDetail;
+  assert.equal(declined.status, 'declined');
+  assert.deepEqual(declined.blocks, []);
+  assert.ok(declined.events.some((e) => e.detail === timelineText.booked.released(date)));
+  assert.equal(ok(await api.availability(date, date)).days[0].status, 'open');
+
+  // Booked again: the block comes back, and the detail shows it.
+  const rebooked = ok(await api.admin.setStatus(mine.id, 'booked')) as DemoInquiryDetail;
+  assert.equal(rebooked.blocks.length, 1);
+  assert.equal(rebooked.blocks[0].space, 'both');
+  const listed = ok(await api.admin.listInquiries({ q: created.reference }));
+  assert.ok(!('blocks' in listed[0]), 'list rows stay plain inquiries');
+});
+
 test('exportCsv returns a text/csv Blob that starts with the shared header', async () => {
   const blob = ok(await api.admin.exportCsv());
   assert.ok(blob instanceof Blob);
   assert.equal(blob.type, 'text/csv');
-  const text = await blob.text();
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  assert.deepEqual([...bytes.slice(0, 3)], [0xef, 0xbb, 0xbf], 'UTF-8 byte order mark for Excel');
+  const text = (await blob.text()).replace(String.fromCharCode(0xfeff), '');
   const lines = text.split(String.fromCharCode(13, 10));
   assert.equal(lines[0], CSV_COLUMNS.map((c) => c.label).join(','));
   const all = ok(await api.admin.listInquiries({ status: 'all' }));
   assert.equal(lines.filter((l) => l.length > 0).length, all.length + 1);
+  assert.ok(text.includes(',Birthdays & milestones,'), 'event types by name');
+  assert.ok(text.includes(',Indoor hall,'), 'spaces by name');
+  assert.ok(!/,birthday-parties,|,indoor,/.test(text));
 });
 
 test('password changes are turned off in the demo', async () => {

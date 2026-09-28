@@ -129,7 +129,7 @@ AWS Lightsail; usually $5 to $12 a month). With 1 GB of memory, add swap so the 
    request Booked. The date should show as taken on the public calendar.
 
 8. **Remove `ADMIN_PASSWORD` from `.env`** and run `docker compose up -d` so it is no longer in the
-   container's environment.
+   container's environment. Until you do, the log shows a warning at every start.
 
 The app restarts automatically after crashes and reboots (`restart: unless-stopped`). The database,
 outbox, and backups live in the `venue-data` Docker volume, and Caddy's certificates in `caddy-data`.
@@ -184,8 +184,19 @@ After launch, submit `https://venueatncc.org/sitemap-index.xml` in Google Search
   On a development machine: `npm run admin:create -- --email someone@example.com --name "Their Name"`.
 - If the email already exists, its password (and name, if given) is updated and that admin is signed out
   everywhere. Passwords need at least 12 characters.
-- Admins sign in at `/admin/`. Sessions last 14 days. Changing your password in the admin signs out your
-  other devices. After 10 wrong passwords in 15 minutes, sign-in from that address pauses for 15 minutes.
+- Admins sign in at `/admin/`. Sessions last 14 days, and end sooner after 12 hours without use.
+  Changing your password in the admin signs out every session, then signs this browser back in with a
+  new one.
+- Sign-in limits, per address (an IPv6 network counts as one address): after 10 wrong passwords for one
+  account in 15 minutes, or 20 sign-in attempts with any emails, sign-in from that address pauses for
+  15 minutes. Passwords are hashed with scrypt at OWASP's recommended strength; older hashes are
+  upgraded the next time that admin signs in. If many sign-ins arrive at once, the server answers
+  "Sign-in is busy right now" for a moment rather than slow the whole site down.
+- **Marking a request Booked** blocks every space it asked for on the public calendar. If another
+  calendar block already covers any of those spaces on that date, the admin refuses and names the
+  block: remove or change it on the calendar first. A hold linked to the request is turned into the
+  booking. Moving a Booked request to another status takes its booked block off the calendar (for
+  dates from today on), so the date is open again.
 
 ## 5. Checking the email outbox
 
@@ -204,6 +215,16 @@ docker compose cp app:/app/data/outbox ./outbox      # copy them to the server's
 Every send attempt is recorded (sent, saved to the outbox, or failed with the error) in the `email_log`
 table and on the request's timeline in the admin. An email problem never loses a booking request: the
 request is saved first, and emails go out right after.
+
+The files hold guests' names, email addresses, and phone numbers, and only the app's user can read
+them. Nothing is deleted automatically. Once SMTP is sending, set `OUTBOX_RETENTION_DAYS` (for
+example `90`) in `.env` to delete outbox files older than that. The requests themselves stay in the
+database until you remove them; decide how long to keep declined and archived requests, and note it
+alongside your backup routine.
+
+**Guest confirmations are capped at 50 an hour** across all visitors, because the form mails whatever
+address is typed in. Past that, the venue notification still arrives and the request's timeline says
+the confirmation was not sent, so you can contact the guest yourself.
 
 ## 6. Backups and restores
 
@@ -268,7 +289,7 @@ for `/app/data`. Run a single instance: SQLite is one file on one disk.
 
   [Service]
   WorkingDirectory=/opt/venueatncc
-  Environment=NODE_ENV=production TRUST_PROXY=true HOST=127.0.0.1
+  Environment=NODE_ENV=production TRUST_PROXY=true HOST=127.0.0.1 UV_THREADPOOL_SIZE=8
   ExecStart=/usr/bin/node server-dist/index.mjs
   Restart=always
   User=venue
@@ -278,6 +299,17 @@ for `/app/data`. Run a single instance: SQLite is one file on one disk.
   ```
 
   The CLI tools run with `npx tsx server/cli/create-admin.ts ...` and `npx tsx server/cli/backup.ts`.
+
+**Client addresses and rate limits.** Sign-in and booking-request limits count per client address, so
+the app must see the real one. Set `TRUST_PROXY=true` only when exactly one proxy you control sits in
+front of the app and the app is not reachable any other way (Compose does this: the app has no
+published port). If a CDN such as Cloudflare sits in front of Caddy, add the CDN's address ranges to
+the Caddyfile (`reverse_proxy app:8787 { trusted_proxies ... }`), or every visitor shares the CDN's few
+addresses and one person's failed sign-ins lock out everyone.
+
+**Slow clients.** The app ends a request whose headers take more than 10 seconds or whose whole request
+takes more than 15, and the Caddyfile sets the same limits in front of it, so a client that trickles a
+request cannot hold connections open for minutes.
 
 Static-only hosts (GitHub Pages, Netlify, Cloudflare Pages, Vercel's static hosting) can serve the pages
 but not the booking API, admin, or database. That is why the public demo uses the in-browser backend.
@@ -307,4 +339,10 @@ Without SMTP settings, emails land in `data/outbox/`. For a production-like run 
   saved to the outbox, or failed with the reason. Check the spam folder and the SPF, DKIM, and DMARC
   records from [section 1](#1-before-you-start-email).
 - **Guests see "You have sent several requests already":** each address may send 5 requests an hour and
-  20 a day. This only affects repeated submissions from the same network.
+  20 a day (an IPv6 network counts as one address). This only affects repeated submissions from the
+  same network. A retry of a request that already went through is not counted: it gets the same
+  reference back.
+- **"Too many sign-in attempts" for everyone at once:** the app is behind a proxy but `TRUST_PROXY` is
+  false, so all visitors share one address. See [Client addresses](#8-other-hosts) above.
+- **Mark Booked says the date "already has a ... block":** another calendar block covers one of the
+  spaces the request asked for. Remove or change it on the calendar, then mark the request booked.

@@ -10,16 +10,20 @@ import { inquiriesToCsv } from '../../src/shared/csv';
 import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
 import { availabilityQuerySchema, blockInputSchema, fieldErrors, loginSchema, noteInputSchema, passwordChangeSchema, statusUpdateSchema } from '../../src/shared/schemas';
 import { INQUIRY_STATUSES } from '../../src/shared/types';
-import type { AdminUser, BlockKind, Inquiry, InquiryListQuery, InquiryStatus } from '../../src/shared/types';
-import { apiError, clientIp, iso, MUTATING_METHODS, readBody, type AppContextT, type AppEnv, type ServerContext } from '../context';
+import type { AdminUser, BlockKind, CalendarBlock, DateKey, Inquiry, InquiryListQuery, InquiryStatus, SpaceChoice } from '../../src/shared/types';
+import { apiError, clientIp, ipBucket, iso, MUTATING_METHODS, readBody, type AppContextT, type AppEnv, type ServerContext } from '../context';
 import { spaceLabel } from '../email/templates';
-import { spacesOverlap } from '../repo';
-import { dummyPasswordHash, hashPassword, newSessionToken, sha256, verifyPassword } from '../security';
+import { spacesOverlap, type Repo } from '../repo';
+import { BusyError, dummyPasswordHash, hashPassword, needsRehash, newSessionToken, sha256, verifyPassword, type RateLimiter } from '../security';
 
-export const SESSION_COOKIE = 'ncc_session';
+/** Without HTTPS (local development) the cookie cannot carry the __Host- prefix. */
+export const sessionCookieName = (secure: boolean) => (secure ? '__Host-ncc_session' : 'ncc_session');
 export const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+/** A session that has not been used for this long ends, even before its 14 days are up. */
+export const SESSION_IDLE_MS = 12 * 60 * 60 * 1000;
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
 const LOGIN_ERROR = 'Email or password is incorrect.';
+const BUSY_ERROR = 'Sign-in is busy right now. Wait a minute, then try again.';
 
 const statusLabel = (s: InquiryStatus) => INQUIRY_STATUSES.find((x) => x.id === s)?.label ?? s;
 const kindLabel: Record<BlockKind, string> = { booked: 'booked', held: 'held', closed: 'closed' };
@@ -34,9 +38,69 @@ export function blockLabelFor(i: Pick<Inquiry, 'name' | 'eventType' | 'eventType
   return `${i.name}: ${eventTypeName(i.eventType, i.eventTypeOther)}`.slice(0, 120);
 }
 
+// ---------------------------------------------------------------- booked requests and the calendar
+
+type Part = 'indoor' | 'outdoor';
+const partsOf = (space: SpaceChoice): Part[] => (space === 'both' ? ['indoor', 'outdoor'] : [space]);
+const spaceOf = (parts: Part[]): SpaceChoice | null => (parts.length === 2 ? 'both' : (parts[0] ?? null));
+
+export type BookingPlan =
+  | { ok: true; /** Linked holds to turn into booked blocks. */ upgrade: CalendarBlock[]; /** The part of the request no linked block covers yet. */ add: SpaceChoice | null }
+  | { ok: false; clash: CalendarBlock };
+
+/**
+ * What marking a request booked must change so the calendar shows every space it asked for as
+ * taken. Blocks linked to the request (booked, or held and upgraded) count as covering it; for
+ * whatever they leave uncovered, any other block on that date and space is a clash, and nothing
+ * is changed.
+ */
+export function planBooking(inquiry: Pick<Inquiry, 'date' | 'space'>, linked: CalendarBlock[], others: CalendarBlock[]): BookingPlan {
+  const mine = linked.filter((b) => b.date === inquiry.date && spacesOverlap(b.space, inquiry.space) && b.kind !== 'closed');
+  const covered = new Set(mine.flatMap((b) => partsOf(b.space)));
+  const add = spaceOf(partsOf(inquiry.space).filter((p) => !covered.has(p)));
+  if (add) {
+    const clash = others.find((b) => b.date === inquiry.date && spacesOverlap(b.space, add) && !mine.some((m) => m.id === b.id));
+    if (clash) return { ok: false, clash };
+  }
+  return { ok: true, upgrade: mine.filter((b) => b.kind === 'held'), add };
+}
+
+export const bookingText = {
+  clash: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'space' | 'label'>) =>
+    `${formatLong(date)} already has a ${kindLabel[b.kind]} block for ${spaceLabel(b.space).toLowerCase()}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
+  holdUpgraded: (date: DateKey) => `The hold on ${formatLong(date)} is now marked booked on the calendar.`,
+  added: (date: DateKey, space: SpaceChoice, requested: SpaceChoice) =>
+    space === requested
+      ? `Added to the calendar as booked for ${formatLong(date)}.`
+      : `Added to the calendar as booked for ${formatLong(date)} (${spaceLabel(space).toLowerCase()}).`,
+  released: (date: DateKey) => `Removed the booked block for ${formatLong(date)} from the calendar, so the date is open again.`,
+};
+
+function applyBooking(repo: Repo, inquiry: Inquiry, plan: Extract<BookingPlan, { ok: true }>, createdBy: number, stamp: string): void {
+  const label = blockLabelFor(inquiry);
+  for (const held of plan.upgrade) {
+    repo.updateBlockKind(held.id, 'booked', label);
+    repo.addEvent(inquiry.id, 'block', bookingText.holdUpgraded(inquiry.date), stamp);
+  }
+  if (plan.add) {
+    repo.insertBlock({ date: inquiry.date, space: plan.add, kind: 'booked', label, inquiryId: inquiry.id, createdBy }, stamp);
+    repo.addEvent(inquiry.id, 'block', bookingText.added(inquiry.date, plan.add, inquiry.space), stamp);
+  }
+}
+
+/** A request is no longer booked: take its booked blocks for today and later off the calendar. */
+function releaseBooking(repo: Repo, inquiry: Inquiry, today: DateKey, stamp: string): void {
+  for (const b of repo.blocksForInquiry(inquiry.id)) {
+    if (b.kind !== 'booked' || b.date < today) continue;
+    repo.deleteBlock(b.id);
+    repo.addEvent(inquiry.id, 'block', bookingText.released(b.date), stamp);
+  }
+}
+
 export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
   const admin = new Hono<AppEnv>();
   const { config, repo, now } = ctx;
+  const SESSION_COOKIE = sessionCookieName(config.secureCookies);
 
   const setSessionCookie = (c: AppContextT, token: string) =>
     setCookie(c, SESSION_COOKIE, token, {
@@ -48,6 +112,26 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     });
   const clearSessionCookie = (c: AppContextT) => deleteCookie(c, SESSION_COOKIE, { path: '/', secure: config.secureCookies, httpOnly: true, sameSite: 'Lax' });
 
+  const startSession = (c: AppContextT, adminId: number, nowMs: number) => {
+    const { token, id } = newSessionToken();
+    repo.createSession(
+      {
+        id,
+        adminId,
+        expiresAt: iso(nowMs + SESSION_TTL_MS),
+        ip: clientIp(c, config.trustProxy).slice(0, 100),
+        userAgent: (c.req.header('user-agent') ?? '').slice(0, 400) || null,
+      },
+      iso(nowMs),
+    );
+    setSessionCookie(c, token);
+  };
+
+  const tooMany = (c: AppContextT, limiter: RateLimiter, key: string, nowMs: number, message: string) => {
+    c.header('Retry-After', String(Math.max(1, Math.ceil(limiter.retryAfterMs(key, nowMs) / 1000))));
+    return apiError(c, 429, message);
+  };
+
   // Guard: X-Requested-With on writes, then the session for everything but login.
   admin.use('*', async (c, next) => {
     if (MUTATING_METHODS.has(c.req.method) && (c.req.header('x-requested-with') ?? '').toLowerCase() !== 'fetch') {
@@ -56,7 +140,7 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (c.req.path === '/api/admin/login') return next();
     const token = getCookie(c, SESSION_COOKIE);
     const nowMs = now();
-    const session = token ? repo.findSession(sha256(token), iso(nowMs)) : null;
+    const session = token ? repo.findSession(sha256(token), iso(nowMs), iso(nowMs - SESSION_IDLE_MS)) : null;
     if (!session) {
       if (token) clearSessionCookie(c);
       return apiError(c, 401, 'Sign in to continue.');
@@ -73,31 +157,40 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     const parsed = loginSchema.safeParse(body ?? {});
     if (!parsed.success) return apiError(c, 400, 'Enter your email and password.', fieldErrors(parsed.error));
     const email = parsed.data.email.trim().toLowerCase();
-    const ip = clientIp(c, config.trustProxy);
-    const key = `${ip}|${email}`;
+    const bucket = ipBucket(clientIp(c, config.trustProxy));
     const nowMs = now();
-    if (ctx.limits.login.blocked(key, nowMs)) {
-      c.header('Retry-After', String(Math.ceil(ctx.limits.login.retryAfterMs(key, nowMs) / 1000)));
-      return apiError(c, 429, 'Too many sign-in attempts. Wait 15 minutes, then try again.');
-    }
+    const tooManyMessage = 'Too many sign-in attempts. Wait 15 minutes, then try again.';
+    // Both limits count the attempt before any await, so a burst of concurrent guesses cannot
+    // all pass the check before one is recorded. The first caps an address across every email.
+    if (!ctx.limits.loginIp.consume(bucket, nowMs)) return tooMany(c, ctx.limits.loginIp, bucket, nowMs, tooManyMessage);
+    const key = sha256(`${bucket}|${email}`);
+    if (!ctx.limits.login.consume(key, nowMs)) return tooMany(c, ctx.limits.login, key, nowMs, tooManyMessage);
+
     const found = repo.findAdminByEmail(email);
-    const valid = await verifyPassword(parsed.data.password, found?.passwordHash ?? (await dummyPasswordHash()));
-    if (!found || !valid) {
-      ctx.limits.login.hit(key, nowMs);
-      return apiError(c, 401, LOGIN_ERROR);
+    let valid: boolean;
+    try {
+      valid = await verifyPassword(parsed.data.password, found?.passwordHash ?? (await dummyPasswordHash()));
+    } catch (err) {
+      if (err instanceof BusyError) return apiError(c, 503, BUSY_ERROR);
+      throw err;
     }
+    if (!found || !valid) return apiError(c, 401, LOGIN_ERROR);
     ctx.limits.login.reset(key);
+
+    // Hashes made with older, weaker settings are replaced now that the password is known.
+    if (needsRehash(found.passwordHash)) {
+      try {
+        repo.updateAdmin(found.id, { passwordHash: await hashPassword(parsed.data.password) }, iso(nowMs));
+      } catch (err) {
+        if (!(err instanceof BusyError)) throw err;
+      }
+    }
 
     // A fresh token on every sign-in; drop the one this browser had, if any.
     const previous = getCookie(c, SESSION_COOKIE);
     if (previous) repo.deleteSession(sha256(previous));
-    const { token, id } = newSessionToken();
-    repo.createSession(
-      { id, adminId: found.id, expiresAt: iso(nowMs + SESSION_TTL_MS), ip, userAgent: (c.req.header('user-agent') ?? '').slice(0, 400) || null },
-      iso(nowMs),
-    );
+    startSession(c, found.id, nowMs);
     repo.recordLogin(found.id, iso(nowMs));
-    setSessionCookie(c, token);
     const user: AdminUser = { id: found.id, email: found.email, name: found.name };
     return c.json(user);
   });
@@ -119,18 +212,29 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     }
     const key = `admin:${session.user.id}`;
     const nowMs = now();
-    if (ctx.limits.password.blocked(key, nowMs)) return apiError(c, 429, 'Too many attempts. Wait 15 minutes, then try again.');
+    // Counted before the password check, like sign-in, so concurrent guesses cannot slip past.
+    if (!ctx.limits.password.consume(key, nowMs)) return tooMany(c, ctx.limits.password, key, nowMs, 'Too many attempts. Wait 15 minutes, then try again.');
     const hash = repo.getAdminHash(session.user.id);
-    if (!hash || !(await verifyPassword(parsed.data.current, hash))) {
-      ctx.limits.password.hit(key, nowMs);
-      return apiError(c, 400, 'Your current password is incorrect.', { current: 'Your current password is incorrect.' });
-    }
-    if (parsed.data.next === parsed.data.current) {
-      return apiError(c, 400, 'Choose a new password that is different from the current one.', { next: 'Choose a new password that is different from the current one.' });
+    let nextHash: string;
+    try {
+      if (!hash || !(await verifyPassword(parsed.data.current, hash))) {
+        return apiError(c, 400, 'Your current password is incorrect.', { current: 'Your current password is incorrect.' });
+      }
+      if (parsed.data.next === parsed.data.current) {
+        return apiError(c, 400, 'Choose a new password that is different from the current one.', { next: 'Choose a new password that is different from the current one.' });
+      }
+      nextHash = await hashPassword(parsed.data.next);
+    } catch (err) {
+      if (err instanceof BusyError) return apiError(c, 503, 'The server is busy. Wait a minute, then try again.');
+      throw err;
     }
     ctx.limits.password.reset(key);
-    repo.updateAdmin(session.user.id, { passwordHash: await hashPassword(parsed.data.next) }, iso(nowMs));
-    repo.deleteOtherSessions(session.user.id, session.sessionId);
+    // Every session ends, this one included; this browser gets a fresh token.
+    repo.db.transaction(() => {
+      repo.updateAdmin(session.user.id, { passwordHash: nextHash }, iso(nowMs));
+      repo.deleteAllSessions(session.user.id);
+    })();
+    startSession(c, session.user.id, nowMs);
     return c.json({ ok: true as const });
   });
 
@@ -164,37 +268,21 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (!parsed.success) return apiError(c, 400, 'Choose a status.', fieldErrors(parsed.error));
     const status = parsed.data.status as InquiryStatus;
     const who = c.get('session').user;
-    const stamp = iso(now());
+    const nowMs = now();
+    const stamp = iso(nowMs);
+
+    // Booked means every requested space is taken on the calendar. Work out the change first,
+    // and refuse (leaving the status as it was) when another block is in the way.
+    const plan = status === 'booked' ? planBooking(current, repo.blocksForInquiry(id), repo.blocksBetween(current.date, current.date)) : null;
+    if (plan && !plan.ok) return apiError(c, 409, bookingText.clash(current.date, plan.clash));
 
     repo.db.transaction(() => {
       if (status !== current.status) {
         repo.setInquiryStatus(id, status, stamp);
         repo.addEvent(id, 'status', `Status changed from ${statusLabel(current.status)} to ${statusLabel(status)} by ${who.name}.`, stamp);
       }
-      if (status !== 'booked') return;
-
-      // Booked: make sure the calendar shows it.
-      const label = blockLabelFor(current);
-      const linked = repo.blocksForInquiry(id).filter((b) => b.date === current.date && spacesOverlap(b.space, current.space));
-      if (linked.some((b) => b.kind === 'booked')) return;
-      const held = linked.find((b) => b.kind === 'held');
-      if (held) {
-        repo.updateBlockKind(held.id, 'booked', label);
-        repo.addEvent(id, 'block', `The hold on ${formatLong(current.date)} is now marked booked on the calendar.`, stamp);
-        return;
-      }
-      const clash = repo.conflictingBlocks(current.date, current.space)[0];
-      if (clash) {
-        repo.addEvent(
-          id,
-          'block',
-          `Not added to the calendar: ${formatLong(current.date)} already has a ${kindLabel[clash.kind]} block for ${spaceLabel(clash.space).toLowerCase()}${clash.label ? ` (${clash.label})` : ''}. Resolve it on the calendar.`,
-          stamp,
-        );
-        return;
-      }
-      repo.insertBlock({ date: current.date, space: current.space, kind: 'booked', label, inquiryId: id, createdBy: who.id }, stamp);
-      repo.addEvent(id, 'block', `Added to the calendar as booked for ${formatLong(current.date)}.`, stamp);
+      if (plan?.ok) applyBooking(repo, current, plan, who.id, stamp);
+      else if (current.status === 'booked' && status !== 'booked') releaseBooking(repo, current, todayKey(new Date(nowMs)), stamp);
     })();
 
     return c.json(repo.getInquiryDetail(id)!);

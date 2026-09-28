@@ -22,6 +22,7 @@ import type {
   InquiryEvent,
   InquiryNote,
   InquiryStatus,
+  SpaceChoice,
 } from '../../shared/types';
 import { DEMO_ADMIN_NAME } from './demo-credentials';
 
@@ -38,6 +39,8 @@ export interface DemoDb {
   nextEntryId: number;
   inquiries: InquiryDetail[];
   blocks: CalendarBlock[];
+  /** Form tokens that already created an inquiry, so a retried request is not stored twice. */
+  formTokenUses?: Record<string, { inquiryId: number; fingerprint: string; usedAt: string }>;
 }
 
 export function statusLabel(status: InquiryStatus): string {
@@ -55,9 +58,17 @@ export function blockLabelFor(inquiry: Pick<Inquiry, 'name' | 'eventType' | 'eve
   return `${inquiry.name}: ${eventLabel(inquiry.eventType, inquiry.eventTypeOther)}`;
 }
 
-/** Timeline wording, shared by the seed and the live demo backend. */
+const SPACE_NAME: Record<SpaceChoice, string> = { indoor: 'Indoor hall', outdoor: 'Outdoor space', both: 'Indoor and outdoor' };
+
+/**
+ * Timeline wording, shared by the seed and the live demo backend. Where the API server records
+ * the same event, the words match it (server/routes/public.ts inquiryText and
+ * server/routes/admin.ts bookingText; server/test/units.test.ts checks they stay equal).
+ */
 export const timelineText = {
-  created: 'Inquiry received from the website.',
+  created: 'Request received through the website.',
+  conflict: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) =>
+    `The calendar already shows ${formatLong(date)} as taken for ${SPACE_NAME[b.space].toLowerCase()} (${b.label ? `${b.kind}: ${b.label}` : b.kind}). Check it before you confirm this request.`,
   emailed: (email: string) => `Confirmation email sent to ${email}. The team was notified.`,
   demoEmail: 'Demo mode: no emails were sent.',
   status: (from: InquiryStatus, to: InquiryStatus) => `Status changed from ${statusLabel(from)} to ${statusLabel(to)}.`,
@@ -68,8 +79,17 @@ export const timelineText = {
       : kind === 'closed'
         ? `Closed on the calendar for ${formatLong(date)}.`
         : `Added to the calendar as booked for ${formatLong(date)}.`,
-  blockUpgraded: (date: DateKey) => `Calendar hold for ${formatLong(date)} changed to booked.`,
-  blockSkipped: (reason: string) => `Not added to the calendar. ${reason}`,
+  /** Marking a request booked: the same words as the API server. */
+  booked: {
+    holdUpgraded: (date: DateKey) => `The hold on ${formatLong(date)} is now marked booked on the calendar.`,
+    added: (date: DateKey, space: SpaceChoice, requested: SpaceChoice) =>
+      space === requested
+        ? `Added to the calendar as booked for ${formatLong(date)}.`
+        : `Added to the calendar as booked for ${formatLong(date)} (${SPACE_NAME[space].toLowerCase()}).`,
+    released: (date: DateKey) => `Removed the booked block for ${formatLong(date)} from the calendar, so the date is open again.`,
+    clash: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) =>
+      `${formatLong(date)} already has a ${b.kind} block for ${SPACE_NAME[b.space].toLowerCase()}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
+  },
   blockRemoved: (date: DateKey) => `Removed from the calendar for ${formatLong(date)}.`,
 };
 

@@ -16,7 +16,9 @@ import { ensureFirstAdmin, loadDotEnv } from './bootstrap';
 import { loadConfig } from './config';
 import { iso, type Logger } from './context';
 import { openDatabase } from './db';
+import { pruneOutbox } from './email/mailer';
 import { Repo } from './repo';
+import { SESSION_IDLE_MS } from './routes/admin';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -41,19 +43,43 @@ async function main(): Promise<void> {
     log.info(`[email] Sending through ${config.smtp?.host}:${config.smtp?.port} as ${config.mailFrom}. Notifications go to ${config.notifyTo}.`);
   }
 
-  const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
-    const shown = config.host === '0.0.0.0' || config.host === '::' ? 'localhost' : config.host;
-    log.info(`[server] ${config.nodeEnv}: listening on http://${shown}:${info.port} (public origin ${config.publicOrigin})`);
-  });
+  const server = serve(
+    {
+      fetch: app.fetch,
+      port: config.port,
+      hostname: config.host,
+      // A client that sends headers or a body very slowly (or never finishes) gives up its
+      // connection after these limits instead of holding it for Node's default 5 minutes.
+      // Node checks these every connectionsCheckingInterval (30 s by default), so check more often.
+      serverOptions: { headersTimeout: 10_000, requestTimeout: 15_000, connectionsCheckingInterval: 2_000 },
+    },
+    (info) => {
+      const shown = config.host === '0.0.0.0' || config.host === '::' ? 'localhost' : config.host;
+      log.info(`[server] ${config.nodeEnv}: listening on http://${shown}:${info.port} (public origin ${config.publicOrigin})`);
+    },
+  );
+  server.maxConnections = 1000;
+
+  if (config.outboxRetentionDays) {
+    log.info(`[email] Outbox files older than ${config.outboxRetentionDays} days are deleted.`);
+  }
 
   const housekeeping = setInterval(() => {
     const t = Date.now();
     try {
-      repo.deleteExpiredSessions(iso(t));
+      repo.deleteExpiredSessions(iso(t), iso(t - SESSION_IDLE_MS));
       ctx.limits.login.prune(t);
+      ctx.limits.loginIp.prune(t);
       ctx.limits.password.prune(t);
     } catch (err) {
       log.error('[housekeeping]', err);
+    }
+    if (config.outboxRetentionDays) {
+      pruneOutbox(config.outboxDir, config.outboxRetentionDays, t)
+        .then((removed) => {
+          if (removed > 0) log.info(`[email] Deleted ${removed} outbox files older than ${config.outboxRetentionDays} days.`);
+        })
+        .catch((err: unknown) => log.error('[housekeeping] outbox', err));
     }
   }, HOUR);
   housekeeping.unref();

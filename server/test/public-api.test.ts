@@ -7,7 +7,9 @@ import { estimate } from '../../src/shared/pricing';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
 import type { AvailabilityResponse, InquiryCreated } from '../../src/shared/types';
-import { createHarness, formToken, freshIp, inquiryBody, ORIGIN, submitInquiry, type Harness } from './helpers';
+import { createHash } from 'node:crypto';
+import { GUEST_CONFIRMATIONS_PER_HOUR } from '../routes/public';
+import { createHarness, formToken, freshIp, HOME_INLINE_SCRIPT, inquiryBody, ORIGIN, submitInquiry, type Harness } from './helpers';
 
 const EM_DASH = String.fromCharCode(8212);
 const EN_DASH = String.fromCharCode(8211);
@@ -155,9 +157,105 @@ describe('public API', () => {
       const fresh = await formToken(h);
       h.clock.advance(5_000);
       const tampered = fresh.replace(/[.][^.]+$/, '.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-      assert.equal((await h.request('/api/inquiries', { body: inquiryBody(h, tampered), ip })).status, 400);
-      assert.equal((await h.request('/api/inquiries', { body: inquiryBody(h, ''), ip })).status, 400);
+      const bad = await h.request('/api/inquiries', { body: inquiryBody(h, tampered), ip });
+      assert.equal(bad.status, 400);
+      // Every token failure names the formToken field, so the page fetches a new token and retries.
+      assert.ok((await bad.json()).fields.formToken);
+      const missing = await h.request('/api/inquiries', { body: inquiryBody(h, ''), ip });
+      assert.equal(missing.status, 400);
+      assert.ok((await missing.json()).fields.formToken);
       assert.equal((await h.request('/api/inquiries', { body: inquiryBody(h, fresh), ip })).status, 201);
+    });
+
+    test('too fast and expired tokens also name the formToken field', async () => {
+      const ip = freshIp();
+      const token = await formToken(h);
+      const fast = await (await h.request('/api/inquiries', { body: inquiryBody(h, token), ip })).json();
+      assert.equal(fast.fields.formToken, fast.error);
+      h.clock.advance(25 * 60 * 60 * 1000);
+      const expired = await (await h.request('/api/inquiries', { body: inquiryBody(h, token), ip })).json();
+      assert.equal(expired.fields.formToken, 'This form has expired. Refresh the page and send your request again.');
+    });
+
+    test('a retry with the same token and details returns the first reference instead of a duplicate', async () => {
+      const ip = freshIp();
+      const token = await formToken(h);
+      h.clock.advance(4_000);
+      const body = inquiryBody(h, token, { name: 'Riley Retry', email: 'riley@example.com' });
+      const first = await h.request('/api/inquiries', { body, ip });
+      assert.equal(first.status, 201);
+      const a = (await first.json()) as InquiryCreated;
+      h.clock.advance(2_000);
+      const again = await h.request('/api/inquiries', { body, ip });
+      assert.equal(again.status, 200);
+      const b = (await again.json()) as InquiryCreated;
+      assert.equal(b.reference, a.reference);
+      assert.deepEqual(b.estimate, a.estimate);
+      const count = (h.db.prepare("SELECT COUNT(*) AS n FROM inquiries WHERE email = 'riley@example.com'").get() as { n: number }).n;
+      assert.equal(count, 1);
+      // Changed details with the same token are a new request.
+      const edited = await h.request('/api/inquiries', { body: { ...body, guests: 60 }, ip });
+      assert.equal(edited.status, 201);
+      assert.notEqual(((await edited.json()) as InquiryCreated).reference, a.reference);
+    });
+
+    test('a retry of the fifth request in an hour still gets its reference, not a 429', async () => {
+      const ip = freshIp();
+      for (let i = 0; i < 4; i++) assert.equal((await submitInquiry(h, {}, ip)).status, 201);
+      const token = await formToken(h);
+      h.clock.advance(4_000);
+      const body = inquiryBody(h, token, { name: 'Fifth Request' });
+      const fifth = (await (await h.request('/api/inquiries', { body, ip })).json()) as InquiryCreated;
+      const retry = await h.request('/api/inquiries', { body, ip });
+      assert.equal(retry.status, 200);
+      assert.equal(((await retry.json()) as InquiryCreated).reference, fifth.reference);
+      assert.equal((await submitInquiry(h, {}, ip)).status, 429, 'a new request is still limited');
+    });
+
+    test('the event type must be one of ours; phone numbers need an area code; one-line fields refuse line breaks', async () => {
+      const unknown = await submitInquiry(h, { eventType: 'rave-party' });
+      assert.equal(unknown.status, 400);
+      assert.equal((await unknown.json()).fields.eventType, 'Choose the kind of event.');
+      const shortPhone = await submitInquiry(h, { contactPreference: 'text', phone: '1' });
+      assert.equal(shortPhone.status, 400);
+      assert.equal((await shortPhone.json()).fields.phone, 'Enter your phone number with the area code.');
+      const crlf = await submitInquiry(h, { name: 'Eve' + String.fromCharCode(13, 10) + 'Bcc: x@example.net' });
+      assert.equal(crlf.status, 400);
+      assert.equal((await crlf.json()).fields.name, 'Remove line breaks and special characters.');
+      assert.equal((await submitInquiry(h, { eventType: 'other', eventTypeOther: 'Retirement party' })).status, 201);
+    });
+
+    test('the guest email says what is due to reserve, and never repeats the typed name', async () => {
+      const res = await submitInquiry(h, { name: 'https://evil.example/login Customer', email: 'victim@example.com' });
+      assert.equal(res.status, 201);
+      const { reference, estimate: est } = (await res.json()) as InquiryCreated;
+      await h.whenIdle();
+      const files = fs.readdirSync(h.config.outboxDir).filter((f) => f.includes(reference));
+      const guestHtml = fs.readFileSync(path.join(h.config.outboxDir, files.find((f) => f.includes('-guest-') && f.endsWith('.html'))!), 'utf8');
+      assert.ok(!guestHtml.includes('evil.example'));
+      assert.ok(guestHtml.includes('Thank you for your request.'));
+      assert.ok(guestHtml.includes('Due to reserve the date'));
+      assert.ok(guestHtml.includes(`$${est.bookingDeposit.toLocaleString('en-US')}`));
+    });
+
+    test(`after ${GUEST_CONFIRMATIONS_PER_HOUR} guest confirmations in an hour, the next guest gets none but the venue is still told`, async () => {
+      const stamp = new Date(h.clock.now).toISOString();
+      const insert = h.db.prepare(
+        "INSERT INTO email_log (inquiry_id, kind, to_address, subject, status, transport, created_at) VALUES (NULL, 'guest_confirmation', 'x@example.com', 's', 'outbox', 'outbox', ?)",
+      );
+      for (let i = 0; i < GUEST_CONFIRMATIONS_PER_HOUR; i++) insert.run(stamp);
+      const res = await submitInquiry(h, { email: 'capped@example.com' });
+      assert.equal(res.status, 201);
+      const { reference } = (await res.json()) as InquiryCreated;
+      await h.whenIdle();
+      const files = fs.readdirSync(h.config.outboxDir).filter((f) => f.includes(reference));
+      assert.equal(files.filter((f) => f.includes('-venue-')).length, 2);
+      assert.equal(files.filter((f) => f.includes('-guest-')).length, 0);
+      const events = h.db
+        .prepare('SELECT e.detail FROM inquiry_events e JOIN inquiries i ON i.id = e.inquiry_id WHERE i.reference = ?')
+        .all(reference) as { detail: string }[];
+      assert.ok(events.some((e) => e.detail.startsWith('Confirmation email not sent')));
+      h.clock.advance(61 * 60 * 1000);
     });
 
     test('rate limit: 5 per hour per IP, then 429; other IPs are unaffected', async () => {
@@ -291,12 +389,18 @@ describe('errors and headers', () => {
     const h = await createHarness();
     const plain = await createHarness({ PUBLIC_ORIGIN: 'http://127.0.0.1:8791' });
     try {
-      for (const p of ['/api/health', '/', '/missing/']) {
+      const policy = (scripts: string) =>
+        `default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'${scripts}; connect-src 'self'; frame-src https://www.google.com; form-action 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'`;
+      const homeScript = `'sha256-${createHash('sha256').update(HOME_INLINE_SCRIPT).digest('base64')}'`;
+      for (const [p, scripts] of [
+        ['/api/health', ''],
+        ['/', ` ${homeScript}`],
+        ['/missing/', ''],
+        ['/book/', ''],
+      ] as const) {
         const res = await h.request(p);
-        assert.equal(
-          res.headers.get('content-security-policy'),
-          "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src https://www.google.com; form-action 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
-        );
+        assert.equal(res.headers.get('content-security-policy'), policy(scripts), p);
+        assert.equal(res.headers.get('cross-origin-opener-policy'), 'same-origin');
         assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
         assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
         assert.equal(res.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');

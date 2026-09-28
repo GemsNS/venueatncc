@@ -29,12 +29,15 @@ RUN npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --tar
 
 # ---------------------------------------------------------------- runtime
 FROM ${NODE_IMAGE} AS runtime
+# UV_THREADPOOL_SIZE: password hashing (scrypt) and file reads share libuv's thread pool; more
+# threads keep pages fast while someone is signing in (the server also runs at most two hashes at once).
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=8787 \
     SITE_DIR=/app/dist \
     DATABASE_PATH=/app/data/venue.db \
-    OUTBOX_DIR=/app/data/outbox
+    OUTBOX_DIR=/app/data/outbox \
+    UV_THREADPOOL_SIZE=8
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist

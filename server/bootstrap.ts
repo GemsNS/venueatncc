@@ -18,7 +18,11 @@ export function loadDotEnv(file = path.resolve('.env')): void {
 /** Create the first admin from ADMIN_EMAIL / ADMIN_PASSWORD when there is none yet. */
 export async function ensureFirstAdmin(config: Pick<Config, 'admin'>, repo: Repo, log: Logger, now: () => number = Date.now): Promise<void> {
   if (repo.countAdmins() > 0) {
-    if (config.admin) log.info('[admin] An admin already exists, so ADMIN_EMAIL and ADMIN_PASSWORD are ignored. Use the create-admin tool to add or reset one.');
+    if (config.admin) {
+      log.warn(
+        '[admin] ADMIN_PASSWORD is still set, but an admin already exists, so it is ignored. Remove it from .env and the environment. Use the create-admin tool to add or reset an admin.',
+      );
+    }
     return;
   }
   if (!config.admin) {

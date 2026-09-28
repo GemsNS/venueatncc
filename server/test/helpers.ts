@@ -9,7 +9,7 @@ import { createApp } from '../app';
 import { loadConfig, type Config } from '../config';
 import { iso, type Logger } from '../context';
 import { openDatabase, type Db } from '../db';
-import { hashPassword } from '../security';
+import { hashPassword, useFastPasswordHashingForTests } from '../security';
 import { addDays, todayKey } from '../../src/shared/dates';
 import type { InquiryInput } from '../../src/shared/types';
 
@@ -54,9 +54,12 @@ let ipCounter = 0;
 /** A distinct client IP per call, so rate limits never leak between tests. */
 export const freshIp = () => `10.1.${Math.floor(++ipCounter / 250)}.${(ipCounter % 250) + 1}`;
 
+/** The home page's one inline script; its hash must be in the page's CSP. */
+export const HOME_INLINE_SCRIPT = 'document.documentElement.dataset.js = "1";';
+
 export function writeSite(dir: string): void {
   const files: Record<string, string> = {
-    'index.html': '<!doctype html><title>Home</title><h1>Home</h1>',
+    'index.html': `<!doctype html><title>Home</title><script>${HOME_INLINE_SCRIPT}</script><script type="application/ld+json">{"@type":"Place"}</script><h1>Home</h1>`,
     'book/index.html': '<!doctype html><title>Book</title><h1>Book</h1>',
     '404.html': '<!doctype html><title>Not found</title><h1>Page not found</h1>',
     '_astro/app.abc123.js': 'console.log(1);',
@@ -70,6 +73,8 @@ export function writeSite(dir: string): void {
 }
 
 export async function createHarness(env: Record<string, string> = {}): Promise<Harness> {
+  // Production scrypt (N=2^17) costs about half a second a hash; the API tests only need it to work.
+  useFastPasswordHashingForTests();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ncc-server-test-'));
   const siteDir = path.join(dir, 'site');
   writeSite(siteDir);
@@ -175,10 +180,10 @@ export async function login(h: Harness, ip = freshIp(), cookie?: string): Promis
   return sessionCookie(res);
 }
 
-/** "ncc_session=<token>" from a Set-Cookie header. */
+/** "__Host-ncc_session=<token>" (or "ncc_session=<token>" without HTTPS) from a Set-Cookie header. */
 export function sessionCookie(res: Response): string {
   const header = res.headers.get('set-cookie') ?? '';
-  const match = /ncc_session=([^;]*)/.exec(header);
+  const match = /((?:__Host-)?ncc_session)=([^;]+)/.exec(header);
   if (!match) throw new Error(`no session cookie in: ${header}`);
-  return `ncc_session=${match[1]}`;
+  return `${match[1]}=${match[2]}`;
 }

@@ -31,6 +31,9 @@ export interface VenueServerApp {
 
 const MAX_BODY_BYTES = 64 * 1024;
 
+/** Sign-in attempts allowed from one address (or IPv6 /64) in 15 minutes, across all emails. */
+export const LOGIN_ATTEMPTS_PER_ADDRESS = 20;
+
 export function createApp(deps: AppDeps): VenueServerApp {
   const log = deps.log ?? console;
   const now = deps.now ?? Date.now;
@@ -44,12 +47,13 @@ export function createApp(deps: AppDeps): VenueServerApp {
     hashIp: ipHasher(deps.config.sessionSecret),
     limits: {
       login: new RateLimiter(10, 15 * 60 * 1000),
+      loginIp: new RateLimiter(LOGIN_ATTEMPTS_PER_ADDRESS, 15 * 60 * 1000),
       password: new RateLimiter(10, 15 * 60 * 1000),
     },
   };
 
   // Compute the decoy hash now, so the first sign-in with an unknown email is not measurably faster.
-  void dummyPasswordHash();
+  dummyPasswordHash().catch(() => undefined);
 
   const app = new Hono<AppEnv>();
 

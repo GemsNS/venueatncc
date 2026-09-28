@@ -6,24 +6,36 @@ import type { MiddlewareHandler } from 'hono';
 import type { Config } from './config';
 import { apiError, MUTATING_METHODS, type AppEnv } from './context';
 
-export const CONTENT_SECURITY_POLICY = [
-  "default-src 'self'",
-  "img-src 'self' data: https:",
-  "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-inline'",
-  "connect-src 'self'",
-  'frame-src https://www.google.com',
-  "form-action 'self'",
-  "base-uri 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-].join('; ');
+/**
+ * The Content-Security-Policy. No inline script runs unless its SHA-256 is listed: HTML pages
+ * from the built site pass the hashes of their own inline scripts (see server/static.ts), and
+ * every other response gets none. Inline styles stay allowed; the pages use style attributes.
+ */
+export function buildCsp(scriptHashes: readonly string[] = []): string {
+  return [
+    "default-src 'self'",
+    "img-src 'self' data:",
+    "style-src 'self' 'unsafe-inline'",
+    ["script-src 'self'", ...scriptHashes.map((h) => `'${h}'`)].join(' '),
+    "connect-src 'self'",
+    'frame-src https://www.google.com',
+    "form-action 'self'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+  ].join('; ');
+}
+
+/** The policy for responses without inline script (API, assets, errors). */
+export const CONTENT_SECURITY_POLICY = buildCsp();
 
 export function securityHeaders(config: Pick<Config, 'hsts'>): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     await next();
     const h = c.res.headers;
-    h.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+    // An HTML page may already carry a policy with its own script hashes.
+    if (!h.has('Content-Security-Policy')) h.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+    h.set('Cross-Origin-Opener-Policy', 'same-origin');
     h.set('X-Content-Type-Options', 'nosniff');
     h.set('X-Frame-Options', 'DENY');
     h.set('Referrer-Policy', 'strict-origin-when-cross-origin');

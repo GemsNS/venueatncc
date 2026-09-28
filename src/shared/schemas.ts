@@ -3,25 +3,53 @@
  * The server always re-validates; the browser uses the same rules for instant feedback.
  */
 import { z } from 'zod';
-import { isDateKey } from './dates';
+import { eventTypes, OTHER_EVENT } from '../data/event-types';
+import { isDateKey, parseKey, toKey } from './dates';
 import { INQUIRY_STATUSES } from './types';
+import type { DateKey } from './types';
 
 const dateKey = z.string().refine(isDateKey, 'Choose a valid date.');
 const hhmm = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, 'Choose a start time.');
 const trimmed = (max: number) => z.string().trim().max(max);
 
+/** The latest bookable date: the same calendar day two years from today. */
+export function latestBookableDate(today: DateKey): DateKey {
+  const { y, m, d } = parseKey(today);
+  return toKey(y + 2, m, d);
+}
+
+export const DATE_TOO_FAR = 'Choose a date within the next two years.';
+
+/** Every event type a request may name: the listed slugs, plus "other". */
+export const EVENT_TYPE_SLUGS = [...eventTypes.map((e) => e.slug), OTHER_EVENT.slug] as string[] as [string, ...string[]];
+
+/** At least this many digits when a phone number is given (a US number with its area code). */
+export const MIN_PHONE_DIGITS = 10;
+export const PHONE_TOO_SHORT = 'Enter your phone number with the area code.';
+
+const charRange = (from: number, to: number) => String.fromCharCode(from) + '-' + String.fromCharCode(to);
+/**
+ * Characters that never belong in a one-line field: C0 and C1 controls (including line breaks
+ * and tabs), DEL, the Unicode line and paragraph separators, and bidirectional overrides and
+ * isolates, which can make text display differently from what it says.
+ */
+const SPECIAL_CHARACTERS = new RegExp('[' + charRange(0, 31) + charRange(127, 159) + charRange(0x2028, 0x202e) + charRange(0x2066, 0x2069) + ']');
+export const isSingleLine = (s: string) => !SPECIAL_CHARACTERS.test(s);
+export const SINGLE_LINE_ERROR = 'Remove line breaks and special characters.';
+const singleLine = (max: number) => trimmed(max).refine(isSingleLine, SINGLE_LINE_ERROR);
+
 export const inquiryInputSchema = z.object({
-  eventType: trimmed(60).min(1, 'Choose the kind of event.'),
-  eventTypeOther: trimmed(80).optional(),
+  eventType: z.enum(EVENT_TYPE_SLUGS, { error: 'Choose the kind of event.' }),
+  eventTypeOther: singleLine(80).optional(),
   date: dateKey,
   altDate: dateKey.optional().or(z.literal('').transform(() => undefined)),
   startTime: hhmm,
   hours: z.coerce.number().int('Choose whole hours.').min(1, 'Choose at least 1 hour.').max(16, 'For more than 16 hours, call us.'),
   space: z.enum(['indoor', 'outdoor', 'both'], { error: 'Choose a space.' }),
   guests: z.coerce.number().int('Enter a whole number.').min(1, 'Enter your guest count.').max(1000, 'Enter a realistic guest count.'),
-  name: trimmed(120).min(2, 'Enter your name.'),
+  name: singleLine(120).min(2, 'Enter your name.'),
   email: z.email('Enter a valid email address.').max(200),
-  phone: trimmed(40).optional(),
+  phone: singleLine(40).optional(),
   contactPreference: z.enum(['email', 'phone', 'text']).default('email'),
   message: trimmed(4000).optional(),
   wantsVisit: z.coerce.boolean().default(false),
@@ -32,6 +60,8 @@ export const inquiryInputSchema = z.object({
 }).superRefine((v, ctx) => {
   if ((v.contactPreference === 'phone' || v.contactPreference === 'text') && !v.phone) {
     ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Add a phone number so we can reach you that way.' });
+  } else if (v.phone && v.phone.replace(/[^0-9]/g, '').length < MIN_PHONE_DIGITS) {
+    ctx.addIssue({ code: 'custom', path: ['phone'], message: PHONE_TOO_SHORT });
   }
   if (v.eventType === 'other' && !v.eventTypeOther) {
     ctx.addIssue({ code: 'custom', path: ['eventTypeOther'], message: 'Tell us what kind of event you are planning.' });
@@ -57,7 +87,7 @@ export const blockInputSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.email('Enter your email address.'),
+  email: z.email('Enter your email address.').max(200, 'Enter your email address.'),
   password: z.string().min(1, 'Enter your password.').max(500),
 });
 
