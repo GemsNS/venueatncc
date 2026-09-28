@@ -36,7 +36,6 @@ export interface Draft {
   guests: number;
   eventType: string;
   eventTypeOther: string;
-  servingAlcohol: boolean;
   wantsVisit: boolean;
   visitNotes: string;
   name: string;
@@ -60,7 +59,6 @@ export const DEFAULT_DRAFT: Draft = {
   guests: 50,
   eventType: '',
   eventTypeOther: '',
-  servingAlcohol: false,
   wantsVisit: false,
   visitNotes: '',
   name: '',
@@ -125,7 +123,6 @@ export const FIELD_STEP: Record<string, Step> = {
   hours: 1,
   eventType: 2,
   eventTypeOther: 2,
-  servingAlcohol: 2,
   wantsVisit: 2,
   visitNotes: 2,
   name: 3,
@@ -165,7 +162,6 @@ export function buildInput(d: Draft, formToken: string, website: string): Inquir
     message: opt(d.message),
     wantsVisit: d.wantsVisit,
     visitNotes: d.wantsVisit ? opt(d.visitNotes) : undefined,
-    servingAlcohol: d.servingAlcohol,
     formToken,
     website,
   };

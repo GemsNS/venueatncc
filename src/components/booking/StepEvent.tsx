@@ -1,4 +1,4 @@
-/** Step 2: the kind of event, alcohol, and a visit request. */
+/** Step 2: the kind of event and a visit request. */
 import { useRef } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { OTHER_EVENT, eventTypes } from '../../data/event-types';
@@ -98,17 +98,9 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
 
       <div class="field">
         <span class="field__label" id="bk-details-label">
-          Details
+          Visit
         </span>
         <ul class="list-group bk-list" aria-labelledby="bk-details-label">
-          <SwitchRow
-            id={fieldId('servingAlcohol')}
-            icon="wine"
-            title="We plan to serve alcohol"
-            hint="Alcohol is allowed at the venue."
-            checked={d.servingAlcohol}
-            onChange={(servingAlcohol) => update({ servingAlcohol })}
-          />
           <SwitchRow
             id={fieldId('wantsVisit')}
             icon="map-pin"
@@ -147,11 +139,11 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
         <ul class="list-group bk-list" aria-labelledby="bk-included-label">
           <li class="bk-fact">
             <span class="bk-row-icon" aria-hidden="true">
-              <Icon name="utensils" />
+              <Icon name="calendar-check" />
             </span>
             <span class="bk-fact__text">
-              <strong>Catering is not included.</strong>
-              <span class="bk-fact__hint">Bring the caterer of your choice, or your own food and drinks.</span>
+              <strong>We confirm every date personally.</strong>
+              <span class="bk-fact__hint">We check availability with you, then your booking deposit reserves the date.</span>
             </span>
           </li>
           <li class="bk-fact">

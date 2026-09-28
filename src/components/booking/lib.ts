@@ -3,9 +3,10 @@
  * lighter islands (date checker, capacity planner, price estimator) stay lean.
  */
 import { href } from '../../lib/paths';
+import { CAPACITY } from '../../shared/capacity';
 import { addDays, dayOfWeek, formatLong, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
 import { formatUSD, pricing, type DayType } from '../../shared/pricing';
-import type { DateKey, SpaceChoice } from '../../shared/types';
+import { SPACE_NAMES, type DateKey, type SpaceChoice } from '../../shared/types';
 
 export const ELLIPSIS = String.fromCharCode(8230);
 export const MIDDOT = String.fromCharCode(183);
@@ -36,12 +37,27 @@ export const TOO_LATE_MESSAGE = 'Choose a date within the next two years.';
 export const SPACES: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 export const SINGLE_SPACES: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
 
-/** Short segment labels (nouns, equal width). Full names come from the rate card. */
-export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Indoor', outdoor: 'Outdoor', both: 'Both' };
+/** Short segment labels (nouns, equal width) for the price estimator. */
+export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: SPACE_NAMES.indoor, outdoor: SPACE_NAMES.outdoor, both: 'Both' };
 
+/** The public name: The Hall, The Grove, or The Hall and The Grove. */
 export function spaceLabel(space: SpaceChoice): string {
-  return pricing.spaces[space].label;
+  return SPACE_NAMES[space];
 }
+
+/** The title of each space choice in the booking form. */
+export const SPACE_CHOICE_TITLE: Record<SpaceChoice, string> = {
+  indoor: SPACE_NAMES.indoor,
+  outdoor: SPACE_NAMES.outdoor,
+  both: 'Both spaces',
+};
+
+/** One line under each space choice: indoor or outdoor, and how many guests it holds. */
+export const SPACE_HINT: Record<SpaceChoice, string> = {
+  indoor: `Indoor, up to ${CAPACITY.indoor} guests`,
+  outdoor: `Outdoor, up to ${CAPACITY.outdoor} guests`,
+  both: `${SPACE_NAMES.indoor} up to ${CAPACITY.indoor}, ${SPACE_NAMES.outdoor} up to ${CAPACITY.outdoor}`,
+};
 
 export const HOURS_MIN = 1;
 export const HOURS_MAX = 16;

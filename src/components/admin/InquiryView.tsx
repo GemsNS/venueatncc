@@ -22,8 +22,6 @@ const EVENT_ICON: Record<InquiryEvent['kind'], IconName> = {
 
 const PREF_LABEL = { email: 'Email', phone: 'Phone call', text: 'Text message' } as const;
 
-const SPACE_PHRASE = { indoor: 'the indoor hall', outdoor: 'the outdoor space', both: 'the indoor hall and outdoor space' } as const;
-
 function Row({ label, children }: { label: string; children: ComponentChildren }) {
   return (
     <div class="list-row adm-kv">
@@ -365,7 +363,6 @@ export function InquiryView({ id }: { id: number }) {
                 {d.guests}
                 {over && <span class="adm-warn">{over}</span>}
               </Row>
-              <Row label="Alcohol">{d.servingAlcohol ? 'Yes, serving alcohol' : 'No'}</Row>
               <Row label="Visit">
                 {d.wantsVisit ? 'Wants to visit first' : 'No visit requested'}
                 {d.wantsVisit && d.visitNotes && <span class="adm-kv__extra">{d.visitNotes}</span>}
@@ -498,14 +495,14 @@ export function InquiryView({ id }: { id: number }) {
         body={
           reblock ? (
             <p>
-              {SPACE_PHRASE[d.space][0].toUpperCase() + SPACE_PHRASE[d.space].slice(1)} on {formatLong(d.date)} will be blocked on the calendar for{' '}
+              {spaceLabel(d.space)} on {formatLong(d.date)} will be blocked on the calendar for{' '}
               {d.name}
               {String.fromCharCode(8217)}s booking.
             </p>
           ) : (
             <p>
               {d.name}
-              {String.fromCharCode(8217)}s request will be marked booked, and {SPACE_PHRASE[d.space]} on {formatLong(d.date)} will be blocked on
+              {String.fromCharCode(8217)}s request will be marked booked, and {spaceLabel(d.space)} on {formatLong(d.date)} will be blocked on
               the calendar.
             </p>
           )

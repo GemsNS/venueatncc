@@ -4,6 +4,7 @@ import { SHOW_DEMO } from './demo-tools';
 import type { AdminStats, AdminUser } from '../../shared/types';
 import type { IconName } from '../../shared/icons';
 import { Icon } from '../islands/Icon';
+import { Monogram } from './ui';
 import type { Route } from './route';
 
 interface NavItem {
@@ -64,8 +65,11 @@ export function Shell({
     <div class="adm">
       <nav class="adm-sidebar glass" aria-label="Admin">
         <div class="adm-sidebar__brand">
-          <span class="adm-sidebar__name">The Venue at NCC</span>
-          <span class="adm-sidebar__role">Admin</span>
+          <Monogram class="adm-sidebar__mark" />
+          <span class="adm-sidebar__text">
+            <span class="adm-sidebar__name">The Venue at NCC</span>
+            <span class="adm-sidebar__role">Admin</span>
+          </span>
         </div>
         <ul class="adm-sidebar__list">
           {NAV.map((item) => (

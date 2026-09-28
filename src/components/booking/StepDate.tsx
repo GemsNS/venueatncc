@@ -1,16 +1,17 @@
 /** Step 1: the calendar, guests, space, start time, and hours. */
 import { site } from '../../data/site';
 import { spaceIsFree } from '../../shared/availability';
-import { CAPACITY, capacityError, capacityLabel, suggestSpace } from '../../shared/capacity';
+import { capacityError, suggestSpace } from '../../shared/capacity';
 import { addHours, formatShort, formatTime } from '../../shared/dates';
 import { dayTypeOf } from '../../shared/pricing';
-import type { AvailabilityDay, DateKey, SpaceChoice } from '../../shared/types';
+import type { AvailabilityDay, DateKey } from '../../shared/types';
 import { Calendar, type CalStatus } from './Calendar';
 import {
   HOURS_MAX,
   HOURS_MIN,
   SINGLE_SPACES,
-  SPACE_SHORT,
+  SPACE_CHOICE_TITLE,
+  SPACE_HINT,
   SPACES,
   TIME_OPTIONS,
   guestsLabel,
@@ -20,7 +21,7 @@ import {
   spaceLabel,
   telHref,
 } from './lib';
-import { CountField, Note, Segmented, Stepper } from './ui';
+import { ChoiceList, CountField, Note, Stepper, type ChoiceOption } from './ui';
 import { ymOf, type YM } from './useAvailability';
 import { GUESTS_MAX, GUESTS_MIN, errorId, fieldId, type Draft } from './wizard';
 import { FieldError, describe } from './fields';
@@ -42,12 +43,6 @@ export interface StepDateProps {
   calMsg: string;
 }
 
-/** Each space by its own limit; never one combined figure for both. */
-function spaceSentence(space: SpaceChoice): string {
-  if (space === 'both') return `Both spaces. ${capacityLabel('both')}.`;
-  return `${spaceLabel(space)} holds up to ${CAPACITY[space]} guests.`;
-}
-
 export function StepDate(props: StepDateProps) {
   const { d, update, errors, today, view, days } = props;
   const latest = latestBookableDate(today);
@@ -58,11 +53,18 @@ export function StepDate(props: StepDateProps) {
   const suggestionFree = suggestion ? !day || spaceIsFree(day, suggestion) : false;
   const dayType = d.date ? dayTypeOf(d.date) : null;
 
-  const spaceOptions = SPACES.map((s) => ({
+  // Each space by its own limit; never one combined figure for both.
+  const spaceOptions: ChoiceOption<(typeof SPACES)[number]>[] = SPACES.map((s) => ({
     value: s,
-    label: SPACE_SHORT[s],
+    title: SPACE_CHOICE_TITLE[s],
+    hint: SPACE_HINT[s],
     disabled: day ? day.status !== 'past' && !spaceIsFree(day, s) : false,
+    disabledNote: s === 'both' && taken.length < 2 ? 'Partly booked' : 'Booked',
   }));
+
+  // One space taken on the chosen day: say which, so the Booked label is not the only clue.
+  const bookedNote =
+    d.date && taken.length === 1 ? `${spaceLabel(taken[0])} is booked on ${formatShort(d.date)}. ${spaceLabel(SINGLE_SPACES.find((s) => s !== taken[0]) ?? 'indoor')} is open.` : '';
 
   const capId = 'bk-guests-cap';
   const spaceHintId = 'bk-space-hint';
@@ -126,7 +128,7 @@ export function StepDate(props: StepDateProps) {
               <p>{capErr}</p>
               {suggestion && suggestion !== d.space && suggestionFree && (
                 <button type="button" class="btn btn--tinted btn--sm" onClick={() => update({ space: suggestion, spaceChosen: true })}>
-                  Use {SPACE_SHORT[suggestion]} Space
+                  Use {spaceLabel(suggestion)}
                 </button>
               )}
               {suggestion && suggestion !== d.space && !suggestionFree && d.date && (
@@ -147,24 +149,20 @@ export function StepDate(props: StepDateProps) {
           <span class="field__label" id="bk-space-label">
             Space
           </span>
-          <Segmented
+          <ChoiceList
             id={fieldId('space')}
             labelId="bk-space-label"
             options={spaceOptions}
             value={d.space}
             onChange={(space) => update({ space, spaceChosen: true })}
-            describedBy={describe(spaceHintId, errors.space ? errorId('space') : '')}
+            describedBy={describe(bookedNote ? spaceHintId : '', errors.space ? errorId('space') : '')}
             invalid={Boolean(errors.space)}
-            full
           />
-          <p class="field__hint" id={spaceHintId}>
-            {taken.length > 0 && d.date ? (
-              <>
-                Booked on {formatShort(d.date)}: {taken.map((s) => spaceLabel(s)).join(' and ')}.{' '}
-              </>
-            ) : null}
-            {spaceSentence(d.space)}
-          </p>
+          {bookedNote && (
+            <p class="field__hint" id={spaceHintId}>
+              {bookedNote}
+            </p>
+          )}
           <FieldError errors={errors} field="space" />
         </div>
 

@@ -53,7 +53,6 @@ export function StepReview(props: {
   ];
   const rows2: [string, string][] = [
     ['Event', d.eventType ? eventTypeName(d.eventType, d.eventTypeOther.trim()) : 'Not chosen'],
-    ['Alcohol', d.servingAlcohol ? 'We plan to serve alcohol' : 'No alcohol planned'],
     ['Visit first', d.wantsVisit ? (d.visitNotes.trim() ? `Yes. ${d.visitNotes.trim()}` : 'Yes') : 'No'],
   ];
   const rows3: [string, string][] = [

@@ -3,12 +3,16 @@
  * plus a plain-text version of each. Facts come from src/data/site.ts; prices from the stored
  * estimate, read as estimate() wrote them: bookingDeposit is due to reserve the date and the
  * rest (total minus bookingDeposit) is the balance.
+ *
+ * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
+ * render SVG), a thin Venue Purple rule, Georgia for headings in place of Caslon, the system
+ * sans stack for body text, and the palette's Ink, Ink 2, and Lilac Mist.
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
 import { addHours, formatLong, formatTime } from '../../src/shared/dates';
-import { formatUSD, pricing } from '../../src/shared/pricing';
-import type { ContactPreference, Estimate, Inquiry } from '../../src/shared/types';
+import { formatUSD } from '../../src/shared/pricing';
+import { SPACE_NAMES, type ContactPreference, type Estimate, type Inquiry } from '../../src/shared/types';
 
 export interface RenderedEmail {
   subject: string;
@@ -22,12 +26,20 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-const PURPLE = '#7B2FBE';
-const INK = '#1d1d1f';
-const MUTED = '#6e6e73';
-const RULE = '#e5e5ea';
-const TINT = '#f5eefb';
+/** Venue Purple: links, the rule under the header, the button. 10.9:1 on white. */
+const PURPLE = '#4F2A75';
+/** Ink and Ink 2: text and secondary text (7.1:1 on white). */
+const INK = '#1C1622';
+const MUTED = '#5E5566';
+/** Hairlines: the palette's separator over white. */
+const RULE = '#E4E1E8';
+/** Lilac Mist: the reference box. */
+const TINT = '#F4F0F8';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+/** Headings: Georgia stands in for Libre Caslon, which email clients do not have. */
+const SERIF = `Georgia, 'Times New Roman', Times, serif`;
+/** The PNG lockup (512 x 96), shown at half size. Always the public site, so every mail client can load it. */
+const LOCKUP = { src: `${site.url}/brand/email-lockup.png`, width: 256, height: 48 };
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (m) => ENTITIES[m]);
@@ -57,7 +69,7 @@ export const continued = (s: string, indent = '    ') => linesOf(s).join(NL + in
 const CONTACT_LABEL: Record<ContactPreference, string> = { email: 'Email', phone: 'Phone call', text: 'Text message' };
 const CONTACT_HOW: Record<ContactPreference, string> = { email: 'email', phone: 'phone', text: 'text message' };
 
-export const spaceLabel = (space: Inquiry['space']) => pricing.spaces[space].label;
+export const spaceLabel = (space: Inquiry['space']) => SPACE_NAMES[space];
 export const eventLabel = (i: Pick<Inquiry, 'eventType' | 'eventTypeOther'>) => eventTypeName(i.eventType, i.eventTypeOther);
 export const timeRange = (i: Pick<Inquiry, 'startTime' | 'hours'>) =>
   `${formatTime(i.startTime)} to ${formatTime(addHours(i.startTime, i.hours))} (${i.hours} ${i.hours === 1 ? 'hour' : 'hours'})`;
@@ -110,12 +122,13 @@ function layout(opts: { preheader: string; body: string; origin: string }): stri
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;">
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:${FONT};color:${INK};">
-<tr><td style="padding:0 0 16px 0;border-bottom:3px solid ${PURPLE};">
-<span style="font-size:20px;font-weight:700;color:${PURPLE};letter-spacing:-0.2px;">${escapeHtml(site.name)}</span>
+<tr><td style="padding:0 0 20px 0;">
+<a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${PURPLE};"></a>
 </td></tr>
+<tr><td height="1" style="height:1px;padding:0;background:${PURPLE};font-size:1px;line-height:1px;">&nbsp;</td></tr>
 ${opts.body}
 <tr><td style="padding:24px 0 0 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${MUTED};">
-${escapeHtml(site.name)}, the event venue of ${escapeHtml(site.parent.name)}<br>
+${escapeHtml(site.name)} is operated by ${escapeHtml(site.parent.name)}.<br>
 ${escapeHtml(fullAddress)}<br>
 <a href="tel:${site.contact.phoneE164}" style="color:${PURPLE};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
 &nbsp;&middot;&nbsp;
@@ -130,13 +143,15 @@ ${escapeHtml(fullAddress)}<br>
 </html>`;
 }
 
+/** The page title: Georgia, regular weight, like the site's Caslon titles (never bold). */
 const heading = (text: string) =>
-  `<tr><td style="padding:24px 0 8px 0;font-size:24px;line-height:30px;font-weight:700;color:${INK};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:28px 0 10px 0;font-family:${SERIF};font-size:28px;line-height:34px;font-weight:400;color:${INK};">${escapeHtml(text)}</td></tr>`;
 
 const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size:16px;line-height:24px;color:${INK};">${html}</td></tr>`;
 
+/** Section headings in sentence case, never all caps. */
 const sectionTitle = (text: string) =>
-  `<tr><td style="padding:20px 0 8px 0;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:${PURPLE};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${INK};">${escapeHtml(text)}</td></tr>`;
 
 function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
@@ -199,7 +214,7 @@ function estimateText(est: Estimate): string {
 function footerText(origin: string): string {
   return [
     '--',
-    `${site.name}, the event venue of ${site.parent.name}`,
+    `${site.name} is operated by ${site.parent.name}.`,
     fullAddress,
     `${site.contact.phone} | ${site.contact.email}`,
     `${origin}/`,
@@ -228,7 +243,6 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
   const subject = `New inquiry ${i.reference}: ${oneLine(eventLabel(i))}, ${formatLong(i.date)}`;
   const detailRows: [string, string][] = [
     ...eventRows(i, 'venue'),
-    ['Serving alcohol', yesNo(i.servingAlcohol)],
     ['Wants a visit', yesNo(i.wantsVisit)],
   ];
   if (i.visitNotes) detailRows.push(['Visit notes', i.visitNotes]);

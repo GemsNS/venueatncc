@@ -6,6 +6,23 @@ import type { IconName } from '../../shared/icons';
 import type { InquiryStatus } from '../../shared/types';
 import { statusLabel, statusTone } from './format';
 
+/**
+ * The monogram from src/assets/brand/venue-mark.svg, inlined in currentColor so it follows the
+ * theme: Venue Purple in light mode and Lilac in dark mode, both palette colors (brand.md).
+ */
+export function Monogram(props: { class?: string }) {
+  return (
+    <svg class={props.class} viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3" />
+      <circle cx="50" cy="50" r="40.5" fill="none" stroke="currentColor" stroke-width="1.1" />
+      <path
+        fill="currentColor"
+        d="M62.52 32.03Q63.52 32.10 63.95 32.41Q64.38 32.72 64.38 33.34Q64.38 33.89 64.14 34.51L51.55 68.12L51.30 68.12L38.16 32.22L43.55 31.72L43.55 31.23L28.05 31.23L28.05 31.72L33.14 32.22L48.82 75L49.94 75L65.13 34.51Q65.62 33.09 66.28 32.62Q66.93 32.16 68.48 32.03L71.95 31.72L71.95 31.23L58.74 31.23L58.74 31.72"
+      />
+    </svg>
+  );
+}
+
 export function StatusBadge({ status }: { status: InquiryStatus }) {
   return <span class={`badge adm-tone--${statusTone(status)}`}>{statusLabel(status)}</span>;
 }

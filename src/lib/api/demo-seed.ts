@@ -12,7 +12,7 @@
 import { eventTypeName } from '../../data/event-types';
 import { addDays, dayOfWeek, formatLong, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
-import { INQUIRY_STATUSES } from '../../shared/types';
+import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
 import type {
   BlockKind,
   CalendarBlock,
@@ -26,7 +26,8 @@ import type {
 } from '../../shared/types';
 import { DEMO_ADMIN_NAME } from './demo-credentials';
 
-export const DEMO_DB_VERSION = 1;
+/** Version 2 retired an inquiry field and rewrote the seed, so data stored by version 1 is replaced. */
+export const DEMO_DB_VERSION = 2;
 
 /** Everything the demo backend stores, as one JSON document. */
 export interface DemoDb {
@@ -58,8 +59,6 @@ export function blockLabelFor(inquiry: Pick<Inquiry, 'name' | 'eventType' | 'eve
   return `${inquiry.name}: ${eventLabel(inquiry.eventType, inquiry.eventTypeOther)}`;
 }
 
-const SPACE_NAME: Record<SpaceChoice, string> = { indoor: 'Indoor hall', outdoor: 'Outdoor space', both: 'Indoor and outdoor' };
-
 /**
  * Timeline wording, shared by the seed and the live demo backend. Where the API server records
  * the same event, the words match it (server/routes/public.ts inquiryText and
@@ -68,7 +67,7 @@ const SPACE_NAME: Record<SpaceChoice, string> = { indoor: 'Indoor hall', outdoor
 export const timelineText = {
   created: 'Request received through the website.',
   conflict: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) =>
-    `The calendar already shows ${formatLong(date)} as taken for ${SPACE_NAME[b.space].toLowerCase()} (${b.label ? `${b.kind}: ${b.label}` : b.kind}). Check it before you confirm this request.`,
+    `The calendar already shows ${formatLong(date)} as taken for ${SPACE_NAMES[b.space]} (${b.label ? `${b.kind}: ${b.label}` : b.kind}). Check it before you confirm this request.`,
   emailed: (email: string) => `Confirmation email sent to ${email}. The team was notified.`,
   demoEmail: 'Demo mode: no emails were sent.',
   status: (from: InquiryStatus, to: InquiryStatus) => `Status changed from ${statusLabel(from)} to ${statusLabel(to)}.`,
@@ -85,10 +84,10 @@ export const timelineText = {
     added: (date: DateKey, space: SpaceChoice, requested: SpaceChoice) =>
       space === requested
         ? `Added to the calendar as booked for ${formatLong(date)}.`
-        : `Added to the calendar as booked for ${formatLong(date)} (${SPACE_NAME[space].toLowerCase()}).`,
+        : `Added to the calendar as booked for ${formatLong(date)} (${SPACE_NAMES[space]}).`,
     released: (date: DateKey) => `Removed the booked block for ${formatLong(date)} from the calendar, so the date is open again.`,
     clash: (date: DateKey, b: Pick<CalendarBlock, 'kind' | 'label' | 'space'>) =>
-      `${formatLong(date)} already has a ${b.kind} block for ${SPACE_NAME[b.space].toLowerCase()}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
+      `${formatLong(date)} already has a ${b.kind} block for ${SPACE_NAMES[b.space]}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
   },
   blockRemoved: (date: DateKey) => `Removed from the calendar for ${formatLong(date)}.`,
 };
@@ -145,10 +144,9 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         email: 'tanya.whitfield@example.com',
         phone: '(757) 555-0142',
         contactPreference: 'text',
-        message: 'Planning a surprise 40th birthday for my husband. Most of the guests are family from Chesapeake and Norfolk. We will bring our own caterer.',
+        message: 'Planning a surprise 40th birthday for my husband. Most of the guests are family from Chesapeake and Norfolk.',
         wantsVisit: true,
         visitNotes: 'Weekday evenings after 5:30 work best.',
-        servingAlcohol: false,
       },
       steps: [],
     },
@@ -167,7 +165,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         contactPreference: 'email',
         message: 'Baby shower for my sister. An afternoon start works best since a lot of our guests are coming straight from church.',
         wantsVisit: false,
-        servingAlcohol: false,
       },
       steps: [],
     },
@@ -187,7 +184,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         contactPreference: 'text',
         message: 'Sweet 16 for my daughter. She wants the whole party outside if the weather cooperates.',
         wantsVisit: false,
-        servingAlcohol: false,
       },
       steps: [
         { h: 3, status: 'contacted', note: 'Texted Marcus. He is choosing between two Saturdays and will call back this week.' },
@@ -208,16 +204,15 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         email: 'danielle.greene@example.com',
         phone: '(757) 555-0118',
         contactPreference: 'phone',
-        message: 'We would love a ceremony outdoors, with the reception flowing between the hall and the outdoor space. Our caterer is already booked.',
+        message: 'We would love the ceremony at the gazebo in The Grove, then the reception in The Hall.',
         wantsVisit: true,
         visitNotes: 'Saturday mornings are easiest for us.',
-        servingAlcohol: true,
       },
       steps: [
         {
           h: 20,
           status: 'contacted',
-          note: 'Called Danielle. She wants to see the outdoor space before deciding. Confirmed that catering is not included and their caterer is welcome.',
+          note: 'Called Danielle. She wants to see The Grove before deciding and asked about time to set up the day before.',
         },
       ],
     },
@@ -238,7 +233,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         message: 'Langley family reunion. Relatives are driving in from three states, so parking matters to us.',
         wantsVisit: true,
         visitNotes: 'Any weekday after 5 PM.',
-        servingAlcohol: false,
       },
       steps: [
         { h: 22, status: 'contacted', note: 'Reached Robert by phone. Confirmed parking is included with the rental.' },
@@ -260,12 +254,11 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         email: 'gloria.patterson@example.com',
         phone: '(757) 555-0190',
         contactPreference: 'email',
-        message: 'Our parents are celebrating their 50th wedding anniversary. We would like a dinner with a champagne toast.',
+        message: 'Our parents are celebrating their 50th wedding anniversary with a seated family dinner.',
         wantsVisit: false,
-        servingAlcohol: true,
       },
       steps: [
-        { h: 4, status: 'contacted', note: 'Spoke with Gloria. Their caterer is handling dinner, and they will bring champagne for the toast.' },
+        { h: 4, status: 'contacted', note: 'Spoke with Gloria. She would like two hours before the dinner to set up and decorate.' },
         { h: 50, status: 'quoted', block: 'held', note: 'Sent the estimate by email. She is checking the date with her siblings.' },
       ],
     },
@@ -285,12 +278,11 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         contactPreference: 'phone',
         message: 'Repast for my father after the funeral service. Family will arrive from the cemetery around 1 PM.',
         wantsVisit: false,
-        servingAlcohol: false,
       },
       steps: [
         { h: 1, status: 'contacted', note: 'Called Denise with our condolences and walked her through the estimate.' },
         { h: 20, status: 'quoted' },
-        { h: 26, status: 'booked', block: 'booked', note: 'Payment received. Family caterer confirmed.' },
+        { h: 26, status: 'booked', block: 'booked', note: 'Payment received. Arrival time confirmed with the family.' },
       ],
     },
     {
@@ -307,14 +299,13 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         email: 'anthony.brooks@example.com',
         phone: '(757) 555-0173',
         contactPreference: 'email',
-        message: 'Our neighborhood association is planning its fall gathering and has outgrown the park shelter we usually use. Families bring food to share.',
+        message: 'Our neighborhood association is planning its fall gathering and has outgrown the park shelter we usually use.',
         wantsVisit: true,
         visitNotes: 'Saturday late morning.',
-        servingAlcohol: false,
       },
       steps: [
         { h: 26, status: 'contacted' },
-        { h: 75, status: 'visit', note: 'Toured the outdoor space with Anthony and two board members.' },
+        { h: 75, status: 'visit', note: 'Toured The Grove with Anthony and two board members.' },
         { h: 122, status: 'quoted' },
         { h: 170, status: 'booked', block: 'booked', note: 'Payment received. Guest count confirmed.' },
       ],
@@ -335,7 +326,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         contactPreference: 'email',
         message: 'Full-day training for our regional sales team.',
         wantsVisit: false,
-        servingAlcohol: false,
       },
       steps: [
         { h: 6, status: 'contacted' },
@@ -359,7 +349,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         contactPreference: 'phone',
         message: 'Silent auction and dinner to raise money for our youth sports league.',
         wantsVisit: false,
-        servingAlcohol: false,
       },
       steps: [
         { h: 30, status: 'contacted' },

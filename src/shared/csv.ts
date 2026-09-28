@@ -7,8 +7,7 @@
  */
 import { eventTypeName } from '../data/event-types';
 import { VENUE_TZ } from './dates';
-import { pricing } from './pricing';
-import { INQUIRY_STATUSES } from './types';
+import { INQUIRY_STATUSES, SPACE_NAMES } from './types';
 import type { ContactPreference, Inquiry } from './types';
 
 export interface CsvColumn {
@@ -48,7 +47,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
   { key: 'altDate', label: 'Alternate date' },
   { key: 'startTime', label: 'Start time' },
   { key: 'hours', label: 'Hours' },
-  { key: 'space', label: 'Space', format: (r) => pricing.spaces[r.space]?.label },
+  { key: 'space', label: 'Space', format: (r) => SPACE_NAMES[r.space] },
   { key: 'guests', label: 'Guests' },
   { key: 'eventType', label: 'Event type', format: (r) => eventTypeName(r.eventType) },
   { key: 'eventTypeOther', label: 'Event type (other)' },
@@ -56,7 +55,6 @@ export const CSV_COLUMNS: CsvColumn[] = [
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Phone' },
   { key: 'contactPreference', label: 'Contact preference', format: (r) => CONTACT_LABEL[r.contactPreference] },
-  { key: 'servingAlcohol', label: 'Serving alcohol' },
   { key: 'wantsVisit', label: 'Wants a visit' },
   { key: 'visitNotes', label: 'Visit notes' },
   { key: 'estimateTotal', label: 'Estimate (USD)' },

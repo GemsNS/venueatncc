@@ -7,7 +7,6 @@ import './booking.css';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { OTHER_EVENT, eventTypes } from '../../data/event-types';
-import { CAPACITY, capacityLabel } from '../../shared/capacity';
 import { formatLong, todayKey } from '../../shared/dates';
 import { dayTypeOf, estimate, formatUSD, pricing, type DayType } from '../../shared/pricing';
 import type { DateKey, SpaceChoice } from '../../shared/types';
@@ -16,6 +15,7 @@ import {
   DAY_TYPES,
   HOURS_MAX,
   HOURS_MIN,
+  SPACE_HINT,
   SPACE_SHORT,
   SPACES,
   bookUrl,
@@ -92,7 +92,7 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
             full
           />
           <p class="field__hint" id="bk-pe-space-hint">
-            {space === 'both' ? `Both spaces. ${capacityLabel('both')}.` : `${spaceLabel(space)}, up to ${CAPACITY[space]} guests.`}
+            {space === 'both' ? `Both spaces. ${SPACE_HINT.both}.` : `${spaceLabel(space)}. ${SPACE_HINT[space]}.`}
           </p>
         </div>
 

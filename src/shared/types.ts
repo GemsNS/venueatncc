@@ -6,6 +6,17 @@
 
 export type SpaceChoice = 'indoor' | 'outdoor' | 'both';
 
+/**
+ * The public names of the spaces (docs/design/brand.md). The data slugs stay indoor, outdoor,
+ * and both. Every label the booking app, the admin, the emails, and the CSV export show for a
+ * space comes from here, so the names read the same everywhere.
+ */
+export const SPACE_NAMES: Record<SpaceChoice, string> = {
+  indoor: 'The Hall',
+  outdoor: 'The Grove',
+  both: 'The Hall and The Grove',
+};
+
 /** YYYY-MM-DD in the venue's local time (America/New_York). */
 export type DateKey = string;
 
@@ -56,7 +67,6 @@ export interface InquiryInput {
   message?: string;
   wantsVisit: boolean;
   visitNotes?: string;
-  servingAlcohol: boolean;
   /** Anti-spam: a signed token from GET /api/form-token, and a honeypot that must stay empty. */
   formToken: string;
   website?: string;

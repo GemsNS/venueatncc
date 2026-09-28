@@ -1,5 +1,7 @@
 /*
-  Staff admin app. Built on the tokens and utilities in src/styles/global.css.
+  Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md):
+  Venue Purple for selection and new items, the palette grays and surfaces, and the interface family
+  throughout except the brand name beside the monogram.
   Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
   Glass only on the sidebar, tab bar, sheets, menus, and toasts. Purple only for interactive or selected.
 */
@@ -11,32 +13,26 @@
   --adm-radius-sidebar: 28px;
   --adm-radius-section: var(--r-lg);
 
-  /* Status colors with 4.5:1 text on their tints, in both appearances. */
-  --adm-blue: #0066cc;
-  --adm-blue-tint: rgba(0, 122, 255, 0.12);
+  /* Status colors with 4.5:1 text on their tints, in both appearances. New items use Venue Purple. */
   --adm-green: #1b6e30;
   --adm-green-tint: rgba(52, 199, 89, 0.16);
   --adm-orange: #b52f00;
   --adm-orange-tint: rgba(255, 149, 0, 0.16);
   --adm-red: #c4001a;
   --adm-red-tint: rgba(255, 59, 48, 0.12);
-  --adm-gray: #5c5c61;
+  --adm-gray: var(--label-2);
   --adm-gray-tint: var(--fill-2);
   --adm-page: var(--bg-grouped);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --adm-blue: #5eaeff;
-    --adm-blue-tint: rgba(10, 132, 255, 0.2);
     --adm-green: #4cd97b;
     --adm-green-tint: rgba(48, 209, 88, 0.16);
     --adm-orange: #ffb340;
     --adm-orange-tint: rgba(255, 159, 10, 0.16);
     --adm-red: #ff7a70;
     --adm-red-tint: rgba(255, 69, 58, 0.18);
-    --adm-gray: #b4b4b9;
-    --adm-page: #000000;
   }
 }
 
@@ -152,7 +148,7 @@ body.is-bare {
 }
 
 .adm-tab[aria-current='page'] {
-  background: var(--fill);
+  background: var(--accent-tint-2);
   color: var(--accent-text);
 }
 
@@ -180,19 +176,13 @@ body.is-bare {
   height: 20px;
   padding: 0 6px;
   border-radius: var(--r-full);
-  background: var(--adm-red);
-  color: #ffffff;
+  /* New requests: Venue Purple with a white count (5.9:1 or better in both appearances). */
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-}
-
-@media (prefers-color-scheme: dark) {
-  .adm-count {
-    background: #ff453a;
-    color: #000000;
-  }
 }
 
 .adm-demo-banner {
@@ -243,16 +233,34 @@ body.is-bare {
   }
 }
 
+/* The monogram and the name. The name is the one place the admin uses a brand face (brand.md). */
 .adm-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 18px;
+}
+
+.adm-sidebar__mark {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  color: var(--accent-text);
+}
+
+.adm-sidebar__text {
   display: grid;
-  gap: 2px;
-  padding: 10px 12px 18px;
+  gap: 1px;
+  min-width: 0;
 }
 
 .adm-sidebar__name {
-  font-size: var(--t-headline);
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  font-synthesis: none;
   line-height: 1.2;
+  letter-spacing: -0.005em;
 }
 
 .adm-sidebar__role {
@@ -300,7 +308,7 @@ body.is-bare {
 }
 
 .adm-nav[aria-current='page'] {
-  background: var(--fill);
+  background: var(--accent-tint);
   color: var(--accent-text);
   font-weight: 600;
 }
@@ -584,9 +592,9 @@ body.is-bare {
 
 /* ---------- Badges ---------- */
 
-.badge.adm-tone--blue {
-  background: var(--adm-blue-tint);
-  color: var(--adm-blue);
+.badge.adm-tone--accent {
+  background: var(--accent-tint);
+  color: var(--accent-text);
 }
 
 .badge.adm-tone--green {
@@ -621,7 +629,7 @@ body.is-bare {
   height: 8px;
   margin-right: 8px;
   border-radius: 50%;
-  background: var(--adm-blue);
+  background: var(--accent-text);
   vertical-align: 0.1em;
 }
 
@@ -697,16 +705,14 @@ body.is-bare {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--fill-2);
+  background: var(--accent-tint);
   line-height: 1;
 }
 
 .adm-datetile__month {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--adm-red);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-text);
 }
 
 .adm-datetile__day {
@@ -887,9 +893,10 @@ body.is-bare {
   width: 100%;
 }
 
+/* Dark mode: the selected segment is a plum-tinted gray raised above the track. */
 @media (prefers-color-scheme: dark) {
   .adm-segmented .segmented__item[aria-checked='true'] {
-    background: #636366;
+    background: #3d3645;
   }
 }
 
@@ -1623,7 +1630,8 @@ body.is-bare {
 
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
-  background: rgba(0, 0, 0, 0.32);
+  /* A dim tinted toward Deep Plum. */
+  background: rgba(26, 16, 36, 0.4);
 }
 
 .adm-sheet {
@@ -1955,19 +1963,11 @@ body.is-bare {
   }
 }
 
+/* The monogram in Venue Purple (Lilac in dark mode). */
 .adm-signin__mark {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: var(--fill-2);
-  color: var(--label);
-}
-
-.adm-signin__mark .icon {
-  width: 26px;
-  height: 26px;
+  width: 64px;
+  height: 64px;
+  color: var(--accent-text);
 }
 
 .adm-signin__title {
@@ -2112,9 +2112,4 @@ body.is-bare {
   }
 }
 
-/* Dark mode: keep the month label readable when a row's hover background lightens the tile. */
-@media (prefers-color-scheme: dark) {
-  .adm-datetile__month {
-    color: #ff9a92;
-  }
-}
+

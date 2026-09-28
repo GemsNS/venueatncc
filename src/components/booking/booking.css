@@ -1,8 +1,10 @@
 /*
   Booking islands: wizard, date checker, capacity planner, price estimator.
-  Built on the tokens and utilities in src/styles/global.css and the HIG web spec
-  (docs/design/hig-web-spec.md). Purple marks interactive or selected things only; status uses
-  green and orange with an icon or text. Glass appears only on the phone action bar (a control layer).
+  Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md) and the
+  interaction rules of the HIG web spec (docs/design/hig-web-spec.md). Venue Purple marks
+  interactive or selected things only; status uses green and orange with an icon or text. Glass
+  appears only on the phone action bar (a control layer). Headings and controls use the interface
+  family; large prices use Libre Caslon Text and the confirmation title Libre Caslon Display.
   Radii are concentric: inner radius = outer radius - inset.
 */
 
@@ -20,11 +22,12 @@
   font-size: var(--t-body);
 }
 
+/* Dark mode: raised controls in plum-tinted grays that sit on the Elevated surface (#1C1820). */
 @media (prefers-color-scheme: dark) {
   .bk,
   .bk-app {
-    --bk-thumb: #636366;
-    --bk-step-bg: #3a3a3c;
+    --bk-thumb: #3d3645;
+    --bk-step-bg: #2d2733;
     --bk-green-text: var(--green);
     --bk-orange-text: var(--orange);
   }
@@ -56,7 +59,8 @@
 }
 
 .bk-dc__space:focus-visible,
-.bk-switch-row__btn:focus-visible {
+.bk-switch-row__btn:focus-visible,
+.bk-choice__item:focus-visible {
   border-radius: var(--r-sm);
 }
 
@@ -305,12 +309,115 @@
   transition: transform var(--dur-2) var(--ease-spring);
 }
 
+/* On is a selected state, so it takes Venue Purple; the knob position and the row text carry it too. */
 [aria-checked='true'] > .bk-switch {
-  background: var(--green);
+  background: var(--accent);
 }
 
 [aria-checked='true'] > .bk-switch .bk-switch__knob {
   transform: translateX(20px);
+}
+
+/* ---------- Choice list: the space picker ---------- */
+
+.bk-choice {
+  display: grid;
+  box-shadow: var(--bk-card-edge);
+}
+
+.bk-choice[aria-invalid='true'] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--red) 55%, transparent);
+}
+
+.bk-choice__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-1) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bk-choice__item + .bk-choice__item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  border-top: 1px solid var(--separator);
+}
+
+.bk-choice__item:hover {
+  background: var(--fill-3);
+}
+
+.bk-choice__item:focus-visible {
+  outline-offset: -3px;
+}
+
+.bk-choice__item[aria-checked='true'] {
+  background: var(--accent-tint);
+}
+
+.bk-choice__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bk-choice__title {
+  font-size: var(--t-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bk-choice__hint {
+  font-size: var(--t-footnote);
+  color: var(--label-2);
+}
+
+.bk-choice__radio {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--separator-strong);
+  border-radius: 50%;
+  transition: border-width var(--dur-1) ease;
+}
+
+.bk-choice__item[aria-checked='true'] .bk-choice__radio {
+  border: 7px solid var(--accent);
+  background: var(--on-accent);
+}
+
+.bk-choice__item[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.bk-choice__item[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.bk-choice__item[aria-disabled='true'] .bk-choice__title {
+  color: var(--label-2);
+  text-decoration: line-through;
+}
+
+.bk-choice__note {
+  flex: none;
+  font-size: var(--t-footnote);
+  font-weight: 600;
+  color: var(--label-2);
 }
 
 /* ---------- Status, notes, spinner ---------- */
@@ -451,10 +558,14 @@
   font-weight: 600;
 }
 
+/* Large prices are set in Libre Caslon Text, regular weight (brand.md). */
 .bk-est__total-amt {
+  font-family: var(--font-serif);
   font-size: var(--t-title-2);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
@@ -1459,8 +1570,14 @@ button.bk-progress__item:hover {
   stroke-width: 2.6;
 }
 
+/* The confirmation reads like a page title: Caslon Display, at 28px and up only. */
 .bk-success__title {
-  font-size: var(--t-title-1);
+  font-family: var(--font-display);
+  font-size: var(--t-large-title);
+  line-height: 1.1;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
 }
 
 .bk-success__lead {
@@ -1482,9 +1599,9 @@ button.bk-progress__item:hover {
 }
 
 .bk-ref__code {
-  font-size: var(--t-large-title);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: var(--t-title-2);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   line-height: 1.1;
   user-select: all;
 }
@@ -2089,9 +2206,11 @@ html:not(.js) .bk-skel {
 
 .bk-pe__big {
   margin-top: 6px;
+  font-family: var(--font-serif);
   font-size: var(--t-large-title);
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.015em;
   line-height: 1.05;
 }
 
@@ -2140,6 +2259,7 @@ html:not(.js) .bk-skel {
   .bk-chip[aria-pressed='true'],
   .bk-tile[aria-checked='true'],
   .bk-dc__space[aria-checked='true'],
+  .bk-choice__item[aria-checked='true'],
   .bk-seg .segmented__item[aria-checked='true'] {
     outline: 3px solid Highlight;
     outline-offset: -3px;

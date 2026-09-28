@@ -1,15 +1,15 @@
 /** Labels and formatting for the admin app. Prices always come from src/shared/pricing.ts. */
-import { INQUIRY_STATUSES, type BlockKind, type InquiryStatus, type SpaceChoice } from '../../shared/types';
-import { pricing, formatUSD } from '../../shared/pricing';
+import { INQUIRY_STATUSES, SPACE_NAMES, type BlockKind, type InquiryStatus, type SpaceChoice } from '../../shared/types';
+import { formatUSD } from '../../shared/pricing';
 import { VENUE_TZ, addHours, formatTime } from '../../shared/dates';
 
 export { formatUSD };
 export { eventTypeName } from '../../data/event-types';
 
-export type Tone = 'blue' | 'gray' | 'orange' | 'green' | 'red';
+export type Tone = 'accent' | 'gray' | 'orange' | 'green' | 'red';
 
 const STATUS_TONE: Record<InquiryStatus, Tone> = {
-  new: 'blue',
+  new: 'accent',
   contacted: 'gray',
   visit: 'gray',
   quoted: 'orange',
@@ -29,11 +29,11 @@ export function statusTone(status: InquiryStatus): Tone {
 }
 
 export function spaceLabel(space: SpaceChoice): string {
-  return pricing.spaces[space]?.label ?? space;
+  return SPACE_NAMES[space] ?? space;
 }
 
 /** Short space names for calendar chips. */
-export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Indoor', outdoor: 'Outdoor', both: 'Both' };
+export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Hall', outdoor: 'Grove', both: 'Both' };
 
 export const KIND_LABEL: Record<BlockKind, string> = { booked: 'Booked', held: 'Held', closed: 'Closed' };
 
