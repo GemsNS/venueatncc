@@ -303,9 +303,27 @@ for `/app/data`. Run a single instance: SQLite is one file on one disk.
 **Client addresses and rate limits.** Sign-in and booking-request limits count per client address, so
 the app must see the real one. Set `TRUST_PROXY=true` only when exactly one proxy you control sits in
 front of the app and the app is not reachable any other way (Compose does this: the app has no
-published port). If a CDN such as Cloudflare sits in front of Caddy, add the CDN's address ranges to
-the Caddyfile (`reverse_proxy app:8787 { trusted_proxies ... }`), or every visitor shares the CDN's few
-addresses and one person's failed sign-ins lock out everyone.
+published port). If a CDN such as Cloudflare sits in front of Caddy, every visitor otherwise arrives from
+the CDN's few addresses, and one person's failed sign-ins could lock out everyone. Tell Caddy to trust the
+CDN and to hand the app the real visitor address:
+
+```
+{
+	servers {
+		trusted_proxies static <the CDN's published address ranges>
+		client_ip_headers CF-Connecting-IP X-Forwarded-For
+	}
+}
+
+venueatncc.org {
+	reverse_proxy app:8787 {
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+```
+
+Caddy then works out the visitor's address from the CDN's header, and the app reads it as the only
+X-Forwarded-For entry. This setup was not tested here; confirm with a test sign-in from two networks.
 
 **Slow clients.** The app ends a request whose headers take more than 10 seconds or whose whole request
 takes more than 15, and the Caddyfile sets the same limits in front of it, so a client that trickles a

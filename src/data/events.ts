@@ -188,7 +188,7 @@ export const events: EventType[] = [
         heading: 'Awards banquets, team dinners, and appreciation nights',
         body: [
           'Schools, sports teams, clubs, businesses, and churches often hold banquets to close out a season or a year of work. Scholarship dinners and volunteer appreciation nights follow a similar shape: a welcome, a meal, and time to honor people. Anyone can book The Venue at NCC, so your group does not need any tie to the church.',
-          'If the program includes a slideshow or microphones, ask us about sound and screens before you plan around them. If your banquet sells tickets that include drinks, check Virginia ABC licensing rules before the event.',
+          'If the program includes a slideshow or microphones, ask us about sound and screens before you plan around them. If you plan to serve alcohol, Virginia ABC may require a banquet license, so check its rules early.',
         ],
       },
       {
@@ -219,7 +219,7 @@ export const events: EventType[] = [
       },
       {
         q: 'Is alcohol allowed at an anniversary party or banquet?',
-        a: "Yes. You can serve alcohol at your event. If you sell drinks or include them in a ticket price, check Virginia ABC's licensing rules before the event.",
+        a: "Yes. You can serve alcohol at your event. Virginia ABC may require a banquet license, so check its rules early.",
       },
       {
         q: 'How many guests can a banquet at The Venue at NCC hold?',

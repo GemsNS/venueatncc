@@ -48,6 +48,8 @@ export function createApp(deps: AppDeps): VenueServerApp {
     limits: {
       login: new RateLimiter(10, 15 * 60 * 1000),
       loginIp: new RateLimiter(LOGIN_ATTEMPTS_PER_ADDRESS, 15 * 60 * 1000),
+      // Caps guessing against one account from many addresses (distributed attempts).
+      loginAccount: new RateLimiter(30, 15 * 60 * 1000),
       password: new RateLimiter(10, 15 * 60 * 1000),
     },
   };

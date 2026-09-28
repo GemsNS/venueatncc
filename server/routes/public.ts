@@ -111,7 +111,14 @@ export async function sendInquiryEmails(ctx: ServerContext, inquiryId: number, e
     ...venue,
     tag: `${inquiry.reference}-venue`,
   });
-  const sentLastHour = ctx.repo.countEmailsSince('guest_confirmation', iso(ctx.now() - HOUR));
+  // Check and reserve a send slot in one synchronous step, so a burst of concurrent requests cannot
+  // all read a low count before any of them is recorded.
+  const nowMs = ctx.now();
+  let guestSendTimes = guestSendTimesByApp.get(ctx);
+  if (!guestSendTimes) guestSendTimesByApp.set(ctx, (guestSendTimes = []));
+  while (guestSendTimes.length > 0 && guestSendTimes[0] <= nowMs - HOUR) guestSendTimes.shift();
+  const sentLastHour = Math.max(guestSendTimes.length, ctx.repo.countEmailsSince('guest_confirmation', iso(nowMs - HOUR)));
+  if (sentLastHour < GUEST_CONFIRMATIONS_PER_HOUR) guestSendTimes.push(nowMs);
   if (sentLastHour >= GUEST_CONFIRMATIONS_PER_HOUR) {
     ctx.log.warn(`[email] ${sentLastHour} guest confirmations in the last hour; not sending one for ${inquiry.reference}.`);
     ctx.repo.addEvent(
@@ -130,6 +137,9 @@ export async function sendInquiryEmails(ctx: ServerContext, inquiryId: number, e
     tag: `${inquiry.reference}-guest`,
   });
 }
+
+/** Times of guest confirmations reserved during the last hour, per app instance. */
+const guestSendTimesByApp = new WeakMap<object, number[]>();
 
 function isUniqueViolation(err: unknown): boolean {
   return typeof err === 'object' && err !== null && String((err as { code?: string }).code ?? '').startsWith('SQLITE_CONSTRAINT');

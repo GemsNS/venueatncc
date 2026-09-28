@@ -3,6 +3,9 @@
  * The server always re-validates; the browser uses the same rules for instant feedback.
  */
 import { z } from 'zod';
+
+// Skip zod's eval probe (new Function), which the production Content-Security-Policy blocks.
+z.config({ jitless: true });
 import { eventTypes, OTHER_EVENT } from '../data/event-types';
 import { isDateKey, parseKey, toKey } from './dates';
 import { INQUIRY_STATUSES } from './types';
@@ -33,9 +36,20 @@ const charRange = (from: number, to: number) => String.fromCharCode(from) + '-' 
  * and tabs), DEL, the Unicode line and paragraph separators, and bidirectional overrides and
  * isolates, which can make text display differently from what it says.
  */
-const SPECIAL_CHARACTERS = new RegExp('[' + charRange(0, 31) + charRange(127, 159) + charRange(0x2028, 0x202e) + charRange(0x2066, 0x2069) + ']');
+const INVISIBLE_AND_BIDI =
+  charRange(0x200b, 0x200f) + charRange(0x2028, 0x202e) + charRange(0x2066, 0x2069) + String.fromCharCode(0x061c) + String.fromCharCode(0xfeff);
+const SPECIAL_CHARACTERS = new RegExp('[' + charRange(0, 31) + charRange(127, 159) + INVISIBLE_AND_BIDI + ']');
 export const isSingleLine = (s: string) => !SPECIAL_CHARACTERS.test(s);
+/**
+ * Multi-line fields (message, visit notes) may contain tabs and line breaks, but not other
+ * control characters (vertical tab, form feed, NEL) or invisible and direction-changing ones.
+ */
+const MULTILINE_SPECIAL = new RegExp(
+  '[' + charRange(0, 8) + charRange(11, 12) + charRange(14, 31) + charRange(127, 159) + INVISIBLE_AND_BIDI + ']',
+);
+const multiLine = (max: number) => trimmed(max).refine((s) => !MULTILINE_SPECIAL.test(s), SINGLE_LINE_ERROR_MULTI);
 export const SINGLE_LINE_ERROR = 'Remove line breaks and special characters.';
+const SINGLE_LINE_ERROR_MULTI = 'Remove special characters.';
 const singleLine = (max: number) => trimmed(max).refine(isSingleLine, SINGLE_LINE_ERROR);
 
 export const inquiryInputSchema = z.object({
@@ -51,9 +65,9 @@ export const inquiryInputSchema = z.object({
   email: z.email('Enter a valid email address.').max(200),
   phone: singleLine(40).optional(),
   contactPreference: z.enum(['email', 'phone', 'text']).default('email'),
-  message: trimmed(4000).optional(),
+  message: multiLine(4000).optional(),
   wantsVisit: z.coerce.boolean().default(false),
-  visitNotes: trimmed(500).optional(),
+  visitNotes: multiLine(500).optional(),
   servingAlcohol: z.coerce.boolean().default(false),
   formToken: z.string().min(10).max(400),
   website: z.string().max(0, 'Leave this field empty.').optional(),

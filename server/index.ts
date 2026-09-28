@@ -58,7 +58,12 @@ async function main(): Promise<void> {
       log.info(`[server] ${config.nodeEnv}: listening on http://${shown}:${info.port} (public origin ${config.publicOrigin})`);
     },
   );
-  server.maxConnections = 1000;
+  // No hard connection cap: a fixed cap lets one client that opens many slow connections lock every
+  // visitor out. The header and request timeouts above end slow clients instead, and the reverse
+  // proxy (Caddyfile) is the place for per-client connection limits.
+  if (process.env.ADMIN_PASSWORD && !config.admin) {
+    log.warn('[admin] ADMIN_PASSWORD is set without ADMIN_EMAIL, so it is ignored. Remove it from .env and the environment.');
+  }
 
   if (config.outboxRetentionDays) {
     log.info(`[email] Outbox files older than ${config.outboxRetentionDays} days are deleted.`);
@@ -70,6 +75,7 @@ async function main(): Promise<void> {
       repo.deleteExpiredSessions(iso(t), iso(t - SESSION_IDLE_MS));
       ctx.limits.login.prune(t);
       ctx.limits.loginIp.prune(t);
+      ctx.limits.loginAccount.prune(t);
       ctx.limits.password.prune(t);
     } catch (err) {
       log.error('[housekeeping]', err);

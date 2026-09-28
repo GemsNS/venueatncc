@@ -43,7 +43,7 @@ const schema = [
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
 ---
-<BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} ogAlt={`${event.name} at ${site.name} in Suffolk, Virginia`} schema={schema}>
+<BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} ogAlt={`${event.name}: ${event.h1}. ${site.name}, Suffolk, Virginia.`} schema={schema}>
   <section class="ev-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />

@@ -162,7 +162,13 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     const tooManyMessage = 'Too many sign-in attempts. Wait 15 minutes, then try again.';
     // Both limits count the attempt before any await, so a burst of concurrent guesses cannot
     // all pass the check before one is recorded. The first caps an address across every email.
-    if (!ctx.limits.loginIp.consume(bucket, nowMs)) return tooMany(c, ctx.limits.loginIp, bucket, nowMs, tooManyMessage);
+    // Keys are hashed so an arbitrary X-Forwarded-For value cannot grow the limiter maps.
+    const ipKey = sha256(bucket);
+    if (!ctx.limits.loginIp.consume(ipKey, nowMs)) return tooMany(c, ctx.limits.loginIp, ipKey, nowMs, tooManyMessage);
+    const accountKey = sha256(`account|${email}`);
+    if (!ctx.limits.loginAccount.consume(accountKey, nowMs)) {
+      return tooMany(c, ctx.limits.loginAccount, accountKey, nowMs, tooManyMessage);
+    }
     const key = sha256(`${bucket}|${email}`);
     if (!ctx.limits.login.consume(key, nowMs)) return tooMany(c, ctx.limits.login, key, nowMs, tooManyMessage);
 
@@ -176,6 +182,7 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     }
     if (!found || !valid) return apiError(c, 401, LOGIN_ERROR);
     ctx.limits.login.reset(key);
+    ctx.limits.loginAccount.reset(accountKey);
 
     // Hashes made with older, weaker settings are replaced now that the password is known.
     if (needsRehash(found.passwordHash)) {

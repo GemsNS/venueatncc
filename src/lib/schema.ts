@@ -46,7 +46,6 @@ export function parentOrganization() {
       jobTitle: site.parent.pastorTitle,
     },
     address: postalAddress(),
-    telephone: site.parent.phoneE164,
   };
 }
 

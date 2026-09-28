@@ -43,7 +43,7 @@ export const GET: APIRoute = () => {
       : []),
     ...(offer ? [`- ${offer.label}. Discounts do not combine; the estimate uses the best one that applies.`] : []),
     `- Check availability and request a date: ${u('/book/')}`,
-    `- Operated by: ${site.parent.name} (${site.parent.url}), established in Suffolk in ${site.parent.foundingYear}`,
+    `- Operated by: ${site.parent.name} (${site.parent.url}), part of Suffolk since ${site.parent.foundingYear}`,
     '',
     '## Hourly rates',
     '',

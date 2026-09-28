@@ -54,6 +54,8 @@ export interface ServerContext {
     login: RateLimiter;
     /** Sign-in attempts per client network, whatever email is tried. */
     loginIp: RateLimiter;
+    /** Sign-in attempts per account, from any address. */
+    loginAccount: RateLimiter;
     /** Current-password checks per admin. */
     password: RateLimiter;
   };

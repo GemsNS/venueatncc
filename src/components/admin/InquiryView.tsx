@@ -387,9 +387,15 @@ export function InquiryView({ id }: { id: number }) {
               <Row label="Due to reserve">
                 <span class="adm-num">{formatUSD(est.bookingDeposit)}</span>
               </Row>
-              <Row label="Balance">
-                <span class="adm-num">{formatUSD(est.total - est.bookingDeposit)}</span>
-              </Row>
+              {est.total - est.bookingDeposit > 0 ? (
+                <Row label="Balance">
+                  <span class="adm-num">{formatUSD(est.total - est.bookingDeposit)}</span>
+                </Row>
+              ) : (
+                <Row label="Balance">
+                  <span>None, paid in full to reserve (event within 30 days)</span>
+                </Row>
+              )}
               <Row label="Refundable damage deposit">
                 <span class="adm-num">{formatUSD(est.refundableDeposit)}</span>
               </Row>

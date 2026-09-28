@@ -290,7 +290,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
       steps: [
         { h: 1, status: 'contacted', note: 'Called Denise with our condolences and walked her through the estimate.' },
         { h: 20, status: 'quoted' },
-        { h: 26, status: 'booked', block: 'booked', note: 'Deposit received. Family caterer confirmed.' },
+        { h: 26, status: 'booked', block: 'booked', note: 'Payment received. Family caterer confirmed.' },
       ],
     },
     {
@@ -316,7 +316,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         { h: 26, status: 'contacted' },
         { h: 75, status: 'visit', note: 'Toured the outdoor space with Anthony and two board members.' },
         { h: 122, status: 'quoted' },
-        { h: 170, status: 'booked', block: 'booked', note: 'Deposit received. Balance is due before the event.' },
+        { h: 170, status: 'booked', block: 'booked', note: 'Payment received. Guest count confirmed.' },
       ],
     },
     {

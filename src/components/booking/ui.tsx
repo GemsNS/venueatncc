@@ -328,13 +328,13 @@ export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boo
       <dl class="bk-est__pay">
         {full ? (
           <div class="bk-est__payrow">
-            <dt>Due when you reserve</dt>
+            <dt>Due to reserve</dt>
             <dd class="num">{formatUSD(reserve)}</dd>
           </div>
         ) : (
           <>
             <div class="bk-est__payrow">
-              <dt>Booking deposit to reserve</dt>
+              <dt>Due to reserve</dt>
               <dd class="num">{formatUSD(reserve)}</dd>
             </div>
             {balance > 0 && (

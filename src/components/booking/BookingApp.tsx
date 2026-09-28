@@ -258,8 +258,10 @@ export default function BookingApp() {
     const free = singles.filter((s) => spaceIsFree(day, s));
     const alt = free.find((s) => !capacityError(s, d.guests)) ?? free[0];
     if (!alt) return;
+    const taken = singles.filter((s) => !spaceIsFree(day, s));
+    const takenLabel = taken.length === 1 ? spaceLabel(taken[0]) : spaceLabel(d.space);
     setD((p) => ({ ...p, space: alt }));
-    say(`${spaceLabel(d.space)} is booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
+    say(`${takenLabel} is booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
   }, [d.date, day]);
 
   // A date that arrived booked (a link, an old tab, or a refresh that found it taken): let it go and say why.

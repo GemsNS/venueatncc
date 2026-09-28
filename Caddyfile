@@ -2,8 +2,11 @@
 # and forwards requests to the Node app. Both names must point at this server in DNS first.
 # SITE_DOMAIN defaults to venueatncc.org; set it in .env to try a staging name first.
 #
-# If a CDN or another proxy (Cloudflare, for example) ever sits in front of Caddy, add its address
-# ranges to reverse_proxy with trusted_proxies, or every visitor shares the CDN's rate limits.
+# If a CDN or another proxy (Cloudflare, for example) ever sits in front of Caddy, trust it globally
+# and pass the real visitor address on, or every visitor shares the CDN's rate limits:
+#   servers { trusted_proxies static <CDN address ranges>  client_ip_headers CF-Connecting-IP X-Forwarded-For }
+#   reverse_proxy app:8787 { header_up X-Forwarded-For {client_ip} }
+# (See docs/deploy.md. Not needed when visitors connect to Caddy directly.)
 
 {
 	servers {
