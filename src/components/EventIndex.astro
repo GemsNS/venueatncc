@@ -1,30 +1,38 @@
 ---
-/**
- * A typographic index of event types. Each row links to the event's landing page.
- */
+/** Event types as cards. Each links to its landing page. */
+import Icon from './Icon.astro';
 import { events } from '../data/events';
+import { eventTypes } from '../data/event-types';
+import { href } from '../lib/paths';
 
 interface Props {
-  /** Slugs to leave out, e.g. the current page. */
   exclude?: string[];
-  /** Only these slugs, in this order. */
   only?: string[];
   headingLevel?: 'h2' | 'h3';
+  /** 'grid' wraps; 'shelf' scrolls horizontally with snap points. */
+  layout?: 'grid' | 'shelf';
 }
-const { exclude = [], only, headingLevel = 'h3' } = Astro.props;
+const { exclude = [], only, headingLevel = 'h3', layout = 'grid' } = Astro.props;
 const list = only
   ? only.map((slug) => events.find((e) => e.slug === slug)).filter((e) => e !== undefined)
   : events.filter((e) => !exclude.includes(e.slug));
+const iconFor = (slug: string) => eventTypes.find((t) => t.slug === slug)?.icon ?? 'party-popper';
 const Heading = headingLevel;
 ---
 {
   list.length > 0 && (
-    <ul class:list={['event-index', { 'event-index--three': list.length === 3 }]}>
+    <ul class:list={['events', `events--${layout}`]}>
       {list.map((e) => (
-        <li class="event-index__item">
-          <a class="event-index__link" href={`/events/${e.slug}/`}>
-            <Heading class="event-index__name">{e.name}</Heading>
-            <p class="event-index__summary">{e.summary}</p>
+        <li class="events__item">
+          <a class="event-card card" href={href(`/events/${e.slug}/`)}>
+            <span class="icon-tile">
+              <Icon name={iconFor(e.slug)} />
+            </span>
+            <Heading class="event-card__name t-title-3">{e.name}</Heading>
+            <p class="event-card__summary secondary">{e.summary}</p>
+            <span class="link-more event-card__more">
+              Plan yours <Icon name="chevron-right" />
+            </span>
           </a>
         </li>
       ))}
@@ -33,60 +41,69 @@ const Heading = headingLevel;
 }
 
 <style>
-  .event-index {
-    display: grid;
+  .events {
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--line);
   }
 
-  @media (min-width: 760px) {
-    .event-index {
-      grid-template-columns: 1fr 1fr;
-      column-gap: clamp(2rem, 5vw, 5rem);
-    }
-  }
-
-  @media (min-width: 1000px) {
-    .event-index--three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  .event-index__item {
-    border-bottom: 1px solid var(--line);
-  }
-
-  .event-index__link {
+  .events--grid {
     display: grid;
-    gap: 0.35rem;
-    height: 100%;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
+
+  .events--shelf {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(78%, 300px);
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    padding: 0.5rem var(--gutter) 1.5rem;
+    margin-inline: calc(-1 * var(--gutter));
+    scrollbar-width: none;
+  }
+
+  .events--shelf::-webkit-scrollbar {
+    display: none;
+  }
+
+  .events--shelf .events__item {
+    scroll-snap-align: start;
+  }
+
+  .event-card {
+    display: grid;
     align-content: start;
-    padding-block: 1.4rem 1.5rem;
+    gap: 0.6rem;
+    height: 100%;
+    padding: 1.5rem;
+    color: var(--label);
     text-decoration: none;
-    color: inherit;
+    transition:
+      transform var(--dur-2) var(--ease-spring),
+      box-shadow var(--dur-2) ease;
   }
 
-  .event-index__name {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: var(--step-2);
-    line-height: 1.2;
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.2em;
-    transition: text-decoration-color 150ms ease;
+  .event-card:hover {
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
   }
 
-  .event-index__link:hover .event-index__name,
-  .event-index__link:focus-visible .event-index__name {
-    text-decoration-color: var(--brass);
+  .event-card__name {
+    margin-top: 0.5rem;
   }
 
-  .event-index__summary {
-    color: var(--ink-2);
-    max-width: 46ch;
+  .event-card__summary {
+    font-size: var(--t-subhead);
+  }
+
+  .event-card__more {
+    margin-top: auto;
+    padding-top: 0.5rem;
+    font-size: var(--t-subhead);
   }
 </style>

@@ -6,9 +6,11 @@ import type { APIRoute } from 'astro';
 import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs } from '../data/faq';
+import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 
 export const GET: APIRoute = () => {
   const u = (path: string) => new URL(path, site.url).href;
+  const { fromHourly } = priceSummary();
   const lines = [
     `# ${site.name}`,
     '',
@@ -16,19 +18,19 @@ export const GET: APIRoute = () => {
     '',
     `- Address: ${fullAddress}`,
     `- Phone: ${site.contact.phone}`,
-    ...(site.contact.email ? [`- Email: ${site.contact.email}`] : []),
+    `- Email: ${site.contact.email}`,
+    ...site.spaces.map((s) => `- ${s.name}: up to ${s.capacity} guests`),
+    '- Open to everyone: membership is not required',
+    '- Alcohol: allowed',
+    '- Catering: not included; hosts choose their own caterer or bring food',
+    '- Parking: included with every booking',
+    `- Rates: from ${formatUSD(fromHourly)} per hour; minimums from ${Math.min(...Object.values(pricing.minimumHours))} hours. Full rate card: ${u('/pricing/')}`,
+    `- Check availability and request a date: ${u('/book/')}`,
     `- Operated by: ${site.parent.name} (${site.parent.url}), established in Suffolk in ${site.parent.foundingYear}`,
-    `- Book or check a date: ${u('/book/')}`,
     '',
     '## Events',
     '',
     ...events.map((e) => `- [${e.name}](${u(`/events/${e.slug}/`)}): ${e.summary}`),
-    '',
-    '## Pages',
-    '',
-    `- [The space](${u('/the-space/')})`,
-    `- [Questions and answers](${u('/faq/')})`,
-    `- [About](${u('/about/')})`,
     '',
     '## Questions and answers',
     '',

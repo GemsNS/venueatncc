@@ -1,16 +1,22 @@
 ---
+import Icon from './Icon.astro';
+import { href } from '../lib/paths';
+
 interface Props {
   items: { name: string; path: string }[];
 }
 const { items } = Astro.props;
 ---
-<nav class="breadcrumbs" aria-label="Breadcrumb">
+<nav class="crumbs t-footnote" aria-label="Breadcrumb">
   <ol>
     {
       items.map((item, i) => (
         <li>
           {i < items.length - 1 ? (
-            <a href={item.path}>{item.name}</a>
+            <>
+              <a href={href(item.path)}>{item.name}</a>
+              <Icon name="chevron-right" class="crumbs__sep" />
+            </>
           ) : (
             <span aria-current="page">{item.name}</span>
           )}
@@ -21,29 +27,41 @@ const { items } = Astro.props;
 </nav>
 
 <style>
-  .breadcrumbs ol {
+  .crumbs ol {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 0;
+    align-items: center;
+    gap: 0.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--step--1);
-    color: var(--ink-2);
+    color: var(--label-2);
   }
 
-  .breadcrumbs li:not(:last-child)::after {
-    content: '/';
-    margin-inline: 0.6rem;
-    color: var(--line);
+  .crumbs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
-  .breadcrumbs a {
-    color: var(--ink-2);
+  .crumbs a {
+    color: var(--label-2);
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
   }
 
-  .breadcrumbs [aria-current] {
-    color: var(--ink);
-    font-weight: 500;
+  .crumbs a:hover {
+    color: var(--accent-text);
+  }
+
+  .crumbs [aria-current] {
+    color: var(--label);
+  }
+
+  .crumbs :global(.crumbs__sep) {
+    width: 0.9em;
+    height: 0.9em;
+    color: var(--label-3);
   }
 </style>

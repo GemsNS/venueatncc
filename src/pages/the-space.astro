@@ -1,7 +1,286 @@
 ---
+import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import ArchFrame from '../components/ArchFrame.astro';
+import Icon from '../components/Icon.astro';
+import LocationBand from '../components/LocationBand.astro';
+import CtaBand from '../components/CtaBand.astro';
 import CapacityPlanner from '../components/booking/CapacityPlanner';
+import { site } from '../data/site';
+import { photos, hasPhotos, photosTagged } from '../data/photos';
+import { bookHref } from '../data/nav';
+import { breadcrumbs, abs } from '../lib/schema';
+import { href, withoutBase } from '../lib/paths';
+
+const title = 'The space | Indoor hall and outdoor venue, Suffolk, VA';
+const description = `An indoor hall for up to ${site.spaces[0].capacity} guests and an outdoor space for up to ${site.spaces[1].capacity} at The Venue at NCC in Suffolk, VA. Parking included. Anyone can book.`;
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'The Space', path: '/the-space/' },
+];
+const indoor = site.spaces.find((s) => s.id === 'indoor');
+const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+const indoorPhoto = photosTagged('indoor')[0] ?? null;
+const outdoorPhoto = photosTagged('outdoor')[0] ?? null;
+
+const fullImages = await Promise.all(photos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })));
+const gallerySchema =
+  photos.length > 0
+    ? [
+        {
+          '@type': 'ImageGallery',
+          name: `${site.name} photos`,
+          image: photos.map((p, i) => ({
+            '@type': 'ImageObject',
+            name: p.caption ?? p.alt,
+            description: p.alt,
+            contentUrl: abs(withoutBase(fullImages[i].src)),
+          })),
+        },
+      ]
+    : [];
 ---
-<BaseLayout title="The Space | The Venue at NCC, Suffolk, VA" description="An indoor hall for up to 100 guests and an outdoor space for up to 150 at The Venue at NCC in Suffolk, VA. Parking included. Open to everyone." og="the-space">
-  <section class="section"><div class="container"><h1>The space</h1><CapacityPlanner client:visible /></div></section>
+<BaseLayout title={title} description={description} og="the-space" venueDetails schema={[breadcrumbs(crumbs), ...gallerySchema]}>
+  <section class="page-hero">
+    <div class="container">
+      <Breadcrumbs items={crumbs} />
+      <div class="page-hero__copy">
+        <h1 class="hero-h1">
+          <span class="kicker">The space</span>
+          <span class="t-large-title">A hall for {indoor?.capacity}. The open air for {outdoor?.capacity}.</span>
+        </h1>
+        <p class="t-lead">Book the indoor hall, the outdoor space, or ask for both. Parking is included, and anyone can book.</p>
+        <div class="btn-row">
+          <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-label="The two spaces">
+    <div class="container spaces">
+      <article class="space card">
+        <ArchFrame photo={indoorPhoto} variant={1} ratio="4 / 5" sizes="(min-width: 900px) 360px, 80vw" class="space__media" />
+        <div class="space__body">
+          <span class="icon-tile"><Icon name="building" /></span>
+          <h2 class="t-title-1">{indoor?.name}</h2>
+          <p class="space__cap num">Up to {indoor?.capacity} guests</p>
+          <p class="secondary">{indoor?.description} A fit for receptions, showers, banquets, repasts, and meetings.</p>
+          <a class="btn btn--tinted" href={`${href(bookHref)}?space=indoor`}>Check Indoor Dates</a>
+        </div>
+      </article>
+      <article class="space card">
+        <ArchFrame photo={outdoorPhoto} variant={2} ratio="4 / 5" sizes="(min-width: 900px) 360px, 80vw" class="space__media" />
+        <div class="space__body">
+          <span class="icon-tile"><Icon name="tree" /></span>
+          <h2 class="t-title-1">{outdoor?.name}</h2>
+          <p class="space__cap num">Up to {outdoor?.capacity} guests</p>
+          <p class="secondary">{outdoor?.description} A fit for ceremonies, receptions, reunions, and graduation parties.</p>
+          <a class="btn btn--tinted" href={`${href(bookHref)}?space=outdoor`}>Check Outdoor Dates</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="planner-heading">
+    <div class="container planner">
+      <div class="section-head">
+        <h2 id="planner-heading">Will your guest list fit?</h2>
+        <p class="t-lead">Enter your guest count to see which space works best.</p>
+      </div>
+      <div class="card planner__card">
+        <CapacityPlanner client:visible bookHref={href(bookHref)} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="included-heading">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <h2 id="included-heading">What comes with your booking.</h2>
+        <p class="t-lead">Simple and flexible. You bring the celebration.</p>
+      </div>
+      <div class="incl">
+        <div>
+          <h3 class="incl__title">Included</h3>
+          <ul class="list-group">
+            {
+              site.included.map((item) => (
+                <li class="list-row">
+                  <Icon name="check-circle" class="incl__yes" />
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+            <li class="list-row">
+              <Icon name="check-circle" class="incl__yes" />
+              <span>Open to everyone, no membership needed</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="incl__title">Your choice</h3>
+          <ul class="list-group">
+            <li class="list-row">
+              <Icon name="utensils" class="incl__you" />
+              <span>Your caterer, or food you bring yourself</span>
+            </li>
+            <li class="list-row">
+              <Icon name="wine" class="incl__you" />
+              <span>Alcohol is welcome</span>
+            </li>
+            <li class="list-row">
+              <Icon name="info" class="incl__you" />
+              <span>Catering is not included in the rental</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <p class="incl__note secondary t-subhead">
+        Questions about tables, chairs, the kitchen, or decorating? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a> and we will walk you through it.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="gallery-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="gallery-heading">Photos</h2>
+        <p class="t-lead">{hasPhotos ? 'Select a photo to see it full size.' : 'Photos of the venue are on the way. Until then, ask for a visit when you send your request.'}</p>
+      </div>
+      {
+        hasPhotos && (
+          <ul class="gallery">
+            {photos.map((p, i) => (
+              <li>
+                <a class="gallery__link" href={fullImages[i].src} target="_blank" rel="noopener">
+                  <ArchFrame photo={p} shape="panel" ratio="4 / 3" sizes="(min-width: 1224px) 390px, (min-width: 640px) 45vw, 92vw" />
+                  <span class="visually-hidden"> (opens the full photo in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+
+  <LocationBand heading="Where the venue is" />
+  <CtaBand />
 </BaseLayout>
+
+<style>
+  .page-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+
+  .page-hero__copy {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+    max-width: 52rem;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
+  .hero-h1 {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .kicker {
+    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
+    font-weight: 600;
+    color: var(--accent-text);
+    letter-spacing: -0.01em;
+  }
+
+  .spaces {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 900px) {
+    .spaces {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .space {
+    display: grid;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    align-content: start;
+  }
+
+  .space :global(.space__media) {
+    width: min(100%, 320px);
+    justify-self: center;
+  }
+
+  .space__body {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: start;
+  }
+
+  .space__cap {
+    font-size: var(--t-title-3);
+    font-weight: 600;
+    color: var(--accent-text);
+  }
+
+  .space__body .btn {
+    margin-top: 0.5rem;
+  }
+
+  .planner__card {
+    padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  }
+
+  .incl {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 760px) {
+    .incl {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .incl__title {
+    font-size: var(--t-subhead);
+    color: var(--label-2);
+    margin: 0 0 0.6rem 1.1rem;
+  }
+
+  .incl :global(.incl__yes) {
+    color: var(--green);
+  }
+
+  .incl :global(.incl__you) {
+    color: var(--accent-text);
+  }
+
+  .incl__note {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+
+  .gallery {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery__link {
+    display: block;
+    border-radius: var(--r-xl);
+  }
+</style>

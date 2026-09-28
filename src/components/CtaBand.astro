@@ -1,92 +1,102 @@
 ---
+/** Closing call to action on a deep purple band lit by the luminous scene. */
+import ArchScene from './ArchScene.astro';
+import Icon from './Icon.astro';
 import { site } from '../data/site';
-import { bookHref } from '../data/nav';
+import { bookHref, pricingHref } from '../data/nav';
+import { href } from '../lib/paths';
 
 interface Props {
   heading?: string;
   body?: string;
 }
 const {
-  heading = 'Check your date',
-  body = 'Tell us the date, the kind of event, and roughly how many guests you expect. We will follow up about availability and next steps.',
+  heading = 'Your date is a few taps away.',
+  body = 'See what is open, get an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
 } = Astro.props;
 ---
-<section class="cta-band on-dark" aria-labelledby="cta-heading">
-  <div class="container cta-band__inner">
-    <div class="cta-band__copy">
-      <h2 id="cta-heading">{heading}</h2>
-      <p class="lead">{body}</p>
+<section class="cta" aria-labelledby="cta-heading">
+  <div class="cta__bg" aria-hidden="true">
+    <ArchScene variant={2} width={1200} height={520} />
+  </div>
+  <div class="container cta__inner">
+    <h2 id="cta-heading" class="t-large-title">{heading}</h2>
+    <p class="cta__body">{body}</p>
+    <div class="btn-row cta__actions">
+      <a class="btn btn--white btn--lg" href={href(bookHref)}>
+        <Icon name="calendar" />
+        Check Availability
+      </a>
+      <a class="btn btn--glass btn--lg cta__glass" href={href(pricingHref)}>See Pricing</a>
     </div>
-    <div class="cta-band__actions">
-      <a class="btn btn--light" href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
-      <a class="btn btn--ghost-light" href={bookHref}>Check your date</a>
-    </div>
+    <p class="cta__call">
+      Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
+    </p>
   </div>
 </section>
 
 <style>
-  .cta-band {
+  .cta {
     position: relative;
-    background: var(--navy);
-    padding-block: clamp(3.5rem, 2.5rem + 4vw, 6rem);
     overflow: hidden;
+    isolation: isolate;
+    color: var(--on-night);
+    background: var(--night);
   }
 
-  /* A single arch outline, echoing the windows, set into the band's corner. */
-  .cta-band::after {
-    content: '';
+  .cta__bg {
     position: absolute;
-    right: clamp(-140px, -8vw, -60px);
-    bottom: -40%;
-    width: clamp(260px, 30vw, 420px);
-    aspect-ratio: 4 / 5;
-    border: 1px solid rgba(168, 122, 46, 0.55);
-    border-radius: 100vmax 100vmax 0 0;
-    pointer-events: none;
+    inset: 0;
+    z-index: -1;
   }
 
-  /* Opaque so the decorative arch line never runs through the button label. */
-  .cta-band .btn--ghost-light {
-    background: var(--navy);
-  }
-
-  .cta-band .btn--ghost-light:hover {
-    background: var(--navy-2);
-  }
-
-  @media (min-width: 900px) {
-    .cta-band::after {
-      top: clamp(1.25rem, 2.5vw, 2.5rem);
-      bottom: auto;
-    }
-  }
-
-  .cta-band__inner {
-    position: relative;
-    z-index: 1;
+  .cta__inner {
     display: grid;
-    gap: 2rem;
-    align-items: end;
+    justify-items: center;
+    gap: 1.25rem;
+    padding-block: clamp(4.5rem, 3rem + 6vw, 8rem);
+    text-align: center;
   }
 
-  @media (min-width: 900px) {
-    .cta-band__inner {
-      grid-template-columns: 1.4fr 1fr;
-    }
-
-    .cta-band__actions {
-      justify-content: flex-end;
-    }
+  .cta h2 {
+    color: #ffffff;
+    max-width: 18ch;
   }
 
-  .cta-band__copy {
-    display: grid;
-    gap: 1rem;
+  .cta__body {
+    max-width: 40rem;
+    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+    color: rgba(255, 255, 255, 0.86);
   }
 
-  .cta-band__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+  .cta__actions {
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .cta__glass {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .cta__glass:hover {
+    background-color: rgba(255, 255, 255, 0.24);
+  }
+
+  .cta__call {
+    font-size: var(--t-subhead);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .cta__call a {
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .cta :global(:focus-visible) {
+    outline-color: #ffffff;
   }
 </style>

@@ -2,114 +2,140 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ArchFrame from '../components/ArchFrame.astro';
+import FactStrip from '../components/FactStrip.astro';
 import EventIndex from '../components/EventIndex.astro';
+import LocationBand from '../components/LocationBand.astro';
 import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
 import { photos, heroPhoto, photosTagged } from '../data/photos';
 import { breadcrumbs } from '../lib/schema';
 
 const title = 'About The Venue at NCC | New Community Church, Suffolk';
-const description =
-  'The Venue at NCC is the event space of New Community Church, part of Suffolk, VA since 1997. Learn who we are and how to plan your event with us.';
+const description = `The Venue at NCC is the event space of New Community Church, part of Suffolk, VA since ${site.parent.foundingYear}. Anyone can book it for weddings, parties, and gatherings.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about/' },
 ];
-// A photo tagged 'about', else any photo other than the home hero, else the hero, else the illustration.
 const hero = heroPhoto();
 const photo = photosTagged('about')[0] ?? photos.find((p) => p !== hero) ?? hero;
 ---
 <BaseLayout title={title} description={description} og="about" pageType="AboutPage" schema={[breadcrumbs(crumbs)]}>
-  <section class="page-head">
+  <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-head__copy">
-        <h1>About The Venue at NCC</h1>
-        <p class="lead">
-          The Venue at NCC is the event space of {site.parent.name} in Suffolk, Virginia. It can be booked for
-          celebrations, milestones, and community gatherings.
-        </p>
+      <div class="about-grid">
+        <div class="about-copy">
+          <h1 class="t-large-title">A place for the moments people remember.</h1>
+          <p class="t-lead">
+            The Venue at NCC is the event space of {site.parent.name} in Suffolk, Virginia. Anyone can book it, for
+            celebrations, milestones, and gatherings of every kind.
+          </p>
+          <FactStrip />
+        </div>
+        <div class="about-media">
+          <ArchFrame photo={photo} variant={1} sizes="(min-width: 960px) 380px, 72vw" priority />
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="container about__grid">
-      <div class="prose">
-        <h2>Part of New Community Church</h2>
+  <section class="section section--grouped">
+    <div class="container story">
+      <article class="card story__card">
+        <span class="icon-tile"><Icon name="church" /></span>
+        <h2 class="t-title-2">Part of New Community Church</h2>
         <p>
-          {site.parent.name} has been part of the Suffolk community since {site.parent.foundingYear}.
-          {' '}{site.parent.pastor} is the church's {site.parent.pastorTitle.toLowerCase()}. The church describes its
-          mission simply: to know Christ, love people well, and walk in hope together.
+          {site.parent.name} has been part of the Suffolk community since {site.parent.foundingYear}. {site.parent.pastor} is the
+          church's {site.parent.pastorTitle.toLowerCase()}. The church describes its mission simply: to know Christ, love people
+          well, and walk in hope together.
         </p>
+        <a class="link-more" href={site.parent.url} rel="noopener">Visit wearencc.org <Icon name="arrow-up-right" /></a>
+      </article>
+      <article class="card story__card">
+        <span class="icon-tile"><Icon name="users" /></span>
+        <h2 class="t-title-2">Open to everyone</h2>
         <p>
-          Weddings and anniversaries, showers and birthdays, repasts and reunions, meetings and community gatherings
-          can all be booked at The Venue at NCC.
+          You do not need to be a member to book. Families, friends, businesses, nonprofits, and churches are all welcome to
+          host their events here.
         </p>
-
-        <h2>Planning an event with us</h2>
+      </article>
+      <article class="card story__card">
+        <span class="icon-tile"><Icon name="calendar-check" /></span>
+        <h2 class="t-title-2">Simple to book</h2>
         <p>
-          Every booking starts with a conversation. Call {site.contact.phone} with your date, the kind of event, and
-          roughly how many guests you expect. We will talk through availability and what your event needs, and then
-          reserve your date.
+          Check the live calendar, see your estimate, and send a request. {site.contact.contactName} and the team follow up
+          personally to confirm your date.
         </p>
-        <p>
-          The venue is at {site.address.street} in {site.address.city}. If your guests are coming from elsewhere in
-          Hampton Roads, share the full address with them early.
-        </p>
-
-        <h2>More about the church</h2>
-        <p>
-          To learn more about the church itself, visit{' '}
-          <a href={site.parent.url} rel="noopener">wearencc.org</a>.
-        </p>
-      </div>
-      <div class="about__arch">
-        <ArchFrame photo={photo} variant={5} sizes="(min-width: 960px) 360px, 70vw" />
-      </div>
+      </article>
     </div>
   </section>
 
-  <section class="section section--tight about-events" aria-labelledby="about-events-heading">
+  <section class="section" aria-labelledby="about-events">
     <div class="container">
       <div class="section-head">
-        <h2 id="about-events-heading">Events we host</h2>
+        <h2 id="about-events">Events we host</h2>
       </div>
-      <EventIndex />
+      <EventIndex layout="shelf" />
     </div>
   </section>
 
+  <LocationBand />
   <CtaBand />
 </BaseLayout>
 
 <style>
-  .about__grid {
+  .page-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+
+  .about-grid {
     display: grid;
-    gap: 3rem clamp(3rem, 7vw, 7rem);
-    align-items: start;
+    gap: clamp(2rem, 1.5rem + 3vw, 4rem);
+    align-items: center;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
 
   @media (min-width: 960px) {
-    .about__grid {
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    .about-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     }
   }
 
-  .about__arch {
-    width: min(70%, 360px);
+  .about-copy {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .about-media {
+    width: min(100%, 380px);
     justify-self: center;
   }
 
-  @media (min-width: 960px) {
-    .about__arch {
-      width: 100%;
-      position: sticky;
-      top: calc(var(--header-h) + 2rem);
+  @media (max-width: 959.98px) {
+    .about-media {
+      width: min(72%, 340px);
     }
   }
 
-  .about-events {
-    background: var(--surface);
-    border-top: 1px solid var(--line);
+  .story {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+
+  .story__card {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+  }
+
+  .story__card .icon-tile {
+    margin-bottom: 0.25rem;
+  }
+
+  .story__card p {
+    color: var(--label-2);
   }
 </style>

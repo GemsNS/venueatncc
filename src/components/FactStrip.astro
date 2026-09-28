@@ -1,0 +1,48 @@
+---
+/** The venue's key facts as a row of pills. Every item comes from site.ts. */
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+import type { IconName } from '../shared/icons';
+
+interface Props {
+  class?: string;
+  center?: boolean;
+}
+const { class: className, center = false } = Astro.props;
+const indoor = site.spaces.find((s) => s.id === 'indoor');
+const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+
+const facts: { icon: IconName; text: string }[] = [
+  { icon: 'building', text: `Indoors up to ${indoor?.capacity}` },
+  { icon: 'tree', text: `Outdoors up to ${outdoor?.capacity}` },
+  { icon: 'parking', text: 'Parking included' },
+  { icon: 'users', text: 'Open to everyone' },
+  { icon: 'utensils', text: 'Bring your caterer' },
+  { icon: 'wine', text: 'Alcohol welcome' },
+];
+---
+<ul class:list={['facts', { 'facts--center': center }, className]} aria-label="Venue at a glance">
+  {
+    facts.map((f) => (
+      <li class="pill">
+        <Icon name={f.icon} />
+        {f.text}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .facts--center {
+    justify-content: center;
+  }
+</style>

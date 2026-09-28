@@ -1,7 +1,94 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Icon from '../components/Icon.astro';
 import BookingApp from '../components/booking/BookingApp';
+import { site } from '../data/site';
+import { breadcrumbs } from '../lib/schema';
+
+const title = 'Check availability | Book The Venue at NCC, Suffolk, VA';
+const description =
+  'Check open dates at The Venue at NCC in Suffolk, VA. Pick your date and space, see an instant estimate, and send your booking request in about two minutes.';
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Check Availability', path: '/book/' },
+];
 ---
-<BaseLayout title="Check availability | Book The Venue at NCC in Suffolk, VA" description="Check availability at The Venue at NCC in Suffolk, VA. Pick a date, see an instant estimate, and send your booking request in about two minutes." og="book" pageType="ContactPage">
-  <section class="section"><div class="container"><h1>Check availability</h1><BookingApp client:load /></div></section>
+<BaseLayout title={title} description={description} og="book" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
+  <section class="book-hero">
+    <div class="container">
+      <Breadcrumbs items={crumbs} />
+      <div class="book-hero__copy">
+        <h1 class="t-large-title">Find your date.</h1>
+        <p class="t-lead">
+          See what is open, get an instant estimate, and send your request in about two minutes. We confirm every booking
+          personally.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="book-app">
+    <div class="container">
+      <BookingApp client:load />
+      <noscript>
+        <div class="card noscript">
+          <h2 class="t-title-2">Book by phone or email</h2>
+          <p>The booking calendar needs JavaScript. You can still book with us directly:</p>
+          <p>
+            <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or
+            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+          </p>
+        </div>
+      </noscript>
+    </div>
+  </section>
+
+  <section class="section section--tight section--grouped" aria-labelledby="talk-heading">
+    <div class="container talk">
+      <div>
+        <h2 id="talk-heading" class="t-title-2">Prefer to talk it through?</h2>
+        <p class="secondary">Call, or email {site.contact.contactName}, and we will help you plan your date and space.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn--tinted" href={`tel:${site.contact.phoneE164}`}><Icon name="phone" /> {site.contact.phone}</a>
+        <a class="btn btn--gray" href={`mailto:${site.contact.email}`}><Icon name="mail" /> Email Us</a>
+      </div>
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+  .book-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  }
+
+  .book-hero__copy {
+    display: grid;
+    gap: 1rem;
+    max-width: 46rem;
+    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+  }
+
+  .book-app {
+    padding-bottom: clamp(3rem, 2rem + 4vw, 6rem);
+  }
+
+  .noscript {
+    display: grid;
+    gap: 0.75rem;
+    padding: 2rem;
+  }
+
+  .talk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+  }
+
+  .talk p {
+    margin-top: 0.35rem;
+  }
+</style>

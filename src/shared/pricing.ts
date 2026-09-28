@@ -44,8 +44,14 @@ export interface PricingModel {
   introOffer: { label: string; percent: number; validUntil: DateKey } | null;
 }
 
+/**
+ * Recommended from the September 2026 comparables analysis (59 Hampton Roads venues, 54 verified):
+ * venue-only halls for 100 to 150 guests that allow alcohol and outside caterers rent for about
+ * $145 to $225 an hour on Saturdays ($870 to $1,350 for 6 hours). This card sits at the value end
+ * of that band, below the priced faith halls, with a founding discount to earn first reviews.
+ */
 export const pricing: PricingModel = {
-  status: 'provisional',
+  status: 'recommended',
   currency: 'USD',
   spaces: {
     indoor: { label: 'Indoor hall', capacity: 100 },
@@ -59,16 +65,46 @@ export const pricing: PricingModel = {
     sunday: { label: 'Sunday', days: [0] },
   },
   hourly: {
-    indoor: { weekday: 75, friday: 100, saturday: 125, sunday: 100 },
-    outdoor: { weekday: 85, friday: 110, saturday: 140, sunday: 110 },
-    both: { weekday: 125, friday: 160, saturday: 200, sunday: 160 },
+    indoor: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
+    outdoor: { weekday: 85, friday: 115, saturday: 140, sunday: 100 },
+    both: { weekday: 140, friday: 180, saturday: 220, sunday: 165 },
   },
-  minimumHours: { weekday: 2, friday: 4, saturday: 5, sunday: 4 },
-  packages: [],
+  minimumHours: { weekday: 2, friday: 4, saturday: 5, sunday: 3 },
+  packages: [
+    { id: 'sat-indoor-6', name: 'Saturday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
+    { id: 'sat-outdoor-6', name: 'Saturday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
+    { id: 'sat-both-6', name: 'Saturday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, with the hall as your rain plan for up to 100 guests.', space: 'both', dayType: 'saturday', hours: 6, price: 1250 },
+    { id: 'sat-indoor-12', name: 'Saturday Full Day, Indoor', description: 'The indoor hall for up to 12 hours, setup and cleanup time included.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
+    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Outdoor', description: 'The outdoor space for up to 12 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
+    { id: 'sat-both-12', name: 'Saturday Wedding and Celebration Day', description: 'Both spaces for up to 12 hours: ceremony outside, reception inside or out.', space: 'both', dayType: 'saturday', hours: 12, price: 2200 },
+    { id: 'fri-indoor-6', name: 'Friday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
+    { id: 'fri-outdoor-6', name: 'Friday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
+    { id: 'fri-both-6', name: 'Friday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, setup and cleanup time included.', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
+    { id: 'fri-both-12', name: 'Friday Full Day, Indoor and Outdoor', description: 'Both spaces for up to 12 hours. Good for weddings and rehearsal-plus-reception days.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
+    { id: 'sun-indoor-6', name: 'Sunday Indoor Block', description: 'The indoor hall for 6 hours, setup and cleanup time included.', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
+    { id: 'sun-outdoor-6', name: 'Sunday Outdoor Block', description: 'The outdoor space for 6 hours, setup and cleanup time included.', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
+    { id: 'sun-both-6', name: 'Sunday Indoor and Outdoor Block', description: 'Both spaces for 6 hours, setup and cleanup time included.', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
+    { id: 'weekday-indoor-8', name: 'Weekday Full Day, Indoor', description: 'The indoor hall for up to 8 hours, Monday to Thursday. Good for trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
+  ],
   fees: { cleaning: 100, damageDepositRefundable: 250 },
-  bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: 14 },
-  discounts: [],
-  introOffer: null,
+  bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: 30 },
+  discounts: [
+    { id: 'repast', label: 'Repast and celebration of life rate', percent: 25, appliesTo: 'eventType:repasts-memorials' },
+    { id: 'weekday-daytime', label: 'Weekday daytime (Monday to Thursday, ending by 4 PM)', percent: 20, appliesTo: 'manual' },
+    { id: 'nonprofit', label: 'Nonprofits and churches (Sunday to Thursday)', percent: 15, appliesTo: 'manual' },
+    { id: 'military', label: 'Military, veterans, and first responders', percent: 10, appliesTo: 'manual' },
+  ],
+  introOffer: { label: 'Founding rate: 20% off the rental when you book by March 31, 2027', percent: 20, validUntil: '2027-03-31' },
+};
+
+/** Market context from the comparables analysis, shown on the pricing page. */
+export const marketContext = {
+  researched: 'September 2026',
+  venueCount: 59,
+  saturdaySixHourLow: 870,
+  saturdaySixHourHigh: 1350,
+  saturdayHourlyLow: 145,
+  saturdayHourlyHigh: 225,
 };
 
 export function dayTypeOf(date: DateKey, model: PricingModel = pricing): DayType {
@@ -120,18 +156,20 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
     total += model.fees.cleaning;
   }
 
+  // Discounts do not combine: the host gets the single best one that applies.
+  const applicable: { label: string; percent: number }[] = [];
   for (const d of model.discounts) {
     const [scope, value] = d.appliesTo.split(':');
     const applies = (scope === 'eventType' && value === input.eventType) || (scope === 'dayType' && value === dayType);
-    if (!applies || d.percent <= 0) continue;
-    const off = money((rental * d.percent) / 100);
-    lines.push({ label: d.label, amount: -off, kind: 'discount' });
-    total -= off;
+    if (applies && d.percent > 0) applicable.push({ label: d.label, percent: d.percent });
   }
-
   if (model.introOffer && model.introOffer.percent > 0 && today <= model.introOffer.validUntil) {
-    const off = money((rental * model.introOffer.percent) / 100);
-    lines.push({ label: model.introOffer.label, amount: -off, kind: 'discount' });
+    applicable.push({ label: model.introOffer.label, percent: model.introOffer.percent });
+  }
+  const best = applicable.sort((a, b) => b.percent - a.percent)[0];
+  if (best) {
+    const off = money((rental * best.percent) / 100);
+    lines.push({ label: best.label, amount: -off, kind: 'discount' });
     total -= off;
   }
 
@@ -143,6 +181,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
 
   const notes: string[] = [];
   if (billableHours > hours) notes.push(`${model.dayTypes[dayType].label} bookings have a ${minHours}-hour minimum.`);
+  if (applicable.length > 1) notes.push('Discounts do not combine, so your estimate uses the best one.');
   notes.push('Catering is not included. Bring the caterer of your choice.');
   notes.push('On-site parking is included.');
   const daysOut = daysBetween(today, input.date);

@@ -1,7 +1,481 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ArchFrame from '../components/ArchFrame.astro';
+import Icon from '../components/Icon.astro';
+import FactStrip from '../components/FactStrip.astro';
+import EventIndex from '../components/EventIndex.astro';
+import LocationBand from '../components/LocationBand.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
+import { site } from '../data/site';
+import { heroPhoto, photosTagged, photos } from '../data/photos';
+import { publishedFaqs } from '../data/faq';
+import { bookHref, pricingHref } from '../data/nav';
+import { priceSummary, formatUSD } from '../shared/pricing';
+import { href } from '../lib/paths';
+
+const hero = heroPhoto();
+const indoorPhoto = photosTagged('indoor')[0] ?? photos.find((p) => p !== hero) ?? null;
+const outdoorPhoto = photosTagged('outdoor')[0] ?? null;
+const indoor = site.spaces.find((s) => s.id === 'indoor');
+const outdoor = site.spaces.find((s) => s.id === 'outdoor');
+const { fromHourly } = priceSummary();
+const homeFaqs = ['How many guests can the venue hold?', 'Do I need to be a member of New Community Church to book?', 'Is alcohol allowed?', 'Is catering included?', 'How do I check if my date is available?']
+  .map((q) => publishedFaqs.find((f) => f.q === q))
+  .filter((f) => f !== undefined);
+
+const title = 'Event venue in Suffolk, VA | The Venue at NCC';
+const description = `Event venue in Suffolk, VA: indoor hall for ${indoor?.capacity}, outdoor space for ${outdoor?.capacity}, parking included, open to everyone. Check dates and get an instant estimate.`;
 ---
-<BaseLayout title="Event venue in Suffolk, VA | The Venue at NCC" description="The Venue at NCC is an event venue in Suffolk, VA with an indoor hall for 100 and an outdoor space for 150. Open to everyone, parking included. Check your date.">
-  <section class="section"><div class="container"><h1>Event venue in Suffolk, Virginia</h1><DateChecker client:load /></div></section>
+<BaseLayout title={title} description={description} og="home" venueDetails>
+  <section class="hero">
+    <div class="container hero__head">
+      <h1 class="hero__h1">
+        <span class="hero__kicker">Event venue in Suffolk, Virginia</span>
+        <span class="hero__title t-display">Unforgettable events await you.</span>
+      </h1>
+      <p class="t-lead hero__lead">
+        An indoor hall for {indoor?.capacity}, an outdoor space for {outdoor?.capacity}, and parking for everyone. Open to
+        all, with upfront pricing and an instant estimate for your date.
+      </p>
+      <div class="btn-row hero__actions">
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+        <a class="link-more" href={href(pricingHref)}>See pricing <Icon name="chevron-right" /></a>
+      </div>
+    </div>
+
+    <div class="container hero__stage">
+      <div class="hero__media">
+        <ArchFrame shape="panel" ratio="2 / 1" photo={hero} priority sizes="(min-width: 1240px) 1200px, 94vw" variant={0} muntins={false} window={!hero} class="hero__panel" />
+      </div>
+      <div class="hero__widget glass">
+        <DateChecker client:load bookHref={href(bookHref)} />
+      </div>
+    </div>
+
+    <div class="container">
+      <FactStrip center class="hero__facts" />
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="why-heading">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <h2 id="why-heading">Everything you need. Nothing you don't.</h2>
+        <p class="t-lead">A flexible space that fits the way you want to celebrate.</p>
+      </div>
+      <div class="bento">
+        <article class="bento__tile bento__tile--wide card">
+          <h3 class="t-title-2">Room for your whole guest list.</h3>
+          <div class="cap">
+            <div class="cap__item">
+              <Icon name="building" class="cap__icon" />
+              <p class="cap__num num">{indoor?.capacity}</p>
+              <p class="secondary">guests in the indoor hall</p>
+            </div>
+            <div class="cap__item">
+              <Icon name="tree" class="cap__icon" />
+              <p class="cap__num num">{outdoor?.capacity}</p>
+              <p class="secondary">guests in the outdoor space</p>
+            </div>
+          </div>
+          <a class="link-more" href={href('/the-space/')}>Plan your guest count <Icon name="chevron-right" /></a>
+        </article>
+        <article class="bento__tile card">
+          <span class="icon-tile"><Icon name="users" /></span>
+          <h3>Open to everyone</h3>
+          <p class="secondary">No membership needed. Anyone can book the venue.</p>
+        </article>
+        <article class="bento__tile card">
+          <span class="icon-tile"><Icon name="utensils" /></span>
+          <h3>Bring your own caterer</h3>
+          <p class="secondary">Catering is not included, so you choose the menu, the caterer, and the budget.</p>
+        </article>
+        <article class="bento__tile card">
+          <span class="icon-tile"><Icon name="wine" /></span>
+          <h3>Alcohol welcome</h3>
+          <p class="secondary">Raise a glass. You can serve alcohol at your event.</p>
+        </article>
+        <article class="bento__tile card">
+          <span class="icon-tile"><Icon name="parking" /></span>
+          <h3>Parking included</h3>
+          <p class="secondary">On-site parking comes with every booking, for every guest.</p>
+        </article>
+        <article class="bento__tile bento__tile--wide bento__tile--price card">
+          <div>
+            <h3 class="t-title-2">Upfront pricing, from {formatUSD(fromHourly)} an hour.</h3>
+            <p class="secondary">See every rate, then get an instant estimate for your date, space, and hours.</p>
+          </div>
+          <a class="btn btn--tinted" href={href(pricingHref)}>
+            <Icon name="tag" />
+            View Pricing
+          </a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-heading">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <h2 id="steps-heading">Book in three steps.</h2>
+        <p class="t-lead">No phone tag. See what is open and ask for your date in minutes.</p>
+      </div>
+      <ol class="steps">
+        {
+          site.bookingSteps.map((step, i) => (
+            <li class="steps__item">
+              <span class="steps__num num" aria-hidden="true">{i + 1}</span>
+              <h3>{step.title}</h3>
+              <p class="secondary">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="btn-row steps__cta">
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--grouped" aria-labelledby="events-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="events-heading">Plan any kind of event.</h2>
+        <p class="t-lead">Weddings to workshops, showers to celebrations of life.</p>
+      </div>
+      <EventIndex layout="shelf" />
+      <p class="more-link">
+        <a class="link-more" href={href('/events/')}>See all events <Icon name="chevron-right" /></a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="spaces-heading">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <h2 id="spaces-heading">Two spaces. One address.</h2>
+        <p class="t-lead">Choose the hall, the open air, or ask for both.</p>
+      </div>
+      <div class="spaces">
+        <article class="space">
+          <ArchFrame photo={indoorPhoto} ratio="4 / 5" variant={1} sizes="(min-width: 900px) 440px, 88vw" />
+          <div class="space__text">
+            <h3 class="t-title-2">{indoor?.name}</h3>
+            <p class="secondary">Up to {indoor?.capacity} guests. {indoor?.description}</p>
+          </div>
+        </article>
+        <article class="space">
+          <ArchFrame photo={outdoorPhoto} ratio="4 / 5" variant={2} sizes="(min-width: 900px) 440px, 88vw" />
+          <div class="space__text">
+            <h3 class="t-title-2">{outdoor?.name}</h3>
+            <p class="secondary">Up to {outdoor?.capacity} guests. {outdoor?.description}</p>
+          </div>
+        </article>
+      </div>
+      <p class="more-link more-link--center">
+        <a class="link-more" href={href('/the-space/')}>Explore the space <Icon name="chevron-right" /></a>
+      </p>
+    </div>
+  </section>
+
+  <LocationBand />
+
+  {
+    homeFaqs.length > 0 && (
+      <section class="section" aria-labelledby="faq-heading">
+        <div class="container faq-grid">
+          <div class="section-head">
+            <h2 id="faq-heading">Questions, answered.</h2>
+            <p class="t-lead">The things people ask before they book.</p>
+            <a class="link-more" href={href('/faq/')}>
+              All questions <Icon name="chevron-right" />
+            </a>
+          </div>
+          <FaqList items={homeFaqs} />
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section section--tight section--grouped church" aria-labelledby="church-heading">
+    <div class="container church__inner">
+      <span class="icon-tile"><Icon name="church" /></span>
+      <div>
+        <h2 id="church-heading" class="t-title-2">Part of New Community Church</h2>
+        <p class="secondary">
+          The Venue at NCC is the event space of {site.parent.name}, part of Suffolk since {site.parent.foundingYear} and led by
+          {' '}{site.parent.pastor}, {site.parent.pastorTitle.toLowerCase()}.
+        </p>
+      </div>
+      <a class="link-more" href={href('/about/')}>About us <Icon name="chevron-right" /></a>
+    </div>
+  </section>
+
+  <CtaBand />
 </BaseLayout>
+
+<style>
+  .hero {
+    padding-top: clamp(2.5rem, 1.5rem + 4vw, 5rem);
+    padding-bottom: clamp(3rem, 2rem + 4vw, 5.5rem);
+    overflow: hidden;
+  }
+
+  .hero__head {
+    display: grid;
+    justify-items: center;
+    gap: 1.25rem;
+    text-align: center;
+  }
+
+  .hero__h1 {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: center;
+  }
+
+  .hero__kicker {
+    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--accent-text);
+  }
+
+  .hero__title {
+    max-width: 13ch;
+  }
+
+  .hero__lead {
+    max-width: 38rem;
+  }
+
+  .hero__actions {
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 0.25rem;
+  }
+
+  .hero__stage {
+    position: relative;
+    margin-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+  }
+
+  @media (max-width: 899.98px) {
+    .hero :global(.hero__panel .media__frame) {
+      aspect-ratio: 5 / 4;
+    }
+  }
+
+  .hero__widget {
+    border-radius: var(--r-xl);
+    padding: 1.25rem;
+  }
+
+  @media (min-width: 900px) {
+    .hero__widget {
+      position: absolute;
+      right: clamp(1.25rem, 3vw, 2.5rem);
+      bottom: clamp(1.25rem, 3vw, 2.5rem);
+      width: min(380px, 42%);
+    }
+  }
+
+  @media (max-width: 899.98px) {
+    .hero__widget {
+      margin-top: -3rem;
+      margin-inline: 0.75rem;
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .hero__facts {
+    margin-top: 2rem;
+  }
+
+  /* Bento grid */
+  .bento {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
+
+  @media (min-width: 960px) {
+    .bento {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .bento__tile--wide {
+      grid-column: span 2;
+    }
+
+    .bento__tile--price {
+      grid-column: span 3;
+    }
+  }
+
+  .bento__tile {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    padding: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+  }
+
+  .bento__tile .icon-tile {
+    margin-bottom: 0.5rem;
+  }
+
+  .bento__tile--price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    background:
+      radial-gradient(120% 140% at 100% 0%, var(--accent-tint-2), transparent 60%),
+      var(--bg-elevated);
+  }
+
+  .bento__tile--price > div {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 40rem;
+  }
+
+  .cap {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0.5rem 0;
+  }
+
+  .cap__item {
+    display: grid;
+    gap: 0.15rem;
+    padding: 1.25rem;
+    border-radius: var(--r-md);
+    background: var(--bg-grouped);
+  }
+
+  .cap :global(.cap__icon) {
+    width: 26px;
+    height: 26px;
+    color: var(--accent-text);
+    margin-bottom: 0.4rem;
+  }
+
+  .cap__num {
+    font-size: clamp(2.75rem, 2rem + 3vw, 4.25rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  /* Steps */
+  .steps {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 820px) {
+    .steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .steps__item {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding: 1.75rem;
+    border-radius: var(--r-lg);
+    background: var(--bg-grouped);
+  }
+
+  .steps__num {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .steps__cta {
+    justify-content: center;
+    margin-top: 2.5rem;
+  }
+
+  .more-link {
+    margin-top: 1rem;
+  }
+
+  .more-link--center {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  /* Spaces */
+  .spaces {
+    display: grid;
+    gap: clamp(2rem, 4vw, 3.5rem);
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 760px) {
+    .spaces {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .space {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .space__text {
+    display: grid;
+    gap: 0.4rem;
+    text-align: center;
+  }
+
+  /* FAQ */
+  .faq-grid {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 5rem);
+  }
+
+  @media (min-width: 900px) {
+    .faq-grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+
+  /* Church */
+  .church__inner {
+    display: grid;
+    gap: 1rem 1.5rem;
+    align-items: center;
+  }
+
+  @media (min-width: 760px) {
+    .church__inner {
+      grid-template-columns: auto 1fr auto;
+    }
+  }
+
+  .church__inner p {
+    margin-top: 0.35rem;
+    max-width: 48rem;
+  }
+</style>

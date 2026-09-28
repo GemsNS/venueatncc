@@ -1,8 +1,7 @@
 ---
-/** Questions and answers as native disclosure widgets: keyboard and screen-reader friendly with no script. */
+/** Questions and answers as an inset grouped list of native disclosure widgets (no script needed). */
 interface Props {
   items: { q: string; a: string }[];
-  /** Open the first item by default. */
   openFirst?: boolean;
 }
 const { items, openFirst = false } = Astro.props;
@@ -11,12 +10,15 @@ const { items, openFirst = false } = Astro.props;
 const NBSP = String.fromCharCode(160);
 const keepTogether = (q: string) => q.replace(/The Venue at NCC/g, ['The', 'Venue', 'at', 'NCC'].join(NBSP));
 ---
-<div class="faq-list">
+<div class="faqs list-group">
   {
     items.map((item, i) => (
       <details class="faq" open={openFirst && i === 0}>
         <summary class="faq__q">
           <span>{keepTogether(item.q)}</span>
+          <svg class="icon faq__chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
         </summary>
         <div class="faq__a">
           <p>{item.a}</p>
@@ -27,22 +29,32 @@ const keepTogether = (q: string) => q.replace(/The Venue at NCC/g, ['The', 'Venu
 </div>
 
 <style>
-  .faq-list {
-    border-top: 1px solid var(--line);
+  .faqs {
+    box-shadow: var(--shadow-1);
   }
 
   .faq {
-    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+
+  .faq + .faq::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 0;
+    border-top: 1px solid var(--separator);
   }
 
   .faq__q {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
-    padding-block: 1.2rem;
+    gap: 1rem;
+    min-height: 56px;
+    padding: 0.9rem 1.25rem;
     font-weight: 600;
-    font-size: 1.0625rem;
+    font-size: var(--t-body);
     cursor: pointer;
     list-style: none;
   }
@@ -55,30 +67,19 @@ const keepTogether = (q: string) => q.replace(/The Venue at NCC/g, ['The', 'Venu
     display: none;
   }
 
-  .faq__q::after {
-    content: '';
-    flex: none;
-    width: 0.65rem;
-    height: 0.65rem;
-    border-right: 2px solid var(--navy);
-    border-bottom: 2px solid var(--navy);
-    transform: rotate(45deg) translateY(-25%);
-    transition: transform 180ms ease;
+  .faq__chev {
+    color: var(--label-3);
+    transition: transform var(--dur-2) var(--ease-spring);
   }
 
-  .faq[open] .faq__q::after {
-    transform: rotate(-135deg) translateY(-25%);
+  .faq[open] .faq__chev {
+    transform: rotate(180deg);
+    color: var(--accent-text);
   }
 
   .faq__a {
-    padding-bottom: 1.4rem;
+    padding: 0 1.25rem 1.2rem;
     max-width: 62ch;
-    color: var(--ink-2);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .faq__q::after {
-      transition: none;
-    }
+    color: var(--label-2);
   }
 </style>

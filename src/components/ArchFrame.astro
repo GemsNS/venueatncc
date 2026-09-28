@@ -1,10 +1,8 @@
 ---
 /**
- * The signature shape of the site: an arched window with a fine brass trim.
- * Shows a venue photo when one is provided, otherwise the illustrated scene.
- *
- * Photos are cropped to the window's aspect ratio at build time, so every srcset
- * candidate matches the frame and the browser's width-based choice stays sharp.
+ * Media frame: a venue photo, or the luminous placeholder scene until photos exist.
+ * shape="arch" echoes the church's arched windows; shape="panel" is a large rounded panel.
+ * Photos are cropped to the frame's aspect ratio at build time so every srcset candidate is sharp.
  */
 import { Picture } from 'astro:assets';
 import type { VenuePhoto } from '../data/photos';
@@ -12,14 +10,16 @@ import ArchScene from './ArchScene.astro';
 
 interface Props {
   photo?: VenuePhoto | null;
-  /** Rendered width of the window at each breakpoint, e.g. "(min-width: 900px) 40vw, 90vw". */
+  /** Rendered width at each breakpoint, e.g. "(min-width: 900px) 40vw, 90vw". */
   sizes?: string;
-  /** Eager-load and prioritise when the arch is the largest thing above the fold. */
   priority?: boolean;
-  /** Aspect ratio of the window, "width / height". */
+  /** Aspect ratio "width / height". */
   ratio?: string;
-  trim?: boolean;
+  shape?: 'arch' | 'panel';
   variant?: number;
+  muntins?: boolean;
+  /** Draw a large arched window in the placeholder scene (wide panels). */
+  window?: boolean;
   class?: string;
   caption?: string;
 }
@@ -29,16 +29,16 @@ const {
   sizes = '(min-width: 1000px) 480px, 90vw',
   priority = false,
   ratio = '4 / 5',
-  trim = true,
+  shape = 'arch',
   variant = 0,
+  muntins,
+  window: showWindow = false,
   class: className = '',
   caption,
 } = Astro.props;
 
 const [rw, rh] = ratio.split('/').map((n) => Number.parseFloat(n));
-const candidateWidths = [360, 540, 720, 960, 1280, 1600];
-
-// The widest crop the source can supply at this ratio without upscaling.
+const candidateWidths = [360, 540, 720, 960, 1280, 1600, 2000];
 const maxCropW = photo ? Math.min(photo.src.width, Math.floor((photo.src.height * rw) / rh)) : 0;
 const photoWidths = photo
   ? (() => {
@@ -49,82 +49,78 @@ const photoWidths = photo
 const cropW = photoWidths.at(-1) ?? 0;
 const cropH = Math.round((cropW * rh) / rw);
 const figCaption = caption ?? photo?.caption;
+const sceneW = shape === 'panel' ? 1200 : 400;
+const sceneH = Math.round((sceneW * rh) / rw);
 ---
-<figure class:list={['arch', className]} style={`--arch-ratio: ${ratio}`}>
-  <div class:list={['arch__frame', { 'arch__frame--trim': trim }]}>
-    <div class="arch__window">
-      {
-        photo ? (
-          <Picture
-            src={photo.src}
-            alt={photo.alt}
-            width={cropW}
-            height={cropH}
-            fit="cover"
-            position={photo.crop ?? 'center'}
-            widths={photoWidths}
-            sizes={sizes}
-            formats={['avif', 'webp']}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchpriority={priority ? 'high' : 'auto'}
-            decoding={priority ? 'sync' : 'async'}
-            class="arch__img"
-          />
-        ) : (
-          <ArchScene variant={variant} />
-        )
-      }
-    </div>
+<figure class:list={['media', `media--${shape}`, className]} style={`--media-ratio: ${ratio}`}>
+  <div class="media__frame">
+    {
+      photo ? (
+        <Picture
+          src={photo.src}
+          alt={photo.alt}
+          width={cropW}
+          height={cropH}
+          fit="cover"
+          position={photo.crop ?? 'center'}
+          widths={photoWidths}
+          sizes={sizes}
+          formats={['avif', 'webp']}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchpriority={priority ? 'high' : 'auto'}
+          decoding={priority ? 'sync' : 'async'}
+          class="media__img"
+        />
+      ) : (
+        <ArchScene variant={variant} muntins={muntins ?? shape === 'arch'} window={showWindow} width={sceneW} height={sceneH} />
+      )
+    }
+    <slot />
   </div>
-  {figCaption && <figcaption class="arch__caption">{figCaption}</figcaption>}
+  {figCaption && <figcaption class="media__caption t-footnote secondary">{figCaption}</figcaption>}
 </figure>
 
 <style>
-  .arch {
+  .media {
     margin: 0;
   }
 
-  .arch__frame {
+  .media__frame {
     position: relative;
-  }
-
-  .arch__window {
-    position: relative;
-    aspect-ratio: var(--arch-ratio, 4 / 5);
+    aspect-ratio: var(--media-ratio, 4 / 5);
     overflow: hidden;
-    /* Oversized radii collapse to half the width: a true semicircular head. */
-    border-radius: 100vmax 100vmax var(--radius) var(--radius);
-    background: var(--navy);
     isolation: isolate;
+    background: var(--night);
+    box-shadow: var(--shadow-2);
   }
 
-  .arch__frame--trim {
-    padding: clamp(8px, 1.4vw, 14px);
+  .media--arch .media__frame {
+    /* Oversized radii collapse to half the width: a true semicircular head. */
+    border-radius: 100vmax 100vmax var(--r-lg) var(--r-lg);
   }
 
-  .arch__frame--trim::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid var(--brass);
-    border-radius: 100vmax 100vmax var(--radius) var(--radius);
-    pointer-events: none;
+  .media--panel .media__frame {
+    border-radius: var(--r-xl);
   }
 
-  .arch__window :global(picture),
-  .arch__window :global(.arch__img) {
+  .media__frame :global(picture),
+  .media__frame :global(.media__img) {
     width: 100%;
     height: 100%;
   }
 
-  .arch__window :global(.arch__img) {
+  .media__frame :global(.media__img) {
     object-fit: cover;
   }
 
-  .arch__caption {
-    margin-top: 0.9rem;
-    font-size: var(--step--1);
-    color: var(--ink-2);
+  @media (prefers-color-scheme: dark) {
+    .media__frame :global(.media__img) {
+      filter: brightness(0.92);
+    }
+  }
+
+  .media__caption {
+    margin-top: 0.75rem;
     text-align: center;
   }
 </style>

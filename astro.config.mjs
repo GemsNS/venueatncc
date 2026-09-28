@@ -2,7 +2,6 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import preact from '@astrojs/preact';
-import fs from 'node:fs';
 import { site } from './src/data/site.ts';
 
 /**
@@ -15,11 +14,6 @@ import { site } from './src/data/site.ts';
 const isDemo = process.env.PUBLIC_DEMO === 'true';
 const demoBase = process.env.DEMO_BASE ?? '/venueatncc/';
 const demoSite = process.env.DEMO_SITE ?? 'https://gemsns.github.io';
-
-// /the-space/ is noindexed until it has photos (see src/pages/the-space.astro); mirror that here.
-const venuePhotoCount = fs.existsSync('./src/assets/venue')
-  ? fs.readdirSync('./src/assets/venue').filter((f) => /\.(jpe?g|png|webp|avif|JPE?G|PNG|WEBP|AVIF)$/.test(f)).length
-  : 0;
 
 export default defineConfig({
   site: isDemo ? demoSite : site.url,
@@ -37,7 +31,7 @@ export default defineConfig({
       : [
           sitemap({
             filter: (page) =>
-              !page.includes('/404') && !page.includes('/admin') && (venuePhotoCount > 0 || !page.endsWith('/the-space/')),
+              !page.includes('/404') && !page.includes('/admin'),
             changefreq: 'monthly',
             priority: 0.7,
             serialize(item) {

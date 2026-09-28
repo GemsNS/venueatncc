@@ -4,49 +4,81 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
-import { publishedFaqs } from '../data/faq';
+import { publishedFaqs, type Faq } from '../data/faq';
 import { breadcrumbs, faqPage } from '../lib/schema';
 
 const title = 'FAQ | Booking The Venue at NCC in Suffolk, VA';
-const description =
-  'Answers about The Venue at NCC in Suffolk, VA: where it is, what events it hosts, how to check your date, and how to get a quote. Call (757) 338-3432.';
+const description = `Capacity, pricing, alcohol, catering, parking, and booking answers for The Venue at NCC, an event venue in Suffolk, VA that anyone can book.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'FAQ', path: '/faq/' },
 ];
+const groups: { topic: Faq['topic']; title: string }[] = [
+  { topic: 'booking', title: 'Booking' },
+  { topic: 'space', title: 'The space' },
+  { topic: 'food', title: 'Food and drink' },
+  { topic: 'pricing', title: 'Pricing' },
+  { topic: 'about', title: 'About the venue' },
+];
 ---
-<BaseLayout
-  title={title}
-  description={description}
-  og="faq"
-  schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}
->
-  <section class="page-head">
+<BaseLayout title={title} description={description} og="faq" schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}>
+  <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-head__copy">
-        <h1>Questions about The Venue at NCC</h1>
-        <p class="lead">
-          Answers to common questions about booking our event space in Suffolk. If your question is not here, call
-          {site.contact.phone}.
+      <div class="page-hero__copy">
+        <h1 class="t-large-title">Questions, answered.</h1>
+        <p class="t-lead">
+          Everything hosts ask before they book. Still wondering about something? Call {site.contact.phone}.
         </p>
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div class="faq-page">
-        <FaqList items={publishedFaqs} openFirst />
-      </div>
+  <section class="section section--grouped">
+    <div class="container faq-groups">
+      {
+        groups.map((g) => {
+          const items = publishedFaqs.filter((f) => f.topic === g.topic);
+          return (
+            items.length > 0 && (
+              <section class="faq-group" aria-labelledby={`faq-${g.topic}`}>
+                <h2 id={`faq-${g.topic}`} class="t-title-2">{g.title}</h2>
+                <FaqList items={items} />
+              </section>
+            )
+          );
+        })
+      }
     </div>
   </section>
 
-  <CtaBand heading="Still have a question?" body={`Call ${site.contact.phone}. We are glad to talk through your event, your date, and anything else you want to know.`} />
+  <CtaBand heading="Ready when you are." />
 </BaseLayout>
 
 <style>
-  .faq-page {
+  .page-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+
+  .page-hero__copy {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 46rem;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
+  .faq-groups {
+    display: grid;
+    gap: clamp(2rem, 1.5rem + 2vw, 3rem);
     max-width: 860px;
+  }
+
+  .faq-group {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .faq-group h2 {
+    padding-left: 0.25rem;
   }
 </style>

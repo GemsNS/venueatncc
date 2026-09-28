@@ -5,12 +5,17 @@ import ArchFrame from '../../components/ArchFrame.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FaqList from '../../components/FaqList.astro';
+import FactStrip from '../../components/FactStrip.astro';
 import CtaBand from '../../components/CtaBand.astro';
+import Icon from '../../components/Icon.astro';
 import { events, type EventType } from '../../data/events';
+import { eventTypes } from '../../data/event-types';
 import { site } from '../../data/site';
 import { eventPhoto } from '../../data/photos';
-import { bookHref } from '../../data/nav';
+import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
+import { href } from '../../lib/paths';
+import { priceSummary, formatUSD } from '../../shared/pricing';
 
 export const getStaticPaths = (() =>
   events.map((event, index) => ({ params: { slug: event.slug }, props: { event, index } }))) satisfies GetStaticPaths;
@@ -22,62 +27,48 @@ interface Props {
 const { event, index } = Astro.props;
 const path = `/events/${event.slug}/`;
 const photo = eventPhoto(event.slug);
+const icon = eventTypes.find((t) => t.slug === event.slug)?.icon ?? 'party-popper';
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
   { name: event.name, path },
 ];
 const related = event.related.filter((slug) => slug !== event.slug && events.some((e) => e.slug === slug));
+const { fromHourly } = priceSummary();
+const bookLink = `${href(bookHref)}?event=${encodeURIComponent(event.slug)}`;
 
 const schema = [
   breadcrumbs(crumbs),
-  eventService({
-    name: `${event.name} at ${site.name}`,
-    description: event.metaDescription,
-    path,
-    serviceType: event.name,
-  }),
+  eventService({ name: `${event.name} at ${site.name}`, description: event.metaDescription, path, serviceType: event.name }),
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
 ---
-<BaseLayout
-  title={event.metaTitle}
-  description={event.metaDescription}
-  og={event.slug}
-  ogAlt={`${event.name} at ${site.name} in Suffolk, Virginia`}
-  schema={schema}
->
-  <section class="event-hero">
+<BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} ogAlt={`${event.name} at ${site.name} in Suffolk, Virginia`} schema={schema}>
+  <section class="ev-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="event-hero__grid">
-        <div class="event-hero__copy">
-          <h1>{event.h1}</h1>
-          <div class="event-hero__intro">
-            <p class="lead">{event.intro[0]}</p>
-          </div>
+      <div class="ev-hero__grid">
+        <div class="ev-hero__copy">
+          <span class="badge badge--accent ev-hero__tag"><Icon name={icon} /> {event.name}</span>
+          <h1 class="t-large-title">{event.h1}</h1>
+          <p class="t-lead">{event.intro[0]}</p>
           <div class="btn-row">
-            <a class="btn btn--primary" href={bookHref}>Check your date</a>
-            <a class="btn btn--secondary" href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
+            <a class="btn btn--filled btn--lg" href={bookLink}>Check Availability</a>
+            <a class="link-more" href={href(pricingHref)}>From {formatUSD(fromHourly)} an hour <Icon name="chevron-right" /></a>
           </div>
         </div>
-        <div class="event-hero__arch">
-          <ArchFrame photo={photo} variant={index + 1} priority sizes="(min-width: 960px) 380px, 70vw" />
+        <div class="ev-hero__media">
+          <ArchFrame photo={photo} variant={index} priority sizes="(min-width: 960px) 400px, 72vw" />
         </div>
       </div>
+      <FactStrip class="ev-hero__facts" />
     </div>
   </section>
 
-  <section class="section event-body">
-    <div class="container event-body__grid">
-      <article class="prose event-body__article">
-        {
-          event.intro.length > 1 && (
-            <div class="event-body__opening">
-              {event.intro.slice(1).map((p) => <p>{p}</p>)}
-            </div>
-          )
-        }
+  <section class="section section--grouped">
+    <div class="container ev-body">
+      <article class="prose ev-article card">
+        {event.intro.slice(1).map((p) => <p class="ev-opening">{p}</p>)}
         {
           event.sections.map((s) => (
             <section>
@@ -88,13 +79,20 @@ const schema = [
         }
       </article>
 
-      <aside class="event-aside" aria-labelledby="aside-heading">
-        <div class="event-aside__card">
-          <h2 id="aside-heading">{event.checklist.heading}</h2>
-          <ul class="checklist">
-            {event.checklist.items.map((item) => <li>{item}</li>)}
+      <aside class="ev-aside" aria-labelledby="checklist-heading">
+        <div class="card ev-checklist">
+          <h2 id="checklist-heading" class="t-title-3">{event.checklist.heading}</h2>
+          <ul>
+            {
+              event.checklist.items.map((item) => (
+                <li>
+                  <Icon name="check-circle" />
+                  <span>{item}</span>
+                </li>
+              ))
+            }
           </ul>
-          <a class="btn btn--primary event-aside__btn" href={bookHref}>Check your date</a>
+          <a class="btn btn--filled" href={bookLink}>Check Availability</a>
         </div>
       </aside>
     </div>
@@ -102,25 +100,26 @@ const schema = [
 
   {
     event.faqs.length > 0 && (
-      <section class="section section--tight event-faq" aria-labelledby="event-faq-heading">
-        <div class="container event-faq__grid">
-          <h2 id="event-faq-heading">Questions about {event.name.toLowerCase()}</h2>
+      <section class="section" aria-labelledby="ev-faq-heading">
+        <div class="container ev-faq">
+          <div class="section-head">
+            <h2 id="ev-faq-heading">Questions about {event.name.toLowerCase()}</h2>
+            <p class="t-lead">Straight answers before you book.</p>
+          </div>
           <FaqList items={event.faqs} />
         </div>
       </section>
     )
   }
 
-  
   {
     related.length > 0 && (
-      <section class="section section--tight event-related" aria-labelledby="related-heading">
+      <section class="section section--grouped" aria-labelledby="related-heading">
         <div class="container">
-          <h2 id="related-heading" class="event-related__heading">Other events at The Venue at NCC</h2>
+          <div class="section-head">
+            <h2 id="related-heading">Other events at The Venue at NCC</h2>
+          </div>
           <EventIndex only={related} />
-          <p class="event-related__all">
-            <a class="text-link" href="/events/">See every kind of event we host</a>
-          </p>
         </div>
       </section>
     )
@@ -130,170 +129,127 @@ const schema = [
 </BaseLayout>
 
 <style>
-  .event-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
-    background: linear-gradient(180deg, var(--surface) 0%, var(--paper) 100%);
-    border-bottom: 1px solid var(--line);
+  .ev-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 
-  .event-hero__grid {
+  .ev-hero__grid {
     display: grid;
-    gap: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+    gap: clamp(2rem, 1.5rem + 3vw, 4rem);
     align-items: center;
     margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
 
   @media (min-width: 960px) {
-    .event-hero__grid {
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    .ev-hero__grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     }
   }
 
-  .event-hero__copy {
+  .ev-hero__copy {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.25rem;
     justify-items: start;
   }
 
-  .event-hero__copy h1 {
-    font-size: var(--step-4);
-    max-width: 20ch;
+  .ev-hero__tag {
+    font-size: var(--t-subhead);
+    padding: 0.35rem 0.8rem;
   }
 
-  .event-hero__intro {
-    max-width: var(--measure);
+  .ev-hero__copy .btn-row {
+    gap: 1.25rem;
   }
 
-  .event-hero__intro .lead {
-    max-width: none;
-  }
-
-  @media (max-width: 599.98px) {
-    .event-hero__intro .lead {
-      font-size: 1.125rem;
-    }
-  }
-
-  .event-body__opening {
-    margin-bottom: 3rem;
-    font-size: 1.125rem;
-  }
-
-  .event-hero__arch {
-    width: min(100%, 380px);
+  .ev-hero__media {
+    width: min(100%, 400px);
     justify-self: center;
   }
 
   @media (max-width: 959.98px) {
-    .event-hero__arch {
-      width: min(70%, 340px);
+    .ev-hero__media {
+      width: min(72%, 340px);
     }
   }
 
-  .event-body__grid {
+  .ev-hero :global(.ev-hero__facts) {
+    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+
+  .ev-body {
     display: grid;
-    gap: 3rem clamp(3rem, 6vw, 6rem);
+    gap: 1.5rem;
     align-items: start;
   }
 
   @media (min-width: 1000px) {
-    .event-body__grid {
-      grid-template-columns: minmax(0, 1fr) 340px;
+    .ev-body {
+      grid-template-columns: minmax(0, 1fr) 360px;
     }
   }
 
-  .event-body__article section + section {
-    margin-top: 3rem;
+  .ev-article {
+    padding: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    max-width: none;
   }
 
-  .event-aside {
+  .ev-article section + section,
+  .ev-opening + section {
+    margin-top: 2.25rem;
+  }
+
+  .ev-opening {
+    font-size: 1.125rem;
+    color: var(--label-2);
+  }
+
+  .ev-aside {
     position: sticky;
-    top: calc(var(--header-h) + 1.5rem);
+    top: calc(var(--nav-h) + 1.5rem);
   }
 
   @media (max-width: 999.98px) {
-    .event-aside {
+    .ev-aside {
       position: static;
     }
   }
 
-  .event-aside__card {
+  .ev-checklist {
     display: grid;
-    gap: 1.25rem;
+    gap: 1.1rem;
     padding: 1.75rem;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-top: 3px solid var(--brass);
-    border-radius: var(--radius);
   }
 
-  .event-aside__card h2 {
-    font-size: var(--step-2);
-    line-height: 1.25;
-  }
-
-  .checklist {
+  .ev-checklist ul {
     display: grid;
-    gap: 0.8rem;
+    gap: 0.85rem;
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: 0.975rem;
+    font-size: var(--t-subhead);
   }
 
-  .checklist li {
-    position: relative;
-    padding-left: 1.6rem;
-  }
-
-  /* A tiny arch as the list mark. */
-  .checklist li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.35em;
-    width: 0.7rem;
-    height: 0.85rem;
-    border: 1.5px solid var(--brass);
-    border-radius: 100vmax 100vmax 1px 1px;
-  }
-
-  .event-aside__btn {
-    width: 100%;
-  }
-
-  .event-faq {
-    background: var(--surface);
-    border-block: 1px solid var(--line);
-  }
-
-  .event-faq__grid {
+  .ev-checklist li {
     display: grid;
-    gap: 2rem 4rem;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: start;
+  }
+
+  .ev-checklist li :global(.icon) {
+    color: var(--accent-text);
+    margin-top: 0.1em;
+  }
+
+  .ev-faq {
+    display: grid;
+    gap: 2rem clamp(2rem, 6vw, 5rem);
   }
 
   @media (min-width: 900px) {
-    .event-faq__grid {
+    .ev-faq {
       grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
     }
-  }
-
-  .event-faq h2 {
-    font-size: var(--step-3);
-  }
-
-  .event-form__grid {
-    display: grid;
-    gap: 2rem;
-    max-width: 860px;
-  }
-
-  .event-related__heading {
-    font-size: var(--step-3);
-    margin-bottom: 2rem;
-  }
-
-  .event-related__all {
-    margin-top: 2rem;
   }
 </style>

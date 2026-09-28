@@ -2,14 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
+import FactStrip from '../../components/FactStrip.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import { events } from '../../data/events';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 
-const title = 'Events we host in Suffolk, VA | The Venue at NCC';
-const description =
-  'Weddings, banquets, showers, birthdays, repasts, meetings, and community events at The Venue at NCC in Suffolk, VA. Find your event and check your date.';
+const title = 'Events at The Venue at NCC in Suffolk, VA';
+const description = `Weddings, banquets, showers, birthdays, repasts, meetings, reunions, and church events at an event venue in Suffolk, VA for up to ${site.maxCapacity} guests.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
@@ -25,38 +25,38 @@ const itemList = {
   })),
 };
 ---
-<BaseLayout
-  title={title}
-  description={description}
-  og="events"
-  pageType="CollectionPage"
-  schema={[breadcrumbs(crumbs), itemList]}
->
-  <section class="page-head">
+<BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[breadcrumbs(crumbs), itemList]}>
+  <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-head__copy">
-        <h1>Events at The Venue at NCC</h1>
-        <p class="lead">
-          Here are the events you can book at our event space in Suffolk. Choose one for planning ideas, a checklist,
-          and the questions to ask before you book.
+      <div class="page-hero__copy">
+        <h1 class="t-large-title">Every kind of event, one welcoming venue.</h1>
+        <p class="t-lead">
+          Choose an event for planning ideas, a checklist, and answers to the questions hosts ask most. Anyone can book.
         </p>
+        <FactStrip />
       </div>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--grouped">
     <div class="container">
       <EventIndex headingLevel="h2" />
     </div>
   </section>
 
-  <CtaBand heading="Not sure your event fits?" body={`Call ${site.contact.phone} and tell us what you have in mind. We will talk it through with you.`} />
+  <CtaBand heading="Planning something else?" body="Tell us what you have in mind. If it fits in a hall for 100 or an outdoor space for 150, we would love to host it." />
 </BaseLayout>
 
 <style>
-  .steps-band {
-    background: var(--surface);
-    border-top: 1px solid var(--line);
+  .page-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+
+  .page-hero__copy {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 48rem;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
 </style>
