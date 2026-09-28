@@ -1,0 +1,12 @@
+# Caddy terminates HTTPS with certificates from Let's Encrypt (issued and renewed automatically)
+# and forwards requests to the Node app. Both names must point at this server in DNS first.
+# SITE_DOMAIN defaults to venueatncc.org; set it in .env to try a staging name first.
+
+www.{$SITE_DOMAIN:venueatncc.org} {
+	redir https://{$SITE_DOMAIN:venueatncc.org}{uri} permanent
+}
+
+{$SITE_DOMAIN:venueatncc.org} {
+	encode zstd gzip
+	reverse_proxy app:8787
+}

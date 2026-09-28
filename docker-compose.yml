@@ -1,0 +1,62 @@
+# The Venue at NCC on one server: the Node app plus Caddy for automatic HTTPS.
+#
+#   cp .env.example .env    # then fill in the secrets and SMTP settings
+#   docker compose up -d --build
+#
+# See docs/deploy.md for the full walkthrough.
+name: venueatncc
+
+services:
+  app:
+    build: .
+    image: venueatncc:latest
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      # Fixed for this setup: production mode, behind Caddy, on the port Caddy forwards to.
+      NODE_ENV: production
+      TRUST_PROXY: "true"
+      HOST: 0.0.0.0
+      PORT: "8787"
+      DATABASE_PATH: /app/data/venue.db
+      OUTBOX_DIR: /app/data/outbox
+      SITE_DIR: /app/dist
+    volumes:
+      - venue-data:/app/data
+    expose:
+      - "8787"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-venueatncc.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # The database, the email outbox, and backups. Back this up (see docs/deploy.md).
+  venue-data:
+  # Caddy's certificates and ACME account. Keep it so certificates are not re-issued on every restart.
+  caddy-data:
+  caddy-config:

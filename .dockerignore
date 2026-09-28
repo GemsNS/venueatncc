@@ -1,0 +1,21 @@
+# Keep the build context small and free of secrets and local data.
+# Patterns are anchored to the project root, so src/data/ (the venue facts) is still sent.
+/node_modules
+/dist
+/dist-demo
+/server-dist
+/data
+/.tmp
+/.astro
+/.git
+/.github
+/.claude
+/.vscode
+/.env
+/.env.*
+!/.env.example
+*.db
+*.db-*
+npm-debug.log*
+.DS_Store
+Thumbs.db
