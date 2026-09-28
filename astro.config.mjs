@@ -43,9 +43,24 @@ export default defineConfig({
         ]),
   ],
   vite: {
+    plugins: [
+      {
+        // With trailingSlash 'always', Astro's dev server would answer /api/* with its 404 page
+        // before Vite's proxy runs. Move the proxy middleware to the front of the stack.
+        name: 'venue:api-proxy-first',
+        configureServer(server) {
+          return () => {
+            const stack = server.middlewares.stack;
+            const i = stack.findIndex((layer) => layer.handle && layer.handle.name === 'viteProxyMiddleware');
+            if (i > 0) stack.unshift(...stack.splice(i, 1));
+          };
+        },
+      },
+    ],
     server: {
       // In development the API server runs separately (npm run dev starts both).
       proxy: { '/api': { target: 'http://127.0.0.1:8787', changeOrigin: false } },
+      watch: { ignored: ['**/data/**', '**/.tmp/**'] },
     },
   },
 });
