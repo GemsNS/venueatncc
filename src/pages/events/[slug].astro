@@ -1,33 +1,34 @@
 ---
+/**
+ * An event landing page: a rectangular photo hero from the event photo map, the planning guide with
+ * its checklist, the two spaces as photo cards, how booking works, FAQs, and related events.
+ * Copy lives in src/data/events.ts. Only real photos, only through Photo (docs/design/brand.md).
+ */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArchFrame from '../../components/ArchFrame.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FaqList from '../../components/FaqList.astro';
 import FactStrip from '../../components/FactStrip.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import Icon from '../../components/Icon.astro';
+import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
-import { eventTypes } from '../../data/event-types';
-import { site } from '../../data/site';
-import { eventPhoto } from '../../data/photos';
+import { site, type SpaceId } from '../../data/site';
+import { eventPhoto, photosFor, type PhotoSpace, type VenuePhoto } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
 import { priceSummary, formatUSD } from '../../shared/pricing';
 
-export const getStaticPaths = (() =>
-  events.map((event, index) => ({ params: { slug: event.slug }, props: { event, index } }))) satisfies GetStaticPaths;
+export const getStaticPaths = (() => events.map((event) => ({ params: { slug: event.slug }, props: { event } }))) satisfies GetStaticPaths;
 
 interface Props {
   event: EventType;
-  index: number;
 }
-const { event, index } = Astro.props;
+const { event } = Astro.props;
 const path = `/events/${event.slug}/`;
 const photo = eventPhoto(event.slug);
-const icon = eventTypes.find((t) => t.slug === event.slug)?.icon ?? 'party-popper';
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
@@ -35,7 +36,27 @@ const crumbs = [
 ];
 const related = event.related.filter((slug) => slug !== event.slug && events.some((e) => e.slug === slug));
 const { fromHourly } = priceSummary();
-const bookLink = `${href(bookHref)}?event=${encodeURIComponent(event.slug)}`;
+const eventParam = `event=${encodeURIComponent(event.slug)}`;
+const bookLink = `${href(bookHref)}?${eventParam}`;
+const visitLink = `${href(bookHref)}?${eventParam}&visit=1`;
+const plainName = event.name.replace(/&/g, 'and').toLowerCase();
+// Phone numbers in the copy become tap-to-call links that never break across lines.
+const PHONE = site.contact.phone;
+const tel = `tel:${site.contact.phoneE164}`;
+const splitPhone = (text: string) => text.split(PHONE);
+
+// The two spaces as photo cards. The space the hero shows leads, and each card uses a different
+// photo of its space than the hero, so no image repeats on the page.
+const areaOf: Record<Exclude<SpaceId, 'both'>, PhotoSpace> = { indoor: 'hall', outdoor: 'grove' };
+function cardPhoto(area: PhotoSpace): VenuePhoto | null {
+  const list = photosFor(area);
+  return list.find((p) => p.name !== photo?.name) ?? list[0] ?? null;
+}
+const leadSpace: SpaceId = photo?.space === 'grove' ? 'outdoor' : 'indoor';
+const spaceCards = site.spaces
+  .filter((s): s is typeof s & { id: 'indoor' | 'outdoor' } => s.id === 'indoor' || s.id === 'outdoor')
+  .map((space) => ({ space, photo: cardPhoto(areaOf[space.id]) }))
+  .sort((a, b) => Number(b.space.id === leadSpace) - Number(a.space.id === leadSpace));
 
 const schema = [
   breadcrumbs(crumbs),
@@ -49,62 +70,112 @@ const schema = [
       <Breadcrumbs items={crumbs} />
       <div class="ev-hero__grid">
         <div class="ev-hero__copy">
-          <span class="badge badge--accent ev-hero__tag"><Icon name={icon} /> {event.name}</span>
           <h1 class="t-large-title">{event.h1}</h1>
-          <p class="t-lead">{event.intro[0]}</p>
+          <p class="t-lead">{splitPhone(event.intro[0]).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
           <div class="btn-row">
             <a class="btn btn--filled btn--lg" href={bookLink}>Check Availability</a>
-            <a class="link-more" href={href(pricingHref)}>From {formatUSD(fromHourly)} an hour <Icon name="chevron-right" /></a>
+            <a class="btn btn--tinted btn--lg" href={href(pricingHref)}>See Pricing</a>
           </div>
         </div>
-        <div class="ev-hero__media">
-          <ArchFrame photo={photo} variant={index} priority sizes="(min-width: 960px) 400px, 72vw" />
-        </div>
+        {photo && <Photo photo={photo} ratio="3 / 2" priority class="ev-hero__photo" sizes="(min-width: 75rem) 680px, (min-width: 64rem) 56vw, calc(100vw - 2rem)" />}
       </div>
       <FactStrip class="ev-hero__facts" />
     </div>
   </section>
 
-  <section class="section section--grouped">
+  <section class="ev-main" aria-label="Planning guide">
     <div class="container ev-body">
-      <article class="prose ev-article card">
-        {event.intro.slice(1).map((p) => <p class="ev-opening">{p}</p>)}
+      <article class="ev-article">
+        {event.intro.slice(1).map((p) => <p class="ev-opening t-serif-lead">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>)}
         {
           event.sections.map((s) => (
-            <section>
+            <section class="ev-section">
               <h2>{s.heading}</h2>
-              {s.body.map((p) => <p>{p}</p>)}
+              {s.body.map((p) => <p>{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>)}
             </section>
           ))
         }
       </article>
 
       <aside class="ev-aside" aria-labelledby="checklist-heading">
-        <div class="card ev-checklist">
+        <div class="ev-checklist">
           <h2 id="checklist-heading" class="t-title-3">{event.checklist.heading}</h2>
           <ul>
             {
               event.checklist.items.map((item) => (
                 <li>
                   <Icon name="check-circle" />
-                  <span>{item}</span>
+                  <span>{splitPhone(item).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</span>
                 </li>
               ))
             }
           </ul>
-          <a class="btn btn--filled" href={bookLink}>Check Availability</a>
+          <div class="ev-checklist__actions">
+            <a class="btn btn--filled" href={bookLink}>Check Availability</a>
+            <a class="btn btn--plain" href={visitLink}>Request a Visit</a>
+          </div>
         </div>
       </aside>
     </div>
   </section>
 
+  <section class="section section--grouped" aria-labelledby="spaces-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="spaces-heading">{spaceCards.map((c) => c.space.name).join(' and ')}</h2>
+        <p class="t-lead">Book one space, or request both for the same day. We confirm availability for each when we follow up.</p>
+      </div>
+      <ul class="ev-spaces">
+        {
+          spaceCards.map(({ space, photo: spacePhoto }) => (
+            <li class="ev-space card">
+              {spacePhoto && <Photo photo={spacePhoto} ratio="3 / 2" rounded={false} sizes="(min-width: 75rem) 592px, (min-width: 48rem) 48vw, calc(100vw - 2rem)" />}
+              <div class="ev-space__body">
+                <h3 class="ev-space__name">{space.name}</h3>
+                <p class="ev-space__cap num">Up to {space.capacity} guests</p>
+                <p class="secondary">{space.description}</p>
+                <a class="link-more ev-space__link" href={`${href(bookHref)}?space=${space.id}&${eventParam}`}>
+                  Check {space.short} Dates <Icon name="chevron-right" />
+                </a>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="steps-heading">How booking works</h2>
+        <p class="t-lead">Rates from {formatUSD(fromHourly)} an hour, with an instant estimate for your date. We confirm every booking personally.</p>
+      </div>
+      <ol class="ev-steps">
+        {
+          site.bookingSteps.map((step, i) => (
+            <li class="ev-step">
+              <span class="ev-step__num" aria-hidden="true">{i + 1}</span>
+              <h3 class="t-headline">{step.title}</h3>
+              <p class="secondary">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="btn-row ev-steps__actions">
+        <a class="btn btn--tinted" href={href(pricingHref)}>See Pricing</a>
+        <a class="btn btn--tinted" href={visitLink}>Request a Visit</a>
+      </div>
+    </div>
+  </section>
+
   {
     event.faqs.length > 0 && (
-      <section class="section" aria-labelledby="ev-faq-heading">
+      <section class="section section--grouped" aria-labelledby="ev-faq-heading">
         <div class="container ev-faq">
           <div class="section-head">
-            <h2 id="ev-faq-heading">Questions about {event.name.toLowerCase()}</h2>
-            <p class="t-lead">Straight answers before you book.</p>
+            <h2 id="ev-faq-heading">Questions about {plainName}</h2>
+            <p class="t-lead">Plain answers before you book.</p>
           </div>
           <FaqList items={event.faqs} />
         </div>
@@ -114,10 +185,10 @@ const schema = [
 
   {
     related.length > 0 && (
-      <section class="section section--grouped" aria-labelledby="related-heading">
+      <section class="section" aria-labelledby="related-heading">
         <div class="container">
           <div class="section-head">
-            <h2 id="related-heading">Other events at The Venue at NCC</h2>
+            <h2 id="related-heading">Other events we host</h2>
           </div>
           <EventIndex only={related} />
         </div>
@@ -129,20 +200,23 @@ const schema = [
 </BaseLayout>
 
 <style>
+  /* ---------- Hero: copy beside a rectangular photo ---------- */
+
   .ev-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 2vw, 3.5rem);
   }
 
   .ev-hero__grid {
     display: grid;
-    gap: clamp(2rem, 1.5rem + 3vw, 4rem);
+    gap: clamp(1.75rem, 1.25rem + 2vw, 3rem);
     align-items: center;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
   }
 
-  @media (min-width: 960px) {
+  @media (min-width: 64rem) {
     .ev-hero__grid {
-      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(2.5rem, 4vw, 4rem);
     }
   }
 
@@ -150,58 +224,71 @@ const schema = [
     display: grid;
     gap: 1.25rem;
     justify-items: start;
-  }
-
-  .ev-hero__tag {
-    font-size: var(--t-subhead);
-    padding: 0.35rem 0.8rem;
+    max-width: 40rem;
   }
 
   .ev-hero__copy .btn-row {
-    gap: 1.25rem;
-  }
-
-  .ev-hero__media {
-    width: min(100%, 400px);
-    justify-self: center;
-  }
-
-  @media (max-width: 959.98px) {
-    .ev-hero__media {
-      width: min(72%, 340px);
-    }
+    margin-top: 0.5rem;
   }
 
   .ev-hero :global(.ev-hero__facts) {
-    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+    margin-top: clamp(1.75rem, 1.25rem + 2vw, 3rem);
+  }
+
+  /* ---------- Planning guide and checklist ---------- */
+
+  .ev-main {
+    padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem) var(--section);
+    border-top: 1px solid var(--separator);
   }
 
   .ev-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
+    gap: 3rem;
     align-items: start;
   }
 
-  @media (min-width: 1000px) {
+  @media (min-width: 64rem) {
     .ev-body {
-      grid-template-columns: minmax(0, 1fr) 360px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+      gap: clamp(3rem, 6vw, 6rem);
     }
   }
 
   .ev-article {
-    padding: clamp(1.5rem, 1rem + 2.5vw, 3rem);
-    max-width: none;
+    max-width: 40rem;
   }
 
-  .ev-article section + section,
-  .ev-opening + section {
-    margin-top: 2.25rem;
-  }
-
+  /* Smaller than the section headings on phones, so the Caslon h2s still lead. */
   .ev-opening {
-    font-size: 1.125rem;
-    color: var(--label-2);
+    font-size: clamp(1.1875rem, 1rem + 0.8vw, 1.5rem);
+    margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+
+  .ev-section + .ev-section {
+    margin-top: clamp(2.25rem, 1.75rem + 2vw, 3rem);
+  }
+
+  /* Caslon Display stays at 28px and up (brand.md). */
+  .ev-section h2 {
+    font-size: min(clamp(1.75rem, 1.5rem + 0.9vw, 2.125rem), 10vw);
+    line-height: 1.15;
+    margin-bottom: 0.9rem;
+  }
+
+  .ev-section p {
+    font-size: var(--t-body);
+    line-height: 1.6;
+    color: var(--label);
+  }
+
+  /* Tap-to-call numbers in the copy stay on one line and are underlined like other inline links. */
+  .ev-tel {
+    white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
   }
 
   .ev-aside {
@@ -209,45 +296,143 @@ const schema = [
     top: calc(var(--nav-h) + 1.5rem);
   }
 
-  @media (max-width: 999.98px) {
+  @media (max-width: 63.99rem) {
     .ev-aside {
       position: static;
+      max-width: 40rem;
     }
   }
 
   .ev-checklist {
     display: grid;
-    gap: 1.1rem;
-    padding: 1.75rem;
+    gap: 1.25rem;
+    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+    border-radius: var(--r-lg);
+    background: var(--lilac-mist);
   }
 
   .ev-checklist ul {
     display: grid;
-    gap: 0.85rem;
+    gap: 0.9rem;
     margin: 0;
     padding: 0;
     list-style: none;
     font-size: var(--t-subhead);
+    line-height: 1.45;
   }
 
   .ev-checklist li {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.65rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.7rem;
     align-items: start;
   }
 
   .ev-checklist li :global(.icon) {
     color: var(--accent-text);
-    margin-top: 0.1em;
+    margin-top: 0.05em;
   }
+
+  .ev-checklist__actions {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+  }
+
+  /* ---------- The two spaces ---------- */
+
+  .ev-spaces {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .ev-spaces {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  .ev-space {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  .ev-space__body {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  }
+
+  .ev-space__name {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+  }
+
+  .ev-space__cap {
+    color: var(--accent-text);
+    font-weight: 600;
+    font-size: var(--t-subhead);
+  }
+
+  .ev-space__link {
+    justify-self: start;
+    margin-top: 0.25rem;
+  }
+
+  /* ---------- How booking works: a real sequence, so numbered ---------- */
+
+  .ev-steps {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .ev-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  .ev-step {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator-strong);
+  }
+
+  .ev-step__num {
+    font-family: var(--font-serif);
+    font-size: 1.625rem;
+    line-height: 1;
+    color: var(--accent-text);
+    font-variant-numeric: lining-nums;
+  }
+
+  .ev-steps__actions {
+    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+
+  /* ---------- FAQ ---------- */
 
   .ev-faq {
     display: grid;
     gap: 2rem clamp(2rem, 6vw, 5rem);
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 60rem) {
     .ev-faq {
       grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
       align-items: start;

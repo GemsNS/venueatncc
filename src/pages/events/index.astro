@@ -8,8 +8,11 @@ import { events } from '../../data/events';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 
+const hall = site.spaces.find((s) => s.id === 'indoor');
+const grove = site.spaces.find((s) => s.id === 'outdoor');
+
 const title = 'Events at The Venue at NCC in Suffolk, VA';
-const description = `Weddings, showers, birthdays, repasts, meetings, and church events in Suffolk, VA. An indoor hall for ${site.spaces[0].capacity} and an outdoor space for ${site.spaces[1].capacity}.`;
+const description = `Weddings, showers, birthdays, repasts, meetings, and church events in Suffolk, VA. ${hall?.name} holds up to ${hall?.capacity} guests and ${grove?.name} up to ${grove?.capacity}, with on-site parking.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
@@ -30,22 +33,26 @@ const itemList = {
     <div class="container">
       <Breadcrumbs items={crumbs} />
       <div class="page-hero__copy">
-        <h1 class="t-large-title">Every kind of event, one welcoming venue.</h1>
+        <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
         <p class="t-lead">
-          Choose an event for planning ideas, a checklist, and answers to the questions hosts ask most. Anyone can book.
+          Choose an occasion for a planning guide, the space that suits it, and a practical checklist. {hall?.name} holds up to {hall?.capacity} guests
+          and {grove?.name} up to {grove?.capacity}, with on-site parking for every booking.
         </p>
-        <FactStrip />
       </div>
+      <FactStrip class="page-hero__facts" />
     </div>
   </section>
 
-  <section class="section section--grouped">
+  <section class="section section--grouped" aria-label="Events we host">
     <div class="container">
       <EventIndex headingLevel="h2" />
     </div>
   </section>
 
-  <CtaBand heading="Planning something else?" body="Tell us what you have in mind. If it fits in a hall for 100 or an outdoor space for 150, we would love to host it." />
+  <CtaBand
+    heading="Planning something else?"
+    body={`Tell us about it in your request. ${hall?.name} holds up to ${hall?.capacity} guests and ${grove?.name} up to ${grove?.capacity}, and we confirm every booking personally.`}
+  />
 </BaseLayout>
 
 <style>
@@ -57,6 +64,10 @@ const itemList = {
     display: grid;
     gap: 1.25rem;
     max-width: 48rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  }
+
+  .page-hero :global(.page-hero__facts) {
+    margin-top: 1.75rem;
   }
 </style>

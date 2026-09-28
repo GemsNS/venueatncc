@@ -2,18 +2,25 @@
  * Event types the venue promotes. Each entry becomes a landing page at /events/<slug>/.
  * Slugs and names must match src/data/event-types.ts.
  *
- * Copy rules:
- * - Venue facts (capacity, phone, address, church details) come from site.ts through the
+ * Copy rules (docs/design/brand.md, "Voice"):
+ * - Professional hospitality: confident, warm, precise, brief. First person plural for the venue,
+ *   second person for guidance. No exclamation marks, no em or en dashes, no parentheses where a
+ *   sentence works. Headings in sentence case.
+ * - Never mention alcohol or drinks of any kind, and never mention catering, menus, kitchens, or
+ *   bringing your own anything. Catering appears only on the pricing page and in one FAQ entry.
+ * - Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark
+ *   wood-look floors, recessed lighting, double doors. The Grove: a timber gazebo, open lawn, picnic
+ *   tables on a paved patio, tall pines, paved paths. The campus: a long paved drive and a paved lot.
+ *   Never claim or ask about a kitchen, sound, screens, a stage, tables and chairs, or setup times.
+ * - Venue facts (space names, capacity, phone, address, church details) come from site.ts through the
  *   constants below, so a change there flows into every page. Never type them in by hand.
  * - Never type a price or a percentage. Rates live in src/shared/pricing.ts; point to the pricing
- *   page, or build the sentence from `pricing` (as the special rates below do).
- * - Unconfirmed details (tables and chairs, whether there is a kitchen, AV, decorating and setup
- *   times, end times) appear only as questions to ask us. Never state or imply an answer.
+ *   page, or build the sentence from `pricing` as the deposit and special-rate sentences below do.
  * - Reserving always reads: we confirm availability, then your booking deposit reserves the date.
- * - No em or en dashes, no exclamation marks. Headings in sentence case.
+ * - Checklists hold practical venue steps only: date, space, guest count, estimate, visit, timeline.
  */
 import { site, fullAddress, type SpaceId } from './site';
-import { pricing } from '../shared/pricing';
+import { pricing, formatUSD } from '../shared/pricing';
 
 export interface EventSection {
   heading: string;
@@ -41,14 +48,16 @@ export interface EventType {
   keywords: string[];
 }
 
-function capacityOf(id: SpaceId): number {
+function spaceOf(id: SpaceId) {
   const space = site.spaces.find((s) => s.id === id);
   if (!space) throw new Error(`site.ts has no "${id}" space`);
-  return space.capacity;
+  return space;
 }
 
-const INDOOR = capacityOf('indoor');
-const OUTDOOR = capacityOf('outdoor');
+const HALL = spaceOf('indoor').name;
+const GROVE = spaceOf('outdoor').name;
+const INDOOR = spaceOf('indoor').capacity;
+const OUTDOOR = spaceOf('outdoor').capacity;
 const PHONE = site.contact.phone;
 const ADDRESS = fullAddress;
 const STREET = site.address.street;
@@ -56,96 +65,149 @@ const CHURCH = site.parent.name;
 const FOUNDED = site.parent.foundingYear;
 const FOUNDER = site.parent.pastor;
 const CHURCH_SITE = site.parent.url.replace('https://', '');
+
 /** The reserving sentence, worded the same everywhere on the site. */
 const RESERVE = 'We confirm availability, then your booking deposit reserves the date.';
+
+/** Parking, worded the same on every page. */
+const PARKING = 'On-site parking on our paved lot is included with every booking.';
+
+/** The visit offer, worded the same on every page. */
+const VISIT = `Ask for a visit when you send your request, or call ${PHONE}, and we will find a time to walk the property with you.`;
+
+/** Deposit terms, built from the rate card so the figures never drift. */
+const deposit = pricing.bookingDeposit;
+const DEPOSIT =
+  deposit.type === 'percent'
+    ? `The booking deposit is ${deposit.value}% of your total`
+    : `The booking deposit is ${formatUSD(deposit.value)}`;
+const DEPOSIT_TERMS =
+  deposit.balanceDueDaysBefore > 0
+    ? `${DEPOSIT}, and the balance is due ${deposit.balanceDueDaysBefore} days before your event.`
+    : `${DEPOSIT}.`;
+/** For events that are often booked at short notice. Empty when there is no balance window. */
+const SHORT_NOTICE =
+  deposit.balanceDueDaysBefore > 0
+    ? ` For an event within ${deposit.balanceDueDaysBefore} days, the full amount is due when you reserve.`
+    : '';
 
 /** Special-rate sentences, built from the rate card so the percentages never drift. */
 const repastRate = pricing.discounts.find((d) => d.id === 'repast' && d.percent > 0);
 const nonprofitRate = pricing.discounts.find((d) => d.id === 'nonprofit' && d.percent > 0);
 const howApplied = (d: { appliesTo: string }) =>
   d.appliesTo === 'manual' ? 'Mention it in your request.' : 'It is applied automatically in your estimate.';
+/** "Nonprofits and churches (Sunday to Thursday)" becomes who: "Nonprofits and churches", when: "Sunday to Thursday". */
+function splitLabel(label: string): { who: string; when: string } {
+  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(label);
+  return m ? { who: m[1], when: m[2] } : { who: label, when: '' };
+}
 const REPAST_RATE = repastRate
-  ? ` Repasts and celebrations of life get our ${repastRate.label.toLowerCase()}: ${repastRate.percent}% off the rental. ${howApplied(repastRate)}`
+  ? ` Repasts and celebrations of life receive ${repastRate.percent}% off the rental. ${howApplied(repastRate)}`
   : '';
 const NONPROFIT_RATE = nonprofitRate
-  ? ` The special rate for ${nonprofitRate.label.charAt(0).toLowerCase()}${nonprofitRate.label.slice(1)} is ${nonprofitRate.percent}% off the rental. ${howApplied(nonprofitRate)}`
+  ? (() => {
+      const { who, when } = splitLabel(nonprofitRate.label);
+      return ` ${who} receive ${nonprofitRate.percent}% off the rental${when ? ` for events ${when}` : ''}. ${howApplied(nonprofitRate)}`;
+    })()
   : '';
+
+const repastRateFaq = repastRate
+  ? [
+      {
+        q: 'Is there a special rate for repasts?',
+        a: `Yes.${REPAST_RATE} The pricing page shows the full rate card and an instant estimate for your date.`,
+      },
+    ]
+  : [];
+const nonprofitRateFaq = (q: string) =>
+  nonprofitRate
+    ? [
+        {
+          q,
+          a: `Yes.${NONPROFIT_RATE} The pricing page lists every rate and gives an instant estimate for your date.`,
+        },
+      ]
+    : [];
 
 export const events: EventType[] = [
   {
     slug: 'weddings',
     name: 'Weddings & receptions',
-    summary: 'Ceremonies, receptions, and the celebrations around your wedding day.',
+    summary: `Ceremonies at the gazebo in ${GROVE}, receptions in ${HALL}, and the whole day on one property.`,
     metaTitle: 'Wedding venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: an indoor hall for up to ${INDOOR} guests, outdoor space for up to ${OUTDOOR}, and on-site parking included.`,
-    h1: 'Your Suffolk wedding venue at New Community Church',
+    metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: a ceremony at the gazebo in ${GROVE}, a reception in ${HALL} for up to ${INDOOR}, and on-site parking.`,
+    h1: 'A Suffolk wedding venue among the pines',
     intro: [
-      `The Venue at NCC is the event space of ${CHURCH} at ${STREET} in Suffolk, Virginia. Say your vows outdoors with up to ${OUTDOOR} guests, or celebrate in the indoor hall with up to ${INDOOR}. Anyone can book, and church membership is not required.`,
-      'Your rental includes the space you book and on-site parking. Catering is not included, which leaves the menu and the caterer up to you. Alcohol is allowed, so a champagne toast or a bar can be part of the plan.',
+      `Say your vows at the timber gazebo in ${GROVE}, then welcome guests into ${HALL} for the reception, all on one wooded property in Suffolk. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
+      `We confirm every date personally, and we welcome you to visit before you book, so you can stand at the gazebo, walk into ${HALL}, and picture the day.`,
     ],
     sections: [
       {
-        heading: 'Ceremony, reception, or both',
+        heading: 'Ceremony outdoors, reception indoors',
         body: [
-          `Many couples want everything in one place so guests are not driving across town between the ceremony and the reception. At The Venue at NCC you can book the indoor hall, book the outdoor space, or request both for the same day. We confirm availability for each space when we follow up on your request.`,
-          `Your guest count points you to the right space. The indoor hall holds up to ${INDOOR} guests. The outdoor space holds up to ${OUTDOOR}, which makes it a natural choice for an open-air ceremony or a larger reception. If you plan to be outdoors, settle on a weather plan early and share it with your vendors.`,
+          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a paved patio, and tall pines on every side. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
+          `${HALL} is our indoor space, with arched windows, a fireplace feature wall, and dark wood-look floors. It holds up to ${INDOOR} guests for the reception. Reserve both for the same day and guests move from the ceremony to the reception without returning to their cars. With both spaces reserved, ${HALL} is also ready for up to ${INDOOR} guests if the weather turns.`,
         ],
       },
       {
-        heading: 'Your caterer, your menu',
+        heading: 'The gatherings around the wedding',
         body: [
-          'Catering is not included, and that gives you room to plan the meal your way. Book the caterer you already trust, choose a cuisine that reflects your families, or plan a relaxed buffet. There is no house menu to work around.',
-          'Alcohol is allowed, so you can plan a champagne toast, wine with dinner, or a full bar through your caterer. Before you sign with a caterer, ask us whether there is a kitchen they can use and what time they can arrive, so their plan matches the space.',
+          'A wedding is often a series of gatherings. Engagement parties, bridal showers, and rehearsal dinners can each be booked on their own date, in the space that suits the group.',
+          'Check each date on the availability calendar and send a request for each one. If the dates are close together, say so in your requests and we will review them together.',
         ],
       },
       {
-        heading: 'Rehearsal dinners and engagement parties',
+        heading: 'A planning timeline',
         body: [
-          'A wedding is often more than one event. Engagement parties, rehearsal dinners, and a family brunch the day after all bring people together around the main celebration, and each one can be booked on its own date.',
-          'Check each date on the availability calendar, then send a request for each gathering. If the dates are close together, mention that in your requests so we can look at them together.',
+          'Many couples reserve their venue nine to twelve months ahead, and earlier for a Saturday in spring or fall. The availability calendar shows open dates up to two years ahead.',
+          `Visit before you reserve. ${VISIT} A few weeks before the wedding, confirm your final guest count and the order of the day, and send guests the address and parking details.`,
         ],
       },
       {
-        heading: 'How to reserve your wedding date',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Booking takes three steps. Pick your date on the live availability calendar and choose the indoor hall, the outdoor space, or both. Send a request with your guest count and plans, which takes about two minutes. ${RESERVE}`,
-          `Rates depend on the day, the space, and how many hours you need. The pricing page shows the full rate card and gives you an instant estimate, so you can compare dates before you choose one. Prefer to talk it through first? Call ${PHONE}.`,
+          'Rates depend on the day, the space, and the hours you need. The pricing page lists every rate and gives an instant estimate for your date, so you can compare dates before you choose one.',
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
     checklist: {
       heading: 'Wedding venue checklist',
       items: [
-        'Set your budget and a rough guest count before you choose a space.',
-        `Choose the indoor hall for up to ${INDOOR} guests, the outdoor space for up to ${OUTDOOR}, or request both.`,
-        'Pick two or three possible dates and compare them on the availability calendar.',
-        'Get an instant estimate on the pricing page for each date you are considering.',
-        'Book your caterer early, since catering is not included with the rental.',
-        'Plan your drinks. Alcohol is allowed, so arrange any bar service with your caterer.',
-        'Ask us whether tables and chairs are included or should be rented.',
-        'Ask whether there is a kitchen your caterer can use, and ask about decorating, setup times, and what time your event needs to end.',
+        'Set a budget and a working guest count.',
+        `Choose ${GROVE} for the ceremony, ${HALL} for the reception, or reserve both.`,
+        'Compare two or three dates on the availability calendar.',
+        'Get an instant estimate for each date on the pricing page.',
+        'Visit the property before you reserve.',
+        'Plan a weather option for any part of the day outdoors.',
+        'Confirm your final guest count and order of the day a few weeks ahead.',
+        'Send guests the address and parking details with the invitation.',
       ],
     },
     faqs: [
       {
-        q: 'Can we have our ceremony and reception at The Venue at NCC?',
-        a: `Yes. You can hold both in one space, or request the indoor hall and the outdoor space together for the same day. The outdoor space holds up to ${OUTDOOR} guests for an open-air ceremony, and the indoor hall holds up to ${INDOOR}. We confirm availability for each space when we follow up on your request.`,
+        q: 'Can we hold the ceremony and the reception here?',
+        a: `Yes. Many couples hold the ceremony at the gazebo in ${GROVE} and the reception in ${HALL}. Request both spaces for the same day, and we confirm availability for each when we follow up.`,
+      },
+      {
+        q: 'What happens if it rains on our wedding day?',
+        a: `When you reserve both spaces, ${HALL} is ready for up to ${INDOOR} guests if the weather turns. For a larger outdoor wedding, talk through a weather plan with us before you book.`,
       },
       {
         q: 'Do we need to be members of New Community Church?',
-        a: `No. Anyone can book The Venue at NCC for a wedding. Couples planning a faith-centered wedding often like celebrating at a church venue, and ${CHURCH} has been part of Suffolk since ${FOUNDED}, but membership is never required.`,
-      },
-      {
-        q: 'Can we bring our own caterer and serve alcohol?',
-        a: 'Yes. Catering is not included, so you choose your caterer or bring your own food, and alcohol is allowed. Before you finalize the plan with your caterer, ask us whether there is a kitchen they can use and when they can arrive.',
+        a: `No. The Venue at NCC is open to the public, and membership at ${CHURCH} is not required.`,
       },
       {
         q: 'How much does a wedding at The Venue at NCC cost?',
-        a: 'Rates depend on the day, the space, and how many hours you need. The pricing page lists the full rate card and gives an instant estimate for your date, and on-site parking is included with every booking.',
+        a: 'Rates depend on the day, the space, and the hours you need. The pricing page lists the full rate card and gives an instant estimate for your date, and on-site parking is included with every booking.',
       },
       {
         q: 'How far in advance should we book a wedding venue?',
-        a: 'Many couples book nine to twelve months before the wedding, and earlier if they have their heart set on one date. The availability calendar shows open dates, so you can see right away whether yours is free.',
+        a: 'Many couples book nine to twelve months ahead, and earlier for a popular Saturday. The availability calendar shows open dates up to two years ahead, so you can see right away whether yours is free.',
+      },
+      {
+        q: 'Can we visit before we book?',
+        a: `Yes. ${VISIT}`,
       },
     ],
     related: ['receptions-banquets', 'baby-bridal-showers', 'church-community-events'],
@@ -154,84 +216,84 @@ export const events: EventType[] = [
       'wedding reception venue Suffolk VA',
       'outdoor wedding venue Suffolk VA',
       'church wedding venue Suffolk VA',
-      'affordable wedding venue Suffolk VA',
+      'gazebo wedding venue Suffolk VA',
       'small wedding venue Hampton Roads',
     ],
   },
   {
     slug: 'receptions-banquets',
     name: 'Banquets & anniversaries',
-    summary: 'Anniversary dinners, award banquets, and formal celebrations.',
+    summary: 'Anniversary dinners, awards banquets, and formal celebrations.',
     metaTitle: 'Banquet hall in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Host an anniversary dinner or awards banquet at The Venue at NCC in Suffolk, VA. Indoor hall for up to ${INDOOR} guests, your own caterer, and alcohol allowed.`,
-    h1: 'Anniversary dinners and awards banquets in Suffolk',
+    metaDescription: `Host an anniversary dinner or awards banquet at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and on-site parking is included.`,
+    h1: 'Banquets and anniversary dinners in Suffolk',
     intro: [
-      `Fifty years of marriage and a season of hard work have something in common: both deserve to be honored with the people who were there. The Venue at NCC in Suffolk has an indoor hall for up to ${INDOOR} guests and an outdoor space for up to ${OUTDOOR}, and anyone can book it.`,
-      'Catering is not included, so you bring the caterer or menu that suits the occasion, and alcohol is allowed for a toast or a bar. On-site parking is included with every booking, which helps when guests of every age are arriving at once.',
+      `A formal evening deserves a room with presence. ${HALL} holds up to ${INDOOR} guests beneath arched windows, with a fireplace feature wall that frames a head table or a speaker.`,
+      'Anniversaries, awards nights, scholarship dinners, and appreciation evenings share a shape: a welcome, dinner, a program, and time to honor people. We confirm every booking personally and will walk the room with you before you reserve.',
     ],
     sections: [
       {
-        heading: 'Planning a banquet or formal dinner',
+        heading: 'The Hall for a formal evening',
         body: [
-          'Formal celebrations run best with a clear program. Decide early who will speak, whether there will be awards or a photo slideshow, and how long the program should last. Many hosts build the evening around a meal, then move into speeches, tributes, and recognitions.',
-          `Set your budget and guest list first, since both shape almost every other choice. The indoor hall holds up to ${INDOOR} guests, and the outdoor space holds up to ${OUTDOOR} for a larger crowd or an open-air reception. For a banquet, confirm award names and spellings before the printing deadline, and give each presenter a set number of minutes.`,
+          `${HALL} holds up to ${INDOOR} guests. Arched windows, a fireplace feature wall, and recessed lighting give a banquet a finished look, and the double doors make a clear entrance for guests of honor.`,
+          `For a larger gathering or a summer evening outdoors, ${GROVE} holds up to ${OUTDOOR} guests among tall pines, with a timber gazebo and picnic tables on a paved patio.`,
         ],
       },
       {
-        heading: 'Hosting an anniversary party in Suffolk',
+        heading: 'Planning the program',
         body: [
-          'A 25th, 40th, or 50th anniversary is a chance to gather family and the friends who have been there through the years. Many families plan a dinner with a short program, a few words from children or grandchildren, and a slideshow of photos across the decades. Others keep it simple with a meal and time to visit.',
-          'Alcohol is allowed, so a champagne toast to the couple is easy to include. If you are planning a surprise, pick one person to manage the guest list and keep the details quiet, and mention the surprise in your booking request.',
+          'Formal celebrations run best with a clear program. Decide early who will speak, whether there will be awards or tributes, and how long each part should last. Give every presenter a set number of minutes and share the order of events with them ahead of time.',
+          'For an anniversary, a few words from children or grandchildren and a display of photos across the decades make the evening personal. For an awards banquet, confirm names and spellings before the printing deadline.',
         ],
       },
       {
-        heading: 'Awards banquets, team dinners, and appreciation nights',
+        heading: 'A planning timeline',
         body: [
-          'Schools, sports teams, clubs, businesses, and churches often hold banquets to close out a season or a year of work. Scholarship dinners and volunteer appreciation nights follow a similar shape: a welcome, a meal, and time to honor people. Anyone can book The Venue at NCC, so your group does not need any tie to the church.',
-          'If the program includes a slideshow or microphones, ask us about sound and screens before you plan around them. If you plan to serve alcohol, Virginia ABC may require a banquet license, so check its rules early.',
+          'Most hosts reserve a banquet date three to six months ahead, and earlier for a date near the end of a school or sports season. Visit before you book to see how your guest count and program fit the room.',
+          `${VISIT} About two weeks before the event, confirm the program and your final guest count, and send guests the address and parking details.`,
         ],
       },
       {
-        heading: 'Reserving a date for your banquet or anniversary dinner',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the occasion and a rough guest count, which takes about two minutes. ${RESERVE}`,
-          `Rates depend on the day, the space, and how many hours you need. If a board or committee needs to approve the cost, the instant estimate on the pricing page gives them a clear figure to review. Questions first? Call ${PHONE}.`,
+          'Rates depend on the day, the space, and the hours you need. If a board or committee approves the budget, the instant estimate on the pricing page gives them a clear figure to review.',
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
     checklist: {
       heading: 'Banquet planning checklist',
       items: [
-        'Confirm the occasion, a few possible dates, and a rough guest count.',
+        'Confirm the occasion, a few possible dates, and a working guest count.',
+        `Choose ${HALL} for up to ${INDOOR} guests or ${GROVE} for up to ${OUTDOOR}.`,
         'Check your dates on the availability calendar and get an instant estimate.',
-        'Book your caterer, since catering is not included with the rental.',
-        'Plan drinks for the toast or the bar. Alcohol is allowed.',
-        'Ask us whether a microphone, sound, or a screen is available for speeches and slideshows.',
-        'Ask whether tables and chairs are included, and when you can arrive to set up and decorate.',
-        'Write out your program with speakers, awards, and timing in order.',
-        'Order plaques, certificates, or anniversary keepsakes early so they arrive in time.',
+        'Visit the space to plan the room and the program.',
+        'Write the program with speakers, awards, and timing in order.',
+        'Order plaques, certificates, or keepsakes early so they arrive in time.',
+        'Confirm your final guest count about two weeks ahead.',
+        'Send guests the address and parking details.',
       ],
     },
     faqs: [
       {
-        q: 'Can we use our own caterer for a banquet?',
-        a: 'Yes. Catering is not included, so you choose the caterer or bring your own food. When you send your request, ask us whether there is a kitchen your caterer can use and when they can arrive.',
-      },
-      {
-        q: 'Is alcohol allowed at an anniversary party or banquet?',
-        a: "Yes. You can serve alcohol at your event. Virginia ABC may require a banquet license, so check its rules early.",
-      },
-      {
         q: 'How many guests can a banquet at The Venue at NCC hold?',
-        a: `The indoor hall holds up to ${INDOOR} guests, and the outdoor space holds up to ${OUTDOOR}. Choose the space that fits your guest list when you pick your date on the availability calendar.`,
+        a: `${HALL} holds up to ${INDOOR} guests, and ${GROVE} holds up to ${OUTDOOR}. Choose the space that fits your guest list when you pick your date on the availability calendar.`,
+      },
+      {
+        q: 'Can we see the room before we book?',
+        a: `Yes. ${VISIT}`,
+      },
+      {
+        q: 'What should an awards banquet program include?',
+        a: 'Most banquet programs include a welcome, dinner, remarks, the recognitions, and a closing. Share the order of events with every speaker ahead of time so the evening stays on schedule.',
       },
       {
         q: 'What are good ideas for a 50th anniversary celebration?',
         a: 'Popular ideas include a memory table with photos from each decade, a keepsake book where guests write notes, and a short tribute from each generation of the family. Pick one or two that fit the honorees rather than trying to do everything.',
       },
       {
-        q: 'What should an awards banquet program include?',
-        a: 'Most banquet programs include a welcome, a meal, remarks, the recognitions, and a closing. Share the order of events with every speaker ahead of time so the evening stays on schedule.',
+        q: 'How much does it cost to host a banquet?',
+        a: 'Rates depend on the day, the space, and the hours you need. The pricing page lists the full rate card and gives an instant estimate for your date, and on-site parking is included with every booking.',
       },
     ],
     related: ['weddings', 'birthday-parties', 'graduations-reunions'],
@@ -246,74 +308,73 @@ export const events: EventType[] = [
   {
     slug: 'baby-bridal-showers',
     name: 'Baby & bridal showers',
-    summary: 'Showers, gender reveals, and sip-and-sees for family and friends.',
+    summary: 'Baby showers, bridal showers, and gender reveals for family and friends.',
     metaTitle: 'Baby and bridal shower venue, Suffolk | The Venue at NCC',
-    metaDescription:
-      'Host a baby shower, bridal shower, or gender reveal at The Venue at NCC in Suffolk, VA. Bring your own food, parking is included, and anyone can book.',
-    h1: 'Baby shower and bridal shower venue in Suffolk',
+    metaDescription: `Host a baby shower, bridal shower, or gender reveal at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, with on-site parking included.`,
+    h1: 'Baby and bridal showers in Suffolk',
     intro: [
-      `A shower is often the first time family and friends gather around big news: a baby on the way or a wedding on the calendar. The Venue at NCC in Suffolk has an indoor hall for up to ${INDOOR} guests, and anyone can book it for a shower, a gender reveal, or a sip-and-see.`,
-      'Catering is not included, which gives shower hosts plenty of freedom: bring homemade favorites, order trays, or hire a caterer. On-site parking is included with your booking, and you can check open dates on the availability calendar any time.',
+      `${HALL} gives a shower an open, graceful room: arched windows, a fireplace feature wall, and dark wood-look floors, with space for up to ${INDOOR} guests.`,
+      'Showers are usually planned by a friend or relative, often with co-hosts. We keep booking simple: one host sends the request, we confirm the date personally, and the instant estimate gives every co-host the same figure.',
     ],
     sections: [
       {
-        heading: 'Baby showers, gender reveals, and sip-and-sees',
+        heading: 'The Hall for a shower',
         body: [
-          'Baby celebrations come in a few forms, and each one plans a little differently. A traditional baby shower happens before the baby arrives and usually centers on food, games, and gifts. A gender reveal builds toward one shared moment, so timing and a clear view for every guest matter most. A sip-and-see comes after the birth and gives friends and family an easygoing way to meet the baby.',
-          'Tell us which one you are planning in your booking request. If you are combining two, like a shower with a reveal at the end, mention that too.',
+          `Most showers fit comfortably in ${HALL}, which holds up to ${INDOOR} guests. The fireplace feature wall makes a natural backdrop for gifts and photos, and the arched windows bring in daylight for an afternoon shower.`,
+          `For a spring or summer shower outdoors, ${GROVE} holds up to ${OUTDOOR} guests, with picnic tables on a paved patio beside the timber gazebo.`,
         ],
       },
       {
-        heading: 'Hosting a bridal shower or couples shower',
+        heading: 'Baby showers, gender reveals, and bridal showers',
         body: [
-          'A bridal shower is usually hosted by a friend, a sister, or a relative rather than the bride. The host handles the guest list, the menu, and a few simple activities so the bride can spend her time with the people who came for her. A couples shower follows the same idea with both partners as guests of honor.',
-          'Confirm the wedding date and the guest list with the bride or her family before you book. Alcohol is allowed, so a brunch shower with mimosas works if the bride would like one.',
+          'A baby shower usually happens four to eight weeks before the due date. A gender reveal builds toward one shared moment, so timing and a clear view for every guest matter most. Tell us which one you are planning in your request, and mention it if you are combining the two.',
+          'A bridal shower is usually hosted by a friend, a sister, or a relative, two weeks to two months before the wedding. A couples shower follows the same idea with both partners as guests of honor. Confirm the wedding date and the guest list with the family before you book.',
         ],
       },
       {
-        heading: 'Planning tips for baby and bridal showers',
+        heading: 'A planning timeline',
         body: [
-          'Most hosts find it easier to plan backward from the date. Baby showers are often held four to eight weeks before the due date, and bridal showers are often held two weeks to two months before the wedding. Pick a first-choice date and a backup before you start.',
-          'Set a budget early and decide who is covering what, especially when several friends or relatives are co-hosting. The instant estimate on the pricing page gives every co-host the same figure to plan around. Before you order decorations, ask us about decorating and setup times so your purchases match your plans.',
+          'Pick a first-choice date and a backup, and check both on the availability calendar. Many hosts reserve six to ten weeks ahead. When several friends or relatives co-host, agree on the date and budget first so one host can send the request.',
+          `If you would like to see the room first, ${VISIT.charAt(0).toLowerCase()}${VISIT.slice(1)}`,
         ],
       },
       {
-        heading: 'Booking your shower at The Venue at NCC',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the type of shower and a rough guest count, which takes about two minutes. ${RESERVE}`,
-          `If you are co-hosting, agree on the date first so one host can send the request. Questions before you book? Call ${PHONE}.`,
+          'Rates depend on the day, the space, and the hours you need. Most showers run two to three hours, and the instant estimate on the pricing page shows the cost for your date, including any minimum hours for that day.',
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
     checklist: {
       heading: 'Shower planning checklist',
       items: [
-        'Confirm the date with the parent-to-be, the bride, or the family before you book.',
-        'Set a budget and use the instant estimate to split costs with co-hosts.',
-        `Write a draft guest list. The indoor hall holds up to ${INDOOR} guests.`,
-        'Plan the food, since catering is not included. Homemade, catered, or a mix of both is up to you.',
-        'Ask us whether there is a kitchen you can use if you plan to warm or serve food on site.',
-        'Ask whether tables and chairs are provided and what you should bring yourself.',
-        'Ask about decorating and when you can arrive to set up.',
-        'Plan a simple order for the event, from food and games to gifts or the big reveal.',
+        'Confirm the date with the parent-to-be, the couple, or the family.',
+        'Agree on a budget with any co-hosts.',
+        `Draft a guest list. ${HALL} holds up to ${INDOOR} guests.`,
+        'Check your date and a backup on the availability calendar.',
+        'Get an instant estimate for the hours you need.',
+        'Visit the space to plan where gifts, games, and photos will go.',
+        'Plan a simple order for the event, from the welcome to the gifts or the reveal.',
+        'Send guests the address and parking details.',
       ],
     },
     faqs: [
       {
-        q: 'Can I plan a gender reveal or sip-and-see at The Venue at NCC?',
-        a: 'Yes. Anyone can book The Venue at NCC for gender reveals and sip-and-sees as well as baby and bridal showers. Pick your date on the availability calendar and tell us your plans in your request.',
-      },
-      {
-        q: 'Can I bring my own food to a shower?',
-        a: 'Yes. Catering is not included, so you can bring homemade food, order from a caterer, or do both. If you need to warm or chill anything on site, ask us whether there is a kitchen you can use.',
+        q: 'Can I host a gender reveal at The Venue at NCC?',
+        a: 'Yes. Gender reveals, baby showers, bridal showers, and couples showers are all welcome. Pick your date on the availability calendar and tell us your plans in your request.',
       },
       {
         q: 'When should a baby shower be held?',
-        a: 'Many families hold a baby shower four to eight weeks before the due date, while there is still time to sort and set up the gifts. A sip-and-see usually happens a few weeks to a few months after the baby arrives.',
+        a: 'Many families hold a baby shower four to eight weeks before the due date, while there is still time to sort and set up the gifts.',
       },
       {
         q: 'How long does a baby shower or bridal shower usually last?',
-        a: 'Most showers run about two to three hours, which leaves time for food, a game or two, and opening gifts. Rates depend on the day and how many hours you book, so check the instant estimate on the pricing page for your date.',
+        a: 'Most showers run about two to three hours. Rates depend on the day and the hours you book, and some days have a minimum, so check the instant estimate on the pricing page for your date.',
+      },
+      {
+        q: 'Is parking included?',
+        a: 'Yes. On-site parking is included with every booking, on a large paved lot at the end of our drive.',
       },
     ],
     related: ['weddings', 'birthday-parties', 'receptions-banquets'],
@@ -321,7 +382,7 @@ export const events: EventType[] = [
       'baby shower venue Suffolk VA',
       'bridal shower venue Suffolk VA',
       'gender reveal venue Suffolk VA',
-      'sip and see venue Suffolk VA',
+      'couples shower venue Suffolk VA',
       'baby shower venue Hampton Roads',
     ],
   },
@@ -330,39 +391,39 @@ export const events: EventType[] = [
     name: 'Birthdays & milestones',
     summary: 'First birthdays, sweet sixteens, big-number birthdays, and retirement parties.',
     metaTitle: 'Birthday party venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue at NCC in Suffolk, VA. Up to ${INDOOR} guests indoors, alcohol allowed, parking included.`,
-    h1: 'Milestone birthdays and retirement parties in Suffolk',
+    metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and parking is included.`,
+    h1: 'Milestone birthdays and retirement parties',
     intro: [
-      `Turning one, sixteen, or fifty deserves more than a quick cake after dinner. So does retiring after decades of work. The Venue at NCC in Suffolk has an indoor hall for up to ${INDOOR} guests and an outdoor space for up to ${OUTDOOR}, and anyone can book it for a milestone party.`,
-      'Catering is not included, so the menu, the cake, and the caterer are your call. Alcohol is allowed for grown-up celebrations, and on-site parking is included with every booking.',
+      `Turning one, sixteen, or fifty deserves a proper room, and so does retiring after decades of work. ${HALL} holds up to ${INDOOR} guests, and ${GROVE} welcomes up to ${OUTDOOR} among the pines.`,
+      'We confirm every booking personally, and you are welcome to visit before you reserve. The notes below cover choosing a space, a simple timeline, and what to share with your guests.',
     ],
     sections: [
       {
+        heading: 'Choosing the space for your party',
+        body: [
+          `${HALL} suits most milestone parties: an open room with arched windows, a fireplace feature wall, and double doors that make a fine entrance for the guest of honor.`,
+          `A large open-house party or a summer celebration can move outdoors to ${GROVE}, which holds up to ${OUTDOOR} guests, with open lawn, a timber gazebo, and picnic tables on a paved patio.`,
+        ],
+      },
+      {
         heading: 'First birthdays, sweet sixteens, and big-number birthdays',
         body: [
-          'Every milestone brings a different crowd. A first birthday is really a party for parents, grandparents, and a handful of little ones, so many families plan around nap schedules and keep the program short. A sweet sixteen is built for teens and usually leans on music, photos, and a few planned moments like a toast or a candle ceremony. A fortieth, fiftieth, or seventieth often mixes generations and may include a slideshow, a few speeches, or a surprise entrance.',
-          `A big guest list can move outside, where the outdoor space holds up to ${OUTDOOR}. If you plan to show photos or play music, ask us about sound and screens so you know what to bring.`,
+          'Every milestone brings a different crowd. A first birthday is a party for parents, grandparents, and a few little ones, so many families plan around nap schedules and keep the program short. A sweet sixteen usually centers on music, photos, and one planned moment such as a candle ceremony.',
+          'A fortieth, fiftieth, or seventieth often mixes generations and may include a few speeches or a surprise entrance. A retirement party brings together coworkers, family, and friends, so keep the speaking list short and give each speaker a few minutes at most.',
         ],
       },
       {
-        heading: 'Retirement parties and other milestone celebrations',
+        heading: 'A planning timeline',
         body: [
-          'A retirement party marks the end of a long chapter, and it often brings together coworkers, family, and friends from church or the neighborhood. Many hosts plan a short program with a meal, a few speeches, and time for guests to share stories with the retiree. Keep the speaking list short and ask each speaker for a few minutes at most so the party moves along.',
-          'If an employer or team is helping with the party, settle early who is paying and who is on the guest list. The instant estimate on the pricing page gives everyone the same figure to plan around.',
+          'Many hosts book two to three months ahead for a milestone birthday, and earlier for a large party or a holiday weekend. Send invitations four to six weeks before the date, and earlier if guests are traveling.',
+          `Planning a surprise? Choose one trusted person to bring the guest of honor, and ask guests to arrive about thirty minutes earlier. A visit before you book helps you plan where guests will wait. ${VISIT}`,
         ],
       },
       {
-        heading: 'How to plan a milestone birthday party',
+        heading: 'Rates, deposits, and parking',
         body: [
-          'Start with the guest of honor. Decide early whether the party is a surprise, and if it is, pick one trusted person to handle the arrival. Next, set a budget and a rough guest count, since those two numbers shape the menu, the invitations, and which space you need.',
-          'Send invitations four to six weeks ahead for most milestone parties, and earlier if guests are traveling. Before you book a caterer or a baker, ask us whether there is a kitchen they can use, when you can set up, and what time the party needs to end, so everyone works from the same schedule.',
-        ],
-      },
-      {
-        heading: 'Three steps to book your birthday party',
-        body: [
-          `Pick your date on the live availability calendar. Send a request with the occasion and about how many guests you expect, which takes about two minutes. ${RESERVE}`,
-          `Rates depend on the day, the space, and how many hours you need, and the pricing page shows an instant estimate. Our address is ${ADDRESS}, and you can reach us at ${PHONE}.`,
+          'Rates depend on the day, the space, and the hours you need. When family members or an employer share the cost, the instant estimate on the pricing page gives everyone the same figure.',
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
@@ -370,23 +431,18 @@ export const events: EventType[] = [
       heading: 'Birthday party planning checklist',
       items: [
         'Pick a first-choice date and a backup, and check both on the availability calendar.',
-        'Decide early whether the party is a surprise and who will bring the guest of honor.',
+        'Decide early whether the party is a surprise.',
+        `Choose ${HALL} for up to ${INDOOR} guests or ${GROVE} for up to ${OUTDOOR}.`,
         'Set a budget and get an instant estimate on the pricing page.',
-        'Line up your cake, food, or caterer, since catering is not included.',
-        'Plan drinks for the adults. Alcohol is allowed.',
-        'Ask us whether music equipment or a screen is available, or what to bring.',
-        'Ask when you can arrive to decorate and what time the party needs to end.',
-        'Plan a short run of show for food, cake, speeches, and photos.',
+        "Visit the space to plan the room and the guest of honor's arrival.",
+        'Plan a short run of show for the welcome, speeches, and photos.',
+        'Send invitations four to six weeks ahead with the address and parking details.',
       ],
     },
     faqs: [
       {
         q: 'Where can I host a retirement party in Suffolk, VA?',
-        a: `The Venue at NCC, at ${STREET} in Suffolk, can be booked by anyone for a retirement party. The indoor hall holds up to ${INDOOR} guests, and on-site parking is included.`,
-      },
-      {
-        q: 'Can I bring my own cake, food, and drinks?',
-        a: 'Yes. Catering is not included, so you bring the cake, food, and caterer you want, and alcohol is allowed. When you send your request, ask us whether there is a kitchen your caterer can use.',
+        a: `The Venue at NCC is at ${STREET} in Suffolk. ${HALL} holds up to ${INDOOR} guests, and on-site parking is included with every booking.`,
       },
       {
         q: 'How far in advance should I book a birthday party venue?',
@@ -394,7 +450,11 @@ export const events: EventType[] = [
       },
       {
         q: 'How do I plan a surprise birthday party?',
-        a: 'Ask guests to arrive about 30 minutes before the guest of honor, and choose one trusted person to bring them in on time. When you book, ask what time your guests can arrive so the surprise timing works.',
+        a: 'Ask guests to arrive about thirty minutes before the guest of honor, and choose one trusted person to bring them in on time. Mention the surprise in your request so we can plan arrival times with you.',
+      },
+      {
+        q: 'Can I see the space before I book?',
+        a: `Yes. ${VISIT}`,
       },
     ],
     related: ['graduations-reunions', 'receptions-banquets', 'baby-bridal-showers'],
@@ -409,71 +469,73 @@ export const events: EventType[] = [
   {
     slug: 'repasts-memorials',
     name: 'Repasts & celebrations of life',
-    summary: 'A place for family and friends to gather, share a meal, and remember.',
+    summary: 'A calm place for family and friends to gather and remember.',
     metaTitle: 'Repast venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `A place for family and friends to gather after a funeral or memorial in Suffolk, VA. Bring your own food, and parking is included. Call ${PHONE}.`,
-    h1: 'Repasts and celebrations of life in Suffolk',
+    metaDescription: `A calm place for family and friends to gather after a funeral or memorial in Suffolk, VA. ${HALL} holds up to ${INDOOR}, with on-site parking. Call ${PHONE}.`,
+    h1: 'Repasts and celebrations of life',
     intro: [
-      `When someone you love has died, the gathering after the service is often where the stories come out and people finally have time to talk. The Venue at NCC, the event space of ${CHURCH} in Suffolk, is open to any family for a repast or celebration of life, whether or not you belong to the church.`,
-      `The indoor hall holds up to ${INDOOR} guests, and on-site parking is included. You may be planning this within a few days, so the first step is short: call ${PHONE}, or send a request from the availability calendar, and we will follow up with you.`,
+      `The gathering after a service is often where family and friends finally have time to talk and remember. ${HALL} offers a calm, dignified room for up to ${INDOOR} guests.`,
+      `You may be planning within a few days, so the first step is short: call ${PHONE}, or send a request from the availability calendar, and we will follow up with you personally.`,
     ],
     sections: [
       {
-        heading: 'Planning a funeral repast',
+        heading: 'A calm room for the gathering',
         body: [
-          'Most repasts begin soon after the burial or memorial service, so the service schedule usually sets the timing. Many families choose one point person to handle the repast so the closest relatives are not fielding every question. That person can confirm the date, share a rough guest count, and keep track of decisions in one place.',
-          'Food is often the biggest decision. Catering is not included, so your family decides what is served. Some families hire a caterer, some ask relatives and friends to bring dishes, and some do a mix of both. Ask us whether there is a kitchen you can use and how much time you will have to set up, so the food plan works on the day.',
-          'It also helps to decide early who will welcome guests, who will offer a blessing before the meal, and who will pack up leftovers and flowers at the end. Small jobs like these are easy to hand to cousins, friends, or church members who want to help.',
+          `${HALL} holds up to ${INDOOR} guests. Arched windows, a fireplace feature wall, and recessed lighting give it a quiet, dignified character, and the fireplace wall is a natural place for photographs and flowers.`,
+          `A celebration of life in warmer months, or one expecting more guests, can use ${GROVE}, which holds up to ${OUTDOOR} among tall pines.`,
         ],
       },
       {
-        heading: 'Hosting a celebration of life in Suffolk',
+        heading: 'Planning a repast',
         body: [
-          'A celebration of life can look different from a traditional repast. Some families want to display photos, share music the person loved, show a slideshow, or leave time for guests to tell stories. If any of that is part of your plan, ask us about sound and screens when you reach out.',
-          `Celebrations of life are sometimes held weeks or months after a passing, which gives the family more time to plan and makes it easier for relatives from across Hampton Roads and farther away to attend. When more people are expected than the indoor hall holds, the outdoor space holds up to ${OUTDOOR} guests.`,
+          'Most repasts begin soon after the burial or memorial service, so the service schedule sets the timing. Choose one family point person to confirm the date, share a rough guest count, and keep decisions in one place.',
+          'Decide early who will welcome guests, who will offer a blessing, and who will gather photographs and flowers at the end. Small tasks like these are easy to hand to cousins, friends, or church members who want to help.',
         ],
       },
       {
-        heading: 'Arranging a repast at The Venue at NCC',
+        heading: 'Timing and celebrations of life',
         body: [
-          `You can call ${PHONE} or start online. Pick the date on the availability calendar, send a short request with the service time and a rough guest count, and we confirm availability. Then your booking deposit reserves the date. A best guess on numbers is fine, since attendance at a repast is often hard to know ahead of time.`,
-          `Rates depend on the day and how many hours you need, and the pricing page shows an instant estimate so the family can see the cost before deciding.${REPAST_RATE} If you are coordinating with a funeral home, share our address, ${ADDRESS}, with them early.`,
+          `Repasts are often arranged within a few days. Call ${PHONE} or send a request with the service time and a best guess at numbers, and we will talk the timing through with you. A best guess is fine, since attendance is often hard to know ahead of time.`,
+          'Celebrations of life are sometimes held weeks or months after a passing, which gives relatives from across Hampton Roads and farther away time to travel. With more time, a visit before you book helps the family plan photographs and tributes.',
+        ],
+      },
+      {
+        heading: 'Rates, deposits, and parking',
+        body: [
+          `Rates depend on the day and the hours you need, and the pricing page shows an instant estimate so the family can see the cost before deciding.${REPAST_RATE}`,
+          `${DEPOSIT_TERMS}${SHORT_NOTICE} ${PARKING} If you are working with a funeral home, share our address, ${ADDRESS}, with them early.`,
         ],
       },
     ],
     checklist: {
       heading: 'Repast and celebration of life checklist',
       items: [
-        'Confirm the service time and plan the repast start time around it.',
-        'Choose one family point person to answer questions and keep track of decisions.',
-        'Share a rough guest count, and plan food for a few more people than you expect.',
-        'Decide on food. Catering is not included, so a caterer, family dishes, or both are up to you.',
-        'Ask us whether there is a kitchen you can use and how much time you will have to set up and clean up.',
-        'Ask whether tables and chairs are provided, and whether sound or a screen is available for a slideshow.',
-        'Pick who will welcome guests and who will offer a blessing before the meal.',
+        'Confirm the service time and plan the start of the gathering around it.',
+        'Choose one family point person for questions and decisions.',
+        `Share a best guess at the guest count. ${HALL} holds up to ${INDOOR}.`,
+        `Call ${PHONE} or check the date on the availability calendar.`,
+        'Choose who will welcome guests and who will offer a blessing.',
+        'Gather photographs and keepsakes for a memory table.',
         `Share the address, ${ADDRESS}, with guests and the funeral home.`,
       ],
     },
     faqs: [
       {
         q: 'What is a repast?',
-        a: 'A repast is a meal shared after a funeral or memorial service, usually with family, friends, and members of the church community. It gives people time to rest, eat, and share memories together.',
+        a: 'A repast is a gathering after a funeral or memorial service, usually with family, friends, and members of the church community. It gives people time to rest, visit, and share memories together.',
       },
       {
         q: 'Do we need to be members of New Community Church to hold a repast here?',
-        a: 'No. Anyone can book The Venue at NCC. Families from every church, and families without a church home, are welcome.',
+        a: 'No. The Venue at NCC is open to the public. Families from every church, and families without a church home, are welcome.',
       },
       {
         q: 'Can we hold a repast at The Venue at NCC right after the funeral?',
         a: `Check the date on the availability calendar or call ${PHONE}, and share the time of the service. We will talk through timing with you and confirm what works.`,
       },
-      {
-        q: 'Can family members bring food to a repast?',
-        a: 'Yes. Catering is not included, so family and friends can bring dishes, you can hire a caterer, or you can do both.',
-      },
+      ...repastRateFaq,
       {
         q: 'How far ahead should we plan a celebration of life?',
-        a: `Repasts are often planned within a few days of a funeral, while celebrations of life can be planned weeks or months ahead. Either way, check your date on the availability calendar or call ${PHONE}, and we will talk it through.`,
+        a: `Repasts are often arranged within a few days of a funeral, while celebrations of life can be planned weeks or months ahead. Either way, check your date on the availability calendar or call ${PHONE}, and we will talk it through.`,
       },
     ],
     related: ['church-community-events', 'receptions-banquets'],
@@ -490,39 +552,39 @@ export const events: EventType[] = [
     name: 'Meetings & workshops',
     summary: 'Board meetings, trainings, workshops, and nonprofit gatherings.',
     metaTitle: 'Meeting space in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. Room for up to ${INDOOR} people, parking included, and instant estimates online.`,
-    h1: 'Off-site meeting space in Suffolk for your team or board',
+    metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, with on-site parking and instant estimates.`,
+    h1: 'Meeting and training space in Suffolk',
     intro: [
-      `Board meetings, staff trainings, and planning days often go better away from the usual office. The Venue at NCC at ${STREET} in Suffolk has an indoor hall for up to ${INDOOR} people, and any business, nonprofit, or group can book it.`,
-      'On-site parking is included with every booking, so there is nothing extra to budget for parking. Catering is not included, which means you can bring in coffee, order lunch from the place your team already likes, or hire a caterer.',
+      `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} holds up to ${INDOOR} people in a wooded setting minutes from downtown Suffolk, with on-site parking for every attendee.`,
+      'Businesses, nonprofits, schools, and community groups book with the same simple process. The instant estimate on the pricing page gives you a figure to forward for approval, and we confirm every booking personally.',
     ],
     sections: [
       {
-        heading: 'Before the meeting: agendas, breaks, and presentations',
+        heading: 'The Hall for meetings and trainings',
         body: [
-          'Start with the agenda and work backward. Once you know what the group needs to get done, you can decide how long the session should run, when to take breaks, and whether to plan a meal. A hands-on training usually needs a different layout than a board meeting where everyone faces each other.',
-          'Many organizers send the agenda, address, and start time a few days ahead, along with any reading people should do first. If you plan to present slides or bring in a remote speaker, ask us about screens, sound, and internet access before you finalize the plan.',
+          `${HALL} holds up to ${INDOOR} people in one open room with arched windows and recessed lighting. It suits a board meeting, a training session, or a workshop that breaks into small groups.`,
+          `For a staff picnic or an outdoor team day, ${GROVE} holds up to ${OUTDOOR} among tall pines, with picnic tables on a paved patio.`,
         ],
       },
       {
-        heading: 'Workshops and training sessions in Suffolk',
+        heading: 'Before the meeting',
         body: [
-          'Workshops often run longer than a standard meeting and involve more movement, from small-group activities to hands-on practice. Think about how people will work together, what supplies each group will use, and how the day will flow from one activity to the next. If you are planning a full-day session, build in a real lunch break so people come back ready to work.',
-          'For trainings that end with a certificate or sign-off, prepare sign-in sheets and materials ahead of time. Ask us whether tables and chairs are provided for your layout and how early you can arrive to set up, so everything is ready before the first person walks in.',
+          'Start with the agenda and work backward: what the group needs to finish, how long the session should run, and when to take breaks. A hands-on training needs a different layout than a board meeting where everyone faces each other, so walk the room with us before you book if the layout matters.',
+          'Send attendees the agenda, address, and start time a few days ahead, along with anything they should read first, and list the equipment and materials your team will bring.',
         ],
       },
       {
-        heading: 'Meeting space for nonprofit boards and staff teams',
+        heading: 'Regular meetings and planning ahead',
         body: [
-          'Nonprofit boards, staff teams, and volunteer committees often need a place to meet a few times a year for planning, training, or an annual meeting. A change of setting can help a team step back from daily work and plan for the year ahead.',
-          `If your group meets on a regular schedule, ask whether recurring dates are possible when you send your request. Groups coming from across Hampton Roads will find us at ${ADDRESS}.`,
+          'Most organizers book a few weeks ahead for a single meeting and a season ahead for an annual meeting or a full-day training. If your group meets on a regular schedule, ask about recurring dates in your request.',
+          `${VISIT} Groups coming from across Hampton Roads will find us at ${ADDRESS}.`,
         ],
       },
       {
-        heading: 'How to book meeting space at The Venue at NCC',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Booking takes three steps. Pick your date on the live availability calendar and send a request with your meeting type and headcount, which takes about two minutes. ${RESERVE}`,
-          `Rates depend on the day, the space, and how many hours you need. The pricing page gives an instant estimate you can forward for approval, and you can reach us at ${PHONE} with any questions.`,
+          `Rates depend on the day, the space, and the hours you need. The pricing page gives an instant estimate you can forward for approval.${NONPROFIT_RATE}`,
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
@@ -530,35 +592,31 @@ export const events: EventType[] = [
       heading: 'Meeting and training checklist',
       items: [
         'Write a short agenda with start, break, and end times.',
-        `Estimate your headcount. The indoor hall holds up to ${INDOOR} people.`,
+        `Estimate your headcount. ${HALL} holds up to ${INDOOR} people.`,
+        'Check your date on the availability calendar.',
         'Get an instant estimate on the pricing page for budget approval.',
-        'Ask us whether screens, sound, or Wi-Fi are available for presentations.',
-        'Ask whether tables and chairs are provided for your layout.',
-        'Plan coffee and lunch, since catering is not included.',
-        'Ask how early you can arrive to set up and how late you can stay to pack up.',
-        'Send attendees the address and start time, and let them know parking is included.',
+        'Visit the room to plan your layout.',
+        'List the equipment and materials your team will bring.',
+        'Send attendees the address and start time, and let them know parking is on site.',
       ],
     },
     faqs: [
       {
         q: 'What kinds of meetings can we hold at The Venue at NCC?',
-        a: `Anyone can book The Venue at NCC for board meetings, trainings, workshops, and nonprofit gatherings. The indoor hall holds up to ${INDOOR} people. If your event is a little different, tell us about it in your request.`,
-      },
-      {
-        q: 'Is there a projector or screen for presentations?',
-        a: `Ask us about screens, sound, and internet access in your request or by calling ${PHONE}. Wherever you present, it is wise to bring a backup copy of your slides and any adapters your laptop needs.`,
-      },
-      {
-        q: 'Can we bring in coffee or lunch?',
-        a: 'Yes. Catering is not included, so you can bring your own coffee and lunch or have a caterer deliver. If you need to keep food warm, ask us whether there is a kitchen you can use.',
+        a: `Board meetings, trainings, workshops, and nonprofit gatherings. ${HALL} holds up to ${INDOOR} people. If your event is a little different, tell us about it in your request.`,
       },
       {
         q: 'Is parking included for attendees?',
         a: 'Yes. On-site parking is included with every booking.',
       },
       {
+        q: 'Can we book recurring dates?',
+        a: 'Ask in your request. Tell us the schedule you have in mind, and we will confirm which dates are available.',
+      },
+      ...nonprofitRateFaq('Is there a rate for nonprofits?'),
+      {
         q: 'How do I book meeting space in Suffolk at The Venue at NCC?',
-        a: `Pick your date on the availability calendar and send a request with your meeting details, which takes about two minutes. ${RESERVE} The pricing page gives an instant estimate before you send it.`,
+        a: `Pick your date on the availability calendar and send a request with your meeting details, which takes about two minutes. ${RESERVE}`,
       },
     ],
     related: ['church-community-events', 'receptions-banquets'],
@@ -576,68 +634,65 @@ export const events: EventType[] = [
     name: 'Graduations & reunions',
     summary: 'Graduation parties, family reunions, and class reunions.',
     metaTitle: 'Reunion and graduation venue, Suffolk | The Venue at NCC',
-    metaDescription: `Host a graduation party or family reunion at The Venue at NCC in Suffolk, VA. Outdoor space for up to ${OUTDOOR} guests, parking included, and your own food.`,
+    metaDescription: `Host a graduation party or family reunion at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests among the pines, with on-site parking.`,
     h1: 'Graduation parties and reunions in Suffolk',
     intro: [
-      `Graduations and reunions only come around once in a while. A graduate finishes high school or college, a class marks twenty years, or the whole family finally settles on one weekend together. The Venue at NCC in Suffolk has an outdoor space for up to ${OUTDOOR} guests and an indoor hall for up to ${INDOOR}, and anyone can book it.`,
-      "Catering is not included, so you can plan a potluck, hire a caterer, or put the family's best cooks in charge. On-site parking is included, which helps when relatives are driving in from across Hampton Roads and beyond.",
+      `Graduations and reunions bring together people who rarely share a room. ${GROVE} gives a large group space to spread out, with open lawn, a timber gazebo, and picnic tables on a paved patio for up to ${OUTDOOR} guests.`,
+      `${HALL} holds up to ${INDOOR} indoors, and on-site parking is included, which helps when relatives drive in from across Hampton Roads and beyond.`,
     ],
     sections: [
       {
-        heading: 'Graduation parties for high school and college grads',
+        heading: 'The Grove for a large gathering',
         body: [
-          'A graduation party is a chance for the people who helped along the way to say congratulations in person. Grandparents, teachers, coaches, church family, and friends all get to share in the moment. Many families plan the party for the same weekend as the ceremony, so out-of-town relatives can make one trip for both.',
-          `For an open-house party with a long guest list, the outdoor space holds up to ${OUTDOOR} guests. If your graduate has classmates hosting parties too, compare dates early so friends can stop by more than one. A few words from family or a display of photos from the early years makes the party feel personal.`,
+          `${GROVE} holds up to ${OUTDOOR} guests. Families gather at the picnic tables on the paved patio, children have the open lawn, and the timber gazebo makes a natural spot for a group photograph.`,
+          `For a smaller or cooler-weather gathering, ${HALL} holds up to ${INDOOR} guests indoors. Reserve both and the day can move between them.`,
         ],
       },
       {
-        heading: 'Family reunion and class reunion planning tips',
+        heading: 'Graduation parties',
         body: [
-          'Reunions take more coordination than most parties because the guest list is spread out. Many families form a small committee, pick a date nine to twelve months ahead, and send a save-the-date as soon as it is set. Class reunion committees often start by rebuilding the contact list, since addresses and emails change over the years.',
-          'Decide early how costs will be covered, such as a set contribution per household, a class fee, or a few family sponsors. Plan a simple program, like recognizing elders, welcoming new babies and in-laws, or reading the names of classmates who have passed. Alcohol is allowed, so a class reunion can include a bar or a toast to old friends.',
-          `Relatives and classmates may be traveling from across Hampton Roads and beyond. Share the full address, ${ADDRESS}, early so everyone can plan the trip.`,
+          'A graduation party lets grandparents, teachers, coaches, and friends say congratulations in person. Many families plan it for the same weekend as the ceremony, so out-of-town relatives make one trip. If classmates are hosting parties too, compare dates early so friends can stop by more than one.',
         ],
       },
       {
-        heading: 'Questions to settle before you book a reunion or graduation party',
+        heading: 'Family and class reunions',
         body: [
-          'Some answers are already settled. Catering is not included, so the food is yours to plan, and on-site parking is included. Bring the rest of your questions to us, such as whether tables and chairs are included and when you can set up and clean up.',
-          `Your rough guest count points to the right space: up to ${INDOOR} guests in the indoor hall or up to ${OUTDOOR} in the outdoor space. That number also shapes how much food to order and how the day is set up.`,
+          'Reunions take more coordination because the guest list is spread out. Many families form a small committee, pick a date nine to twelve months ahead, and send a save-the-date as soon as it is set. Class reunion committees often start by rebuilding the contact list.',
+          `Decide early how costs will be shared, such as a set contribution per household or a class fee. A simple program, like recognizing elders or welcoming new babies, gives the day shape. If the committee would like to see the grounds first, ${VISIT.charAt(0).toLowerCase()}${VISIT.slice(1)}`,
         ],
       },
       {
-        heading: 'Booking your graduation party or reunion',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Booking takes three steps. Pick your date on the live availability calendar and send a request with the type of celebration and a rough guest count, which takes about two minutes. ${RESERVE}`,
-          `The instant estimate on the pricing page makes it easy to work out a fair share per household or classmate. If you are planning for a reunion committee, have one point person handle the booking so the details stay in one place. Questions? Call ${PHONE}.`,
+          'Rates depend on the day, the space, and the hours you need. The instant estimate on the pricing page makes it easy to work out a fair share per household or classmate.',
+          `${DEPOSIT_TERMS} ${PARKING} Share the full address, ${ADDRESS}, early so everyone can plan the trip.`,
         ],
       },
     ],
     checklist: {
       heading: 'Graduation party and reunion checklist',
       items: [
-        'Pick a date that works around the graduation ceremony or the travel plans of most relatives.',
-        'Make a rough guest count, and add a cushion for plus-ones and late additions.',
-        `Choose a space: up to ${INDOOR} guests indoors or up to ${OUTDOOR} outdoors.`,
-        'Get an instant estimate and decide how households or classmates will share the cost.',
-        'Plan the food, since catering is not included. A potluck, a caterer, or both is up to you.',
-        'Ask whether tables and chairs are included, and whether there is a kitchen your caterer can use.',
-        'Ask about setup, cleanup, and end times for your event.',
-        'Send save-the-dates with the full address and a note that parking is included.',
+        'Pick a date around the graduation ceremony or the travel plans of most relatives.',
+        'Make a working guest count, with a cushion for late additions.',
+        `Choose ${GROVE} for up to ${OUTDOOR} guests, ${HALL} for up to ${INDOOR}, or both.`,
+        'Get an instant estimate and decide how the cost will be shared.',
+        'Visit the grounds with your committee before you reserve.',
+        'Plan a weather option if the day is outdoors.',
+        'Send save-the-dates with the full address and parking details.',
       ],
     },
     faqs: [
       {
         q: 'How far ahead should we plan a family reunion?',
-        a: 'Many families start nine to twelve months ahead so relatives can save money and arrange travel. Check your date on the availability calendar as soon as the committee agrees on it.',
+        a: 'Many families start nine to twelve months ahead so relatives can save and arrange travel. Check your date on the availability calendar as soon as the committee agrees on it.',
       },
       {
         q: 'How many guests can the venue hold for a graduation party or reunion?',
-        a: `The outdoor space holds up to ${OUTDOOR} guests, and the indoor hall holds up to ${INDOOR}. Choose the space that fits your guest list when you pick your date.`,
+        a: `${GROVE} holds up to ${OUTDOOR} guests, and ${HALL} holds up to ${INDOOR}. Choose the space that fits your guest list when you pick your date.`,
       },
       {
-        q: 'Can we bring our own food or caterer to a reunion?',
-        a: 'Yes. Catering is not included, so a potluck, a caterer, or a mix of both is up to you. Alcohol is allowed too, if your reunion plans a bar or a toast.',
+        q: 'Can we reserve both spaces?',
+        a: `Yes. Request ${HALL} and ${GROVE} together for the same day, and we confirm availability for both when we follow up.`,
       },
       {
         q: 'When should we have a graduation party?',
@@ -658,40 +713,39 @@ export const events: EventType[] = [
     name: 'Church & community events',
     summary: 'Conferences, fellowship events, youth nights, and community meetings.',
     metaTitle: 'Church event venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan a church conference, youth night, or community meeting at The Venue at NCC in Suffolk, VA. Open to any group, with room for up to ${OUTDOOR} guests outdoors.`,
+    metaDescription: `Plan a church conference, youth night, or community day at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
     h1: 'Church and community events in Suffolk',
     intro: [
-      `Much of the life of a church or community happens outside of Sunday morning. A conference, a fellowship event, a youth night, or a community meeting each needs a clear plan and a place to meet. The Venue at NCC in Suffolk has an indoor hall for up to ${INDOOR} guests and an outdoor space for up to ${OUTDOOR}, and any church or community group can book it.`,
-      `The Venue at NCC is the event space of ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. Other churches, ministries, and neighborhood groups are welcome to book, and on-site parking is included.`,
+      `Much of the life of a church or community happens outside Sunday morning. ${HALL} holds up to ${INDOOR} guests for a conference session or a youth night, and ${GROVE} holds up to ${OUTDOOR} for a fellowship picnic or a community day.`,
+      `The Venue at NCC is operated by ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. Other churches, ministries, and neighborhood groups are welcome to book.`,
     ],
     sections: [
       {
-        heading: 'Conferences, fellowship events, and youth nights',
+        heading: 'Choosing the space',
         body: [
-          'Conferences, fellowship events, and youth nights each ask something different of the host. A conference needs a clear schedule, a check-in plan, and breaks people can count on. A fellowship event is about time together, so leave open time in the schedule for people to talk.',
-          `Youth nights run best with a simple plan, enough adult volunteers, and a way to reach every parent. Community meetings need an agenda, a facilitator, and a clear way for people to share their input. A fellowship picnic or community day can use the outdoor space, which holds up to ${OUTDOOR} guests.`,
+          `${HALL} suits sessions, youth nights, and community meetings: one open room for up to ${INDOOR} guests, with arched windows and recessed lighting.`,
+          `${GROVE} suits a fellowship picnic, an outdoor service, or a community day, with room for up to ${OUTDOOR} guests on the lawn and the paved patio under tall pines. Reserve both for a program that moves between them.`,
         ],
       },
       {
-        heading: 'Church event planning, from purpose to run of show',
+        heading: 'From purpose to run of show',
         body: [
-          'Start with the purpose. Write one sentence about why the event exists and who should be there, and use it to guide every other decision. From there, set a date, a rough headcount, and a budget, and decide if attendees will need to register. The instant estimate on the pricing page makes it easy to set a budget before the leadership team meets.',
-          'Build a simple run of show with start times, speakers or leaders, breaks, and an end time. Assign one point person for the day so volunteers, speakers, and the venue all have a single contact.',
-          `Include the full address, ${ADDRESS}, on every flyer, email, and registration page.`,
+          'Start with the purpose. Write one sentence about why the event exists and who should be there, and let it guide every other decision. Then set a date, a headcount, and a budget, and decide whether attendees will register.',
+          'Build a simple run of show with start times, speakers, breaks, and an end time. Name one point person for the day, so volunteers, speakers, and our team all have a single contact.',
         ],
       },
       {
-        heading: 'What to ask before booking a church conference',
+        heading: 'A planning timeline',
         body: [
-          'Some answers are settled up front. Anyone can book, on-site parking is included, and catering is not included, so your team plans the food or brings in a caterer. If you have speakers or presentations, ask us about sound, microphones, and screens.',
-          'Ask whether tables and chairs are provided for your format, when you can set up and clean up, and what time your event needs to end. Clear answers up front make the rest of the planning easier.',
+          'Conferences and community days are often set a season ahead so leaders, speakers, and volunteers can hold the date. Youth nights and fellowship events usually need four to eight weeks.',
+          `Visit with your planning team before you book to walk the spaces and settle the layout. ${VISIT} Include the full address, ${ADDRESS}, on every flyer, email, and registration page.`,
         ],
       },
       {
-        heading: 'Reserving a date for your church or community event',
+        heading: 'Rates, deposits, and parking',
         body: [
-          `Pick your date on the live availability calendar and choose the space that fits your group. Send a request with the event type and a rough headcount, which takes about two minutes. ${RESERVE} After that, you can start sharing the date with your leaders, speakers, and volunteers.`,
-          `Rates depend on the day, the space, and how many hours you need.${NONPROFIT_RATE} If several leaders are involved, choose one person to handle the booking so nothing gets lost between meetings. Questions? Call ${PHONE}.`,
+          `Rates depend on the day, the space, and the hours you need.${NONPROFIT_RATE} The instant estimate on the pricing page makes it easy to set a budget before the leadership team meets.`,
+          `${DEPOSIT_TERMS} ${PARKING}`,
         ],
       },
     ],
@@ -699,31 +753,28 @@ export const events: EventType[] = [
       heading: 'Church and community event checklist',
       items: [
         'Write one sentence that explains the purpose of the event and who it is for.',
-        'Set a date, a rough headcount, and a budget, using the instant estimate on the pricing page.',
-        `Choose a space: up to ${INDOOR} guests indoors or up to ${OUTDOOR} outdoors.`,
+        'Set a date, a headcount, and a budget.',
+        `Choose ${HALL} for up to ${INDOOR} guests, ${GROVE} for up to ${OUTDOOR}, or both.`,
+        'Get an instant estimate on the pricing page.',
+        'Visit the spaces with your planning team.',
         'Draft a run of show with start times, breaks, and a firm end time.',
-        'Ask us about sound, microphones, and screens if you have speakers or presentations.',
-        'Ask whether tables and chairs are provided, and when you can set up.',
-        'Plan food and coffee, since catering is not included.',
         'Recruit volunteers for check-in and greeting, and name one point person for the day.',
+        'Put the address and parking details on every flyer and registration page.',
       ],
     },
     faqs: [
       {
-        q: 'Which church is The Venue at NCC part of?',
-        a: `The Venue at NCC is the event space of ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. You can learn more about the church at ${CHURCH_SITE}.`,
+        q: 'Which church operates The Venue at NCC?',
+        a: `The Venue at NCC is operated by ${CHURCH}, founded in ${FOUNDED} by ${FOUNDER}, who serves as its pastor. You can learn more about the church at ${CHURCH_SITE}.`,
       },
       {
         q: 'Can other churches and community groups book the venue?',
-        a: `Yes. Anyone can book The Venue at NCC, including other churches, ministries, schools, and neighborhood groups. Membership at ${CHURCH} is not required.`,
+        a: `Yes. The Venue at NCC is open to the public, including other churches, ministries, schools, and neighborhood groups. Membership at ${CHURCH} is not required.`,
       },
-      {
-        q: 'Does the venue have sound and screens for a conference?',
-        a: `Ask us. Tell us what your speakers and sessions need in your request or call ${PHONE}, and we will talk it through before your date is confirmed.`,
-      },
+      ...nonprofitRateFaq('Is there a rate for churches and nonprofits?'),
       {
         q: 'Should we require registration for a church conference?',
-        a: 'Registration helps with name tags, materials, and meal counts for a conference, and a simple online form is usually enough. For a fellowship event or youth night, an RSVP or a parent sign-up may be all you need.',
+        a: 'Registration helps with name tags, materials, and headcounts for a conference, and a simple online form is usually enough. For a fellowship event or youth night, an RSVP or a parent sign-up may be all you need.',
       },
       {
         q: 'What should a youth night plan include?',
