@@ -1,7 +1,8 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
  * 1200 x 630 PNG: a real photo of the property, a Deep Olive scrim for legibility, the light lockup, the page
- * title in Libre Caslon Display, and one short line in Inter. What each card shows lives in _cards.ts.
+ * title in Libre Caslon Display in Cream, and one short line in Inter in Sage (docs/design/brand.md, Share
+ * images). What each card shows lives in _cards.ts.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -21,12 +22,12 @@ const PAD = 64;
 const LOCKUP_H = 60;
 const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-/** Deep Olive, dark value, as RGB for the scrim's stops. */
-const OLIVE = '30, 34, 20';
+/** Deep Olive (#343B24 in brand.md), as RGB for the scrim's stops. */
+const OLIVE = '52, 59, 36';
 const olive = (alpha: number) => `rgba(${OLIVE}, ${alpha})`;
-/** Cream for the title and Caramel for the line under it (5.2:1 or better on the scrim). */
+/** Cream for the title (11.1:1 on Deep Olive) and Sage for the line under it (7.6:1). */
 const CREAM = '#FEFAE0';
-const CARAMEL = '#D4A373';
+const SAGE = '#CCD5AE';
 
 const root = process.cwd();
 const fromRoot = (...p: string[]) => path.join(root, ...p);
@@ -104,7 +105,7 @@ export const GET: APIRoute = async ({ props }) => {
       h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
       h('div', { display: 'flex', flexDirection: 'column', gap: 20, width: CONTENT_W }, [
         h('div', { fontFamily: 'Libre Caslon Display', fontSize: size, lineHeight: 1.08, letterSpacing: -0.01 * size }, card.title),
-        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: CARAMEL }, card.line),
+        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: SAGE }, card.line),
       ]),
     ]),
   ]);
