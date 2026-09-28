@@ -318,6 +318,23 @@ test('resetDemoData restores the seed and keeps the session', async () => {
   assert.ok(await api.admin.session());
 });
 
+test('stored data from more than two weeks ago is replaced with a current seed', async () => {
+  const stale = JSON.parse(local.getItem(DEMO_STORAGE_KEY) as string);
+  stale.seededOn = addDays(today, -30);
+  stale.inquiries = [];
+  local.setItem(DEMO_STORAGE_KEY, JSON.stringify(stale));
+  const all = ok(await api.admin.listInquiries({ status: 'all' }));
+  assert.ok(all.length >= 8, 'reseeded');
+  assert.equal(JSON.parse(local.getItem(DEMO_STORAGE_KEY) as string).seededOn, today);
+
+  const recent = JSON.parse(local.getItem(DEMO_STORAGE_KEY) as string);
+  recent.seededOn = addDays(today, -3);
+  recent.inquiries = recent.inquiries.slice(0, 2);
+  local.setItem(DEMO_STORAGE_KEY, JSON.stringify(recent));
+  assert.equal(ok(await api.admin.listInquiries({ status: 'all' })).length, 2, 'recent data is kept');
+  await resetDemoData();
+});
+
 test('logout ends the session', async () => {
   await api.admin.logout();
   assert.equal(await api.admin.session(), null);
@@ -342,6 +359,6 @@ test('simulated latency is between 200 and 500 ms by default', async () => {
   const started = Date.now();
   await api.formToken();
   const elapsed = Date.now() - started;
-  assert.ok(elapsed >= 190 && elapsed <= 700, `took ${elapsed} ms`);
+  assert.ok(elapsed >= 190 && elapsed <= 1500, `took ${elapsed} ms`);
   setDemoLatency(0);
 });

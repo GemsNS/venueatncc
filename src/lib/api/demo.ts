@@ -15,7 +15,7 @@
 import { availabilityFor } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { inquiriesToCsv } from '../../shared/csv';
-import { formatLong, todayKey } from '../../shared/dates';
+import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
 import { makeReference } from '../../shared/reference';
 import { INQUIRY_STATUSES } from '../../shared/types';
@@ -73,6 +73,8 @@ export const demoMessages = {
 
 const OPEN_STATUSES: InquiryStatus[] = ['new', 'contacted', 'visit', 'quoted'];
 const UPCOMING_BOOKED_LIMIT = 5;
+/** Stored demo data older than this many days is replaced with a fresh seed. */
+const RESEED_AFTER_DAYS = 14;
 const WEEK_MS = 7 * 24 * 3600 * 1000;
 
 // ---------------------------------------------------------------------------------------------
@@ -166,7 +168,9 @@ function writeDb(db: DemoDb): void {
 /** The current database, seeded on first use. */
 function load(): DemoDb {
   const existing = readDb();
-  if (existing) return existing;
+  // Demo data is throwaway: after a couple of weeks the seeded dates drift into the past,
+  // so a returning visitor gets a fresh, current seed instead.
+  if (existing && daysBetween(existing.seededOn, todayKey()) <= RESEED_AFTER_DAYS) return existing;
   const seeded = buildSeed();
   writeDb(seeded);
   return clone(seeded);
