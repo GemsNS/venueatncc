@@ -118,6 +118,27 @@ export const photoDetails: Record<string, PhotoDetail> = {
     tags: ['about', 'church'],
     space: 'campus',
   },
+  // Styled concepts: generated from the real photo above them, with furniture, linens, flowers, and lighting added.
+  'styled-hall-windows-reception.jpg': {
+    alt: 'Styled concept: The Hall set for a reception, with round tables in white floor-length linens, gold chiavari chairs, white and lavender centerpieces, and a head table under the arched windows',
+    styledOf: 'hall-windows.jpg',
+    space: 'hall',
+  },
+  'styled-hall-fireplace-dinner.jpg': {
+    alt: 'Styled concept: The Hall set for a milestone dinner, with two long banquet tables in white linens and lavender runners, white chairs, candles, and a cake table by the fireplace wall',
+    styledOf: 'hall-fireplace.jpg',
+    space: 'hall',
+  },
+  'styled-gazebo-ceremony.jpg': {
+    alt: 'Styled concept: white ceremony chairs in two sections on the lawn facing the gazebo, with a white aisle runner and white and lavender flowers on the gazebo posts',
+    styledOf: 'gazebo.jpg',
+    space: 'grove',
+  },
+  'styled-grove-tables-reunion.jpg': {
+    alt: 'Styled concept: the picnic tables in The Grove dressed in white linens with lavender runners, lanterns, and small flower jars, with string lights above the patio',
+    styledOf: 'grove-tables.jpg',
+    space: 'grove',
+  },
 };
 
 /** Which photo leads each event page. Every slug in src/data/events.ts is listed; any other slug gets hall-windows. */
