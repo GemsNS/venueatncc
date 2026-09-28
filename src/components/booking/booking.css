@@ -104,6 +104,7 @@
   .bk-seg--days .segmented__item {
     padding: 0 0.45rem;
     font-size: var(--t-footnote);
+    white-space: nowrap;
   }
 }
 
@@ -514,6 +515,36 @@
   margin-top: 20px;
 }
 
+/* Without the floating tab bar (the booking page can drop it), the action bar sits at the bottom edge. */
+body:not(:has(.tabbar)) .bk-actions {
+  bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+/*
+  Keep keyboard focus clear of the fixed bars: the action bar (62px) plus the tab bar (92px) when it
+  is there, plus a margin. Short screens (landscape phones, 400% zoom) let the bars scroll away instead.
+*/
+@media (max-width: 899.98px) {
+  html:has(.bk-actions) {
+    scroll-padding-bottom: calc(174px + env(safe-area-inset-bottom));
+  }
+
+  html:has(.bk-actions):not(:has(.tabbar)) {
+    scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-height: 500px) {
+  .bk-actions {
+    position: static;
+  }
+
+  html:has(.bk-actions),
+  html:has(.bk-actions):not(:has(.tabbar)) {
+    scroll-padding-bottom: 0;
+  }
+}
+
 .bk-actions__inner {
   display: flex;
   align-items: center;
@@ -827,6 +858,7 @@ button.bk-progress__item:hover {
   display: grid;
   align-content: start;
   gap: 22px;
+  container-type: inline-size;
 }
 
 .bk-pair {
@@ -839,14 +871,19 @@ button.bk-progress__item:hover {
   margin-top: -12px;
 }
 
-@container (min-width: 640px) {
+/*
+  Calendar beside the choices only when both fit. The threshold is in rem, so it grows with the
+  reader's text size and the layout falls back to one column instead of squeezing the choices.
+*/
+@container (min-width: 44rem) {
   .bk-step1 {
-    grid-template-columns: minmax(0, 23rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 23rem) minmax(16rem, 1fr);
     align-items: start;
   }
 }
 
-@media (max-width: 359.98px) {
+/* Start time and Hours stack when the choices column is narrow, so the time is never clipped. */
+@container (max-width: 22rem) {
   .bk-pair {
     grid-template-columns: 1fr;
   }
@@ -992,7 +1029,8 @@ button.bk-progress__item:hover {
   stroke-width: 3.2;
 }
 
-.bk-day[data-status='past'] {
+.bk-day[data-status='past'],
+.bk-day[data-status='later'] {
   color: var(--label-3);
   opacity: 0.6;
   cursor: default;
@@ -1260,6 +1298,14 @@ button.bk-progress__item:hover {
   gap: 12px;
   min-height: 52px;
   padding: 14px 16px;
+}
+
+/* On phones the label sits above its value, so dates, times and emails get the full width. */
+@media (max-width: 479.98px) {
+  .bk-dl__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
 }
 
 .bk-dl__row + .bk-dl__row::before {
@@ -1618,6 +1664,7 @@ html:not(.js) .bk-skel {
   position: absolute;
   top: 50%;
   left: 14px;
+  z-index: 1; /* above the field's own background when it is focused */
   color: var(--label-2);
   transform: translateY(-50%);
   pointer-events: none;
@@ -1626,6 +1673,16 @@ html:not(.js) .bk-skel {
 .bk-dc__input {
   position: relative;
   padding-left: 46px;
+}
+
+/*
+  The invisible picker button (stretched over the field below) is its own Tab stop. While it has
+  focus the field matches neither :focus nor :focus-visible, only :focus-within, so draw the ring here.
+*/
+.bk-dc__input:focus-within:not(:focus-visible) {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-tint-2);
 }
 
 /* One calendar icon: the native picker button covers the field, so a click anywhere opens it. */
@@ -1813,12 +1870,27 @@ html:not(.js) .bk-skel {
 
 .bk-cp {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   max-width: 640px;
   padding: 20px;
   border-radius: var(--r-xl);
   background: var(--bg-elevated);
   box-shadow: var(--shadow-2), var(--bk-card-edge);
+}
+
+/* Placed inside a page card, the planner is that card's content, not a second card. */
+.card .bk-cp {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.bk-cp .btn {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
 }
 
 .bk-cp__label {
@@ -1860,6 +1932,7 @@ html:not(.js) .bk-skel {
 .bk-cap {
   display: grid;
   gap: 8px;
+  min-width: 0;
   padding: 14px 16px;
   border: 1px solid transparent;
   border-radius: var(--r-sm);
@@ -1943,6 +2016,21 @@ html:not(.js) .bk-skel {
   }
 }
 
+/* Wide screens: the count, verdict and button on the left, the two spaces on the right. */
+@media (min-width: 900px) {
+  .card .bk-cp {
+    max-width: none;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(28px, 4vw, 56px);
+    align-items: start;
+  }
+
+  .card .bk-cp__spaces {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+}
+
 /* ---------- Price estimator ---------- */
 
 .bk-pe {
@@ -1963,6 +2051,20 @@ html:not(.js) .bk-skel {
 
 .bk-pe__result {
   gap: 16px;
+}
+
+/* Placed inside a page card, controls and result are that card's content, split by a hairline. */
+.card .bk-pe__controls,
+.card .bk-pe__result {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.card .bk-pe__result {
+  padding-top: 24px;
+  border-top: 1px solid var(--separator);
 }
 
 .bk-pe__headline {
@@ -2014,6 +2116,13 @@ html:not(.js) .bk-skel {
     position: sticky;
     top: calc(var(--nav-h) + 24px);
   }
+
+  .card .bk-pe__result {
+    padding-top: 0;
+    padding-left: clamp(28px, 3vw, 48px);
+    border-top: 0;
+    border-left: 1px solid var(--separator);
+  }
 }
 
 /* ---------- Windows High Contrast and other forced colors ---------- */
@@ -2022,7 +2131,8 @@ html:not(.js) .bk-skel {
   .bk-day.is-selected,
   .bk-chip[aria-pressed='true'],
   .bk-tile[aria-checked='true'],
-  .bk-dc__space[aria-checked='true'] {
+  .bk-dc__space[aria-checked='true'],
+  .bk-seg .segmented__item[aria-checked='true'] {
     outline: 3px solid Highlight;
     outline-offset: -3px;
   }
@@ -2033,5 +2143,19 @@ html:not(.js) .bk-skel {
 
   .bk-switch__knob {
     background: CanvasText;
+  }
+
+  /* The Open and Partly booked dots are background colors; keep them. */
+  .bk-day__mark,
+  .bk-legend__mark {
+    forced-color-adjust: none;
+  }
+
+  /* Text fields show focus with a box-shadow ring, which forced colors drop. */
+  .bk .input:focus-visible,
+  .bk-app .input:focus-visible,
+  .bk-dc__input:focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
 }

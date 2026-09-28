@@ -3,7 +3,7 @@
  *
  * Four steps: date and space, your event, contact, review. On wide screens a sticky summary with the
  * live estimate sits beside the steps; on phones the steps come one at a time with Back and Next in a
- * bottom action bar above the tab bar. Progress is kept in sessionStorage so a refresh keeps it.
+ * bottom action bar. Progress is kept in sessionStorage so a refresh keeps it.
  * Prefill: ?date=YYYY-MM-DD&space=indoor|outdoor|both&guests=N&event=<slug>&hours=N
  */
 import './booking.css';
@@ -13,10 +13,11 @@ import { site } from '../../data/site';
 import { api, isError } from '../../lib/api';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
-import { formatShort, todayKey } from '../../shared/dates';
+import { formatShort, parseKey, todayKey } from '../../shared/dates';
 import { estimate, formatUSD } from '../../shared/pricing';
-import type { DateKey, DayStatus, InquiryCreated, SpaceChoice } from '../../shared/types';
-import { ELLIPSIS, focusField, session, spaceLabel, telHref } from './lib';
+import type { ApiError, DateKey, InquiryCreated, SpaceChoice } from '../../shared/types';
+import type { CalStatus } from './Calendar';
+import { ELLIPSIS, TOO_LATE_MESSAGE, focusField, guestsLabel, session, spaceLabel, telHref } from './lib';
 import { Spinner } from './ui';
 import { StepContact } from './StepContact';
 import { StepDate } from './StepDate';
@@ -24,7 +25,7 @@ import { StepEvent } from './StepEvent';
 import { StepReview } from './StepReview';
 import { SuccessView } from './SuccessView';
 import { SummaryCard } from './SummaryCard';
-import { useAvailability, ymOf, type YM } from './useAvailability';
+import { addMonths, lastDayOf, useAvailability, useRefreshOnReturn, ymOf, type YM } from './useAvailability';
 import {
   DEFAULT_DRAFT,
   DRAFT_KEY,
@@ -57,7 +58,24 @@ const RELATED: Record<string, string[]> = {
 
 const NETWORK_MESSAGE = 'We could not reach the server. Check your connection and try again.';
 
+/** The server only accepts a form token a few seconds old (FORM_TOKEN_MIN_AGE_MS, 3 s), plus a margin. */
+const TOKEN_MIN_AGE_MS = 3200;
+
+/** How long typing in Guests must pause before a space switch or capacity note is announced. */
+const GUESTS_ANNOUNCE_MS = 700;
+
 type After = null | 'heading' | 'summary' | 'success' | 'senderr' | { field: string };
+
+/** The HTTP status on an error, when the API client passes it through. */
+const statusOf = (res: ApiError): number | null => ('status' in res && typeof res.status === 'number' ? res.status : null);
+
+/** Open on the current month, or on the next one when this month has less than a week left. */
+function initialView(today: DateKey): YM {
+  const ym = ymOf(today);
+  return lastDayOf(ym) - parseKey(today).d < 7 ? addMonths(ym, 1) : ym;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
 function Progress(props: { step: Step; reached: Step; onGo: (s: Step) => void }) {
   return (
@@ -131,6 +149,7 @@ export default function BookingApp() {
   const [token, setToken] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<number | null>(null);
   const [done, setDone] = useState<{ created: InquiryCreated; d: Draft } | null>(null);
   const [announce, setAnnounce] = useState('');
   const [calMsg, setCalMsg] = useState('');
@@ -143,6 +162,12 @@ export default function BookingApp() {
   const sendRef = useRef<HTMLButtonElement>(null);
   const after = useRef<After>(null);
   const tokenReq = useRef<Promise<string | null> | null>(null);
+  /** When the current form token arrived, so a send can wait until the server will accept it. */
+  const tokenAt = useRef(0);
+  const sayTimer = useRef(0);
+  /** Set when a guest count change picked the space, so the switch can be announced. */
+  const autoSpace = useRef(false);
+  const prevCapErr = useRef<string | null | undefined>(undefined);
 
   const mounted = today !== '';
 
@@ -151,11 +176,19 @@ export default function BookingApp() {
       tokenReq.current = api.formToken().then((r) => {
         tokenReq.current = null;
         const t = isError(r) ? null : r.token;
+        if (t) tokenAt.current = Date.now();
         setToken(t);
         return t;
       });
     }
     return tokenReq.current;
+  }, []);
+
+  /** Announce through the status region. Clearing first makes a repeated message speak again. */
+  const say = useCallback((msg: string) => {
+    window.clearTimeout(sayTimer.current);
+    setAnnounce('');
+    sayTimer.current = window.setTimeout(() => setAnnounce(msg), 60);
   }, []);
 
   // Mount: today's date, saved draft, URL prefill, and a form token.
@@ -169,8 +202,9 @@ export default function BookingApp() {
     if (!draft.date && draft.step > 1) draft.step = 1;
     setToday(t);
     setD(draft);
-    setView(ymOf(draft.date || t));
+    setView(draft.date ? ymOf(draft.date) : initialView(t));
     void fetchToken();
+    return () => window.clearTimeout(sayTimer.current);
   }, [fetchToken]);
 
   // Keep the draft through a refresh.
@@ -179,12 +213,42 @@ export default function BookingApp() {
   }, [d, mounted, done]);
 
   // Three months of availability around the visible month.
-  const { ensureMonths } = avail;
+  const { ensureMonths, invalidate } = avail;
   useEffect(() => {
     if (mounted) ensureMonths(view);
   }, [mounted, view.y, view.m, ensureMonths]);
 
+  // Coming back to the tab: dates may have been booked meanwhile, so load them again.
+  useRefreshOnReturn(() => {
+    if (!mounted || done) return;
+    invalidate();
+    ensureMonths(view);
+  });
+
   const day = d.date ? avail.days[d.date] : undefined;
+
+  const update = useCallback((patch: Partial<Draft>) => {
+    setD((prev) => ({ ...prev, ...patch }));
+    const keys = Object.keys(patch).flatMap((k) => [k, ...(RELATED[k] ?? [])]);
+    setErrors((prev) => {
+      if (!keys.some((k) => k in prev)) return prev;
+      const next = { ...prev };
+      for (const k of keys) delete next[k];
+      return next;
+    });
+    if ('date' in patch) setCalMsg('');
+  }, []);
+
+  const onUnavailable = (date: DateKey, status: CalStatus) => {
+    const msg =
+      status === 'past'
+        ? 'That date has passed. Choose another date.'
+        : status === 'later'
+          ? TOO_LATE_MESSAGE
+          : `${formatShort(date)} is booked. Choose another date.`;
+    setCalMsg(msg);
+    say(msg);
+  };
 
   // If the chosen space is taken on the chosen date, move to one that is free.
   useEffect(() => {
@@ -195,8 +259,37 @@ export default function BookingApp() {
     const alt = free.find((s) => !capacityError(s, d.guests)) ?? free[0];
     if (!alt) return;
     setD((p) => ({ ...p, space: alt }));
-    setAnnounce(`${spaceLabel(d.space)} is booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
+    say(`${spaceLabel(d.space)} is booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
   }, [d.date, day]);
+
+  // A date that arrived booked (a link, an old tab, or a refresh that found it taken): let it go and say why.
+  useEffect(() => {
+    if (d.step !== 1 || !d.date || !day) return;
+    if (day.status !== 'booked' && day.status !== 'past') return;
+    const date = d.date;
+    update({ date: '' });
+    onUnavailable(date, day.status);
+  }, [d.date, day]);
+
+  // Guests: announce a space the count switched to, or a capacity note, once typing pauses.
+  const capErr = capacityError(d.space, d.guests);
+  useEffect(() => {
+    if (!mounted || d.step !== 1) {
+      prevCapErr.current = undefined;
+      autoSpace.current = false;
+      return;
+    }
+    const prev = prevCapErr.current;
+    prevCapErr.current = capErr;
+    const switched = autoSpace.current && !capErr;
+    const capNews = prev !== undefined && capErr !== null && capErr !== prev;
+    if (!switched && !capNews) return;
+    const timer = window.setTimeout(() => {
+      autoSpace.current = false;
+      say(switched ? `${spaceLabel(d.space)} fits ${guestsLabel(d.guests)}, so we switched to it.` : (capErr ?? ''));
+    }, GUESTS_ANNOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [mounted, d.step, capErr, d.space, d.guests]);
 
   // Focus after renders that change the view (layout effect, so focus moves before the next input).
   useLayoutEffect(() => {
@@ -226,18 +319,6 @@ export default function BookingApp() {
     }
   });
 
-  const update = useCallback((patch: Partial<Draft>) => {
-    setD((prev) => ({ ...prev, ...patch }));
-    const keys = Object.keys(patch).flatMap((k) => [k, ...(RELATED[k] ?? [])]);
-    setErrors((prev) => {
-      if (!keys.some((k) => k in prev)) return prev;
-      const next = { ...prev };
-      for (const k of keys) delete next[k];
-      return next;
-    });
-    if ('date' in patch) setCalMsg('');
-  }, []);
-
   const setError = useCallback((field: string, message: string | null) => {
     setErrors((prev) => {
       const next = { ...prev };
@@ -251,15 +332,12 @@ export default function BookingApp() {
     const patch: Partial<Draft> = { guests };
     if (!d.spaceChosen) {
       const s = suggestSpace(guests);
-      if (s && s !== d.space && (!day || spaceIsFree(day, s))) patch.space = s;
+      if (s && s !== d.space && (!day || spaceIsFree(day, s))) {
+        patch.space = s;
+        autoSpace.current = true;
+      }
     }
     update(patch);
-  };
-
-  const onUnavailable = (date: DateKey, status: DayStatus) => {
-    const msg = status === 'past' ? 'That date has passed. Choose another date.' : `${formatShort(date)} is booked. Choose another date.`;
-    setCalMsg(msg);
-    setAnnounce(msg);
   };
 
   const ctx = { today, day };
@@ -268,6 +346,7 @@ export default function BookingApp() {
     setD((p) => ({ ...p, step, reached: Math.max(p.reached, step) as Step }));
     setSummaryFields(null);
     setSubmitError(null);
+    setSubmitStatus(null);
     if (focusHeading) after.current = 'heading';
   };
 
@@ -324,6 +403,12 @@ export default function BookingApp() {
     }
   };
 
+  /** Wait until the current token is old enough for the server's minimum age. */
+  const tokenReady = async () => {
+    const wait = TOKEN_MIN_AGE_MS - (Date.now() - tokenAt.current);
+    if (wait > 0) await sleep(wait);
+  };
+
   const submit = async () => {
     if (sending) return;
     const errs = validate(d, [1, 2, 3], ctx);
@@ -336,15 +421,27 @@ export default function BookingApp() {
     }
     setSending(true);
     setSubmitError(null);
+    setSubmitStatus(null);
     setSummaryFields(null);
-    const tk = token ?? (await fetchToken());
+    const website = honeypot.current?.value ?? '';
+    let tk = token ?? (await fetchToken());
     if (!tk) {
       setSending(false);
       setSubmitError(NETWORK_MESSAGE);
       after.current = 'senderr';
       return;
     }
-    const res = await api.submitInquiry(buildInput(d, tk, honeypot.current?.value ?? ''));
+    await tokenReady();
+    let res = await api.submitInquiry(buildInput(d, tk, website));
+    if (isError(res) && res.fields?.formToken) {
+      // The token expired, or the server changed its secret: get a new one and send once more.
+      setToken(null);
+      tk = await fetchToken();
+      if (tk) {
+        await tokenReady();
+        res = await api.submitInquiry(buildInput(d, tk, website));
+      }
+    }
     setSending(false);
     if (isError(res)) {
       const fields = res.fields ?? {};
@@ -362,6 +459,7 @@ export default function BookingApp() {
         return;
       }
       setSubmitError(res.error || NETWORK_MESSAGE);
+      setSubmitStatus(statusOf(res));
       after.current = 'senderr';
       return;
     }
@@ -390,10 +488,11 @@ export default function BookingApp() {
     setErrors({});
     setSummaryFields(null);
     setSubmitError(null);
+    setSubmitStatus(null);
     setCalMsg('');
     setToken(null);
     void fetchToken();
-    setView(ymOf(today));
+    setView(initialView(today));
     after.current = 'heading';
   };
 
@@ -410,7 +509,6 @@ export default function BookingApp() {
         <SuccessView
           created={done.created}
           d={done.d}
-          today={today}
           demo={api.demo || done.created.demo === true}
           headingRef={successRef}
           onPlanAnother={planAnother}
@@ -447,8 +545,9 @@ export default function BookingApp() {
           </div>
 
           {summaryItems.length > 0 && (
-            <div class="bk-errsum" role="alert" tabIndex={-1} ref={summaryRef}>
-              <p class="bk-errsum__title">
+            // Not a live region: focus moves here once, and fixing a field should not interrupt typing.
+            <div class="bk-errsum" role="group" aria-labelledby="bk-errsum-title" tabIndex={-1} ref={summaryRef}>
+              <p class="bk-errsum__title" id="bk-errsum-title">
                 <Icon name="info" />
                 {summaryItems.length === 1 ? 'Check this to continue' : `Check these ${summaryItems.length} things to continue`}
               </p>
@@ -495,6 +594,7 @@ export default function BookingApp() {
               onEdit={(s) => goStep(s)}
               honeypot={honeypot}
               submitError={submitError}
+              rateLimited={submitStatus === 429}
               onRetry={retry}
               sending={sending}
             />
@@ -502,7 +602,7 @@ export default function BookingApp() {
         </div>
 
         <aside class="bk-aside" aria-labelledby="bk-summary-title">
-          <SummaryCard d={d} est={est} today={today} />
+          <SummaryCard d={d} est={est} />
         </aside>
 
         <div class="bk-actions">

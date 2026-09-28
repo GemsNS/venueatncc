@@ -3,12 +3,35 @@
  * lighter islands (date checker, capacity planner, price estimator) stay lean.
  */
 import { href } from '../../lib/paths';
-import { addDays, dayOfWeek, formatTime, isDateKey } from '../../shared/dates';
-import { pricing, type DayType } from '../../shared/pricing';
+import { addDays, dayOfWeek, formatLong, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
+import { formatUSD, pricing, type DayType } from '../../shared/pricing';
 import type { DateKey, SpaceChoice } from '../../shared/types';
 
 export const ELLIPSIS = String.fromCharCode(8230);
 export const MIDDOT = String.fromCharCode(183);
+export const NBSP = String.fromCharCode(160);
+export const MINUS = String.fromCharCode(8722);
+
+/** Dollars with a true minus sign for discounts ("-$160" reads as a hyphen). */
+export function formatMoney(n: number): string {
+  return n < 0 ? `${MINUS}${formatUSD(Math.abs(n))}` : formatUSD(n);
+}
+
+/** "Wednesday, September 30, 2026" that only wraps after the weekday. */
+export function formatLongKept(key: DateKey): string {
+  return formatLong(key).replace(/ ([0-9])/g, `${NBSP}$1`);
+}
+
+/**
+ * The latest date the server accepts: the same calendar day two years from today.
+ * Mirrors latestBookableDate() in server/routes/public.ts; use the shared one once it moves.
+ */
+export function latestBookableDate(today: DateKey): DateKey {
+  const { y, m, d } = parseKey(today);
+  return toKey(y + 2, m, d);
+}
+
+export const TOO_LATE_MESSAGE = 'Choose a date within the next two years.';
 
 export const SPACES: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 export const SINGLE_SPACES: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
@@ -76,11 +99,11 @@ export function representativeDate(dayType: DayType, today: DateKey): DateKey {
 }
 
 export function hoursLabel(n: number): string {
-  return `${n} ${n === 1 ? 'hour' : 'hours'}`;
+  return `${n}${NBSP}${n === 1 ? 'hour' : 'hours'}`;
 }
 
 export function guestsLabel(n: number): string {
-  return `${n} ${n === 1 ? 'guest' : 'guests'}`;
+  return `${n}${NBSP}${n === 1 ? 'guest' : 'guests'}`;
 }
 
 export function parseSpace(v: string | null | undefined): SpaceChoice | null {

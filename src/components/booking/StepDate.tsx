@@ -1,14 +1,27 @@
 /** Step 1: the calendar, guests, space, start time, and hours. */
 import { site } from '../../data/site';
 import { spaceIsFree } from '../../shared/availability';
-import { CAPACITY, capacityError, suggestSpace } from '../../shared/capacity';
+import { CAPACITY, capacityError, capacityLabel, suggestSpace } from '../../shared/capacity';
 import { addHours, formatShort, formatTime } from '../../shared/dates';
 import { dayTypeOf } from '../../shared/pricing';
-import type { AvailabilityDay, DateKey, DayStatus, SpaceChoice } from '../../shared/types';
-import { Calendar } from './Calendar';
-import { HOURS_MAX, HOURS_MIN, SINGLE_SPACES, SPACE_SHORT, SPACES, TIME_OPTIONS, hoursLabel, minimumHoursNote, spaceLabel, telHref } from './lib';
+import type { AvailabilityDay, DateKey, SpaceChoice } from '../../shared/types';
+import { Calendar, type CalStatus } from './Calendar';
+import {
+  HOURS_MAX,
+  HOURS_MIN,
+  SINGLE_SPACES,
+  SPACE_SHORT,
+  SPACES,
+  TIME_OPTIONS,
+  guestsLabel,
+  hoursLabel,
+  latestBookableDate,
+  minimumHoursNote,
+  spaceLabel,
+  telHref,
+} from './lib';
 import { CountField, Note, Segmented, Stepper } from './ui';
-import { addMonths, type YM } from './useAvailability';
+import { ymOf, type YM } from './useAvailability';
 import { GUESTS_MAX, GUESTS_MIN, errorId, fieldId, type Draft } from './wizard';
 import { FieldError, describe } from './fields';
 
@@ -23,19 +36,21 @@ export interface StepDateProps {
   loading: boolean;
   error: string | null;
   onRetry: () => void;
-  onUnavailable: (date: DateKey, status: DayStatus) => void;
+  onUnavailable: (date: DateKey, status: CalStatus) => void;
   onGuests: (n: number) => void;
   /** A short message after someone picks a day that cannot be booked. */
   calMsg: string;
 }
 
+/** Each space by its own limit; never one combined figure for both. */
 function spaceSentence(space: SpaceChoice): string {
-  if (space === 'both') return `The indoor hall and the outdoor space together, for up to ${CAPACITY.both} guests.`;
+  if (space === 'both') return `Both spaces. ${capacityLabel('both')}.`;
   return `${spaceLabel(space)} holds up to ${CAPACITY[space]} guests.`;
 }
 
 export function StepDate(props: StepDateProps) {
   const { d, update, errors, today, view, days } = props;
+  const latest = latestBookableDate(today);
   const day = d.date ? days[d.date] : undefined;
   const taken = day ? SINGLE_SPACES.filter((s) => day.spaces[s] === 'taken') : [];
   const capErr = capacityError(d.space, d.guests);
@@ -60,8 +75,9 @@ export function StepDate(props: StepDateProps) {
           id={fieldId('date')}
           view={view}
           onView={props.onView}
-          min={{ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) }}
-          max={addMonths({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) }, 23)}
+          min={ymOf(today)}
+          max={ymOf(latest)}
+          lastDate={latest}
           today={today}
           selected={d.date}
           onSelect={(date) => update({ date })}
@@ -102,6 +118,7 @@ export function StepDate(props: StepDateProps) {
             invalid={Boolean(errors.guests)}
             decLabel="Fewer guests"
             incLabel="More guests"
+            announceAs={guestsLabel}
           />
           {errors.guests && errors.guests !== capErr && <FieldError errors={errors} field="guests" />}
           {capErr && (
@@ -196,7 +213,7 @@ export function StepDate(props: StepDateProps) {
           <span class="num">
             {formatTime(d.startTime)} to {formatTime(addHours(d.startTime, d.hours))}
           </span>
-          . Include time to set up and clean up.
+          . Ask us about time to set up and clean up.
           {dayType ? ` ${minimumHoursNote(dayType)}` : ''}
         </p>
       </div>

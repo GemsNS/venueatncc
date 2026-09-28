@@ -4,12 +4,12 @@ import { useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
 import { site } from '../../data/site';
+import { isDemo } from '../../lib/env';
 import { href } from '../../lib/paths';
-import { formatLong } from '../../shared/dates';
 import { formatUSD } from '../../shared/pricing';
-import type { DateKey, InquiryCreated } from '../../shared/types';
-import { guestsLabel, spaceLabel, telHref } from './lib';
-import { EstimateView } from './ui';
+import type { InquiryCreated } from '../../shared/types';
+import { formatLongKept, guestsLabel, spaceLabel, telHref } from './lib';
+import { EstimateView, payment } from './ui';
 import type { Draft } from './wizard';
 
 const REACH = { email: 'by email', phone: 'by phone', text: 'by text message' } as const;
@@ -17,7 +17,6 @@ const REACH = { email: 'by email', phone: 'by phone', text: 'by text message' } 
 export function SuccessView(props: {
   created: InquiryCreated;
   d: Draft;
-  today: DateKey;
   demo: boolean;
   headingRef: Ref<HTMLHeadingElement>;
   onPlanAnother: () => void;
@@ -25,6 +24,7 @@ export function SuccessView(props: {
   const { created, d } = props;
   const [copied, setCopied] = useState(false);
   const firstName = d.name.trim().split(/\s+/)[0] ?? '';
+  const pay = payment(created.estimate);
 
   const copy = async () => {
     try {
@@ -35,12 +35,13 @@ export function SuccessView(props: {
     }
   };
 
-  const rows: [string, string][] = [
-    ['Date', d.date ? formatLong(d.date) : ''],
-    ['Space', spaceLabel(d.space)],
-    ['Guests', guestsLabel(d.guests)],
-    ['Event', eventTypeName(d.eventType, d.eventTypeOther.trim())],
-    ['Estimated total', formatUSD(created.estimate.total)],
+  const rows: [string, string, boolean][] = [
+    ['Date', d.date ? formatLongKept(d.date) : '', false],
+    ['Space', spaceLabel(d.space), false],
+    ['Guests', guestsLabel(d.guests), false],
+    ['Event', eventTypeName(d.eventType, d.eventTypeOther.trim()), false],
+    ['Estimated total', formatUSD(created.estimate.total), true],
+    ['Due to reserve', formatUSD(pay.reserve), true],
   ];
 
   return (
@@ -54,7 +55,7 @@ export function SuccessView(props: {
         </h2>
         <p class="bk-success__lead">
           {firstName ? `Thank you, ${firstName}. ` : 'Thank you. '}
-          We have your request for {d.date ? formatLong(d.date) : 'your date'}.
+          We have your request for {d.date ? formatLongKept(d.date) : 'your date'}.
         </p>
         <div class="bk-ref">
           <span class="bk-ref__label">Your reference</span>
@@ -68,7 +69,8 @@ export function SuccessView(props: {
         </div>
       </div>
 
-      {props.demo && (
+      {/* Build-time gate first, so the production bundle carries none of this. */}
+      {isDemo && props.demo && (
         <div class="bk-demo-note">
           <Icon name="info" />
           <p>
@@ -83,16 +85,16 @@ export function SuccessView(props: {
             Your request
           </h3>
           <dl class="list-group bk-list bk-dl">
-            {rows.map(([k, v]) => (
+            {rows.map(([k, v, money]) => (
               <div class="bk-dl__row" key={k}>
                 <dt>{k}</dt>
-                <dd class={k === 'Estimated total' ? 'num' : undefined}>{v}</dd>
+                <dd class={money ? 'num' : undefined}>{v}</dd>
               </div>
             ))}
           </dl>
           <details class="bk-details">
             <summary>See the Estimate</summary>
-            <EstimateView est={created.estimate} date={d.date} today={props.today} />
+            <EstimateView est={created.estimate} />
           </details>
         </section>
 
@@ -106,7 +108,7 @@ export function SuccessView(props: {
                 1
               </span>
               <span>
-                <strong>We review your request.</strong> We check the calendar and your details.
+                <strong>We confirm availability.</strong> We check the calendar and your details.
               </span>
             </li>
             <li>
@@ -122,7 +124,10 @@ export function SuccessView(props: {
                 3
               </span>
               <span>
-                <strong>Your date is reserved.</strong> Once the booking deposit is paid, the date is yours.
+                <strong>Your booking deposit reserves the date.</strong>{' '}
+                {pay.full
+                  ? `Your event is soon, so the deposit is the full ${formatUSD(pay.reserve)}.`
+                  : `For this estimate, that is ${formatUSD(pay.reserve)}.`}
               </span>
             </li>
           </ol>

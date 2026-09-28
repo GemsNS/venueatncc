@@ -3,8 +3,9 @@ import type { Ref } from 'preact';
 import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
 import { site } from '../../data/site';
-import { addHours, formatLong, formatTime } from '../../shared/dates';
-import { guestsLabel, hoursLabel, spaceLabel, telHref } from './lib';
+import { isDemo } from '../../lib/env';
+import { addHours, formatTime } from '../../shared/dates';
+import { formatLongKept, guestsLabel, hoursLabel, spaceLabel, telHref } from './lib';
 import type { Draft, Step } from './wizard';
 
 const PREF_LABEL = { email: 'Email', phone: 'Phone call', text: 'Text message' } as const;
@@ -38,12 +39,14 @@ export function StepReview(props: {
   onEdit: (step: Step) => void;
   honeypot: Ref<HTMLInputElement>;
   submitError: string | null;
+  /** The server turned the request away for sending too many; retrying will not help for a while. */
+  rateLimited?: boolean;
   onRetry: () => void;
   sending: boolean;
 }) {
   const { d } = props;
   const rows1: [string, string][] = [
-    ['Date', d.date ? formatLong(d.date) : 'Not chosen'],
+    ['Date', d.date ? formatLongKept(d.date) : 'Not chosen'],
     ['Time', `${formatTime(d.startTime)} to ${formatTime(addHours(d.startTime, d.hours))} (${hoursLabel(d.hours)})`],
     ['Space', spaceLabel(d.space)],
     ['Guests', guestsLabel(d.guests)],
@@ -68,8 +71,16 @@ export function StepReview(props: {
       <Group title="Contact" step={3} onEdit={props.onEdit} rows={rows3} />
 
       <p class="bk-review__fine">
-        This is a request, not a booking yet. We follow up to confirm the date and details, then your date is reserved for you.
+        This is a request, not a booking yet. We confirm availability, then your booking deposit reserves the date.
       </p>
+
+      {/* Build-time gate, so the production bundle carries none of this. */}
+      {isDemo && (
+        <div class="bk-demo-note">
+          <Icon name="info" />
+          <p>This is a demo. Your request stays in this browser and nothing is sent.</p>
+        </div>
+      )}
 
       <div class="bk-hp" aria-hidden="true">
         <label for="bk-website">Leave this field empty</label>
@@ -84,13 +95,17 @@ export function StepReview(props: {
           </div>
           <p>{props.submitError}</p>
           <p>
-            Your details are saved on this page. Try again, or call us and we will take your request by phone.
+            {props.rateLimited
+              ? 'Your details are saved on this page.'
+              : 'Your details are saved on this page. Try again, or call us and we will take your request by phone.'}
           </p>
           <div class="btn-row">
-            <button type="button" class="btn btn--filled" onClick={props.onRetry} disabled={props.sending}>
-              Try Again
-            </button>
-            <a class="btn btn--gray" href={telHref(site.contact.phoneE164)}>
+            {!props.rateLimited && (
+              <button type="button" class="btn btn--filled" onClick={props.onRetry} disabled={props.sending}>
+                Try Again
+              </button>
+            )}
+            <a class={props.rateLimited ? 'btn btn--filled' : 'btn btn--gray'} href={telHref(site.contact.phoneE164)}>
               <Icon name="phone" />
               Call {site.contact.phone}
             </a>

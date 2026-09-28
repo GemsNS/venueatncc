@@ -20,11 +20,15 @@ const WEEKDAYS: [string, string][] = [
   ['S', 'Saturday'],
 ];
 
-const STATUS_WORD: Record<DayStatus, string> = {
+/** A day's status, plus 'later' for days past the latest date the venue takes requests for. */
+export type CalStatus = DayStatus | 'later';
+
+const STATUS_WORD: Record<CalStatus, string> = {
   open: 'open',
   partial: 'partly booked',
   booked: 'booked',
   past: 'past',
+  later: 'not open for requests yet',
 };
 
 const monthTitle = (ym: YM) =>
@@ -44,6 +48,8 @@ export interface CalendarProps {
   min: YM;
   max: YM;
   today: DateKey;
+  /** The last day that can be requested; later days in the last month show as unavailable. */
+  lastDate?: DateKey;
   selected: DateKey | '';
   onSelect: (date: DateKey) => void;
   /** Status for a date, or undefined while it loads. */
@@ -53,11 +59,13 @@ export interface CalendarProps {
   onRetry: () => void;
   describedBy?: string;
   /** Called when someone picks a day that cannot be booked. */
-  onUnavailable?: (date: DateKey, status: DayStatus) => void;
+  onUnavailable?: (date: DateKey, status: CalStatus) => void;
 }
 
 export function Calendar(props: CalendarProps) {
-  const { view, min, max, today, selected, statusOf } = props;
+  const { view, min, max, today, selected } = props;
+  const statusOf = (k: DateKey): CalStatus | undefined =>
+    k < today ? 'past' : props.lastDate && k > props.lastDate ? 'later' : props.statusOf(k);
   const gridRef = useRef<HTMLTableElement>(null);
   const wantFocus = useRef(false);
 
@@ -131,8 +139,8 @@ export function Calendar(props: CalendarProps) {
 
   const choose = (k: DateKey) => {
     setFocus(k);
-    const st = k < today ? 'past' : statusOf(k);
-    if (st === 'past' || st === 'booked') {
+    const st = statusOf(k);
+    if (st === 'past' || st === 'booked' || st === 'later') {
       props.onUnavailable?.(k, st);
       return;
     }
@@ -204,10 +212,10 @@ export function Calendar(props: CalendarProps) {
             <tr key={wi}>
               {week.map((k, di) => {
                 if (!k) return <td key={`e${di}`} class="bk-cal__empty" />;
-                const st: DayStatus | undefined = k < today ? 'past' : statusOf(k);
+                const st = statusOf(k);
                 const isSel = k === selected;
                 const isToday = k === today;
-                const disabled = st === 'past' || st === 'booked';
+                const disabled = st === 'past' || st === 'booked' || st === 'later';
                 const label = [formatLong(k), st ? STATUS_WORD[st] : '', isSel ? 'selected' : ''].filter(Boolean).join(', ');
                 return (
                   <td key={k}>

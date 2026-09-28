@@ -8,7 +8,7 @@ import { capacityError } from '../../shared/capacity';
 import { formatShort } from '../../shared/dates';
 import { fieldErrors, inquiryInputSchema } from '../../shared/schemas';
 import type { AvailabilityDay, ContactPreference, DateKey, InquiryInput, SpaceChoice } from '../../shared/types';
-import { HOURS_MAX, HOURS_MIN, parseDate, parseIntIn, parseSpace, spaceLabel } from './lib';
+import { HOURS_MAX, HOURS_MIN, TOO_LATE_MESSAGE, latestBookableDate, parseDate, parseIntIn, parseSpace, spaceLabel } from './lib';
 
 export type Step = 1 | 2 | 3 | 4;
 
@@ -96,7 +96,7 @@ export function restoreDraft(saved: unknown): Draft | null {
 export function applySearch(draft: Draft, params: URLSearchParams, today: DateKey): Draft {
   const next = { ...draft };
   const date = parseDate(params.get('date'));
-  if (date && date >= today) next.date = date;
+  if (date && date >= today && date <= latestBookableDate(today)) next.date = date;
   const space = parseSpace(params.get('space'));
   if (space) {
     next.space = space;
@@ -195,6 +195,7 @@ export function validate(d: Draft, steps: Step[], ctx: ValidationContext): Recor
   if (want('date')) {
     if (!d.date) out.date = 'Choose a date.';
     else if (d.date < ctx.today) out.date = 'Choose a date from today on.';
+    else if (d.date > latestBookableDate(ctx.today)) out.date = TOO_LATE_MESSAGE;
     else if (ctx.day?.status === 'booked') out.date = 'That date is booked. Choose another date.';
   }
   if (want('space') && d.date && ctx.day && ctx.day.status !== 'booked' && !spaceIsFree(ctx.day, d.space)) {
