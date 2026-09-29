@@ -3,12 +3,11 @@ import type { Ref } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
-import { site } from '../../data/site';
 import { isDemo } from '../../lib/env';
 import { href } from '../../lib/paths';
 import { formatUSD, pricing } from '../../shared/pricing';
 import type { InquiryCreated } from '../../shared/types';
-import { formatLongKept, guestsLabel, spaceLabel, telHref } from './lib';
+import { formatLongKept, guestsLabel, spaceLabel } from './lib';
 import { EstimateView, payment } from './ui';
 import type { Draft } from './wizard';
 
@@ -124,17 +123,12 @@ export function SuccessView(props: {
                 3
               </span>
               <span>
-                <strong>Your booking deposit reserves the date.</strong>{' '}
-                {pay.full
-                  ? `Your event is within ${pricing.bookingDeposit.balanceDueDaysBefore} days, so the full ${formatUSD(pay.reserve)} reserves the date.`
-                  : `For this estimate, that is ${formatUSD(pay.reserve)}.`}
+                <strong>Your booking deposit reserves the date.</strong>
+                {pay.full &&
+                  ` Your event is within ${pricing.bookingDeposit.balanceDueDaysBefore} days, so the full ${formatUSD(pay.reserve)} reserves the date.`}
               </span>
             </li>
           </ol>
-          <p class="bk-success__contact secondary">
-            Questions? Call <a href={telHref(site.contact.phoneE164)}>{site.contact.phone}</a> or email{' '}
-            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
-          </p>
         </section>
       </div>
 

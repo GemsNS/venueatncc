@@ -83,25 +83,25 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
   'hall-fireplace.jpg': {
     alt: 'The Hall toward its arched windows, with the dark fireplace feature wall on the right, double doors on the left, and a wide expanse of dark wood-look floor',
-    caption: 'The open floor of The Hall',
+    caption: 'The open floor and the fireplace wall',
     tags: ['indoor'],
     space: 'hall',
   },
   'hall-doors.jpg': {
     alt: 'The Hall toward its white double doors, with a large wall-mounted screen on the left, two arched windows, and recessed ceiling lights',
-    caption: 'The double doors in The Hall',
+    caption: 'The double doors and arched windows',
     tags: ['indoor'],
     space: 'hall',
   },
   'grove-tables.jpg': {
     alt: 'The Grove: rows of wooden picnic tables on a paved patio in front of a timber gazebo, under tall pines',
-    caption: 'Picnic tables and the gazebo in The Grove',
+    caption: 'Picnic tables and the gazebo',
     tags: ['outdoor', 'space'],
     space: 'grove',
   },
   'gazebo.jpg': {
     alt: 'The timber gazebo in The Grove, with a dark metal roof and wooden railings, in front of tall trees',
-    caption: 'The gazebo in The Grove',
+    caption: 'The gazebo',
     tags: ['outdoor'],
     space: 'grove',
   },
@@ -113,7 +113,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
   'approach-dusk.jpg': {
     alt: 'A long paved drive curving past a mown lawn toward the venue building at dusk, with a wall of tall pines behind',
-    caption: 'The drive and lot at dusk',
+    caption: 'The drive at dusk',
     tags: ['arrival', 'parking'],
     space: 'grounds',
   },
@@ -134,7 +134,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     space: 'grove',
   },
   'styled-event-receptions-banquets.jpg': {
-    alt: 'Styled concept: The Hall set for a reception, with round tables in ivory linens, natural wood chairs, low ivory and peach centerpieces, and a head table under the arched windows',
+    alt: 'Styled concept: The Hall set for a banquet, with round tables in ivory linens, natural wood chairs, low ivory and peach centerpieces, and a head table under the arched windows',
     styledOf: 'hall-windows.jpg',
     event: 'receptions-banquets',
     space: 'hall',

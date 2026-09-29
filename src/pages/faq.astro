@@ -36,11 +36,7 @@ const photo = photoByName('grove-path');
       <div class="page-hero__grid">
         <div class="page-hero__copy">
           <h1 class="t-large-title">Frequently asked questions</h1>
-          <p class="t-lead">
-            Answers to the questions we hear most about the spaces, rates, and booking. For anything else, call
-            {' '}<a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or email
-            {' '}<a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
-          </p>
+          <p class="t-lead">Answers to the questions we hear most about the spaces, rates, and booking.</p>
         </div>
         {photo && <Photo photo={photo} class="page-hero__photo" ratio="8 / 5" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>

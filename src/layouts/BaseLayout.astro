@@ -23,7 +23,7 @@ interface Props {
   title: string;
   /** Meta description. Aim for 140 to 160 characters. */
   description?: string;
-  /** Share image key from /og/<key>.png. */
+  /** Share image key from /og/<key>.jpg. */
   og?: string;
   /** Share image description. Defaults to the text on the share card. */
   ogAlt?: string;
@@ -63,7 +63,7 @@ const {
 const canonical = abs(path);
 const withCanonical = !isDemo && !noindex;
 // Share images must resolve where the page is actually hosted.
-const ogImage = new URL(href(`/og/${og}.png`), Astro.site).href;
+const ogImage = new URL(href(`/og/${og}.jpg`), Astro.site).href;
 
 const hero = heroPhoto();
 const venueImages: string[] = [];
@@ -72,12 +72,11 @@ if (hero) {
   venueImages.push(abs(withoutBase(img.src)));
 }
 
-const jsonLd = graph(
-  venue(venueImages, { details: venueDetails }),
-  website(),
-  webPage({ path, title, description, type: pageType }),
-  ...schema,
-);
+// Noindex pages (404, admin) carry no structured data: the 404 page has no URL of its own for a WebPage
+// node, and the admin is not a public page about the venue.
+const jsonLd = noindex
+  ? null
+  : graph(venue(venueImages, { details: venueDetails }), website(), webPage({ path, title, description, type: pageType }), ...schema);
 const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : undefined;
 ---
 <!doctype html>
@@ -111,6 +110,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <meta property="og:description" content={description} />
     {withCanonical && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={ogAlt} />
@@ -125,7 +125,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <meta name="geo.position" content={`${site.address.geo.lat};${site.address.geo.lng}`} />
     <meta name="ICBM" content={`${site.address.geo.lat}, ${site.address.geo.lng}`} />
 
-    <JsonLd data={jsonLd} />
+    {jsonLd && <JsonLd data={jsonLd} />}
     <slot name="head" />
   </head>
   <body class:list={{ 'is-bare': bare }}>

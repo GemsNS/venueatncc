@@ -23,9 +23,10 @@ interface Props {
   only?: string[];
   headingLevel?: 'h2' | 'h3';
   /**
-   * 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px
-   * (text tiles are short, so a text shelf is a plain grid at every width); 'trio' is three tiles in one row from
-   * 48rem and one column below.
+   * 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 3-column grid from
+   * 56.25rem (900px at the default text size) and a 4-column grid from 75rem (text tiles are short, so a text
+   * shelf is a plain grid at every width); 'trio' is three tiles in one row from 48rem and one column below.
+   * The breakpoints are in rem, so larger text keeps the swiping shelf instead of squeezing four columns.
    */
   layout?: 'grid' | 'shelf' | 'trio';
   /**
@@ -53,7 +54,7 @@ const withPhotos = eventsStaged && tilePhotos.every((p) => p?.styledOf !== undef
 const prefix = uid('event');
 const sizes =
   layout === 'shelf'
-    ? '(min-width: 75rem) 290px, (min-width: 900px) 24vw, min(78vw, 300px)'
+    ? '(min-width: 75rem) 290px, (min-width: 56.25rem) 31vw, min(78vw, 300px)'
     : layout === 'trio'
       ? '(min-width: 75rem) 390px, (min-width: 48rem) 31vw, 92vw'
       : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
@@ -110,10 +111,11 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
     list-style: none;
   }
 
+  /* The minimum is in rem (280px at the default text size), so larger text gets fewer, wider tiles. */
   .events--grid {
     display: grid;
     gap: 1.25rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
   }
 
   .events--trio {
@@ -133,7 +135,8 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
   .events--shelf.events--photos {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: min(78%, 300px);
+    /* 300px at the default text size; wider with larger text, so names such as "anniversaries" stay whole. */
+    grid-auto-columns: min(78%, 18.75rem);
     gap: 1rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -159,17 +162,26 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
     scroll-snap-align: start;
   }
 
-  /* Wide screens have room for every card: no hidden overflow, no clipped shadows. */
-  @media (min-width: 900px) {
+  /*
+    Wide screens have room for every card: no hidden overflow, no clipped shadows. Three columns match
+    /events/, so a tile is never narrower here than on the events page; four from 75rem.
+  */
+  @media (min-width: 56.25rem) {
     .events--shelf.events--photos {
       grid-auto-flow: row;
       grid-auto-columns: auto;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1.25rem;
       overflow: visible;
       scroll-snap-type: none;
       margin-inline: 0;
       padding: 0;
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .events--shelf.events--photos {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
@@ -187,7 +199,7 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
     }
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 56.25rem) {
     .events--shelf.events--text {
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 1.25rem;
@@ -218,6 +230,21 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
 
   .event-card:focus-visible {
     border-radius: var(--r-lg);
+  }
+
+  /* A photo tile measures itself, so the Styled Concept badge can step down on a narrow tile. */
+  .events--photos .event-card {
+    container-type: inline-size;
+  }
+
+  @container (width < 260px) {
+    .event-card :global(.photo__badge) {
+      top: 0.5rem;
+      left: 0.5rem;
+      min-height: 24px;
+      padding: 0.2rem 0.55rem;
+      font-size: var(--t-caption);
+    }
   }
 
   .event-card__body {

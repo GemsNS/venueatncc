@@ -170,6 +170,8 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     backdrop-filter: blur(12px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.28);
+    /* With very large text on a narrow frame the label wraps inside the pill instead of running off the photo. */
+    max-width: calc(100% - 1.5rem);
     color: var(--on-navy);
     font-size: var(--t-footnote);
     font-weight: 600;

@@ -934,6 +934,24 @@ button.bk-progress__item:hover {
   color: var(--label-2);
 }
 
+/*
+  Where the step chips show, the active chip already says which step this is, so the count is read by
+  screen readers only.
+*/
+@media (min-width: 900px) {
+  .bk-step-count {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
 .bk-step-title {
   font-size: var(--t-title-2);
   line-height: 1.18;
@@ -1720,10 +1738,6 @@ button.bk-progress__item:hover {
   font-weight: 700;
 }
 
-.bk-success__contact {
-  padding: 4px 16px 0;
-  font-size: var(--t-subhead);
-}
 
 .bk-demo-note {
   display: flex;
@@ -1837,9 +1851,10 @@ html:not(.js) .bk-skel {
   pointer-events: none;
 }
 
+/* The padding is sized from the icon (1.25em), so the icon clears the text at any text size. */
 .bk-dc__input {
   position: relative;
-  padding-left: 46px;
+  padding-left: calc(14px + 1.25em + 0.65rem);
 }
 
 /*
@@ -2042,6 +2057,14 @@ html:not(.js) .bk-skel {
 .bk-dc__cta,
 .bk-pe__cta {
   width: 100%;
+}
+
+/* 200% text on a phone: the trailing arrow steps aside so the label keeps its words together. */
+@media (width < 20rem) {
+  .bk-dc__cta .icon,
+  .bk-pe__cta .icon {
+    display: none;
+  }
 }
 
 /* ---------- Price estimator ---------- */

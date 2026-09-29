@@ -92,7 +92,7 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
             full
           />
           <p class="field__hint" id="bk-pe-space-hint">
-            {space === 'both' ? `Both spaces. ${SPACE_HINT.both}.` : `${spaceLabel(space)}. ${SPACE_HINT[space]}.`}
+            {`${SPACE_HINT[space]}.`}
           </p>
         </div>
 

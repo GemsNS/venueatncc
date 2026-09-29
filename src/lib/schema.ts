@@ -18,7 +18,7 @@ const ratesId = `${site.url}/pricing/#rates`;
  * Share images that stand for the venue as a whole: the building at blue hour and The Hall.
  * Fixed paths rather than hashed assets, so the URLs in structured data stay stable between builds.
  */
-const VENUE_SHARE_IMAGES = ['/og/home.png', '/og/the-space.png'];
+const VENUE_SHARE_IMAGES = ['/og/home.jpg', '/og/the-space.jpg'];
 
 /**
  * Words and phrases the brand keeps out of public copy (docs/design/brand.md, Voice). Structured data and
@@ -251,7 +251,7 @@ export function rateCatalog() {
           {
             '@type': 'Offer',
             name: 'Cleaning fee',
-            description: 'Charged once per event.',
+            description: 'Per event, added to every booking.',
             price: pricing.fees.cleaning,
             priceCurrency: pricing.currency,
             offeredBy,

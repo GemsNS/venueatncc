@@ -32,7 +32,9 @@ const groveName = grove?.name ?? 'The Grove';
 
 /*
   The two spaces: the teaser for The Space, which carries the full description. Each card shows its space's
-  primary real photo, its capacity (the only capacity on this page), one sentence, and a link.
+  primary real photo, its capacity (the only capacity on this page), one sentence on what the space is (the
+  hero lead already says which is indoors and which is outdoors, and the event tiles below say what each
+  hosts), and a link.
 */
 interface SpaceCard {
   id: 'hall' | 'grove';
@@ -47,7 +49,7 @@ const spaceCards: SpaceCard[] = [
     id: 'hall',
     name: hallName,
     capacity: hall?.capacity,
-    sentence: 'Our indoor space: an open room for receptions, banquets, showers, and meetings.',
+    sentence: 'Arched windows, a fireplace feature wall, and dark wood-look floors.',
     photo: photosFor('hall')[0],
     href: '/the-space/#hall',
   },
@@ -55,7 +57,7 @@ const spaceCards: SpaceCard[] = [
     id: 'grove',
     name: groveName,
     capacity: grove?.capacity,
-    sentence: 'Our outdoor space among tall pines, for ceremonies, reunions, and community gatherings.',
+    sentence: 'A timber gazebo and picnic tables on a paved patio under tall pines.',
     photo: photosFor('grove')[0],
     href: '/the-space/#grove',
   },
@@ -112,7 +114,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     <div class="container">
       <div class="section-head">
         <h2 id="spaces-heading">Two spaces, one address</h2>
-        <p class="t-lead">Choose {hallName}, {groveName}, or request both for the same event.</p>
       </div>
       <div class="spaces">
         {
@@ -203,8 +204,12 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   .hero {
     --hero-h: min(88svh, 56rem);
     --checker-w: 23.75rem;
-    /* Where the photo is cropped: the lit entry and the cross sit right of center. */
-    --photo-pos: 50% 62%;
+    /*
+      Where the photo is cropped. From 64rem the whole width of the building shows and the date checker
+      floats over the gable at the right. The crop sits high in the photo, so the building sits low in the
+      frame and the gable's cross stays behind the checker instead of rising above its top edge.
+    */
+    --photo-pos: 50% 15%;
     display: grid;
     grid-template-columns:
       [full-start] minmax(var(--gutter), 1fr)
@@ -267,13 +272,17 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     color: var(--on-navy);
   }
 
+  /*
+    Over the photo the kicker is white: Mist falls near 3:1 over the lit roof on wide screens. On the
+    phone's solid Navy panel it takes the Mist accent (7.5:1), below.
+  */
   .hero__kicker {
     font-family: var(--font);
     font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: normal;
-    color: var(--on-navy-accent);
+    color: var(--on-navy);
     text-shadow: 0 1px 2px rgb(var(--navy-rgb) / 0.6);
   }
 
@@ -315,10 +324,14 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     margin-inline: auto;
   }
 
-  /* The copy spans the width here, so the scrim rises from the bottom only. */
+  /*
+    The copy spans the width here, so the scrim rises from the bottom only. The frame is narrower than the
+    photo, so the crop keeps the lit entry and the lawn and leaves the gable and its cross outside the frame
+    (brand.md, Separation): left of center, and further left as the frame widens.
+  */
   @media (width < 64rem) {
     .hero {
-      --photo-pos: 72% 50%;
+      --photo-pos: 28% 58%;
     }
 
     .hero__scrim {
@@ -330,6 +343,12 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
         rgb(var(--navy-rgb) / 0.18) 75%,
         rgb(var(--navy-rgb) / 0) 90%
       );
+    }
+  }
+
+  @media (56rem <= width < 64rem) {
+    .hero {
+      --photo-pos: 4% 58%;
     }
   }
 
@@ -364,6 +383,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     .hero__title,
     .hero__kicker {
       text-shadow: none;
+    }
+
+    .hero__kicker {
+      color: var(--on-navy-accent);
     }
 
     .hero__checker {
@@ -508,14 +531,37 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     font-weight: 600;
   }
 
-  /* The price is right-aligned on every row, also when a long name pushes it onto its own line. */
+  /*
+    The price is right-aligned on every row, also when a long name pushes it onto its own line. "from" and
+    "an hour" never break inside, so with very large text the price wraps between its parts, not mid-phrase.
+  */
   .rates__price {
     display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     align-items: baseline;
     gap: 0.4rem;
     margin: 0 0 0 auto;
     color: var(--label-2);
     font-size: var(--t-subhead);
+  }
+
+  .rates__from,
+  .rates__unit {
+    white-space: nowrap;
+  }
+
+  /* 200% text on a phone: the price takes its own line under the name, aligned with it, and the note and button use the full width. */
+  @media (width < 20rem) {
+    .rates__price {
+      margin-left: 0;
+      justify-content: flex-start;
+    }
+
+    .rates__action,
+    .rates__note {
+      padding-inline: 0;
+    }
   }
 
   .rates__num {

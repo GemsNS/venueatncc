@@ -198,9 +198,12 @@
     --fill: rgba(169, 214, 229, 0.2);
     --fill-2: rgba(169, 214, 229, 0.13);
     --fill-3: rgba(169, 214, 229, 0.07);
-    /* Chips in translucent Mist with Mist text (at least 5:1 on the page and cards); selected rows likewise. */
+    /*
+      Chips in translucent Mist with Ice text: 6.4:1 on Night, and still 5.6:1 on a hovered or selected
+      row, where Mist text would fall below 4.5:1. Selected rows use the same translucent Mist.
+    */
     --chip: rgba(137, 194, 217, 0.2);
-    --on-chip: var(--mist);
+    --on-chip: var(--ice);
     --selected: rgba(137, 194, 217, 0.16);
     /* Raised controls: Deep Blue sits above the fill track (a card color would sink below it). */
     --thumb: var(--deep-blue);
@@ -742,6 +745,22 @@ main:focus {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+}
+
+/*
+  Very large text on a phone (200%, where 20rem is wider than the screen). A label that wraps reads as a
+  rounded rectangle instead of a tall pill, and buttons in a row take the full width, with tighter side
+  padding, so the words get the whole measure. The query never matches at the default text size.
+*/
+@media (width < 20rem) {
+  .btn {
+    border-radius: var(--r-lg);
+    padding-inline: 0.75rem;
+  }
+
+  .btn-row .btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 479.98px) {

@@ -73,7 +73,7 @@ export const GET: APIRoute = () => {
     '',
     `> ${site.description}`,
     '',
-    `We rent two distinct spaces by the hour in a wooded setting minutes from downtown ${site.address.city}, and we confirm every booking personally.`,
+    `We rent two distinct spaces by the hour in a wooded setting on Godwin Boulevard in north ${site.address.city}, and we confirm every booking personally.`,
     '',
     '## The spaces',
     '',
@@ -88,7 +88,7 @@ export const GET: APIRoute = () => {
       (s) => `- ${spaceName(s)}: ${days.map((d) => `${pricing.dayTypes[d].label} ${formatUSD(pricing.hourly[s][d])}`).join(', ')} per hour`,
     ),
     `- Minimum hours: ${days.map((d) => `${pricing.dayTypes[d].label} ${pricing.minimumHours[d]}`).join(', ')}`,
-    ...(pricing.fees.cleaning > 0 ? [`- Cleaning fee: ${formatUSD(pricing.fees.cleaning)} per event, on every booking`] : []),
+    ...(pricing.fees.cleaning > 0 ? [`- Cleaning fee: ${formatUSD(pricing.fees.cleaning)} per event, added to every booking`] : []),
     ...(pricing.fees.damageDepositRefundable > 0
       ? [`- Refundable damage deposit: ${formatUSD(pricing.fees.damageDepositRefundable)}, returned after the event if there is no damage`]
       : []),
@@ -125,7 +125,7 @@ export const GET: APIRoute = () => {
     '## Events we host',
     '',
     ...eventList.map((e) => `- [${e.name}](${u(`/events/${e.slug}/`)}): ${e.summary}`),
-    `- Another kind of event: describe it in your request, and we will confirm whether ${spaceName('indoor')} or ${spaceName('outdoor')} suits it.`,
+    '- Another kind of event: describe it in your request, and we will confirm which space suits it.',
     '',
     ...(faqs.length > 0 ? ['## Questions and answers', '', ...faqs.flatMap((f) => [`### ${f.q}`, '', f.a, ''])] : []),
   ];

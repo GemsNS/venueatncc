@@ -221,7 +221,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
     notes.push(
       payInFull
         ? `Your event is within ${model.bookingDeposit.balanceDueDaysBefore} days, so the full amount is due when you reserve.`
-        : `The balance of ${formatUSD(total - bookingDeposit)} is due ${model.bookingDeposit.balanceDueDaysBefore} days before your event.`,
+        : `Balance due ${model.bookingDeposit.balanceDueDaysBefore} days before your event.`,
     );
   }
   notes.push('This is an estimate. We confirm your final quote.');

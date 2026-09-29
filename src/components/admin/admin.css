@@ -281,6 +281,12 @@ body.is-bare {
   letter-spacing: -0.005em;
 }
 
+/* "at NCC" in italic at a smaller size, as in the lockup. */
+.adm-sidebar__at {
+  font-style: italic;
+  font-size: 0.8em;
+}
+
 .adm-sidebar__role {
   font-size: var(--t-footnote);
   color: var(--label-2);
@@ -1519,9 +1525,11 @@ body.is-bare {
   color: var(--label-2);
 }
 
+/* Today: an accent ring as well as the accent numeral, so it stands out from past days by shape, not color alone. */
 .adm-day[aria-current='date'] .adm-day__num {
   color: var(--accent-text);
   font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--accent-text);
 }
 
 .adm-day.is-selected .adm-day__num {
@@ -2139,4 +2147,18 @@ body.is-bare {
 /* Meta segments (a date, a guest count) never break inside. */
 .adm-nowrap {
   white-space: nowrap;
+}
+
+/*
+  200% text on a phone: meta segments wrap inside the row instead of running past the card, and the date
+  tile steps aside (the meta line carries the same date) so event names keep whole words.
+*/
+@media (width < 20rem) {
+  .adm-nowrap {
+    white-space: normal;
+  }
+
+  .adm-row > .adm-datetile {
+    display: none;
+  }
 }

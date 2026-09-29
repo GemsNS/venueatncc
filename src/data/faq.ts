@@ -8,10 +8,12 @@
  * Catering is mentioned in exactly one entry, "Is catering provided?". It is shown on /faq/ only:
  * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
- * Each answer says a fact once. Parking and the cleaning fee live in "What is included in the rental?".
- * The 'pricing' group is the question form of /pricing/, which states rates, deposits, and fees in full
- * and does not repeat these questions. How booking works is said by the closing band on each page, so
- * the availability answer only points to the calendar and the phone.
+ * Each answer says a fact once. Parking lives in "What is included in the rental?". The 'pricing' group is
+ * the question form of /pricing/, which states rates, deposits, the balance, and fees in full (Rental terms
+ * and Fees) and does not repeat these questions; the deposit answer gives the headline and points there
+ * instead of copying the paragraph (brand.md, Redundancy rules). How booking works is said by the closing
+ * band on each page, so the availability answer only points to the calendar. The phone is in the visit
+ * answer and the footer.
  */
 import { site, fullAddress } from './site';
 import { pricing, priceSummary, formatUSD } from '../shared/pricing';
@@ -29,24 +31,22 @@ const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const deposit =
   pricing.bookingDeposit.type === 'percent'
-    ? `a booking deposit of ${pricing.bookingDeposit.value}% of your total`
-    : `a booking deposit of ${formatUSD(pricing.bookingDeposit.value)}`;
-const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
-const balance =
-  balanceDays > 0
-    ? ` The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
-    : '';
-const damage =
-  pricing.fees.damageDepositRefundable > 0
-    ? ` A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event if there is no damage.`
-    : '';
-const cleaning = pricing.fees.cleaning > 0 ? ` A cleaning fee of ${formatUSD(pricing.fees.cleaning)} applies to each event.` : '';
+    ? `A ${pricing.bookingDeposit.value}% booking deposit`
+    : `A booking deposit of ${formatUSD(pricing.bookingDeposit.value)}`;
+/** What the pricing page adds to the deposit answer, named only when the rate card has it. */
+const pricingDetails = [
+  pricing.bookingDeposit.balanceDueDaysBefore > 0 ? 'the balance terms' : null,
+  pricing.fees.damageDepositRefundable > 0 ? 'the refundable damage deposit' : null,
+  'every fee',
+].filter((d): d is string => d !== null);
+const andList = (items: string[]) =>
+  items.length <= 2 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 
 export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'How do I check if my date is available?',
-    a: `Use the availability calendar on our booking page to see open dates for ${hall?.name} and ${grove?.name}, or call ${phone}.`,
+    a: `Use the availability calendar on our booking page to see open dates for ${hall?.name} and ${grove?.name}.`,
   },
   {
     topic: 'booking',
@@ -76,7 +76,7 @@ export const faqs: Faq[] = [
   {
     topic: 'space',
     q: 'Is catering provided?',
-    a: 'Food service is arranged separately.',
+    a: 'No. You arrange food service separately.',
   },
   {
     topic: 'pricing',
@@ -86,12 +86,12 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
-    a: `Once we confirm availability, ${deposit} reserves the date.${balance}${damage}`,
+    a: `${deposit} reserves your date once we confirm availability. The pricing page lists ${andList(pricingDetails)}.`,
   },
   {
     topic: 'pricing',
     q: 'What is included in the rental?',
-    a: `Every rental includes the space you book and on-site parking.${cleaning}`,
+    a: 'Every rental includes the space you book and on-site parking.',
   },
   {
     topic: 'about',
@@ -101,7 +101,7 @@ export const faqs: Faq[] = [
   {
     topic: 'about',
     q: 'What kinds of events can I host?',
-    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and community events. For another kind of event, please call us to discuss it.',
+    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and community events. For another kind of event, describe it in your request, and we will confirm which space suits it.',
   },
   // To answer, then publish:
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },

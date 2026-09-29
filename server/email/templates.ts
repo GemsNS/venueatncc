@@ -212,6 +212,8 @@ function button(href: string, label: string): string {
 // ---------------------------------------------------------------- plain text helpers
 
 const textRows = (rows: [string, string][]) => rows.map(([k, v]) => `${k}: ${continued(v)}`).join(NL);
+/** A plain-text section heading: sentence case over a hyphen rule, never all caps (brand.md). */
+const textHeading = (label: string) => `${label}${NL}${'-'.repeat(label.length)}`;
 
 function estimateText(est: Estimate): string {
   return [
@@ -292,15 +294,15 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     `${name} sent a request through the website. Reply to this email to answer them directly.`,
     ...(ctx.conflict ? ['', `Calendar conflict: ${ctx.conflict}`] : []),
     '',
-    'EVENT',
+    textHeading('Event'),
     textRows(detailRows),
     '',
-    'CONTACT',
+    textHeading('Contact'),
     textRows(contactRows),
     // The guest's own words, indented so no line can pass for one of ours.
-    ...(i.message ? ['', 'MESSAGE', `    ${continued(i.message)}`] : []),
+    ...(i.message ? ['', textHeading('Message'), `    ${continued(i.message)}`] : []),
     '',
-    'ESTIMATE SHOWN TO THE GUEST',
+    textHeading('Estimate shown to the guest'),
     estimateText(est),
     ...est.notes.map((n) => `* ${n}`),
     '',
@@ -329,7 +331,8 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     ...(i.wantsVisit ? ['We will find a time for your visit to see the space.'] : []),
     reserveStep(est),
   ];
-  const intro = `We received your request for ${formatLong(i.date)}. Your date is not reserved yet. We will be in touch to confirm availability.`;
+  // The steps below say who confirms and how, so the intro does not.
+  const intro = `We received your request for ${formatLong(i.date)}. Your date is not reserved yet.`;
   const thanks = 'Thank you for your request.';
 
   const body = [
@@ -359,17 +362,17 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     `Reference: ${i.reference}`,
     'Mention this reference when you call or write to us.',
     '',
-    'YOUR REQUEST',
+    textHeading('Your request'),
     textRows(eventRows(i, 'guest')),
     '',
-    'YOUR ESTIMATE',
+    textHeading('Your estimate'),
     estimateText(est),
     ...est.notes.map((n) => `* ${n}`),
     '',
-    'WHAT HAPPENS NEXT',
+    textHeading('What happens next'),
     ...steps.map((s, n) => `${n + 1}. ${s}`),
     '',
-    'QUESTIONS',
+    textHeading('Questions'),
     QUESTIONS,
     '',
     footerText(ctx.origin),

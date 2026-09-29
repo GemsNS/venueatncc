@@ -26,7 +26,10 @@
  *   an event's copy, and the street address never does (the footer carries it).
  * - Never type a price or a percentage. Rates live in src/shared/pricing.ts; build the sentence from
  *   `pricing` as the special-rate sentences below do.
- * - Checklists hold practical venue steps only: date, space, guest count, estimate, visit, timeline.
+ * - Checklists hold practical venue steps only: date, space, guest count, budget, visit, timeline.
+ * - The instant estimate is named once by the page's shared line and once by the closing band, and the
+ *   visit is carried by the checklist item and the Request a Visit button, so neither is written into the
+ *   intro or section prose. Intros open with something true of the occasion, not a promise about booking.
  */
 import { site, type SpaceId } from './site';
 import { pricing } from '../shared/pricing';
@@ -97,7 +100,6 @@ export const events: EventType[] = [
     h1: 'A Suffolk wedding venue among the pines',
     intro: [
       `Say your vows at the timber gazebo in ${GROVE}, then welcome guests into ${HALL} for the reception, all on one wooded property in Suffolk.`,
-      `We confirm every date personally, and we welcome you to visit before you book, so you can stand at the gazebo, walk into ${HALL}, and picture the day.`,
     ],
     sections: [
       {
@@ -119,9 +121,8 @@ export const events: EventType[] = [
       heading: 'Wedding venue checklist',
       items: [
         'Set a budget and a working guest count.',
-        `Choose ${GROVE} for the ceremony, ${HALL} for the reception, or reserve both.`,
         'Compare two or three dates on the availability calendar.',
-        'Get an instant estimate for each date on the pricing page.',
+        'Build the timeline of the day backward from the ceremony time.',
         'Visit the property before you reserve.',
         'Plan a weather option for any part of the day outdoors.',
         'Confirm your final guest count and order of the day a few weeks ahead.',
@@ -155,8 +156,8 @@ export const events: EventType[] = [
     metaDescription: `Host an anniversary dinner or awards banquet at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and on-site parking is included.`,
     h1: 'Banquets and anniversary dinners in Suffolk',
     intro: [
-      `A formal evening deserves a room with presence. ${HALL} has arched windows and a fireplace feature wall that frames a head table or a speaker.`,
-      'Anniversaries, awards nights, scholarship dinners, and appreciation evenings share a shape: a welcome, dinner, a program, and time to honor people. We confirm every booking personally and will walk the room with you before you reserve.',
+      'A formal evening deserves a room with presence, one that frames a head table or a speaker.',
+      'Anniversaries, awards nights, scholarship dinners, and appreciation evenings share a shape: a welcome, dinner, a program, and time to honor people.',
     ],
     sections: [
       {
@@ -180,7 +181,7 @@ export const events: EventType[] = [
       items: [
         'Confirm the occasion, a few possible dates, and a working guest count.',
         `Choose ${HALL} or ${GROVE} for your guest count.`,
-        'Check your dates on the availability calendar and get an instant estimate.',
+        'Check your dates on the availability calendar.',
         'Visit the space to plan the room and the program.',
         'Write the program with speakers, awards, and timing in order.',
         'Order plaques, certificates, or keepsakes early so they arrive in time.',
@@ -215,8 +216,8 @@ export const events: EventType[] = [
     metaDescription: `Host a baby shower, bridal shower, or gender reveal at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, with on-site parking included.`,
     h1: 'Baby and bridal showers in Suffolk',
     intro: [
-      `${HALL} gives a shower an open, graceful room, with arched windows, a fireplace feature wall, and dark wood-look floors.`,
-      'Showers are usually planned by a friend or relative, often with co-hosts. We keep booking simple: one host sends the request, we confirm the date personally, and the instant estimate gives every co-host the same figure.',
+      `${HALL} gives a shower an open, graceful room for family and friends.`,
+      'Showers are usually planned by a friend or relative, often with co-hosts. One host sends the request and stays our contact, so every decision is made in one place.',
     ],
     sections: [
       {
@@ -241,7 +242,6 @@ export const events: EventType[] = [
         'Agree on a budget with any co-hosts.',
         'Draft a guest list.',
         'Check your date and a backup on the availability calendar.',
-        'Get an instant estimate for the hours you need.',
         'Visit the space to plan where gifts, games, and photos will go.',
         'Plan a simple order for the event, from the welcome to the gifts or the reveal.',
         'Send guests the address and parking details.',
@@ -250,7 +250,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'How long does a baby shower or bridal shower usually last?',
-        a: 'Most showers run about two to three hours. Some days have a minimum number of hours, and the instant estimate on the pricing page shows it for your date.',
+        a: 'Most showers run about two to three hours. Some days have a minimum number of hours, which the pricing page lists by day.',
       },
     ],
     related: ['weddings', 'birthday-parties', 'receptions-banquets'],
@@ -271,7 +271,6 @@ export const events: EventType[] = [
     h1: 'Milestone birthdays and retirement parties',
     intro: [
       'Turning one, sixteen, or fifty deserves a proper room, and so does retiring after decades of work.',
-      'We confirm every booking personally, and you are welcome to visit before you reserve.',
     ],
     sections: [
       {
@@ -295,7 +294,7 @@ export const events: EventType[] = [
         'Pick a first-choice date and a backup, and check both on the availability calendar.',
         'Decide early whether the party is a surprise.',
         `Choose ${HALL} or ${GROVE} for your guest count.`,
-        'Set a budget and get an instant estimate on the pricing page.',
+        'Set a budget and a working guest count.',
         "Visit the space to plan the room and the guest of honor's arrival.",
         'Plan a short run of show for the welcome, speeches, and photos.',
         'Send invitations four to six weeks ahead with the address and parking details.',
@@ -387,8 +386,8 @@ export const events: EventType[] = [
     metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, with on-site parking and instant estimates.`,
     h1: 'Meeting and training space in Suffolk',
     intro: [
-      `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} gives your group a wooded setting minutes from downtown Suffolk.`,
-      'Businesses, nonprofits, schools, and community groups book with the same simple process, and we confirm every booking personally.',
+      `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} gives your group a wooded setting on Godwin Boulevard in north Suffolk.`,
+      'Businesses, nonprofits, schools, and community groups all book the same way.',
     ],
     sections: [
       {
@@ -401,7 +400,7 @@ export const events: EventType[] = [
       {
         heading: 'Before the meeting',
         body: [
-          'Start with the agenda and work backward: what the group needs to finish, how long the session should run, and when to take breaks. A hands-on training needs a different layout than a board meeting where everyone faces each other, so walk the room with us before you book if the layout matters.',
+          'Start with the agenda and work backward: what the group needs to finish, how long the session should run, and when to take breaks. A hands-on training needs a different layout than a board meeting where everyone faces each other.',
           'Most organizers book a few weeks ahead for a single meeting and a season ahead for an annual meeting or a full-day training. A few days before, send attendees the agenda, address, and start time, along with anything they should read first.',
         ],
       },
@@ -412,7 +411,7 @@ export const events: EventType[] = [
         'Write a short agenda with start, break, and end times.',
         'Estimate your headcount.',
         'Check your date on the availability calendar.',
-        'Get an instant estimate on the pricing page for budget approval.',
+        'Get budget approval before you send your request.',
         'Visit the room to plan your layout.',
         'Ask us about any equipment your session needs.',
         'Send attendees the address and start time, and let them know parking is on site.',
@@ -473,7 +472,7 @@ export const events: EventType[] = [
         'Pick a date around the graduation ceremony or the travel plans of most relatives.',
         'Make a working guest count, with a cushion for late additions.',
         `Choose ${GROVE}, ${HALL}, or both for your guest count.`,
-        'Get an instant estimate and decide how the cost will be shared.',
+        'Set a budget with your committee.',
         'Visit the grounds with your committee before you reserve.',
         'Plan a weather option if the day is outdoors.',
         'Send save-the-dates with our address and parking details.',
@@ -532,7 +531,6 @@ export const events: EventType[] = [
         'Write one sentence that explains the purpose of the event and who it is for.',
         'Set a date, a headcount, and a budget.',
         `Choose ${HALL}, ${GROVE}, or both for your headcount.`,
-        'Get an instant estimate on the pricing page.',
         'Visit the spaces with your planning team.',
         'Draft a run of show with start times, breaks, and a firm end time.',
         'Recruit volunteers for check-in and greeting, and name one point person for the day.',

@@ -1,12 +1,13 @@
 ---
 /**
- * The Space: The Hall, The Grove, and The grounds, each as a short spec sheet beside a small gallery of real
- * photos, then a visit request and the closing band. Real photos only, with no toggles and no photo shown
- * twice; only facts the photos show (docs/design/brand.md, Photography).
+ * The Space: a hero pair of The Hall and The Grove to match the title, then The Hall, The Grove, and The
+ * grounds, each as a short spec sheet beside a small gallery of real photos, then a visit request and the
+ * closing band. Real photos only, with no toggles and no photo shown twice; only facts the photos show
+ * (docs/design/brand.md, Photography).
  *
  * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, parking in
  * the grounds Parking row, the visit request in the visit panel. Booking is the header CTA and the closing
- * band; the address and phone are in the footer.
+ * band, the page's one filled button; the address and phone are in the footer.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -31,19 +32,25 @@ const crumbs = [
   { name: 'The Space', path: '/the-space/' },
 ];
 
-const heroPhoto = photoByName('hall-windows') ?? photosFor('hall')[0] ?? null;
+/** The hero pair: each space's primary photo, since the page title names both spaces. */
+const heroPhotos = [
+  { photo: photoByName('hall-windows') ?? photosFor('hall')[0] ?? null, caption: hall.name },
+  { photo: photoByName('grove-tables') ?? photosFor('grove')[0] ?? null, caption: grove.name },
+].filter((h): h is { photo: VenuePhoto; caption: string } => h.photo !== null);
+const heroNames = new Set(heroPhotos.map((h) => h.photo.name));
 
-/** A space's real photos in data order, without the hero photo: no photo appears twice on the page. */
+/** A space's real photos in data order, without the hero photos: no photo appears twice on the page. */
 function galleryFor(space: 'hall' | 'grove'): VenuePhoto[] {
   const list = photosFor(space);
-  const rest = list.filter((p) => p !== heroPhoto);
+  const rest = list.filter((p) => !heroNames.has(p.name));
   return rest.length > 0 ? rest : list;
 }
 
 /**
  * Crops for the pair of portrait frames a two-photo gallery uses. The Hall: the fireplace wall, and the double
  * doors with the windows beside them, so neither reads as a second copy of the hero. The grounds: the drive
- * curving toward the entry beside the full view of the lot, so the pair does not show the building twice.
+ * curving toward the entry beside the full view of the lot. Both grounds photos look up the drive, so the
+ * building shows small in each, as the end of the drive.
  */
 const PAIR_CROPS: Record<string, string> = { 'hall-fireplace': '85% 50%', 'hall-doors': '100% 50%', 'approach-dusk': '0% 50%' };
 
@@ -75,7 +82,7 @@ const sections: Section[] = [
     lead: 'Our indoor space: a bright, open room for receptions, dinners, showers, and meetings.',
     rows: [
       { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
-      { label: 'In the room', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
+      { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
       { label: 'Rates', value: `From ${fromRate('indoor')} an hour` },
     ],
     photos: galleryFor('hall'),
@@ -88,7 +95,7 @@ const sections: Section[] = [
     lead: 'Our outdoor space: a wooded setting among tall pines for ceremonies, reunions, and gatherings in the open air.',
     rows: [
       { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
-      { label: 'In the grove', value: 'A timber gazebo with a metal roof, picnic tables on a paved patio, open lawn, and paved paths' },
+      { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a paved patio, open lawn, and paved paths' },
       { label: 'Rates', value: `From ${fromRate('outdoor')} an hour` },
     ],
     photos: galleryFor('grove'),
@@ -98,7 +105,7 @@ const sections: Section[] = [
   {
     id: 'grounds',
     heading: 'The grounds',
-    lead: 'A long paved drive leads past open lawn to the building and a large paved lot, minutes from downtown Suffolk.',
+    lead: 'On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot.',
     rows: [{ label: 'Parking', value: 'On site, included with every booking' }],
     link: { label: 'Get Directions', href: site.address.directionsUrl },
     photos: ['approach-dusk', 'driveway'].map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null),
@@ -111,7 +118,7 @@ const LEAD_SIZES = '(min-width: 81.25rem) 680px, (min-width: 60rem) 56vw, 94vw';
 const SMALL_SIZES = '(min-width: 81.25rem) 335px, (min-width: 60rem) 28vw, (min-width: 36rem) 46vw, 94vw';
 
 // Structured data lists the photos on this page.
-const pagePhotos = [...new Set([heroPhoto, ...sections.flatMap((s) => s.photos)].filter((p): p is VenuePhoto => p !== null))];
+const pagePhotos = [...new Set([...heroPhotos.map((h) => h.photo), ...sections.flatMap((s) => s.photos)])];
 const fullImages = await Promise.all(
   pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
 );
@@ -141,7 +148,17 @@ const gallerySchema =
           {hall.name} and {grove.name} share one address in Suffolk. Book either space, or both together.
         </p>
       </div>
-      {heroPhoto && <Photo photo={heroPhoto} priority ratio="2 / 1" caption class="sp-hero__photo" sizes="(min-width: 81.25rem) 1200px, 94vw" />}
+      {
+        heroPhotos.length > 0 && (
+          <ul class="sp-hero__pair">
+            {heroPhotos.map((h) => (
+              <li>
+                <Photo photo={h.photo} priority ratio="3 / 2" caption={h.caption} class="sp-hero__photo" sizes="(min-width: 81.25rem) 590px, 47vw" />
+              </li>
+            ))}
+          </ul>
+        )
+      }
     </div>
   </section>
 
@@ -208,11 +225,7 @@ const gallerySchema =
           </p>
         </div>
         <div class="btn-row btn-row--stack sp-visit__actions">
-          <a class="btn btn--filled" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
-          <a class="btn btn--tinted" href={`tel:${site.contact.phoneE164}`}>
-            <Icon name="phone" />
-            Call {site.contact.phone}
-          </a>
+          <a class="btn btn--tinted" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
         </div>
       </div>
     </div>
@@ -222,7 +235,7 @@ const gallerySchema =
 </BaseLayout>
 
 <style>
-  /* Hero: the title beside a short lead, then The Hall in a wide rectangle. */
+  /* Hero: the title beside a short lead, then The Hall and The Grove side by side. */
   .sp-hero {
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
   }
@@ -249,10 +262,23 @@ const gallerySchema =
     max-width: 36rem;
   }
 
-  /* Wide on large screens; a calmer 4:3 on phones, where 2:1 is only a sliver. */
-  @media (width < 48rem) {
+  .sp-hero__pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Portrait frames on phones, where two 3:2 frames side by side would be slivers. */
+  @media (width < 36rem) {
+    .sp-hero__pair {
+      gap: 0.75rem;
+    }
+
     .sp-hero :global(.sp-hero__photo .photo__frame) {
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 4 / 5;
     }
   }
 
@@ -372,19 +398,28 @@ const gallerySchema =
     min-width: 0;
   }
 
-  /* A pair of portraits: side by side from 36rem, and calmer 3:2 frames stacked on phones. */
-  @media (width < 36rem) {
-    .sp-gallery--pair :global(.photo__frame) {
-      aspect-ratio: 3 / 2;
+  /* A pair of portraits sits side by side at every width, so a phone does not scroll through two tall frames. */
+  .sp-gallery--pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 0.75rem;
+  }
+
+  @media (min-width: 36rem) {
+    .sp-gallery--pair {
+      gap: 1.5rem 1rem;
     }
   }
 
   /* Small tiles keep their captions short enough to sit under a half-width photo. */
-  .sp-gallery__item:not(.sp-gallery__lead) :global(.photo__caption) {
+  .sp-gallery__item:not(.sp-gallery__lead) :global(.photo__caption),
+  .sp-hero__pair :global(.photo__caption) {
     font-size: 0.9375rem;
   }
 
-  /* The visit request: one quiet Frost panel across the column, the words beside the two actions on wide screens. */
+  /*
+    The visit request: one quiet Frost panel across the column, the words beside the action on wide screens.
+    Request a Visit is tinted: the closing band's Check Availability is the page's one filled button.
+  */
   .sp-visit {
     display: grid;
     gap: 1.5rem 3rem;

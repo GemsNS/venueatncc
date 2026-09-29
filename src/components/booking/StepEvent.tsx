@@ -105,7 +105,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             id={fieldId('wantsVisit')}
             icon="map-pin"
             title="I'd like to see the space first"
-            hint="Tell us which days and times work for you."
+            hint="We will arrange a time with you."
             checked={d.wantsVisit}
             onChange={(wantsVisit) => update({ wantsVisit })}
           />
@@ -143,7 +143,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             </span>
             <span class="bk-fact__text">
               <strong>We confirm every date personally.</strong>
-              <span class="bk-fact__hint">We confirm availability, then your booking deposit reserves the date.</span>
+              <span class="bk-fact__hint">Your booking deposit then reserves the date.</span>
             </span>
           </li>
           <li class="bk-fact">
@@ -152,7 +152,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             </span>
             <span class="bk-fact__text">
               <strong>Parking is included.</strong>
-              <span class="bk-fact__hint">On-site parking comes with every booking.</span>
+              <span class="bk-fact__hint">A large paved lot on site.</span>
             </span>
           </li>
         </ul>

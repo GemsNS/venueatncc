@@ -6,11 +6,11 @@ interface Props {
 }
 const { items, openFirst = false } = Astro.props;
 
-// Keep the venue name on one line inside questions.
+// Keep "at NCC" on one line inside questions. The whole name would be too wide for a phone at 200% text.
 const NBSP = String.fromCharCode(160);
-const keepTogether = (q: string) => q.replace(/The Venue at NCC/g, ['The', 'Venue', 'at', 'NCC'].join(NBSP));
+const keepTogether = (q: string) => q.replace(/\bat NCC\b/g, `at${NBSP}NCC`);
 
-// Phone numbers in answers, such as "(757) 338-3432", become tap-to-call links that never break across lines.
+// Phone numbers in answers, such as "(757) 555-0142", become tap-to-call links that never break across lines.
 // split() with a capturing group keeps each number at an odd index.
 const PHONE = /(\(\d{3}\) \d{3}-\d{4})/;
 const telHref = (phone: string) => `tel:+1${phone.replace(/\D/g, '')}`;
@@ -65,8 +65,15 @@ const withPhoneLinks = (a: string) => a.split(PHONE);
     list-style: none;
   }
 
+  /* The question gives way to the chevron, and a word too long for the row breaks rather than overflowing. */
   .faq__q span {
+    min-width: 0;
     text-wrap: pretty;
+    overflow-wrap: anywhere;
+  }
+
+  .faq__chev {
+    flex: none;
   }
 
   .faq__q::-webkit-details-marker {

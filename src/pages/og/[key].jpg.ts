@@ -1,8 +1,9 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
- * 1200 x 630 PNG: a real photo of the property, a Navy scrim for legibility, the light lockup, the page
+ * 1200 x 630 JPEG: a real photo of the property, a Navy scrim for legibility, the light lockup, the page
  * title in Libre Caslon Display in white, and one short line in Inter in Ice (docs/design/brand.md, Share
- * images). What each card shows lives in _cards.ts.
+ * images). What each card shows lives in _cards.ts. JPEG keeps each card near 150 to 250 KB: some messengers
+ * skip link previews for images much over 300 KB, which a lossless PNG of a photo always is.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -57,17 +58,28 @@ function loadShared(): Promise<Shared> {
   return shared;
 }
 
-/** Several cards share a photo, so each one is resized once per build. */
+/** Several cards share a photo, so each one (and each region of it) is resized once per build. */
 const photos = new Map<string, Promise<string>>();
-function loadPhoto(file: string): Promise<string> {
-  let photo = photos.get(file);
+async function cropped(p: ShareCard['photo']) {
+  const img = sharp(fromRoot('src/assets/venue', p.file));
+  if (!p.region) return img;
+  const { width = 0, height = 0 } = await img.metadata();
+  const r = p.region;
+  return img.extract({
+    left: Math.round(r.left * width),
+    top: Math.round(r.top * height),
+    width: Math.round(r.width * width),
+    height: Math.round(r.height * height),
+  });
+}
+function loadPhoto(p: ShareCard['photo']): Promise<string> {
+  const key = JSON.stringify([p.file, p.region ?? null]);
+  let photo = photos.get(key);
   if (!photo) {
-    photo = sharp(fromRoot('src/assets/venue', file))
-      .resize(W, H, { fit: 'cover' })
-      .jpeg({ quality: 86, mozjpeg: true })
-      .toBuffer()
+    photo = cropped(p)
+      .then((img) => img.resize(W, H, { fit: 'cover' }).jpeg({ quality: 86, mozjpeg: true }).toBuffer())
       .then((b) => dataUri('image/jpeg', b));
-    photos.set(file, photo);
+    photos.set(key, photo);
   }
   return photo;
 }
@@ -92,7 +104,7 @@ function titleSize(title: string): number {
 
 export const GET: APIRoute = async ({ props }) => {
   const { card } = props as { card: ShareCard };
-  const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo.file)]);
+  const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo)]);
   const size = titleSize(card.title);
   const scrim = (alpha: number) => navy(Math.min(0.94, alpha));
 
@@ -120,8 +132,7 @@ export const GET: APIRoute = async ({ props }) => {
     ],
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
-  // resvg writes a loosely compressed RGBA file. The card is opaque, so drop the alpha channel and recompress,
-  // still lossless: a 256-color palette would halve the size but blotches smooth walls and sky.
-  const png = await sharp(rendered).removeAlpha().png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
-  return new Response(new Uint8Array(png), { headers: { 'Content-Type': 'image/png' } });
+  // Full-resolution color (4:4:4) keeps the white title and the Ice line crisp against the Navy scrim.
+  const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+  return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
 };

@@ -1,5 +1,5 @@
 /**
- * What each share card (/og/<key>.png) shows: a real photo of the property, the page title, and one short
+ * What each share card (/og/<key>.jpg) shows: a real photo of the property, the page title, and one short
  * line. Kept apart from the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro).
  * The underscore keeps Astro from routing this file.
  *
@@ -18,8 +18,11 @@ export interface ShareCard {
   title: string;
   /** One short line under the title, set in Inter. No trailing period. */
   line: string;
-  /** The photo behind the text: a file in src/assets/venue/ and its caption. */
-  photo: { file: string; caption?: string };
+  /**
+   * The photo behind the text: a file in src/assets/venue/ and its caption. `region` crops the file first,
+   * as fractions of its width and height, before it is fitted to the card.
+   */
+  photo: { file: string; caption?: string; region?: { left: number; top: number; width: number; height: number } };
 }
 
 function pick(photo: VenuePhoto | null): ShareCard['photo'] {
@@ -40,7 +43,13 @@ const { fromHourly } = priceSummary();
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
 // event's name. Keep them in step when a heading changes.
 export const shareCards: Record<string, ShareCard> = {
-  home: { title: 'Celebrate among the pines.', line: `Event venue in ${site.address.city}, ${site.address.regionName}`, photo: byName('exterior-dusk') },
+  // The building at blue hour without its gable: the cross may appear in photos of the building, but never
+  // beside the headline as a subject (brand.md, Separation). The left 80% keeps the lit entry and the pines.
+  home: {
+    title: 'Celebrate among the pines.',
+    line: `Event venue in ${site.address.city}, ${site.address.regionName}`,
+    photo: { ...byName('exterior-dusk'), region: { left: 0, top: 0, width: 0.8, height: 1 } },
+  },
   'the-space': { title: 'Two spaces, indoors and out', line: bothSpaces, photo: byName('hall-windows') },
   pricing: {
     title: 'Transparent rates for every event',

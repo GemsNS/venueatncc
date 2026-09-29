@@ -67,7 +67,9 @@ export function Shell({
         <div class="adm-sidebar__brand">
           <Monogram class="adm-sidebar__mark" />
           <span class="adm-sidebar__text">
-            <span class="adm-sidebar__name">The Venue at NCC</span>
+            <span class="adm-sidebar__name">
+              The Venue <span class="adm-sidebar__at">at NCC</span>
+            </span>
             <span class="adm-sidebar__role">Admin</span>
           </span>
         </div>

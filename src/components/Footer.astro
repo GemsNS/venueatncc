@@ -1,52 +1,59 @@
 ---
 /**
  * Site footer on Navy: the light lockup, then "Visit and contact", the site's single contact block
- * (address with directions, phone, email), and one link to the FAQ, the only route to /faq/ on phones,
- * where the tab bar has no FAQ tab and the header nav is hidden. It does not repeat the header navigation,
- * the event list, or the booking call to action (brand.md, "Redundancy rules").
+ * (address with directions, phone, email). On compact screens it adds one link to the FAQ, the only route
+ * to /faq/ there, where the tab bar has no FAQ tab and the header nav is hidden; from 46.5rem the header
+ * carries FAQ, so the footer does not repeat it, and /faq/ never links to itself. It does not repeat the
+ * header navigation, the event list, or the booking call to action (brand.md, "Redundancy rules").
+ * From 64rem the lockup and the contact block share one row.
  */
 import Logo from './Logo.astro';
 import { site } from '../data/site';
-import { href } from '../lib/paths';
+import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
 const year = new Date().getFullYear();
+const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
 ---
 <footer class="footer">
   <div class="container">
-    <div class="footer__top">
+    <div class="footer__main">
       <a class="footer__brand" href={href('/')} aria-label={`${site.name}, home`}>
         <Logo variant="lockup" tone="white" height={40} decorative />
       </a>
-    </div>
 
-    <div class="footer__grid">
-      <section class="footer__col" aria-labelledby="f-visit">
-        <h2 id="f-visit" class="footer__head">Visit and contact</h2>
-        <address>
-          <a href={site.address.directionsUrl} rel="noopener" target="_blank">
-            {site.address.street}<br />{site.address.city}, {site.address.region} {site.address.postalCode}
-            <span class="visually-hidden">, directions open in a new tab</span>
-          </a>
-          <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
-          <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
-        </address>
+      <div class="footer__grid">
+        <section class="footer__col" aria-labelledby="f-visit">
+          <h2 id="f-visit" class="footer__head">Visit and contact</h2>
+          <address>
+            <a href={site.address.directionsUrl} rel="noopener" target="_blank">
+              {site.address.street}<br />{site.address.city}, {site.address.region} {site.address.postalCode}
+              <span class="visually-hidden">, directions open in a new tab</span>
+            </a>
+            <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+          </address>
+          {
+            site.social.length > 0 && (
+              <ul class="footer__social">
+                {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
+              </ul>
+            )
+          }
+        </section>
+
         {
-          site.social.length > 0 && (
-            <ul class="footer__social">
-              {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
-            </ul>
+          !onFaq && (
+            <nav class="footer__col footer__questions" aria-labelledby="f-questions">
+              <h2 id="f-questions" class="footer__head">Questions</h2>
+              <ul>
+                <li><a href={href('/faq/')}>Frequently asked questions</a></li>
+              </ul>
+            </nav>
           )
         }
-      </section>
-
-      <nav class="footer__col" aria-labelledby="f-questions">
-        <h2 id="f-questions" class="footer__head">Questions</h2>
-        <ul>
-          <li><a href={href('/faq/')}>Frequently asked questions</a></li>
-        </ul>
-      </nav>
+      </div>
     </div>
 
     <div class="footer__legal">
@@ -85,7 +92,7 @@ const year = new Date().getFullYear();
     padding-top: 0;
   }
 
-  :global(main:has(> .cta:last-child)) + .footer .footer__top {
+  :global(main:has(> .cta:last-child)) + .footer .footer__main {
     padding-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
     border-top: 1px solid var(--on-navy-line);
   }
@@ -97,11 +104,11 @@ const year = new Date().getFullYear();
     }
   }
 
-  .footer__top {
-    display: flex;
-    padding-bottom: 2.5rem;
-    margin-bottom: 2.5rem;
-    border-bottom: 1px solid var(--on-navy-line);
+  /* The lockup above the contact block, with space rather than a rule between them. */
+  .footer__main {
+    display: grid;
+    gap: 2.25rem;
+    justify-items: start;
   }
 
   .footer__brand {
@@ -110,11 +117,34 @@ const year = new Date().getFullYear();
     min-height: 44px;
   }
 
-  /* Two short columns, side by side from the width where both fit, never stretched across the page. */
+  /* Short columns, side by side from the width where both fit, never stretched across the page. */
   .footer__grid {
     display: grid;
     gap: 2rem 4rem;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
+  }
+
+  /* From 46.5rem the header carries FAQ. */
+  @media (min-width: 46.5rem) {
+    .footer__questions {
+      display: none;
+    }
+  }
+
+  /*
+    Wide screens: one row, the lockup on the left and the contact block beside it, with the address,
+    phone, and email side by side.
+  */
+  @media (min-width: 64rem) {
+    .footer__main {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 2rem 5rem;
+    }
+
+    .footer__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   /* Interface family: Caslon Display is for titles at 28px and up. Mist on Navy is 7.5:1. */
@@ -174,6 +204,16 @@ const year = new Date().getFullYear();
 
   .footer address a {
     overflow-wrap: anywhere;
+  }
+
+  /* Wide screens: the address, phone, and email side by side. */
+  @media (min-width: 64rem) {
+    .footer address {
+      grid-auto-flow: column;
+      justify-content: start;
+      align-items: start;
+      column-gap: 3rem;
+    }
   }
 
   .footer .footer__social {

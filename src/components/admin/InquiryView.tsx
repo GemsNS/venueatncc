@@ -387,13 +387,10 @@ export function InquiryView({ id }: { id: number }) {
               <Row label="Due to reserve">
                 <span class="adm-num">{formatUSD(est.bookingDeposit)}</span>
               </Row>
-              {est.total - est.bookingDeposit > 0 ? (
+              {/* Within the balance window the full amount is due to reserve, so there is no balance row; the footnote says why. */}
+              {est.total - est.bookingDeposit > 0 && (
                 <Row label="Balance">
                   <span class="adm-num">{formatUSD(est.total - est.bookingDeposit)}</span>
-                </Row>
-              ) : (
-                <Row label="Balance">
-                  <span>Paid in full</span>
                 </Row>
               )}
               <Row label="Refundable damage deposit">

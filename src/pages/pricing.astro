@@ -17,9 +17,9 @@ import { href } from '../lib/paths';
 
 /*
   Each fact on this page has one home (brand.md, Redundancy rules): rates in the hourly table and the
-  packages, fees and special rates in their lists, inclusions in the Included card (the site's only
-  inclusions block), and the deposit and balance in Rental terms. Capacity appears only inside the
-  estimator's space control. Rate questions are answered on /faq/, not repeated here.
+  packages, fees and special rates in their lists, and what every rental includes, the deposit, and the
+  balance in Rental terms (the site's one full statement of them; /faq/ points here). Capacity appears
+  only inside the estimator's space control. Rate questions are answered on /faq/, not repeated here.
 */
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
@@ -49,25 +49,24 @@ const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
 const rateHead = (s: SpaceChoice): { name: string; detail?: string } =>
   s === 'both' ? { name: 'Both spaces', detail: SPACE_NAME.both } : { name: SPACE_NAME[s] };
 
-/** Exactly what every rental includes (site.included). */
-const included = site.included;
-
 /**
- * Rental terms: the site's one full explanation of the deposit and the balance, from the pricing module,
- * and the one neutral catering line (brand.md). "This is an estimate" is said by the estimator itself.
+ * Rental terms: what every rental includes beyond the space itself (parking), the site's one full
+ * explanation of the deposit and the balance, from the pricing module, and the one neutral catering line
+ * (brand.md). "This is an estimate" is said by the estimator itself.
  */
 const rentalTerms = [
+  site.policies.parkingIncluded ? 'Every rental includes on-site parking.' : null,
   pricing.bookingDeposit.type === 'percent'
     ? `A booking deposit of ${pricing.bookingDeposit.value}% of your total reserves your date once we confirm availability.`
     : `A booking deposit of ${formatUSD(pricing.bookingDeposit.value)} reserves your date once we confirm availability.`,
   balanceDays > 0
     ? `The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
     : null,
-  'Catering and décor are arranged separately by the client.',
+  'You arrange catering and décor separately.',
 ].filter((t): t is string => t !== null);
 
 const fees = [
-  pricing.fees.cleaning > 0 && { label: 'Cleaning fee', detail: 'Added to every booking.', amount: formatUSD(pricing.fees.cleaning) },
+  pricing.fees.cleaning > 0 && { label: 'Cleaning fee', detail: 'Per event, added to every booking.', amount: formatUSD(pricing.fees.cleaning) },
   pricing.fees.damageDepositRefundable > 0 && {
     label: 'Refundable damage deposit',
     detail: 'Returned after your event if there is no damage.',
@@ -260,7 +259,6 @@ const photo = photoByName('hall-fireplace');
                   <li class="list-row">
                     <div class="list-row__main">
                       <div class="t-headline">{d.label}</div>
-                      <div class="list-row__detail">Mention it in your request.</div>
                     </div>
                     <span class="fees__amount">
                       <span class="price num">{d.percent}%</span> <span class="fees__off">off</span>
@@ -269,6 +267,7 @@ const photo = photoByName('hall-fireplace');
                 ))}
               </ul>
               <p class="t-footnote secondary fees__note">
+                {askDiscounts.length > 0 && `Mention ${autoDiscounts.length > 0 ? 'the other rates' : 'any of these rates'} in your request. `}
                 Discounts apply to the rental and do not combine. We apply the best rate that fits your event.
               </p>
             </div>
@@ -281,28 +280,12 @@ const photo = photoByName('hall-fireplace');
   <section class="section" aria-labelledby="terms-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="terms-heading">Inclusions and terms</h2>
+        <h2 id="terms-heading">Rental terms</h2>
       </div>
-      <div class="terms-grid">
-        <section class="terms card" aria-labelledby="included-heading">
-          <h3 id="included-heading" class="serif-label">Included with every rental</h3>
-          <ul class="terms__list terms__list--check">
-            {
-              included.map((item) => (
-                <li>
-                  <Icon name="check" />
-                  <span>{item}</span>
-                </li>
-              ))
-            }
-          </ul>
-        </section>
-        <section class="terms card" aria-labelledby="rental-terms-heading">
-          <h3 id="rental-terms-heading" class="serif-label">Rental terms</h3>
-          <ul class="terms__list">
-            {rentalTerms.map((t) => <li>{t}</li>)}
-          </ul>
-        </section>
+      <div class="terms card">
+        <ul class="terms__list">
+          {rentalTerms.map((t) => <li>{t}</li>)}
+        </ul>
       </div>
     </div>
   </section>
@@ -433,7 +416,8 @@ const photo = photoByName('hall-fireplace');
     align-items: start;
     padding: 1.5rem;
     border-radius: var(--r-lg);
-    background: var(--bg-grouped);
+    /* Frost on the White section; a raised card color in dark mode, where the grouped color would sink below the page. */
+    background: var(--panel);
   }
 
   /* The space as an Ice chip under the name (brand.md: Ice for chips, never an eyebrow above a heading). */
@@ -553,7 +537,8 @@ const photo = photoByName('hall-fireplace');
     display: none;
   }
 
-  @media (max-width: 679.98px) {
+  /* In rem, so with very large text the stacked lists take over before the table outgrows the page. */
+  @media (width < 42.5rem) {
     .rates--table {
       display: none;
     }
@@ -622,25 +607,14 @@ const photo = photoByName('hall-fireplace');
     padding-left: 0.25rem;
   }
 
-  .terms-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
-  }
-
-  @media (min-width: 46.5rem) {
-    .terms-grid {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      align-items: start;
-    }
-  }
-
+  /* Frost on the White section, a raised card color in dark mode (never darker than the page). */
   .terms {
     display: grid;
     align-content: start;
     gap: 1rem;
+    max-width: 44rem;
     padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-    background: var(--bg-grouped);
+    background: var(--panel);
     box-shadow: none;
   }
 
@@ -662,15 +636,8 @@ const photo = photoByName('hall-fireplace');
     padding-top: 0.25rem;
   }
 
-  .terms__list--check li {
-    display: flex;
-    gap: 0.65rem;
-    align-items: center;
-    font-weight: 600;
-  }
-
-  .terms__list--check :global(.icon) {
-    color: var(--accent-text);
+  .terms__list li:last-child {
+    padding-bottom: 0.25rem;
   }
 
   .pkg > p {

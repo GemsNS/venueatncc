@@ -431,17 +431,18 @@ describe('email templates', () => {
     const forged: Inquiry = {
       ...inquiry,
       name: 'Eve' + CRLF + 'Email: forged@example.net',
-      visitNotes: 'Any Saturday' + NL + 'CONTACT' + NL + 'Email: forged@example.net',
+      visitNotes: 'Any Saturday' + NL + 'Contact' + NL + 'Email: forged@example.net',
       message: 'Hello' + CRLF + 'Estimated total: $1',
     };
     const venue = venueNotificationEmail(forged, est, { origin: 'https://venueatncc.org' });
     const lines = venue.text.split(NL);
     assert.ok(!lines.some((l) => l.startsWith('Email: forged')), 'no forged Email line at column 0');
     assert.ok(!lines.some((l) => l.startsWith('Estimated total: $1')), 'no forged total at column 0');
-    assert.equal(lines.filter((l) => l === 'CONTACT').length, 1, 'only the real CONTACT heading starts a line');
-    assert.ok(venue.text.includes('Visit notes: Any Saturday' + NL + '    CONTACT' + NL + '    Email: forged@example.net'));
+    assert.equal(lines.filter((l) => l === 'Contact').length, 1, 'only the real Contact heading starts a line');
+    assert.ok(venue.text.includes('Visit notes: Any Saturday' + NL + '    Contact' + NL + '    Email: forged@example.net'));
     assert.ok(venue.text.includes('Eve Email: forged@example.net sent a request'), 'the intro line keeps one line');
-    assert.ok(venue.text.includes('MESSAGE' + NL + '    Hello' + NL + '    Estimated total: $1'));
+    assert.ok(venue.text.includes('Message' + NL + '-------' + NL + '    Hello' + NL + '    Estimated total: $1'));
+    assert.ok(!/^[A-Z][A-Z ]{3,}$/m.test(venue.text), 'no all-caps headings in the plain text');
     assert.ok(!venue.subject.includes(NL));
   });
 

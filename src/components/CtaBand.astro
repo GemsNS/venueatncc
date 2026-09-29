@@ -91,6 +91,13 @@ const {
     justify-items: start;
   }
 
+  /* Beside the copy, the button meets the container's right edge on the heading's last row. */
+  @media (min-width: 64rem) {
+    .cta__side {
+      justify-items: end;
+    }
+  }
+
   /* Phones: the button spans the band, like a stacked button row. */
   @media (max-width: 479.98px) {
     .cta__action {
