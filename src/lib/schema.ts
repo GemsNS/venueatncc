@@ -239,7 +239,7 @@ export function rateCatalog() {
   const packages = pricing.packages.map((p) => ({
     '@type': 'Offer',
     name: p.name,
-    description: p.description,
+    description: p.description ?? `${p.hours} hours in ${spaceName(p.space)}${p.dayType === 'any' ? '' : ` (${pricing.dayTypes[p.dayType].label})`}.`,
     price: p.price,
     priceCurrency: pricing.currency,
     offeredBy,

@@ -122,22 +122,6 @@ export const site = {
 
   /** Social profiles for the venue. Added to the footer and to structured data. */
   social: [] as { label: string; url: string }[],
-
-  /** How to book, as a real sequence. */
-  bookingSteps: [
-    {
-      title: 'Pick your date',
-      body: 'Check the calendar, choose your space, and see an instant estimate.',
-    },
-    {
-      title: 'Send your request',
-      body: 'Tell us about your event. It takes about two minutes.',
-    },
-    {
-      title: 'We confirm',
-      body: 'We confirm availability, then your booking deposit reserves the date.',
-    },
-  ],
 } as const;
 
 export type Site = typeof site;

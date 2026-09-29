@@ -115,8 +115,10 @@ serif leads, prices, and italic captions; the system interface stack for body, f
   event, all eight in one décor style, each with the same small "Styled Concept" badge. The events section on
   the home page and the /events/ page carry one line: "Event photos show our spaces styled for each occasion.
   Décor is not included." Event page heroes carry the caption "Styled concept. Décor is not included."
-- **All or nothing.** If a staged image is missing for any event, every event falls back to real photos. This is
-  computed in `src/data/photos.ts` from which files exist, so a half-staged grid can never ship.
+- **All or nothing.** If a staged image is missing for any event, no staged image is shown: each event page hero
+  shows the real photo its staged image is made from, with no badge or caption, event tiles show no photo, and
+  the one-line note is hidden. This is computed in `src/data/photos.ts` from which files exist, so a
+  half-staged grid can never ship, and a grid of eight real photos (which would repeat rooms) never appears.
 - **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
 - **No repeats.** No image appears twice on the same page.
 

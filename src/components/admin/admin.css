@@ -22,12 +22,15 @@
   /* Selected navigation and date tiles. */
   --adm-selected: var(--mist);
 
-  /* Status colors with 4.5:1 text on their tints over Linen and Card, in both appearances. New items use Caramel. */
-  --adm-green: #1b6e30;
+  /*
+    Status colors (the global status tokens) with 4.5:1 text on their tints over Linen and Card, in both
+    appearances. New items use Caramel.
+  */
+  --adm-green: var(--green);
   --adm-green-tint: rgba(52, 199, 89, 0.16);
-  --adm-orange: #b52f00;
+  --adm-orange: var(--orange);
   --adm-orange-tint: rgba(255, 149, 0, 0.16);
-  --adm-red: #c4001a;
+  --adm-red: var(--red);
   --adm-red-tint: rgba(255, 59, 48, 0.12);
   --adm-gray: var(--label-2);
   --adm-gray-tint: var(--fill-2);
@@ -38,11 +41,8 @@
   :root {
     /* Dark Mist (#232719) matches a card, so selection uses a Sage tint that reads on cards and glass. */
     --adm-selected: rgba(204, 213, 174, 0.14);
-    --adm-green: #4cd97b;
     --adm-green-tint: rgba(48, 209, 88, 0.16);
-    --adm-orange: #ffb340;
     --adm-orange-tint: rgba(255, 159, 10, 0.16);
-    --adm-red: #ff7a70;
     --adm-red-tint: rgba(255, 69, 58, 0.18);
   }
 }

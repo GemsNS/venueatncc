@@ -4,8 +4,10 @@
  *   Real photographs show the spaces. The home hero, the space cards, The Space, the arrival band, share
  *   images, and structured data use real photos only.
  *   Staged photographs show events. Every event tile and event page hero uses a staged image of that event,
- *   all eight in one décor style, or none of them do: if any staged image is missing, every event falls back
- *   to a real photo (eventsStaged, below). There are no toggles between the two.
+ *   all eight in one décor style, or none of them do (eventsStaged, below). While any staged image is
+ *   missing, each event page hero shows the real photo its staged image is made from, with no badge or
+ *   caption, and event tiles show no photo at all (EventIndex): eight events cannot map to eight different
+ *   real photos, and no image may appear twice on a page. There are no toggles between the two.
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)
  *   <name>.jpg                   3:2 landscape, 2400px wide. One entry in `photos`.
@@ -123,7 +125,8 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
 
   // Staged event photos, one per event, in one décor style (brand.md). Registered ahead of their files:
-  // until all eight are in src/assets/venue/, every event shows its real photo instead (eventsStaged).
+  // until all eight are in src/assets/venue/, none is shown (eventsStaged). styledOf is also the real photo
+  // each event page hero shows meanwhile.
   'styled-event-weddings.jpg': {
     alt: 'Styled concept: ceremony seating on the lawn facing the timber gazebo in The Grove, with an ivory aisle runner and ivory, peach, and eucalyptus florals',
     styledOf: 'gazebo.jpg',
@@ -174,23 +177,15 @@ export const photoDetails: Record<string, PhotoDetail> = {
   },
 };
 
-/**
- * The real photo for each event, used for every event while the staged set is incomplete. Every event type
- * in src/data/event-types.ts is listed; any other slug gets hall-windows.
- */
-const REAL_EVENT_PHOTOS: Record<string, string> = {
-  weddings: 'gazebo',
-  'receptions-banquets': 'hall-windows',
-  'baby-bridal-showers': 'hall-fireplace',
-  'birthday-parties': 'hall-doors',
-  'repasts-memorials': 'hall-fireplace',
-  'meetings-trainings': 'hall-doors',
-  'graduations-reunions': 'grove-tables',
-  'community-events': 'grove-path',
-};
-const EVENT_PHOTO_FALLBACK = 'hall-windows';
 /** The staged photo of an event, by file stem. */
 const stagedName = (slug: string) => `styled-event-${slug}`;
+const EVENT_PHOTO_FALLBACK = 'hall-windows';
+/**
+ * The real photo of an event while the staged set is incomplete: the one its staged photo is made from
+ * (styledOf above), so the event page hero and its share card show the room the staged photo will show.
+ * An event with no staged entry gets hall-windows.
+ */
+const realEventPhotoName = (slug: string) => photoDetails[`${stagedName(slug)}.jpg`]?.styledOf ?? EVENT_PHOTO_FALLBACK;
 
 const modules = import.meta.glob<{ default: ImageMetadata }>(
   '../assets/venue/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
@@ -285,7 +280,9 @@ for (const [file, detail] of Object.entries(photoDetails)) {
   if (!detail.event && !all.some((p) => p.file === file)) console.warn(`[photos] photoDetails lists ${file}, but no such file is in src/assets/venue/.`);
 }
 for (const e of eventTypes) {
-  if (!REAL_EVENT_PHOTOS[e.slug]) console.warn(`[photos] The event ${e.slug} has no real photo in REAL_EVENT_PHOTOS, so it falls back to ${EVENT_PHOTO_FALLBACK}.`);
+  if (!photoDetails[`${stagedName(e.slug)}.jpg`]?.styledOf) {
+    console.warn(`[photos] The event ${e.slug} has no ${stagedName(e.slug)}.jpg entry with styledOf in photoDetails, so its real photo falls back to ${EVENT_PHOTO_FALLBACK}.`);
+  }
 }
 
 export const hasPhotos = photos.length > 0;
@@ -298,14 +295,15 @@ export function photoByName(name: string): VenuePhoto | null {
 
 /**
  * All or nothing: true only when every event type has its staged photo in src/assets/venue/. Then every
- * event tile and event page hero is staged; otherwise every one of them is a real photo.
+ * event tile and event page hero is staged, with its badge; otherwise event page heroes are real photos and
+ * event tiles are text.
  */
 export const eventsStaged = eventTypes.every((e) => staged.some((p) => p.name === stagedName(e.slug)));
 
 {
   const present = eventTypes.filter((e) => staged.some((p) => p.name === stagedName(e.slug))).length;
   if (present > 0 && !eventsStaged) {
-    console.info(`[photos] ${present} of ${eventTypes.length} staged event photos are in src/assets/venue/, so every event shows its real photo until the set is complete.`);
+    console.info(`[photos] ${present} of ${eventTypes.length} staged event photos are in src/assets/venue/, so none is shown until the set is complete.`);
   }
 }
 
@@ -324,11 +322,12 @@ export function heroPhoto(): VenuePhoto | null {
 }
 
 /**
- * The photo that leads an event page and its tile: the staged photo of that event when the whole set is
- * staged (eventsStaged), otherwise its real photo. Use realPhoto() wherever only a real photograph is allowed.
+ * The photo that leads an event page (and its tile, when staged): the staged photo of that event when the
+ * whole set is staged (eventsStaged), otherwise the real photo it is made from. Use realPhoto() wherever
+ * only a real photograph is allowed.
  */
 export function eventPhoto(slug: string): VenuePhoto | null {
-  const real = () => photoByName(REAL_EVENT_PHOTOS[slug] ?? EVENT_PHOTO_FALLBACK) ?? photoByName(EVENT_PHOTO_FALLBACK);
+  const real = () => photoByName(realEventPhotoName(slug)) ?? photoByName(EVENT_PHOTO_FALLBACK);
   return (eventsStaged ? photoByName(stagedName(slug)) : null) ?? real();
 }
 

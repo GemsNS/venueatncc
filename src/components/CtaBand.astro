@@ -1,33 +1,27 @@
 ---
 /**
- * Closing call to action on a Deep Olive band: a Caslon heading, one sentence, and two actions.
+ * The closing call to action on a Deep Olive band: a Caslon heading, one sentence, and one Check Availability
+ * button. It is the one place that says how booking works (brand.md, "Redundancy rules"), so it carries no
+ * second button and no contact line: the header links the other pages and the footer lists the phone.
  * Plain color, no imagery. Cream text on Deep Olive is 11.1:1; the Caramel button keeps Ink text (6.3:1).
+ * The section stays the last child of <main>, which is how the footer knows to meet it with a hairline.
  */
 import Icon from './Icon.astro';
-import { site } from '../data/site';
-import { bookHref, pricingHref } from '../data/nav';
-import { href, withoutBase } from '../lib/paths';
-
-interface Link {
-  label: string;
-  href: string;
-}
+import { bookHref as defaultBookHref } from '../data/nav';
+import { href } from '../lib/paths';
 
 interface Props {
   heading?: string;
   body?: string;
-  /** The second button. Defaults to See Pricing, or Read the FAQ on the pricing page itself. */
-  secondary?: Link;
+  /** Where Check Availability goes, as a base-relative path. Event pages pass /book/?event=<slug>. */
+  bookHref?: string;
 }
 
-const path = withoutBase(Astro.url.pathname);
 const {
   heading = 'See which dates are open.',
   body = 'Choose a date and a space, see an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
-  secondary = path === pricingHref ? { label: 'Read the FAQ', href: '/faq/' } : { label: 'See Pricing', href: pricingHref },
+  bookHref = defaultBookHref,
 } = Astro.props;
-// Never link to the page the visitor is already on.
-const showSecondary = secondary.href !== path;
 ---
 <section class="cta" aria-labelledby="cta-heading">
   <div class="container cta__inner">
@@ -36,16 +30,10 @@ const showSecondary = secondary.href !== path;
       <p class="cta__body">{body}</p>
     </div>
     <div class="cta__side">
-      <div class="btn-row btn-row--stack cta__actions">
-        <a class="btn btn--filled btn--lg" href={href(bookHref)}>
-          <Icon name="calendar" />
-          Check Availability
-        </a>
-        {showSecondary && <a class="btn btn--outline-light btn--lg" href={href(secondary.href)}>{secondary.label}</a>}
-      </div>
-      <p class="cta__call">
-        Prefer to talk? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>
-      </p>
+      <a class="btn btn--filled btn--lg cta__action" href={href(bookHref)}>
+        <Icon name="calendar" />
+        Check Availability
+      </a>
     </div>
   </div>
 </section>
@@ -99,21 +87,11 @@ const showSecondary = secondary.href !== path;
     justify-items: start;
   }
 
-  /* Full width, so the stacked buttons on phones span the band. */
-  .cta__actions {
-    justify-self: stretch;
-  }
-
-  .cta__call {
-    font-size: var(--t-subhead);
-    color: var(--on-deep-2);
-  }
-
-  .cta__call a {
-    color: var(--on-deep);
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+  /* Phones: the button spans the band, like a stacked button row. */
+  @media (max-width: 479.98px) {
+    .cta__action {
+      justify-self: stretch;
+    }
   }
 
   .cta :global(:focus-visible) {

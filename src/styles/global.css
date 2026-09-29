@@ -70,9 +70,12 @@
   --accent-hover: #cb9764;
   --accent-text: var(--caramel-deep);
   --on-accent: var(--ink);
-  /* Caramel tints. Caramel Deep text keeps 4.5:1 on both over Cream and Linen. */
-  --accent-tint: rgba(212, 163, 115, 0.14);
-  --accent-tint-2: rgba(212, 163, 115, 0.2);
+  /*
+    Caramel tints. Caramel Deep text keeps 4.5:1 on both over Cream, Linen, and Card (at least 4.58:1). Over
+    Mist the hover tint falls just short, so a tinted button on a Mist panel takes an Ink label.
+  */
+  --accent-tint: rgba(212, 163, 115, 0.12);
+  --accent-tint-2: rgba(212, 163, 115, 0.16);
 
   /* Deep Olive: the footer, the closing band, and photo scrims, with Cream text and Caramel accents. */
   --olive-deep: #343b24;

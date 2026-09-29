@@ -6,8 +6,8 @@
  * Photos follow one rule (docs/design/brand.md, "Photography"). The hero is eventPhoto(slug): while the
  * staged set is complete (eventsStaged) it is the event's staged photo, which Photo shows with its
  * Styled Concept badge, under the caption "Styled concept. Décor is not included."; otherwise it is the
- * event's real photo, with no badge and no caption. No image appears twice on a page, so the related
- * tiles skip the hero's photo and each other's.
+ * event's real photo, with no badge and no caption. No image appears twice on a page: the related tiles
+ * show other events' staged photos, or no photos at all while the set is incomplete.
  *
  * Facts that are the same for every event (rates, packages, deposits, fees, payments, parking, visits)
  * live on the pricing page and /faq/. This page links to them in one line instead of repeating them.
@@ -50,23 +50,13 @@ const PHONE = site.contact.phone;
 const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
-// Three related events whose tiles repeat no photo already on the page: the event's own related list
-// first, then the other events in list order.
+// Three related events: the event's own related list first, then the other events in list order. The
+// tiles never repeat the hero: with the staged set each tile shows its own event's staged photo, and
+// without it every tile is text (EventIndex).
 const RELATED_COUNT = 3;
-const usedPhotos = new Set(photo ? [photo.name] : []);
-const related: string[] = [];
-for (const slug of [...event.related, ...events.map((e) => e.slug)]) {
-  if (related.length === RELATED_COUNT) break;
-  if (slug === event.slug || related.includes(slug) || !events.some((e) => e.slug === slug)) continue;
-  const tile = eventPhoto(slug)?.name;
-  if (tile && usedPhotos.has(tile)) continue;
-  if (tile) usedPhotos.add(tile);
-  related.push(slug);
-}
-
-// The closing band's one Check Availability opens the booking page with this event chosen. Passed as a
-// spread until CtaBand declares the bookHref prop (base-relative path; CtaBand wraps it with href()).
-const ctaBook = { bookHref: eventBookPath };
+const related = [...new Set([...event.related, ...events.map((e) => e.slug)])]
+  .filter((slug) => slug !== event.slug && events.some((e) => e.slug === slug))
+  .slice(0, RELATED_COUNT);
 
 const schema = [
   breadcrumbs(crumbs),
@@ -163,7 +153,7 @@ const schema = [
     )
   }
 
-  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." {...ctaBook} />
+  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." bookHref={eventBookPath} />
 </BaseLayout>
 
 <style>
@@ -302,9 +292,11 @@ const schema = [
     margin-top: 0.05em;
   }
 
+  /* On Mist the hover tint leaves Caramel Deep text just under 4.5:1, so the label is Ink (Cream in dark). */
   .ev-checklist__visit {
     justify-self: start;
     margin-top: 0.25rem;
+    color: var(--label);
   }
 
   /* ---------- FAQ ---------- */

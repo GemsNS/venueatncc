@@ -1,13 +1,12 @@
 ---
 /**
- * Site footer on Deep Olive: the light lockup, contact details, the event pages, and a short list of help
- * links. It does not repeat the header navigation (brand.md, "Redundancy rules"); FAQ is here because the
- * phone tab bar has no FAQ tab. The address appears once, in "Visit and contact".
+ * Site footer on Deep Olive: the light lockup, then "Visit and contact", the site's single contact block
+ * (address with directions, phone, email), and one link to the FAQ, the only route to /faq/ on phones,
+ * where the tab bar has no FAQ tab and the header nav is hidden. It does not repeat the header navigation,
+ * the event list, or the booking call to action (brand.md, "Redundancy rules").
  */
 import Logo from './Logo.astro';
 import { site } from '../data/site';
-import { events } from '../data/events';
-import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
@@ -20,7 +19,6 @@ const year = new Date().getFullYear();
       <a class="footer__brand" href={href('/')} aria-label={`${site.name}, home`}>
         <Logo variant="lockup" tone="white" height={40} decorative />
       </a>
-      <p class="footer__intro">An event venue in {site.address.city}, {site.address.regionName}.</p>
     </div>
 
     <div class="footer__grid">
@@ -43,26 +41,10 @@ const year = new Date().getFullYear();
         }
       </section>
 
-      {
-        events.length > 0 && (
-          <nav class="footer__col footer__col--events" aria-labelledby="f-events">
-            <h2 id="f-events" class="footer__head">Plan an event</h2>
-            <ul class="footer__events">
-              {events.map((e) => (
-                <li>
-                  <a href={href(`/events/${e.slug}/`)}>{e.name}</a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-
-      <nav class="footer__col" aria-labelledby="f-help">
-        <h2 id="f-help" class="footer__head">Help</h2>
+      <nav class="footer__col" aria-labelledby="f-questions">
+        <h2 id="f-questions" class="footer__head">Questions</h2>
         <ul>
           <li><a href={href('/faq/')}>Frequently asked questions</a></li>
-          <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
         </ul>
       </nav>
     </div>
@@ -116,24 +98,10 @@ const year = new Date().getFullYear();
   }
 
   .footer__top {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
+    display: flex;
     padding-bottom: 2.5rem;
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--on-deep-line);
-  }
-
-  @media (min-width: 64rem) {
-    .footer__top {
-      grid-template-columns: auto minmax(0, 1fr);
-      align-items: center;
-      gap: 3rem;
-    }
-
-    .footer__intro {
-      justify-self: end;
-    }
   }
 
   .footer__brand {
@@ -142,30 +110,11 @@ const year = new Date().getFullYear();
     min-height: 44px;
   }
 
-  .footer__intro {
-    max-width: 34rem;
-    color: var(--on-deep);
-    font-family: var(--font-serif);
-    font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
-    line-height: 1.45;
-  }
-
+  /* Two short columns, side by side from the width where both fit, never stretched across the page. */
   .footer__grid {
     display: grid;
-    gap: 2rem 2.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
-  }
-
-  /* Wide screens: the event list runs in two columns in the middle. */
-  @media (min-width: 64rem) {
-    .footer__grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
-    }
-
-    .footer__events {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 2.5rem;
-    }
+    gap: 2rem 4rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
   }
 
   /* Interface family: Caslon Display is for titles at 28px and up. Caramel on Deep Olive is 5.2:1. */

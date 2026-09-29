@@ -11,7 +11,9 @@ images somewhere else.
 - **Staged photographs show events**: every event tile and event page hero, all eight in one décor style,
   each with the "Styled Concept" badge.
 - **All or nothing**: `eventsStaged` in `src/data/photos.ts` is true only when all eight staged files are
-  here. Until then every event uses its real photo, so a half-staged grid never ships.
+  here. Until then each event page hero shows the real photo its staged file is made from (no badge, no
+  caption), event tiles are text only, and the styled-photo note is hidden, so a half-staged grid never
+  ships and no real photo repeats in a grid.
 - **No toggles, no repeats**: there is no As Photographed / Styled Concept switch, and no image appears
   twice on a page.
 
@@ -54,8 +56,8 @@ Add an entry in `photoDetails` in `src/data/photos.ts`:
 ## Where photos appear
 
 - `heroPhoto()`: the home hero, `exterior-dusk`.
-- `eventPhoto(slug)`: the photo that leads each event page and its tile: the staged photo when
-  `eventsStaged`, otherwise the real photo mapped in `src/data/photos.ts`.
+- `eventPhoto(slug)`: the photo that leads each event page (and its tile, when staged): the staged photo
+  when `eventsStaged`, otherwise the real photo named by its `styledOf`.
 - `realPhoto(photo)`: the real photo behind a staged one, for share images and structured data.
 - `photoByName('approach-dusk')`: any single photo by name.
 

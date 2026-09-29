@@ -339,7 +339,8 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   */
   @media (width < 46.5rem) {
     .hero {
-      --photo-pos: 100% 50%;
+      /* The square centers the lit entry; the gable and its cross fall outside the frame (brand.md). */
+      --photo-pos: 50% 50%;
       grid-template-rows: [photo-start] auto [photo-end] auto auto;
     }
 

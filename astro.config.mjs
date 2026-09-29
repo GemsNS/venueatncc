@@ -19,18 +19,18 @@ const demoSite = process.env.DEMO_SITE ?? 'https://gemsns.github.io';
 
 /**
  * The source files behind each public page: the page itself plus the data it shows.
- * Every page shows the venue facts from site.ts (capacities, contact details).
+ * Every page shows the venue facts from site.ts (the contact details in the footer).
  * @param {string} pathname e.g. '/', '/pricing/', '/events/weddings/'
  */
 function pageSources(pathname) {
   const p = pathname.replace(/^[/]+|[/]+$/g, '');
   const facts = 'src/data/site.ts';
-  if (p === '') return ['src/pages/index.astro', facts, 'src/data/events.ts', 'src/data/faq.ts', 'src/shared/pricing.ts'];
+  if (p === '') return ['src/pages/index.astro', facts, 'src/data/events.ts', 'src/shared/pricing.ts'];
   if (p === 'events') return ['src/pages/events/index.astro', facts, 'src/data/events.ts'];
   if (p.startsWith('events/')) return ['src/pages/events/[slug].astro', facts, 'src/data/events.ts', 'src/shared/pricing.ts'];
   if (p === 'pricing') return ['src/pages/pricing.astro', facts, 'src/shared/pricing.ts'];
-  if (p === 'faq') return ['src/pages/faq.astro', facts, 'src/data/faq.ts'];
-  if (p === 'the-space') return ['src/pages/the-space.astro', facts, 'src/data/photos.ts'];
+  if (p === 'faq') return ['src/pages/faq.astro', facts, 'src/data/faq.ts', 'src/shared/pricing.ts'];
+  if (p === 'the-space') return ['src/pages/the-space.astro', facts, 'src/data/photos.ts', 'src/shared/pricing.ts'];
   return [`src/pages/${p}.astro`, facts];
 }
 
