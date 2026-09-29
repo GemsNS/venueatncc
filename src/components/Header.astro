@@ -6,6 +6,11 @@
  * in rem so that larger text switches to the compact layout sooner instead of overflowing.
  * The brand is always the full lockup (brand.md): 36px tall, or 32px (the minimum) where the links need
  * the room (46.5rem to 64rem), where the demo pill also steps aside.
+ *
+ * Check Availability is the bar's one action (hig-web-spec.md, Glass nav bar). It is the filled primary
+ * on every page but home, whose hero already holds the page's primary button, the date checker's
+ * Continue to Booking. There it is tinted, so the first screen shows one filled button (brand.md,
+ * Redundancy rules). The style is set per page when the site builds; nothing changes on scroll.
  */
 import Logo from './Logo.astro';
 import { site } from '../data/site';
@@ -13,10 +18,18 @@ import { mainNav, bookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
 
+interface Props {
+  /** Where Check Availability goes, base-relative: '/book/?event=weddings' on an event page. Defaults to '/book/'. */
+  ctaHref?: string;
+}
+
+const { ctaHref = bookHref } = Astro.props;
 const path = withoutBase(Astro.url.pathname);
 const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
 // On the booking page the call to action would link to the page itself.
 const showCta = !current(bookHref);
+// The home hero's date checker carries that page's filled primary button (above).
+const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
 ---
 <header class="nav" data-nav>
   <div class="nav__inner container">
@@ -40,7 +53,7 @@ const showCta = !current(bookHref);
     </nav>
     {
       showCta && (
-        <a class="btn btn--filled btn--sm nav__cta" href={href(bookHref)}>
+        <a class:list={['btn', ctaTone, 'btn--sm', 'nav__cta']} href={href(ctaHref)}>
           Check Availability
         </a>
       )
@@ -177,6 +190,17 @@ const showCta = !current(bookHref);
     .nav__links a {
       padding: 0 0.5rem;
     }
+  }
+
+  /* The capsule is the 36px small size; its hit area reaches 44px (hig-web-spec.md, Layout). */
+  .nav__cta {
+    position: relative;
+  }
+
+  .nav__cta::before {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
   }
 
   /* On phones the floating tab bar's Book tab is the primary action, so the header stays uncluttered. */

@@ -2,8 +2,8 @@
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
  * 1200 x 630 JPEG: a real photo of the property, a Navy scrim for legibility, the light lockup, the page
  * title in Libre Caslon Display in white, and one short line in Inter in Ice (docs/design/brand.md, Share
- * images). What each card shows lives in _cards.ts. JPEG keeps each card near 150 to 250 KB: some messengers
- * skip link previews for images much over 300 KB, which a lossless PNG of a photo always is.
+ * images). What each card shows lives in _cards.ts. JPEG keeps each card between 62 and 184 KB: some
+ * messengers skip link previews for images much over 300 KB, which a lossless PNG of a photo always is.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';

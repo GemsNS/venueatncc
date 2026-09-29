@@ -1,9 +1,9 @@
 ---
 /**
  * The Space: a hero pair of The Hall and The Grove to match the title, then The Hall, The Grove, and The
- * grounds, each as a short spec sheet beside a small gallery of real photos, then a visit request and the
- * closing band. Real photos only, with no toggles and no photo shown twice; only facts the photos show
- * (docs/design/brand.md, Photography).
+ * grounds, each as a short spec sheet beside its real photos, then a visit request and the closing band.
+ * Real photos only, with no toggles, no photo shown twice, and no two photos of the same view; only facts
+ * the photos show (docs/design/brand.md, Photography).
  *
  * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, parking in
  * the grounds Parking row, the visit request in the visit panel. Booking is the header CTA and the closing
@@ -37,22 +37,21 @@ const heroPhotos = [
   { photo: photoByName('hall-windows') ?? photosFor('hall')[0] ?? null, caption: hall.name },
   { photo: photoByName('grove-tables') ?? photosFor('grove')[0] ?? null, caption: grove.name },
 ].filter((h): h is { photo: VenuePhoto; caption: string } => h.photo !== null);
-const heroNames = new Set(heroPhotos.map((h) => h.photo.name));
-
-/** A space's real photos in data order, without the hero photos: no photo appears twice on the page. */
-function galleryFor(space: 'hall' | 'grove'): VenuePhoto[] {
-  const list = photosFor(space);
-  const rest = list.filter((p) => !heroNames.has(p.name));
-  return rest.length > 0 ? rest : list;
-}
 
 /**
- * Crops for the pair of portrait frames a two-photo gallery uses. The Hall: the fireplace wall, and the double
- * doors with the windows beside them, so neither reads as a second copy of the hero. The grounds: the drive
- * curving toward the entry beside the full view of the lot. Both grounds photos look up the drive, so the
- * building shows small in each, as the end of the drive.
+ * Each section's photos, by name, so every photo on the page is a different view. The hero looks down The
+ * Hall to its arched windows, so The Hall's own photo faces the other way, to the double doors and the
+ * screen; hall-fireplace, the same view as the hero from a step further back, is not on this page. The
+ * hero shows The Grove's picnic tables, so its section has the gazebo up close and the path to it.
  */
-const PAIR_CROPS: Record<string, string> = { 'hall-fireplace': '85% 50%', 'hall-doors': '100% 50%', 'approach-dusk': '0% 50%' };
+const photosNamed = (...names: string[]) => names.map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null);
+
+/**
+ * Crops for the pair of portrait frames a two-photo gallery uses. The grounds: the drive curving toward the
+ * entry beside the full view of the lot. Both grounds photos look up the drive, so the building shows small
+ * in each, as the end of the drive.
+ */
+const PAIR_CROPS: Record<string, string> = { 'approach-dusk': '0% 50%' };
 
 /** The lowest hourly rate for a space, from the rate card. */
 const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
@@ -85,7 +84,7 @@ const sections: Section[] = [
       { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
       { label: 'Rates', value: `From ${fromRate('indoor')} an hour` },
     ],
-    photos: galleryFor('hall'),
+    photos: photosNamed('hall-doors'),
     flip: false,
     grouped: true,
   },
@@ -98,7 +97,7 @@ const sections: Section[] = [
       { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a paved patio, open lawn, and paved paths' },
       { label: 'Rates', value: `From ${fromRate('outdoor')} an hour` },
     ],
-    photos: galleryFor('grove'),
+    photos: photosNamed('gazebo', 'grove-path'),
     flip: true,
     grouped: false,
   },
@@ -108,7 +107,7 @@ const sections: Section[] = [
     lead: 'On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot.',
     rows: [{ label: 'Parking', value: 'On site, included with every booking' }],
     link: { label: 'Get Directions', href: site.address.directionsUrl },
-    photos: ['approach-dusk', 'driveway'].map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null),
+    photos: photosNamed('approach-dusk', 'driveway'),
     flip: false,
     grouped: true,
   },
@@ -176,7 +175,7 @@ const gallerySchema =
               <div class="sp-view">
                 <ul class:list={['sp-gallery', { 'sp-gallery--pair': s.photos.length === 2 }]}>
                   {s.photos.map((p, i) => {
-                    // Two photos sit side by side as equal portraits; three or more lead with one wide photo.
+                    // Two photos sit side by side as equal portraits; one photo, or the first of three or more, is wide.
                     const pair = s.photos.length === 2;
                     const lead = !pair && i === 0;
                     const sizes = lead ? LEAD_SIZES : SMALL_SIZES;

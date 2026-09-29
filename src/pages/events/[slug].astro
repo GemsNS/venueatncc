@@ -64,7 +64,7 @@ const schema = [
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
 ---
-<BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema}>
+<BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
   <section class="ev-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />

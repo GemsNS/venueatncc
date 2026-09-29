@@ -41,6 +41,11 @@ interface Props {
    * wizard's own action bar holds the bottom of the screen and a third bar would cover the calendar.
    */
   tabBar?: boolean;
+  /**
+   * Where the header's Check Availability goes, base-relative. An event page passes the booking page
+   * with its event chosen, e.g. '/book/?event=weddings'. Defaults to '/book/'.
+   */
+  bookPath?: string;
 }
 
 const path = withoutBase(Astro.url.pathname);
@@ -56,6 +61,7 @@ const {
   venueDetails = false,
   bare = false,
   tabBar = path !== bookHref,
+  bookPath = bookHref,
 } = Astro.props;
 
 // Canonical URLs point at the real domain. The demo and noindex pages (404, admin) carry none:
@@ -130,7 +136,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
   </head>
   <body class:list={{ 'is-bare': bare }}>
     <a class="skip-link" href="#main">Skip to content</a>
-    {!bare && <Header />}
+    {!bare && <Header ctaHref={bookPath} />}
     <main id="main" tabindex="-1">
       <slot />
     </main>
