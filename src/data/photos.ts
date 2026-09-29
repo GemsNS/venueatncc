@@ -123,6 +123,19 @@ export const photoDetails: Record<string, PhotoDetail> = {
     tags: ['parking'],
     space: 'grounds',
   },
+  // The home hero pair: portrait crops (the -tall files) of one photo of each space. They come from the same
+  // originals as hall-doors and grove-path, so they carry no `space`: photosFor() and The Space galleries
+  // never list them beside those photos.
+  'hall-daylight.jpg': {
+    alt: 'The Hall toward its white double doors and two arched windows, with daylight on the dark wood-look floor',
+    caption: 'Daylight through the arched windows',
+    tags: ['home-pair', 'indoor'],
+  },
+  'grove-pines.jpg': {
+    alt: 'The timber gazebo in The Grove among tall pines, with a paved path, lawn, and wooden picnic tables in front',
+    caption: 'The gazebo among the pines',
+    tags: ['home-pair', 'outdoor'],
+  },
 
   // Staged event photos, one per event, in one décor style (brand.md). Registered ahead of their files:
   // until all eight are in src/assets/venue/, none is shown (eventsStaged). styledOf is also the real photo
