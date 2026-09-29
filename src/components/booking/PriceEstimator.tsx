@@ -1,7 +1,8 @@
 /**
  * Instant estimate for /pricing/ (client:visible). Every number comes from src/shared/pricing.ts.
  * Space, day (or an exact date), hours, and event type feed estimate(); the result links into the
- * booking wizard with ?space=&hours=&event= (and &date= when one was picked).
+ * booking wizard with ?space=&hours=&event= (and &date= when one was picked). The date field opens
+ * the booking calendar, which loads availability only once it is opened.
  */
 import './booking.css';
 import { useEffect, useMemo, useState } from 'preact/hooks';
@@ -10,6 +11,7 @@ import { OTHER_EVENT, eventTypes } from '../../data/event-types';
 import { formatLong, todayKey } from '../../shared/dates';
 import { dayTypeOf, estimate, formatUSD, pricing, type DayType } from '../../shared/pricing';
 import type { DateKey, SpaceChoice } from '../../shared/types';
+import { DateField } from './DateField';
 import {
   DAY_SHORT,
   DAY_TYPES,
@@ -27,6 +29,7 @@ import {
   spaceLabel,
 } from './lib';
 import { EstimateView, Segmented, Stepper } from './ui';
+import { useAvailability } from './useAvailability';
 
 const ROOT_ID = 'bk-pe-root';
 
@@ -52,6 +55,7 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
   const [date, setDate] = useState<DateKey | ''>('');
   const [hours, setHours] = useState(pricing.minimumHours.saturday);
   const [eventType, setEventType] = useState('');
+  const { days, loading, error, ensureMonths, retry } = useAvailability();
 
   useEffect(() => setToday(todayKey()), []);
 
@@ -64,14 +68,9 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
   );
   const minHours = pricing.minimumHours[dayType];
 
-  const onDate = (value: string) => {
-    const k = parseDate(value);
-    if (k && (!today || (k >= today && k <= latestBookableDate(today)))) {
-      setDate(k);
-      setDayType(dayTypeOf(k));
-    } else {
-      setDate('');
-    }
+  const onDate = (k: DateKey) => {
+    setDate(k);
+    setDayType(dayTypeOf(k));
   };
 
   const cta = bookUrl(props.bookHref, { space, hours, event: eventType || undefined, date: date || undefined });
@@ -112,17 +111,21 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
             class="bk-seg--days"
           />
           <div class="bk-pe__date">
-            <label class="field__hint" for="bk-pe-date">
-              Or pick your date
-            </label>
-            <input
+            <span class="field__hint" id="bk-pe-date-label">
+              Or a specific date
+            </span>
+            <DateField
               id="bk-pe-date"
-              class="input bk-pe__dateinput"
-              type="date"
-              min={today || undefined}
-              max={latest || undefined}
+              labelId="bk-pe-date-label"
               value={date}
-              onChange={(e) => onDate(e.currentTarget.value)}
+              onChange={onDate}
+              today={today}
+              latest={latest}
+              statusOf={(k) => days[k]?.status}
+              loading={loading}
+              error={error}
+              onRetry={retry}
+              onMonth={(view) => ensureMonths(view, 2)}
             />
           </div>
         </div>

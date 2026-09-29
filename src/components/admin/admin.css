@@ -1195,6 +1195,59 @@ body.is-bare {
   color: var(--adm-orange);
 }
 
+/*
+  Phones: two rows, not three. Status and its select fill the first row (with the saved status while a
+  change is unsaved); Update Status and the calendar action (Mark Booked, Block on Calendar, or View on
+  Calendar) share the second, each growing to fill it. The select's basis leaves too little room for
+  Update Status on the first row at any phone width, but enough for the saved status, so the rows do not
+  change when a status is picked. The action drops its icon so the pair fits a phone; its label says the
+  same. A note keeps a row of its own.
+*/
+@media (width < 32rem) {
+  .adm-statusbar {
+    gap: 10px 8px;
+    padding: 12px;
+  }
+
+  .adm-statusbar__field {
+    display: contents;
+  }
+
+  .adm-statusbar__label {
+    order: 1;
+    margin-right: 4px;
+  }
+
+  .adm-statusbar .adm-selectwrap {
+    order: 2;
+    flex: 1 1 calc(100% - 12rem);
+  }
+
+  .adm-statusbar__saved {
+    order: 3;
+  }
+
+  .adm-statusbar .btn {
+    order: 4;
+    flex: 1 1 auto;
+    padding-inline: 1rem;
+  }
+
+  .adm-statusbar > .btn .icon {
+    display: none;
+  }
+
+  .adm-statusbar__note {
+    order: 5;
+  }
+}
+
+@media (width < 23rem) {
+  .adm-statusbar .btn {
+    padding-inline: 0.7rem;
+  }
+}
+
 .adm-selectwrap {
   position: relative;
   min-width: 0;

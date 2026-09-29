@@ -60,6 +60,10 @@ export interface CalendarProps {
   describedBy?: string;
   /** Called when someone picks a day that cannot be booked. */
   onUnavailable?: (date: DateKey, status: CalStatus) => void;
+  /** In a popover: adds a Close button after the month arrows. The wizard's inline calendar has none. */
+  onClose?: () => void;
+  /** Move focus between days without scrolling the page (a popover is placed in view when it opens). */
+  keepScroll?: boolean;
 }
 
 export function Calendar(props: CalendarProps) {
@@ -92,7 +96,7 @@ export function Calendar(props: CalendarProps) {
   useLayoutEffect(() => {
     if (!wantFocus.current) return;
     wantFocus.current = false;
-    gridRef.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus();
+    gridRef.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus(props.keepScroll ? { preventScroll: true } : undefined);
   });
 
   const atMin = ymIndex(view) <= ymIndex(min);
@@ -185,6 +189,11 @@ export function Calendar(props: CalendarProps) {
           >
             <Icon name="chevron-right" />
           </button>
+          {props.onClose && (
+            <button type="button" class="bk-iconbtn bk-cal__close" aria-label="Close" onClick={props.onClose}>
+              <Icon name="x" />
+            </button>
+          )}
         </div>
       </div>
 
