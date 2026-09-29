@@ -30,7 +30,7 @@ const MAX_WIDTH = 368;
 export interface DateFieldProps {
   /** The button's id. The popover is `${id}-pop` and the calendar grid `${id}-cal`. */
   id: string;
-  /** Id of the visible label; with the chosen date it names the button. */
+  /** Id of the visible label. With the value (the date, or "Choose a date") it names the button. */
   labelId: string;
   value: DateKey | '';
   onChange: (date: DateKey) => void;
@@ -184,7 +184,7 @@ export function DateField(props: DateFieldProps) {
         aria-haspopup="dialog"
         aria-expanded={open ? 'true' : 'false'}
         aria-controls={popId}
-        aria-labelledby={value ? `${props.labelId} ${valueId}` : props.labelId}
+        aria-labelledby={`${props.labelId} ${valueId}`}
         aria-describedby={props.describedBy || undefined}
         onClick={show}
       >
@@ -217,6 +217,7 @@ export function DateField(props: DateFieldProps) {
               onUnavailable={(date, status) => setMsg(unavailableMessage(date, status))}
               onClose={hide}
               keepScroll
+              headingLevel={2}
             />
             <p class="bk-datepop__msg" role="status">
               {msg}

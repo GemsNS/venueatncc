@@ -64,6 +64,8 @@ export interface CalendarProps {
   onClose?: () => void;
   /** Move focus between days without scrolling the page (a popover is placed in view when it opens). */
   keepScroll?: boolean;
+  /** The month title's heading level: 3 in the wizard's step, 2 as the first heading of a popover. */
+  headingLevel?: 2 | 3;
 }
 
 export function Calendar(props: CalendarProps) {
@@ -152,14 +154,15 @@ export function Calendar(props: CalendarProps) {
   };
 
   const titleId = `${props.id}-title`;
+  const Title = props.headingLevel === 2 ? 'h2' : 'h3';
   const weeks = monthGrid(view.y, view.m);
 
   return (
     <div class="bk-cal">
       <div class="bk-cal__head">
-        <h3 id={titleId} class="bk-cal__title" aria-live="polite">
+        <Title id={titleId} class="bk-cal__title" aria-live="polite">
           {monthTitle(view)}
-        </h3>
+        </Title>
         <div class="bk-cal__nav">
           {props.loading && (
             <span class="bk-cal__loading">

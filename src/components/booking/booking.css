@@ -1106,23 +1106,31 @@ button.bk-progress__item:hover {
   padding-left: 8px;
 }
 
+/* An h3 in the wizard and an h2 in the date field's popover; the same size in both. */
 .bk-cal__title {
   font-size: var(--t-headline);
   font-weight: 600;
+  line-height: 1.25;
   letter-spacing: -0.01em;
 }
 
 .bk-cal__nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
   margin-left: auto;
 }
 
+/* Beside the arrows but out of the flow, so the row never reflows while dates load. */
 .bk-cal__loading {
+  position: absolute;
+  top: 50%;
+  right: 100%;
   display: inline-flex;
   padding: 0 8px;
   color: var(--label-2);
+  transform: translateY(-50%);
 }
 
 .bk-iconbtn {
