@@ -8,8 +8,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
 import type { DateKey } from '../../shared/types';
-import { CAPACITY } from '../../shared/capacity';
-import { MIDDOT, NBSP, SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
+import { SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
@@ -22,10 +21,13 @@ const SPEAK_AFTER_MS = 500;
 
 const TOO_EARLY_MESSAGE = 'Choose a date from today on.';
 
-/** One short line under each space: "Indoor · 100 guests", short enough not to leave a word alone on a line. */
+/**
+ * One word under each space name. Capacities are not repeated here: the home page space cards, one
+ * scroll down, carry them (docs/design/brand.md, "Redundancy rules").
+ */
 const SPACE_META: Record<Single, string> = {
-  indoor: `Indoor ${MIDDOT} ${CAPACITY.indoor}${NBSP}guests`,
-  outdoor: `Outdoor ${MIDDOT} ${CAPACITY.outdoor}${NBSP}guests`,
+  indoor: 'Indoor',
+  outdoor: 'Outdoor',
 };
 
 export default function DateChecker(props: { bookHref?: string }) {
@@ -212,8 +214,9 @@ export default function DateChecker(props: { bookHref?: string }) {
                 <span class="bk-dc__radio" aria-hidden="true" />
               </span>
               <span class="bk-dc__space-cap">{SPACE_META[s]}</span>
+              {/* Before a date is chosen the hint above says what to do, so the cards stay quiet. */}
               <span class="bk-dc__space-status">
-                {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">{date ? (statusPending ? 'Checking' : '') : 'Pick a date'}</span>}
+                {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">{statusPending ? 'Checking' : ''}</span>}
               </span>
             </button>
           );

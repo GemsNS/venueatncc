@@ -1,11 +1,20 @@
 /*
   Booking islands: wizard, date checker, price estimator.
   Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md) and the
-  interaction rules of the HIG web spec (docs/design/hig-web-spec.md). Caramel fills mark interactive
-  or selected things only, always with Ink labels, and selection borders and rings use Caramel Deep
-  (--accent-text) so they keep 3:1 against the page; status uses green and orange with an icon or text. Glass
-  appears only on the phone action bar (a control layer). Headings and controls use the interface
-  family; large prices use Libre Caslon Text and the confirmation title Libre Caslon Display.
+  interaction rules of the HIG web spec (docs/design/hig-web-spec.md).
+
+  How the palette marks state:
+    Caramel fill, Ink label      the one chosen value and the primary action: the selected day, a
+                                 pressed Saturday chip, a switch that is on, the current step, and
+                                 the filled buttons (6.3:1).
+    Mist surface                 a selected row or card: a space choice, an event tile, a date
+                                 checker space. Its ring or radio is Caramel Deep (--accent-text),
+                                 which keeps 3:1 against the page and 4.5:1 on Mist.
+    Sage fill, Ink label         a finished step in the progress list. Text on Sage is always Ink:
+                                 Caramel Deep on Sage is under 4.5:1.
+  Status uses green and orange with an icon or text. Glass appears only on the phone action bar
+  (a control layer). Headings and controls use the interface family; large prices use Libre Caslon
+  Text and the confirmation title Libre Caslon Display.
   Radii are concentric: inner radius = outer radius - inset.
 */
 
@@ -15,6 +24,10 @@
   --bk-r-panel: calc(var(--r-sm) + var(--bk-pad)); /* 28px around 12px fields */
   --bk-thumb: var(--bg-elevated);
   --bk-step-bg: var(--bg-elevated);
+  /* Selected rows and cards (Mist), and finished steps (Sage with Ink). */
+  --bk-selected: var(--mist);
+  --bk-done: var(--sage);
+  --bk-on-done: var(--ink);
   /* Status text shades with 4.5:1 on light surfaces (the base tokens are tuned for fills and icons). */
   --bk-green-text: color-mix(in srgb, var(--green) 80%, #000000);
   --bk-orange-text: color-mix(in srgb, var(--orange) 85%, #000000);
@@ -23,12 +36,19 @@
   font-size: var(--t-body);
 }
 
-/* Dark mode: raised controls in olive-tinted grays that sit on the Elevated surface (#22251A). */
+/*
+  Dark mode: raised controls in olive-tinted grays that sit on the Elevated surface (#22251A).
+  Dark Mist (#232719) is the same value as a card, so selected rows use a Sage tint instead, and
+  finished steps a stronger Sage tint with Cream numerals.
+*/
 @media (prefers-color-scheme: dark) {
   .bk,
   .bk-app {
     --bk-thumb: #3a3f2c;
     --bk-step-bg: #2c3021;
+    --bk-selected: rgba(204, 213, 174, 0.12);
+    --bk-done: rgba(204, 213, 174, 0.22);
+    --bk-on-done: var(--label);
     --bk-green-text: var(--green);
     --bk-orange-text: var(--orange);
   }
@@ -367,7 +387,7 @@
 }
 
 .bk-choice__item[aria-checked='true'] {
-  background: var(--accent-tint);
+  background: var(--bk-selected);
 }
 
 .bk-choice__text {
@@ -884,8 +904,8 @@ button.bk-progress__item:hover {
 
 [data-state='done'] .bk-progress__n,
 [data-state='reachable'] .bk-progress__n {
-  background: var(--accent-tint);
-  color: var(--accent-text);
+  background: var(--bk-done);
+  color: var(--bk-on-done);
 }
 
 @media (min-width: 900px) {
@@ -1367,7 +1387,7 @@ button.bk-progress__item:hover {
 
 .bk-tile[aria-checked='true'] {
   border-color: var(--accent-text);
-  background: var(--accent-tint);
+  background: var(--bk-selected);
   box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 
@@ -1892,6 +1912,7 @@ html:not(.js) .bk-skel {
 
 .bk-dc__space[aria-checked='true'] {
   border-color: var(--accent-text);
+  background: var(--bk-selected);
   box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 

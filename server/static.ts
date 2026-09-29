@@ -1,8 +1,9 @@
 /**
  * Serves the built Astro site (SITE_DIR). Fingerprinted /_astro/* files are cached for a year,
- * HTML is always revalidated, /path redirects to /path/ when that directory has an index.html,
- * and anything missing gets 404.html with status 404. Each HTML page gets a Content-Security-Policy
- * that allows exactly its own inline scripts, by hash.
+ * HTML is always revalidated, pages that moved redirect permanently to their new address,
+ * /path redirects to /path/ when that directory has an index.html, and anything missing gets
+ * 404.html with status 404. Each HTML page gets a Content-Security-Policy that allows exactly its
+ * own inline scripts, by hash.
  */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -28,6 +29,22 @@ export function cacheControlFor(urlPath: string, filePath: string): string {
 }
 
 const isApi = (p: string) => p === '/api' || p.startsWith('/api/');
+
+/**
+ * Pages that moved, old path to new path, so links and bookmarks to the old address still land.
+ * The GitHub Pages demo cannot redirect, so there the old paths simply 404.
+ */
+export const MOVED_PAGES: ReadonlyMap<string, string> = new Map([
+  // The event page was renamed (docs/design/brand.md, "Separation"); server/db.ts migrates stored inquiries.
+  ['/events/church-community-events/', '/events/community-events/'],
+  // The About page was removed; The Space describes the venue.
+  ['/about/', '/the-space/'],
+]);
+
+/** Where a moved page lives now, with or without the trailing slash, or null if it did not move. */
+export function movedTo(urlPath: string): string | null {
+  return MOVED_PAGES.get(urlPath.endsWith('/') ? urlPath : `${urlPath}/`) ?? null;
+}
 
 function isFile(p: string): boolean {
   try {
@@ -125,6 +142,12 @@ export function mountStatic(app: Hono<AppEnv>, siteDir: string): boolean {
   const root = path.resolve(siteDir);
   if (!fs.existsSync(root)) return false;
 
+  const movedPages: MiddlewareHandler<AppEnv> = async (c, next) => {
+    const to = movedTo(c.req.path);
+    if (!to) return next();
+    return c.redirect(`${to}${new URL(c.req.url).search}`, 301);
+  };
+
   const trailingSlash: MiddlewareHandler<AppEnv> = async (c, next) => {
     const p = c.req.path;
     if (isApi(p) || p.endsWith('/')) return next();
@@ -145,7 +168,7 @@ export function mountStatic(app: Hono<AppEnv>, siteDir: string): boolean {
   });
 
   const policyFor = htmlPolicy();
-  app.get('*', trailingSlash, async (c, next) => {
+  app.get('*', movedPages, trailingSlash, async (c, next) => {
     if (isApi(c.req.path)) return next();
     const res = await files(c, next);
     const file = c.get('staticFile');

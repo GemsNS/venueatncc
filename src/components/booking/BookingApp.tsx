@@ -132,10 +132,8 @@ function Skeleton() {
           <span class="bk-skel__block bk-skel__block--short" />
         </div>
       </div>
+      {/* Without JavaScript the page shows its own "Book by phone or email" card (src/pages/book.astro). */}
       <p class="visually-hidden">Loading the booking calendar</p>
-      <noscript>
-        Booking online needs JavaScript. Call {site.contact.phone} or email {site.contact.email} and we will help you book.
-      </noscript>
     </div>
   );
 }

@@ -180,7 +180,7 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
         </div>
         <EstimateView est={est} showTotal={false} />
         <a class="btn btn--filled btn--lg bk-pe__cta" href={cta}>
-          Check Availability
+          Continue to Booking
           <Icon name="arrow-right" />
         </a>
       </section>

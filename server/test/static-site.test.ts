@@ -26,6 +26,25 @@ describe('static site', () => {
     assert.match(await page.text(), /<h1>Book<[/]h1>/);
   });
 
+  test('moved pages redirect permanently to their new address, with or without the slash, keeping the query', async () => {
+    const cases: [string, string][] = [
+      ['/events/church-community-events/', '/events/community-events/'],
+      ['/events/church-community-events', '/events/community-events/'],
+      ['/events/church-community-events/?utm_source=flyer', '/events/community-events/?utm_source=flyer'],
+      ['/about/', '/the-space/'],
+      ['/about', '/the-space/'],
+    ];
+    for (const [from, to] of cases) {
+      const res = await h.request(from);
+      assert.equal(res.status, 301, from);
+      assert.equal(res.headers.get('location'), to, from);
+    }
+    // Only the exact old paths move; anything beneath them is an ordinary miss.
+    const deeper = await h.request('/about/team/');
+    assert.equal(deeper.status, 404);
+    assert.equal(deeper.headers.get('location'), null);
+  });
+
   test('fingerprinted assets are immutable for a year; other files get a short cache', async () => {
     const js = await h.request('/_astro/app.abc123.js');
     assert.equal(js.status, 200);

@@ -351,6 +351,22 @@ describe('email templates', () => {
     assert.match(guest.subject, /NCC-7K3QX/);
   });
 
+  test('the footer is the one contact block: address, phone, and email once each, and no operator line', () => {
+    const count = (s: string, part: string) => s.split(part).length - 1;
+    const venue = venueNotificationEmail(inquiry, est, { origin: 'https://venueatncc.org' });
+    const guest = guestConfirmationEmail(inquiry, est, { origin: 'https://venueatncc.org' });
+    for (const mail of [venue, guest]) {
+      for (const part of [mail.html, mail.text]) {
+        assert.equal(count(part, '5112 Godwin Blvd'), 1, 'address once');
+        assert.equal(count(part, '(948) 205-2934'), 1, 'phone once');
+        assert.equal(count(part, 'faith@venueatncc.org'), part === mail.html ? 2 : 1, 'email once (the HTML link has it in href and text)');
+        assert.ok(!/operated by/i.test(part), 'no operator line');
+      }
+    }
+    assert.ok(guest.html.includes('Reply to this email, or call us at the number below.'));
+    assert.ok(guest.text.includes('Reply to this email, or call us at the number below.'));
+  });
+
   const NL = String.fromCharCode(10);
   const CRLF = String.fromCharCode(13, 10);
 

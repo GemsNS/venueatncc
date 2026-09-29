@@ -26,8 +26,12 @@ import type {
 } from '../../shared/types';
 import { DEMO_ADMIN_NAME } from './demo-credentials';
 
-/** Version 2 retired an inquiry field and rewrote the seed, so data stored by version 1 is replaced. */
-export const DEMO_DB_VERSION = 2;
+/**
+ * Bumped whenever stored demo data must not survive: version 2 retired an inquiry field, and
+ * version 3 renamed an event type to community-events and rewrote the calendar labels, so a
+ * browser holding an older copy gets a fresh seed.
+ */
+export const DEMO_DB_VERSION = 3;
 
 /** Everything the demo backend stores, as one JSON document. */
 export interface DemoDb {
