@@ -1,8 +1,9 @@
 ---
 /**
  * Home, per docs/design/brand.md "Page direction: Home", in this order:
- * the hero on the building at dusk with the date checker, the two spaces as real-photo cards, the events,
- * a rates teaser, the arrival band, and the closing band.
+ * the hero (the pines and the gazebo in The Grove as a whole portrait photograph, beside the copy and the
+ * date checker), the two spaces as real-photo cards, the events, a rates teaser, the arrival band, and the
+ * closing band.
  *
  * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
  * parking and the address in the arrival band, prices in the rates teaser, and how booking works in the
@@ -24,7 +25,14 @@ import { bookHref, pricingHref } from '../data/nav';
 import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
 import { href } from '../lib/paths';
 
-const hero = photoByName('exterior-dusk') ?? heroPhoto();
+/*
+  The hero photo is shown whole at every size, never cropped to a landscape frame: its 2:3 portrait file
+  (grove-pines-tall), passed to Photo as the main source so wide screens get it too (Photo swaps in a tall
+  file only on phones). It is a second framing of the photo behind grove-path and its staged
+  community-events tile: the full height of the pines and the sky, where those are a landscape band.
+*/
+const heroSource = photoByName('grove-pines') ?? heroPhoto();
+const hero: VenuePhoto | null = heroSource?.tall ? { ...heroSource, src: heroSource.tall, tall: undefined } : heroSource;
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const hallName = hall?.name ?? 'The Hall';
@@ -90,11 +98,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     {
       hero && (
         <div class="hero__media">
-          <Photo photo={hero} ratio="fill" rounded={false} priority sizes="(max-width: 46.49rem) 150vw, 130vw" />
+          <Photo photo={hero} ratio="fill" rounded={false} priority sizes="(min-width: 64rem) 683px, (min-width: 46.5rem) 44vw, 100vw" />
         </div>
       )
     }
-    <div class="hero__scrim" aria-hidden="true"></div>
     <div class="hero__copy">
       <h1 id="hero-title" class="hero__h1">
         <span class="hero__kicker">Event venue in Suffolk, Virginia<span class="visually-hidden">:</span></span>
@@ -197,41 +204,33 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   /* ---------- Hero ---------- */
 
   /*
-    One grid for the hero. Row 1 is the photo, full bleed, with the copy at the bottom left.
-    Row 2 holds the date checker below 64rem; from 64rem it floats in row 1 at the bottom right.
-    The DateChecker island renders once (its ids are fixed), so CSS alone moves it.
+    A split hero around one portrait photograph, shown whole. The file is 2:3 and so is its frame at every
+    size from 46.5rem, so nothing is cropped away; on phones a 4:5 frame gives way only at the top of the sky.
+    One grid, three layouts. The DateChecker island renders once (its ids are fixed), so CSS alone places it.
+      Phones (below 46.5rem): the photo, the copy on a Navy panel, then the date checker.
+      Tablets (46.5rem to 64rem): the copy on Navy beside the photo, then the date checker.
+      Wide (from 64rem): the copy and the date checker on Navy, beside the photo at the hero's full height.
   */
   .hero {
-    --hero-h: min(88svh, 56rem);
-    --checker-w: 23.75rem;
     /*
-      Where the photo is cropped. A landscape frame is often wider than the photo's 3:2, where a plain cover
-      crop would show the whole building, gable and cross included. So from 46.5rem the photo is drawn 130%
-      wide from its left edge (below), and the gable and its cross stay outside the frame at every size
-      (brand.md, Separation). In a landscape frame the crop sits a little above center, so the copy and
-      the kicker read over the dark roof and pines rather than the pale facade (6.4:1 or better for the
-      white kicker from 1024 to 2560).
+      Where a frame trims the photo: the phone's 4:5 frame, and a row grown past the photo's own height by
+      very large text. Anchored at the bottom, only sky and treetops give way, never the gazebo or the path.
     */
-    --photo-pos: 0% 45%;
+    --photo-pos: 45% 100%;
     display: grid;
-    grid-template-columns:
-      [full-start] minmax(var(--gutter), 1fr)
-      [content-start] minmax(0, var(--max))
-      [content-end] minmax(var(--gutter), 1fr)
-      [full-end];
-    grid-template-rows: [photo-start] minmax(var(--hero-h), auto) [photo-end] auto;
     background: var(--bg-grouped);
   }
 
-  .hero__media,
-  .hero__scrim {
-    grid-column: full;
-    grid-row: photo;
+  /* The Navy panel behind the copy. On wide screens the whole hero is Navy instead. */
+  .hero::before {
+    content: '';
+    background: var(--navy);
   }
 
   .hero__media {
     position: relative;
     overflow: hidden;
+    background: var(--navy);
   }
 
   .hero__media :global(.photo) {
@@ -239,40 +238,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     inset: 0;
   }
 
-  @media (min-width: 46.5rem) {
-    .hero__media :global(.photo__img) {
-      width: 130%;
-      max-width: none;
-    }
-  }
-
-  /*
-    Legibility scrim in Navy (--navy-rgb), strongest at the bottom left where the copy sits over the pale paving.
-    The only gradients on the site are scrims like this one.
-  */
-  .hero__scrim {
-    /* Positioned like the photo, so it paints above it. */
-    position: relative;
-    background:
-      linear-gradient(
-        to top,
-        rgb(var(--navy-rgb) / 0.86) 0%,
-        rgb(var(--navy-rgb) / 0.62) 30%,
-        rgb(var(--navy-rgb) / 0.22) 55%,
-        rgb(var(--navy-rgb) / 0) 72%
-      ),
-      linear-gradient(to right, rgb(var(--navy-rgb) / 0.62) 0%, rgb(var(--navy-rgb) / 0.32) 40%, rgb(var(--navy-rgb) / 0) 66%);
-  }
-
   .hero__copy {
-    grid-column: content;
-    grid-row: photo;
-    align-self: end;
-    z-index: 1;
     display: grid;
+    align-content: center;
     gap: 1.25rem;
-    max-width: 42rem;
-    padding-block: clamp(6rem, 20svh, 12rem) clamp(2rem, 1.5rem + 2vw, 3.5rem);
     color: var(--on-navy);
   }
 
@@ -282,32 +251,29 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     color: var(--on-navy);
   }
 
-  /*
-    Over the photo the kicker is white: Mist falls near 3:1 over the lit roof on wide screens. On the
-    phone's solid Navy panel it takes the Mist accent (7.5:1), below.
-  */
+  /* Mist on Navy, 7.5:1. */
   .hero__kicker {
     font-family: var(--font);
     font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: normal;
-    color: var(--on-navy);
-    text-shadow: 0 1px 2px rgb(var(--navy-rgb) / 0.6);
+    color: var(--on-navy-accent);
   }
 
   /* With very large text the title stays well above the lead's size, not just the vw cap. */
   .hero__title {
     font-size: max(var(--t-display), 1.7rem);
     color: var(--on-navy);
-    text-shadow: 0 1px 24px rgb(var(--navy-rgb) / 0.35);
+    text-wrap: balance;
   }
 
+  /* Ice on Navy, 9.4:1. */
   .hero__lead {
     max-width: 34rem;
     font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
     line-height: 1.5;
-    color: rgb(255 255 255 / 0.92);
+    color: var(--on-navy-2);
   }
 
   /* When the sentence needs two lines, it breaks between its clauses; a clause still wraps within itself when it must. */
@@ -323,114 +289,160 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     outline-color: var(--focus-ring);
   }
 
-  /* Below 64rem the checker sits under the photo, as a plain card on the grouped background. */
-  .hero__checker {
-    grid-column: content;
-    grid-row: 2;
-    padding-block: 1.5rem 2.5rem;
-  }
-
   .hero__checker :global(.bk-dc) {
     margin-inline: auto;
   }
 
-  /*
-    The copy spans the width here, so the scrim rises from the bottom only. In a portrait frame the crop
-    keeps the lit entry and the lawn, left of center and further left as the frame widens; the gable and
-    its cross stay outside the frame (brand.md, Separation).
-  */
-  @media (width < 64rem) {
-    .hero {
-      --photo-pos: 28% 45%;
-    }
-
-    .hero__scrim {
-      background: linear-gradient(
-        to top,
-        rgb(var(--navy-rgb) / 0.9) 0%,
-        rgb(var(--navy-rgb) / 0.76) 30%,
-        rgb(var(--navy-rgb) / 0.52) 55%,
-        rgb(var(--navy-rgb) / 0.18) 75%,
-        rgb(var(--navy-rgb) / 0) 90%
-      );
-    }
-  }
-
-  @media (56rem <= width < 64rem) {
-    .hero {
-      --photo-pos: 4% 45%;
-    }
-  }
-
-  /*
-    Phones: no text over the building. The photo is a square block cropped to the lit entry, and the
-    copy follows on a Navy panel that continues from it, then the date checker.
-  */
+  /* Phones: the photo first, whole from the treetops down, then the copy on Navy, then the checker. */
   @media (width < 46.5rem) {
     .hero {
-      /* The square centers the lit entry; the gable and its cross fall outside the frame (brand.md). */
-      --photo-pos: 50% 50%;
-      grid-template-rows: [photo-start] auto [photo-end] auto auto;
+      grid-template-columns: [full-start] var(--gutter) [content-start] minmax(0, 1fr) [content-end] var(--gutter) [full-end];
+      grid-template-rows: auto auto auto;
+    }
+
+    .hero::before {
+      grid-column: full;
+      grid-row: 2;
     }
 
     .hero__media {
-      aspect-ratio: 1 / 1;
-    }
-
-    .hero__scrim {
-      display: none;
+      grid-column: full;
+      grid-row: 1;
+      aspect-ratio: 4 / 5;
     }
 
     .hero__copy {
-      grid-column: full;
+      grid-column: content;
       grid-row: 2;
-      max-width: none;
       gap: 1rem;
-      padding: 1.75rem var(--gutter) 2rem;
-      background: var(--navy);
-    }
-
-    .hero__title,
-    .hero__kicker {
-      text-shadow: none;
-    }
-
-    .hero__kicker {
-      color: var(--on-navy-accent);
+      padding-block: 1.75rem 2rem;
     }
 
     .hero__checker {
+      grid-column: content;
       grid-row: 3;
+      padding-block: 1.5rem 2.5rem;
     }
   }
 
-  /* From 64rem the checker floats over the photo at the bottom right, on glass. */
-  @media (min-width: 64rem) {
+  /* Tablets: the copy on Navy beside the whole photo, then the checker centered below. */
+  @media (46.5rem <= width < 64rem) {
+    .hero {
+      --media-w: min(44vw, 28rem);
+      grid-template-columns:
+        [full-start] var(--gutter)
+        [copy-start] minmax(0, 1fr)
+        [copy-end] clamp(1.5rem, 4vw, 2.5rem)
+        [media-start] var(--media-w)
+        [media-end full-end];
+      grid-template-rows: auto auto;
+    }
+
+    .hero::before {
+      grid-column: full-start / media-start;
+      grid-row: 1;
+    }
+
+    /* The row is at least as tall as a 2:3 photo of the column's width, so the photo fills it whole. */
+    .hero__media {
+      grid-column: media;
+      grid-row: 1;
+      min-height: calc(var(--media-w) * 3 / 2);
+    }
+
     .hero__copy {
-      max-width: min(42rem, calc(100% - var(--checker-w) - 3rem));
+      grid-column: copy;
+      grid-row: 1;
+      padding-block: 2.5rem;
+      container-type: inline-size;
+    }
+
+    .hero__title {
+      font-size: max(min(var(--t-display), 15cqi), 1.7rem);
     }
 
     .hero__checker {
-      grid-row: photo;
-      align-self: end;
-      justify-self: end;
-      z-index: 1;
-      width: var(--checker-w);
-      padding-block: 2.5rem clamp(2rem, 1.5rem + 2vw, 3.5rem);
+      grid-column: full;
+      grid-row: 2;
+      padding: 1.5rem var(--gutter) 2.5rem;
+    }
+  }
+
+  /*
+    Wide: the hero is one Navy band as tall as the screen allows below the header, within 43rem to 64rem, and
+    never so tall that the photo leaves the copy less than about 27rem (a 1024 x 1366 tablet in portrait). The
+    photo column is exactly as wide as a 2:3 photo of that height, so the photo fills it whole. The copy and
+    the checker start on the header's content edge (the logo) and are centered top to bottom.
+  */
+  @media (width >= 64rem) {
+    .hero {
+      --hero-h: min(clamp(43rem, 100svh - var(--nav-h) - 1px, 64rem), (100vw - 32rem) * 1.5);
+      --media-w: calc(var(--hero-h) * 2 / 3);
+      grid-template-columns:
+        [full-start] max(var(--gutter), (100% - var(--max)) / 2)
+        [copy-start] minmax(0, 36rem)
+        [copy-end] minmax(clamp(2rem, 4vw, 4rem), 1fr)
+        [media-start] var(--media-w)
+        [media-end full-end];
+      grid-template-rows: 1fr auto auto 1fr;
+      min-height: var(--hero-h);
+      background: var(--navy);
     }
 
-    /*
-      The card becomes a glass panel. The glass tokens turn solid under Reduce Transparency, Increase
-      Contrast, and where backdrop-filter is not supported (global.css).
-    */
+    .hero::before {
+      display: none;
+    }
+
+    .hero__media {
+      grid-column: media;
+      grid-row: 1 / -1;
+    }
+
+    .hero__copy {
+      grid-column: copy;
+      grid-row: 2;
+      padding-top: 2rem;
+      container-type: inline-size;
+    }
+
+    .hero__title {
+      font-size: max(min(var(--t-display), 13.5cqi), 1.7rem);
+    }
+
+    .hero__checker {
+      grid-column: copy;
+      grid-row: 3;
+      padding-block: 1.75rem 2rem;
+    }
+
+    /* On Navy the card needs no shadow (a Navy shadow bands on Navy); its hairline edge still shows in dark mode. */
     .hero__checker :global(.bk-dc) {
-      max-width: none;
       margin-inline: 0;
-      background-color: var(--glass-bg-strong);
-      -webkit-backdrop-filter: var(--glass-blur);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-edge), var(--glass-shadow);
+      box-shadow: var(--bk-card-edge);
+    }
+  }
+
+  /*
+    Short wide screens (a 1024 x 768 tablet in landscape, a 1366 x 768 laptop): tighter spacing and a title
+    sized to the screen's height keep the copy and the checker within the photo's height, so the whole hero,
+    photo included, fits the first screen.
+  */
+  @media (width >= 64rem) and (height < 53rem) {
+    .hero__copy {
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+
+    .hero__h1 {
+      gap: 0.6rem;
+    }
+
+    .hero__title {
+      font-size: max(min(var(--t-display), 13.5cqi, 7svh), 1.7rem);
+    }
+
+    .hero__checker {
+      padding-block: 1.25rem 1rem;
     }
   }
 

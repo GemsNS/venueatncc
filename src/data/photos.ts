@@ -111,6 +111,16 @@ export const photoDetails: Record<string, PhotoDetail> = {
     tags: ['outdoor'],
     space: 'grove',
   },
+  /*
+    The home hero: a second framing of the grove-path original (IMG_4906), shown as its whole 2:3 portrait with
+    the sky and the full height of the pines. No `space`: The Space shows every grove photo in its gallery, and
+    this is the same view as grove-path, so it stays out of that gallery and appears only on the home page.
+  */
+  'grove-pines.jpg': {
+    alt: 'Tall pines around the timber gazebo in The Grove, with a paved path across the lawn and a picnic table on the patio in front',
+    caption: 'The gazebo among the pines',
+    tags: ['outdoor'],
+  },
   'approach-dusk.jpg': {
     alt: 'A long paved drive curving past a mown lawn toward the venue building at dusk, with a wall of tall pines behind',
     caption: 'The drive at dusk',
