@@ -90,7 +90,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     {
       hero && (
         <div class="hero__media">
-          <Photo photo={hero} ratio="fill" rounded={false} priority sizes="(max-width: 46.49rem) 150vw, 100vw" />
+          <Photo photo={hero} ratio="fill" rounded={false} priority sizes="(max-width: 46.49rem) 150vw, 130vw" />
         </div>
       )
     }
@@ -205,11 +205,14 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     --hero-h: min(88svh, 56rem);
     --checker-w: 23.75rem;
     /*
-      Where the photo is cropped. From 64rem the whole width of the building shows and the date checker
-      floats over the gable at the right. The crop sits high in the photo, so the building sits low in the
-      frame and the gable's cross stays behind the checker instead of rising above its top edge.
+      Where the photo is cropped. A landscape frame is often wider than the photo's 3:2, where a plain cover
+      crop would show the whole building, gable and cross included. So from 46.5rem the photo is drawn 130%
+      wide from its left edge (below), and the gable and its cross stay outside the frame at every size
+      (brand.md, Separation). In a landscape frame the crop sits a little above center, so the copy and
+      the kicker read over the dark roof and pines rather than the pale facade (6.4:1 or better for the
+      white kicker from 1024 to 2560).
     */
-    --photo-pos: 50% 15%;
+    --photo-pos: 0% 45%;
     display: grid;
     grid-template-columns:
       [full-start] minmax(var(--gutter), 1fr)
@@ -234,6 +237,13 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   .hero__media :global(.photo) {
     position: absolute;
     inset: 0;
+  }
+
+  @media (min-width: 46.5rem) {
+    .hero__media :global(.photo__img) {
+      width: 130%;
+      max-width: none;
+    }
   }
 
   /*
@@ -325,13 +335,13 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   /*
-    The copy spans the width here, so the scrim rises from the bottom only. The frame is narrower than the
-    photo, so the crop keeps the lit entry and the lawn and leaves the gable and its cross outside the frame
-    (brand.md, Separation): left of center, and further left as the frame widens.
+    The copy spans the width here, so the scrim rises from the bottom only. In a portrait frame the crop
+    keeps the lit entry and the lawn, left of center and further left as the frame widens; the gable and
+    its cross stay outside the frame (brand.md, Separation).
   */
   @media (width < 64rem) {
     .hero {
-      --photo-pos: 28% 58%;
+      --photo-pos: 28% 45%;
     }
 
     .hero__scrim {
@@ -348,7 +358,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
 
   @media (56rem <= width < 64rem) {
     .hero {
-      --photo-pos: 4% 58%;
+      --photo-pos: 4% 45%;
     }
   }
 

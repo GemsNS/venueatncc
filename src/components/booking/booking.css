@@ -1820,8 +1820,13 @@ html:not(.js) .bk-skel {
 
 /* ---------- Date checker (home hero) ---------- */
 
+/*
+  One column that never grows past the card. A date field's intrinsic width grows with its padding and
+  text size, and an auto column would widen the whole checker past its edge at 200% text.
+*/
 .bk-dc {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   width: 100%;
   max-width: 460px;
@@ -1835,6 +1840,10 @@ html:not(.js) .bk-skel {
 .bk-dc__label {
   font-size: var(--t-headline);
   font-weight: 600;
+}
+
+.bk-dc > .field {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .bk-dc__inputwrap {
@@ -2059,11 +2068,20 @@ html:not(.js) .bk-skel {
   width: 100%;
 }
 
-/* 200% text on a phone: the trailing arrow steps aside so the label keeps its words together. */
+/*
+  200% text on a phone: the trailing arrow steps aside so the label keeps its words together, and the
+  checker's calendar icon steps aside so the field keeps its whole width for the date. The icon is
+  decorative: the label names the field, and a tap anywhere on it opens the picker.
+*/
 @media (width < 20rem) {
   .bk-dc__cta .icon,
-  .bk-pe__cta .icon {
+  .bk-pe__cta .icon,
+  .bk-dc__inputicon {
     display: none;
+  }
+
+  .bk-dc__input {
+    padding-left: 0.95rem;
   }
 }
 
