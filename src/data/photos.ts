@@ -117,7 +117,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     this is the same view as grove-path, so it stays out of that gallery and appears only on the home page.
   */
   'grove-pines.jpg': {
-    alt: 'Tall pines around the timber gazebo in The Grove, with a paved path across the lawn and a picnic table on the patio in front',
+    alt: 'Tall pines around the timber gazebo in The Grove, with a paved path across the lawn and picnic tables on the patio in front',
     caption: 'The gazebo among the pines',
     tags: ['outdoor'],
   },
