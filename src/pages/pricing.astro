@@ -5,6 +5,7 @@ import Icon from '../components/Icon.astro';
 import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import PriceEstimator from '../components/booking/PriceEstimator';
+import { DAY_SHORT, DAY_TYPES } from '../components/booking/lib';
 import { site } from '../data/site';
 import { bookHref } from '../data/nav';
 import { photoByName } from '../data/photos';
@@ -16,14 +17,18 @@ import { breadcrumbs, rateCatalog, venueRates } from '../lib/schema';
 import { href } from '../lib/paths';
 
 /*
-  Each fact on this page has one home (brand.md, Redundancy rules): rates in the hourly table and the
-  packages, fees and special rates in their lists, and what every rental includes, the deposit, and the
-  balance in Rental terms (the site's one full statement of them; /faq/ points here). Capacity appears
-  only inside the estimator's space control. Rate questions are answered on /faq/, not repeated here.
+  Each fact on this page has one home (brand.md, Redundancy rules): a day's minimum, hourly rates, and
+  packages in that day's panel; fees and special rates in their lists; and what every rental includes, the
+  deposit, and the balance in Rental terms (the site's one full statement of them; /faq/ points here).
+  Capacity appears only inside the estimator's space control. Rate questions are answered on /faq/.
+
+  Rates by day: one panel per day type, all in the HTML (for search engines, and for browsers without
+  :has(), which show every panel under its own heading). A row of native radio buttons, styled as the
+  segmented control, shows one day at a time with CSS alone: arrow keys move between days, no script.
 */
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
-/** The lowest hourly rate for a space, for the meta description only (the page shows the full table). */
+/** The lowest hourly rate for a space, for the meta description only (the page shows every rate). */
 const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
 const title = 'Venue rental rates in Suffolk, VA | The Venue at NCC';
 const description = `Venue rental rates in Suffolk, VA: ${grove?.name} from ${fromRate('outdoor')} an hour and ${hall?.name} from ${fromRate('indoor')}, with on-site parking. Get an instant estimate for your date.`;
@@ -32,22 +37,36 @@ const crumbs = [
   { name: 'Pricing', path: '/pricing/' },
 ];
 const spaces: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
-const days: DayType[] = ['saturday', 'friday', 'sunday', 'weekday'];
 const offer = pricing.introOffer && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
-const packagesByDay = days
-  .map((d) => ({ day: d, items: pricing.packages.filter((p) => p.dayType === d) }))
-  .filter((g) => g.items.length > 0);
+
+/** The day shown first, as in the estimator: Saturday, the most requested day. */
+const firstDay: DayType = 'saturday';
+const days = DAY_TYPES.map((d) => ({
+  id: d,
+  label: pricing.dayTypes[d].label,
+  short: DAY_SHORT[d],
+  minHours: pricing.minimumHours[d],
+  packages: pricing.packages.filter((p) => p.dayType === d || p.dayType === 'any'),
+}));
+const hasPackages = pricing.packages.length > 0;
+
 const autoDiscounts = pricing.discounts.filter((d) => d.appliesTo !== 'manual' && d.percent > 0);
 const askDiscounts = pricing.discounts.filter((d) => d.appliesTo === 'manual' && d.percent > 0);
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const andList = (items: string[]) =>
+  items.length <= 2 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+/** Which special rates the estimate applies on its own, and which to ask for, said once under the list. */
+const discountNote = [
+  autoDiscounts.length > 0
+    ? `Your estimate applies the ${andList(autoDiscounts.map((d) => lowerFirst(d.label)))} when your event qualifies.`
+    : null,
+  askDiscounts.length > 0 ? `Mention ${autoDiscounts.length > 0 ? 'any other rate' : 'any of these rates'} in your request.` : null,
+  'Discounts apply to the rental and do not combine, so we apply the best one that fits your event.',
+]
+  .filter((s): s is string => s !== null)
+  .join(' ');
 
 const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
-
-/**
- * Column and section heads for the hourly rates: the space's name only. 'Both spaces' spells out which
- * two it means. Capacity is not repeated here (it lives in the estimator's space control).
- */
-const rateHead = (s: SpaceChoice): { name: string; detail?: string } =>
-  s === 'both' ? { name: 'Both spaces', detail: SPACE_NAME.both } : { name: SPACE_NAME[s] };
 
 /**
  * Rental terms: what every rental includes beyond the space itself (parking), the site's one full
@@ -65,14 +84,21 @@ const rentalTerms = [
   'You arrange catering and décor separately.',
 ].filter((t): t is string => t !== null);
 
-const fees = [
-  pricing.fees.cleaning > 0 && { label: 'Cleaning fee', detail: 'Per event, added to every booking.', amount: formatUSD(pricing.fees.cleaning) },
-  pricing.fees.damageDepositRefundable > 0 && {
+interface FeeRow {
+  label: string;
+  detail?: string;
+  unit?: string;
+  amount: string;
+}
+const fees: FeeRow[] = [];
+if (pricing.fees.cleaning > 0) fees.push({ label: 'Cleaning fee', unit: 'per event', amount: formatUSD(pricing.fees.cleaning) });
+if (pricing.fees.damageDepositRefundable > 0) {
+  fees.push({
     label: 'Refundable damage deposit',
     detail: 'Returned after your event if there is no damage.',
     amount: formatUSD(pricing.fees.damageDepositRefundable),
-  },
-].filter((f): f is { label: string; detail: string; amount: string } => Boolean(f));
+  });
+}
 
 const photo = photoByName('hall-fireplace');
 ---
@@ -113,107 +139,84 @@ const photo = photoByName('hall-fireplace');
     </div>
   </section>
 
-  {
-    packagesByDay.length > 0 && (
-      <section class="section" aria-labelledby="packages-heading">
-        <div class="container">
-          <div class="section-head">
-            <h2 id="packages-heading">Packages</h2>
-            <p class="t-lead">Set blocks of time, priced below the hourly rate.</p>
+  <section class="section" id="rates" aria-labelledby="rates-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="rates-heading">Rates and fees</h2>
+        {hasPackages && <p class="t-lead">Book by the hour, or choose a package: a set block of time, priced below the hourly rate.</p>}
+      </div>
+
+      <div class="days">
+        <fieldset class="day-pick">
+          <legend class="visually-hidden">Show rates for</legend>
+          <div class="segmented day-pick__track">
+            {
+              days.map((d) => (
+                <label class="segmented__item day-pick__opt">
+                  <input
+                    class="visually-hidden"
+                    type="radio"
+                    name="rates-day"
+                    id={`rates-day-${d.id}`}
+                    value={d.id}
+                    checked={d.id === firstDay}
+                    aria-controls={`day-${d.id}`}
+                  />
+                  <span>{d.short}</span>
+                </label>
+              ))
+            }
           </div>
-          <div class="pkg-days">
-            {packagesByDay.map((g) => (
-              <section class="pkg-day" aria-labelledby={`pkg-${g.day}`}>
-                <h3 id={`pkg-${g.day}`} class="serif-label">
-                  {pricing.dayTypes[g.day].label}
-                </h3>
-                <ul class="pkg-grid">
-                  {g.items.map((p) => (
-                    <li class="pkg">
-                      <h4 class="t-headline">{p.name}</h4>
-                      <p class="pkg__space">{SPACE_NAME[p.space]}</p>
-                      <p class="pkg__price">
-                        <span class="price num">{formatUSD(p.price)}</span>
-                        <span class="pkg__hours t-subhead secondary">for {p.hours} hours</span>
-                      </p>
-                      {p.description && <p class="t-subhead secondary">{p.description}</p>}
+        </fieldset>
+
+        {
+          days.map((d) => (
+            <section class={`day day--${d.id}`} id={`day-${d.id}`} aria-labelledby={`day-${d.id}-title`}>
+              <h3 id={`day-${d.id}-title`} class="day__title serif-label">
+                {d.label}
+              </h3>
+
+              <div class="day__block">
+                <div class="day__head">
+                  <h4 class="day__sub">Hourly rates</h4>
+                  <p class="day__min">
+                    <span class="nowrap">{d.minHours}-hour</span> minimum
+                  </p>
+                </div>
+                <ul class="rows rows--hourly">
+                  {spaces.map((s) => (
+                    <li class="row">
+                      <span class="row__name">{SPACE_NAME[s]}</span>
+                      <span class="row__amount">
+                        <span class="price num">{formatUSD(pricing.hourly[s][d.id])}</span>
+                        <span class="row__unit">an hour</span>
+                      </span>
                     </li>
                   ))}
                 </ul>
-              </section>
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
+              </div>
 
-  <section class="section section--grouped" aria-labelledby="rates-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="rates-heading">Hourly rates</h2>
-        <p class="t-lead">Your rate depends on the space and the day, and each day has a minimum number of hours.</p>
-      </div>
-
-      <div class="card rates rates--table">
-        <table class="rates__table">
-          <caption class="visually-hidden">Hourly rental rates by day and space</caption>
-          <thead>
-            <tr>
-              <th scope="col">Day</th>
-              {
-                spaces.map((s) => (
-                  <th scope="col">
-                    <span class="rates__space">{rateHead(s).name}</span>
-                    {rateHead(s).detail && <span class="rates__cap">{rateHead(s).detail}</span>}
-                  </th>
-                ))
-              }
-            </tr>
-          </thead>
-          <tbody>
-            {
-              days.map((d) => (
-                <tr>
-                  <th scope="row">
-                    <span class="rates__day">{pricing.dayTypes[d].label}</span>
-                    <span class="rates__min"><span class="nowrap">{pricing.minimumHours[d]}-hour</span> minimum</span>
-                  </th>
-                  {spaces.map((s) => (
-                    <td>
-                      <span class="rates__price price num">{formatUSD(pricing.hourly[s][d])}</span>
-                      <span class="rates__unit">an hour</span>
-                    </td>
-                  ))}
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="rates--stacked">
-        {
-          spaces.map((s) => (
-            <section class="rates-space" aria-labelledby={`rates-${s}`}>
-              <h3 id={`rates-${s}`} class="rates-space__head">
-                <span class="t-headline">{rateHead(s).name}</span>
-                {rateHead(s).detail && <span class="secondary t-subhead">{rateHead(s).detail}</span>}
-              </h3>
-              <ul class="list-group">
-                {days.map((d) => (
-                  <li class="list-row">
-                    <div class="list-row__main">
-                      <div>{pricing.dayTypes[d].label}</div>
-                      <div class="list-row__detail"><span class="nowrap">{pricing.minimumHours[d]}-hour</span> minimum</div>
-                    </div>
-                    <div class="rates__cell">
-                      <span class="rates__price price num">{formatUSD(pricing.hourly[s][d])}</span>
-                      <span class="rates__unit">an hour</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {d.packages.length > 0 && (
+                <div class="day__block">
+                  <div class="day__head">
+                    <h4 class="day__sub">Packages</h4>
+                  </div>
+                  <ul class="rows rows--grid">
+                    {d.packages.map((p) => (
+                      <li class="row">
+                        <p class="row__name">{p.name}</p>
+                        <span class="row__amount">
+                          <span class="price num">{formatUSD(p.price)}</span>
+                        </span>
+                        <p class="row__detail">
+                          {SPACE_NAME[p.space]}, {p.hours} hours
+                        </p>
+                        {p.description && <p class="row__note">{p.description}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           ))
         }
@@ -224,14 +227,15 @@ const photo = photoByName('hall-fireplace');
           fees.length > 0 && (
             <div class="fees">
               <h3 class="serif-label">Fees</h3>
-              <ul class="list-group">
+              <ul class="rows panel">
                 {fees.map((f) => (
-                  <li class="list-row">
-                    <div class="list-row__main">
-                      <div class="t-headline">{f.label}</div>
-                      <div class="list-row__detail">{f.detail}</div>
-                    </div>
-                    <span class="fees__amount price num">{f.amount}</span>
+                  <li class="row">
+                    <p class="row__name">{f.label}</p>
+                    <span class="row__amount">
+                      <span class="price num">{f.amount}</span>
+                      {f.unit && <span class="row__unit">{f.unit}</span>}
+                    </span>
+                    {f.detail && <p class="row__detail">{f.detail}</p>}
                   </li>
                 ))}
               </ul>
@@ -243,33 +247,18 @@ const photo = photoByName('hall-fireplace');
           (autoDiscounts.length > 0 || askDiscounts.length > 0) && (
             <div class="fees">
               <h3 class="serif-label">Special rates</h3>
-              <ul class="list-group">
-                {autoDiscounts.map((d) => (
-                  <li class="list-row">
-                    <div class="list-row__main">
-                      <div class="t-headline">{d.label}</div>
-                      <div class="list-row__detail">Applied automatically to your estimate.</div>
-                    </div>
-                    <span class="fees__amount">
-                      <span class="price num">{d.percent}%</span> <span class="fees__off">off</span>
-                    </span>
-                  </li>
-                ))}
-                {askDiscounts.map((d) => (
-                  <li class="list-row">
-                    <div class="list-row__main">
-                      <div class="t-headline">{d.label}</div>
-                    </div>
-                    <span class="fees__amount">
-                      <span class="price num">{d.percent}%</span> <span class="fees__off">off</span>
+              <ul class="rows panel">
+                {[...autoDiscounts, ...askDiscounts].map((d) => (
+                  <li class="row">
+                    <p class="row__name">{d.label}</p>
+                    <span class="row__amount">
+                      <span class="price num">{d.percent}%</span>
+                      <span class="row__unit">off</span>
                     </span>
                   </li>
                 ))}
               </ul>
-              <p class="t-footnote secondary fees__note">
-                {askDiscounts.length > 0 && `Mention ${autoDiscounts.length > 0 ? 'the other rates' : 'any of these rates'} in your request. `}
-                Discounts apply to the rental and do not combine. We apply the best rate that fits your event.
-              </p>
+              <p class="t-footnote secondary fees__note">{discountNote}</p>
             </div>
           )
         }
@@ -277,7 +266,7 @@ const photo = photoByName('hall-fireplace');
     </div>
   </section>
 
-  <section class="section" aria-labelledby="terms-heading">
+  <section class="section section--grouped" aria-labelledby="terms-heading">
     <div class="container">
       <div class="section-head">
         <h2 id="terms-heading">Rental terms</h2>
@@ -366,203 +355,257 @@ const photo = photoByName('hall-fireplace');
     letter-spacing: -0.005em;
   }
 
-  .pkg-days {
-    display: grid;
-    gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  .nowrap {
+    white-space: nowrap;
   }
 
-  .pkg-day {
-    display: grid;
-    gap: 1rem;
-  }
+  /* ---------- Rates by day ---------- */
 
-  .pkg-day > .serif-label {
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--separator);
-  }
-
-  /* Three columns on wide screens, so Saturday's six packages fill two rows exactly. */
-  .pkg-grid {
+  .days {
     display: grid;
     gap: 1rem;
+  }
+
+  /* The day picker only works with :has(); without it every panel shows, under its own heading. */
+  .day-pick {
+    display: none;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .day-pick__track {
+    width: 100%;
+  }
+
+  .day-pick__opt {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    text-align: center;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  /* The selected thumb, as on every segmented control (global.css), with its 2px accent ring. */
+  .day-pick__opt:has(:checked) {
+    background: var(--thumb);
+    box-shadow:
+      inset 0 0 0 2px var(--accent-text),
+      0 3px 8px rgba(0, 0, 0, 0.12),
+      0 3px 1px rgba(0, 0, 0, 0.04);
+    font-weight: 600;
+  }
+
+  .day-pick__opt:has(:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (pointer: coarse) {
+    .day-pick__opt {
+      min-height: 44px;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .day-pick__opt:has(:checked) {
+      outline: 3px solid Highlight;
+      outline-offset: -3px;
+    }
+  }
+
+  /* Wide enough for four equal segments sized to the longest label, not the whole page. */
+  @media (min-width: 40rem) {
+    .day-pick__track {
+      width: auto;
+    }
+
+    .day-pick__opt {
+      padding-inline: 1.25rem;
+    }
+  }
+
+  /* Phones: four segments share the row, so the labels step down to the footnote size. */
+  @media (width < 30rem) {
+    .day-pick__opt {
+      padding-inline: 0.4rem;
+      font-size: var(--t-footnote);
+    }
+  }
+
+  /* Narrow phones and large text: two rows of two, and long labels wrap inside their segment. */
+  @media (width < 22.5rem) {
+    .day-pick__track {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-radius: var(--r-md);
+    }
+
+    .day-pick__opt {
+      padding-block: 0.3rem;
+      border-radius: var(--r-sm);
+      white-space: normal;
+    }
+  }
+
+  /* One day's rates on a Frost panel (a raised card color in dark mode, never darker than the page). */
+  .day {
+    position: relative;
+    display: grid;
+    gap: 1.75rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 2rem);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+  }
+
+  /* With :has(), the picker shows and only the chosen day's panel is displayed. After .day, so it wins. */
+  @supports selector(:has(*)) {
+    .day-pick {
+      display: block;
+    }
+
+    .day {
+      display: none;
+    }
+
+    .days:has(#rates-day-weekday:checked) .day--weekday,
+    .days:has(#rates-day-friday:checked) .day--friday,
+    .days:has(#rates-day-saturday:checked) .day--saturday,
+    .days:has(#rates-day-sunday:checked) .day--sunday {
+      display: grid;
+    }
+
+    /* The selected segment already names the day. */
+    .day__title {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+  }
+
+  .day__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .day__sub {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+  }
+
+  .day__min {
+    color: var(--label-2);
+    font-size: var(--t-subhead);
+  }
+
+  /*
+    Rows: the name and the amount share the first line, and any detail runs the full width below them.
+    Each row carries the hairline above it, so rows in a grid read as columns.
+  */
+  .rows {
+    display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: auto;
+    column-gap: 2rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  @media (min-width: 40rem) {
-    .pkg-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 64rem) {
-    .pkg-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  /*
-    Name, space, price, and description share row tracks, so prices line up across a row. A package
-    without a description leaves its last track empty.
-  */
-  .pkg {
+  .row {
     display: grid;
-    grid-row: span 4;
-    grid-template-rows: subgrid;
-    row-gap: 0.4rem;
-    align-items: start;
-    padding: 1.5rem;
-    border-radius: var(--r-lg);
-    /* Frost on the White section; a raised card color in dark mode, where the grouped color would sink below the page. */
-    background: var(--panel);
-  }
-
-  /* The space as an Ice chip under the name (brand.md: Ice for chips, never an eyebrow above a heading). */
-  .pkg__space {
-    justify-self: start;
-    padding: 0.2rem 0.7rem;
-    border-radius: var(--r-full);
-    background: var(--chip);
-    color: var(--on-chip);
-    font-size: var(--t-footnote);
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  @media (forced-colors: active) {
-    .pkg__space {
-      border: 1px solid CanvasText;
-    }
-  }
-
-  .pkg__price {
-    display: flex;
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: baseline;
-    gap: 0 0.5rem;
-    margin-top: 0.35rem;
+    /* A short row beside a taller one in the same line keeps its lines together at the top. */
+    align-content: start;
+    gap: 0.1rem 1rem;
+    min-width: 0;
+    padding-block: 0.8rem;
+    border-top: 1px solid var(--separator);
   }
 
-  .pkg__price .price {
-    font-size: var(--t-title-1);
-    line-height: 1.1;
+  .row > p {
+    margin: 0;
   }
 
-  .rates {
-    padding: 0.5rem clamp(0.5rem, 2vw, 1.5rem);
-  }
-
-  .rates__table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .rates__table th,
-  .rates__table td {
-    padding: 1.1rem 0.75rem;
-    text-align: left;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--separator);
-  }
-
-  /* Space names line up across the head row; only 'Both spaces' carries a second line. */
-  .rates__table thead th {
-    vertical-align: top;
-  }
-
-  .rates__table tbody tr:last-child th,
-  .rates__table tbody tr:last-child td {
-    border-bottom: 0;
-  }
-
-  .rates__space,
-  .rates__day {
-    display: block;
+  .row__name {
     font-weight: 600;
     color: var(--label);
   }
 
-  .rates__cap,
-  .rates__min {
-    display: block;
-    font-size: var(--t-footnote);
-    font-weight: 400;
+  .row__detail,
+  .row__note {
+    grid-column: 1 / -1;
     color: var(--label-2);
   }
 
-  .rates__table td,
-  .rates__cell {
+  .row__detail {
+    font-size: var(--t-subhead);
+  }
+
+  .row__note {
+    font-size: var(--t-footnote);
+  }
+
+  .row__amount {
+    grid-row: 1;
+    grid-column: 2;
     white-space: nowrap;
+    text-align: right;
   }
 
-  .nowrap {
-    white-space: nowrap;
+  /* Large text on a phone: the amount goes under the name instead of squeezing it. */
+  @media (width < 18rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .row__amount {
+      grid-row: auto;
+      grid-column: 1;
+      text-align: left;
+    }
   }
 
-  /*
-    Rate, fee, and special-rate rows: the label and the amount sit side by side while they fit, and the
-    amount drops below the label when they do not (large text on a phone), instead of overlapping it.
-  */
-  .rates-space :global(.list-row),
-  .fees :global(.list-row) {
-    flex-wrap: wrap;
-    row-gap: 0.25rem;
-  }
-
-  .rates-space :global(.list-row__main),
-  .fees :global(.list-row__main) {
-    flex: 1 1 11rem;
-  }
-
-  .rates__cell,
-  .fees__amount {
-    margin-left: auto;
-  }
-
-  .rates__price {
-    font-size: 1.5rem;
+  .row__amount .price {
+    font-size: 1.375rem;
     line-height: 1.2;
   }
 
-  .rates__unit {
+  .row__unit {
     margin-left: 0.3rem;
     color: var(--label-2);
     font-size: var(--t-footnote);
   }
 
-  .rates--stacked {
-    display: none;
-  }
-
-  /* In rem, so with very large text the stacked lists take over before the table outgrows the page. */
-  @media (width < 42.5rem) {
-    .rates--table {
-      display: none;
-    }
-
-    .rates--stacked {
-      display: grid;
-      gap: 1.75rem;
-    }
-
-    .rates-space {
-      display: grid;
-      gap: 0.6rem;
-    }
-
-    .rates-space__head {
-      display: grid;
-      gap: 0.1rem;
-      padding-left: 0.25rem;
-    }
-
-    .rates-space__head .t-subhead {
-      font-weight: 400;
+  @media (min-width: 48rem) {
+    .rows--grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+
+  /* Wide screens: the three hourly rates in a row above three columns of packages. */
+  @media (min-width: 72rem) {
+    .rows--hourly,
+    .rows--grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* ---------- Fees and special rates ---------- */
 
   .fee-grid {
     display: grid;
@@ -580,42 +623,35 @@ const photo = photoByName('hall-fireplace');
 
   .fees {
     display: grid;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
-  .fees > .serif-label {
-    padding-left: 0.25rem;
-  }
-
-  .fees__amount {
-    flex: none;
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .fees__amount.price,
-  .fees__amount .price {
-    font-size: 1.375rem;
-  }
-
-  .fees__off {
-    color: var(--label-2);
-    font-size: var(--t-footnote);
-  }
-
+  .fees > .serif-label,
   .fees__note {
     padding-left: 0.25rem;
   }
 
-  /* Frost on the White section, a raised card color in dark mode (never darker than the page). */
+  /* The same Frost panel as the day's rates; the first row's hairline is hidden by the panel's edge. */
+  .panel {
+    padding: 0 1.1rem;
+    border-radius: var(--r-md);
+    background: var(--panel);
+    overflow: hidden;
+  }
+
+  .panel > .row {
+    margin-top: -1px;
+  }
+
+  /* ---------- Rental terms ---------- */
+
+  /* A white card on the Frost section; a raised card color in dark mode (never darker than the page). */
   .terms {
     display: grid;
     align-content: start;
     gap: 1rem;
     max-width: 44rem;
     padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-    background: var(--panel);
-    box-shadow: none;
   }
 
   .terms__list {
@@ -638,9 +674,5 @@ const photo = photoByName('hall-fireplace');
 
   .terms__list li:last-child {
     padding-bottom: 0.25rem;
-  }
-
-  .pkg > p {
-    margin: 0;
   }
 </style>
