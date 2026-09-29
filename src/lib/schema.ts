@@ -83,7 +83,8 @@ const feature = (name: string, value: boolean | string = true) => ({
 
 /**
  * The venue as a local business and event venue. Emitted on every page and referenced by @id.
- * Capacity and parking facts appear in the page chrome site-wide, so they are included.
+ * Capacity and parking facts are shown on the home page and The Space, and describe the venue as a whole,
+ * so they are included here; room details (containsPlace) only where a page asks for them.
  * imageUrls are absolute URLs of real photos of the property; the venue's share images follow them.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {

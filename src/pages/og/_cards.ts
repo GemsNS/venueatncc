@@ -4,7 +4,8 @@
  * The underscore keeps Astro from routing this file.
  *
  * Only real photographs (brand.md, Photography). A staged event photo is never a share image, so pick() uses
- * the real photo it was made from (realPhoto), and the hero photo when there is none.
+ * the real photo it was made from (realPhoto), and the hero photo when there is none. An event card therefore
+ * shows the real base of its staged hero, or the page's own real hero while the event photos are not staged.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
@@ -36,7 +37,8 @@ const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
 const { fromHourly } = priceSummary();
 
-// Each page's card carries that page's H1, so the preview matches the page it opens. Keep them in step.
+// Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
+// event's name. Keep them in step when a heading changes.
 export const shareCards: Record<string, ShareCard> = {
   home: { title: 'Celebrate among the pines.', line: `Event venue in ${site.address.city}, ${site.address.regionName}`, photo: byName('exterior-dusk') },
   'the-space': { title: 'Two spaces, indoors and out', line: bothSpaces, photo: byName('hall-windows') },

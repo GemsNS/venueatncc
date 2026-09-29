@@ -2,7 +2,8 @@
  * /llms.txt: a plain-text summary of the venue for AI assistants and answer engines.
  * Generated from the same data as the site so it never drifts. Written in the brand voice of
  * docs/design/brand.md: first person plural, brief and precise. It never mentions alcohol or catering, so
- * the one catering FAQ stays on /faq/ only.
+ * the one catering FAQ stays on /faq/ only. Each fact is stated once: the questions and answers section
+ * carries only FAQs whose answers the sections above do not already give (COVERED_QUESTIONS).
  * The demo build does not publish this file (astro.config.mjs); the real one lives on venueatncc.org.
  */
 import type { APIRoute } from 'astro';
@@ -23,6 +24,25 @@ function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => s
   });
 }
 
+/**
+ * Published FAQs, word for word, whose answers the sections of this file already state (brand.md, Redundancy
+ * rules). They stay on /faq/ and in its structured data. A question reworded in src/data/faq.ts no longer
+ * matches and appears under questions and answers again, which repeats a fact but never drops one.
+ */
+const COVERED_QUESTIONS = new Set([
+  'How do I check if my date is available?', // Booking
+  'Who can book the venue?', // Booking
+  'Can I see the venue before I book?', // Booking
+  'How many guests can the venue hold?', // The spaces
+  `Can I book ${spaceName('both')} together?`, // The spaces
+  'Is parking included?', // The spaces
+  'What is included in the rental?', // The spaces and Rates
+  'How much does it cost to rent the venue?', // Rates
+  'How do deposits and payments work?', // Rates and Booking
+  `Where is ${site.name}?`, // Contact and location
+  'What kinds of events can I host?', // Events we host
+]);
+
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const andList = (items: string[]) =>
   items.length <= 2 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
@@ -33,13 +53,20 @@ export const GET: APIRoute = () => {
   const offer = pricing.introOffer && pricing.introOffer.percent > 0 && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
   const days = Object.keys(pricing.dayTypes) as DayType[];
   const spaces = Object.keys(pricing.hourly) as SpaceChoice[];
-  const minHours = Math.min(...Object.values(pricing.minimumHours));
   const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
   const deposit =
     pricing.bookingDeposit.type === 'percent' ? `${pricing.bookingDeposit.value}% of the total` : formatUSD(pricing.bookingDeposit.value);
-  const specialRates = pricing.discounts.filter((d) => d.percent > 0);
+  // The introductory offer is applied in the estimate like any other discount, so it is listed with them.
+  const specialRates = [
+    ...(offer ? [`- ${offer.name}: ${offer.percent}% off the rental ${offer.terms}, applied automatically`] : []),
+    ...pricing.discounts
+      .filter((d) => d.percent > 0)
+      .map((d) => `- ${d.label}: ${d.percent}% off the rental, ${d.appliesTo === 'manual' ? 'mention it in your request' : 'applied automatically'}`),
+  ];
   const eventList = onBrand(events, (e) => `${e.name} ${e.summary}`, (e) => e.name);
-  const faqs = onBrand(publishedFaqs, (f) => `${f.q} ${f.a}`, (f) => f.q).filter((f) => !mentionsCatering(`${f.q} ${f.a}`));
+  const faqs = onBrand(publishedFaqs, (f) => `${f.q} ${f.a}`, (f) => f.q).filter(
+    (f) => !mentionsCatering(`${f.q} ${f.a}`) && !COVERED_QUESTIONS.has(f.q),
+  );
 
   const lines = [
     `# ${site.name}`,
@@ -56,7 +83,7 @@ export const GET: APIRoute = () => {
     '',
     '## Rates',
     '',
-    `- From ${formatUSD(fromHourly)} per hour, with minimums from ${minHours} hours. Full rate card and an instant estimate: ${u('/pricing/')}`,
+    `- From ${formatUSD(fromHourly)} per hour. Full rate card and an instant estimate: ${u('/pricing/')}`,
     ...spaces.map(
       (s) => `- ${spaceName(s)}: ${days.map((d) => `${pricing.dayTypes[d].label} ${formatUSD(pricing.hourly[s][d])}`).join(', ')} per hour`,
     ),
@@ -64,9 +91,6 @@ export const GET: APIRoute = () => {
     ...(pricing.fees.cleaning > 0 ? [`- Cleaning fee: ${formatUSD(pricing.fees.cleaning)} per event, on every booking`] : []),
     ...(pricing.fees.damageDepositRefundable > 0
       ? [`- Refundable damage deposit: ${formatUSD(pricing.fees.damageDepositRefundable)}, returned after the event if there is no damage`]
-      : []),
-    ...(offer
-      ? [`- ${offer.name}: ${offer.percent}% off the rental ${offer.terms}. Discounts do not combine; the estimate uses the best one that applies.`]
       : []),
     '',
     ...(pricing.packages.length > 0
@@ -76,10 +100,8 @@ export const GET: APIRoute = () => {
       ? [
           '## Special rates',
           '',
-          ...specialRates.map(
-            (d) => `- ${d.label}: ${d.percent}% off the rental, ${d.appliesTo === 'manual' ? 'mention it in your request' : 'applied automatically'}`,
-          ),
-          '- Discounts do not combine; the estimate uses the best one that applies.',
+          ...specialRates,
+          ...(specialRates.length > 1 ? ['- Discounts do not combine; the estimate uses the best one that applies.'] : []),
           '',
         ]
       : []),
@@ -103,10 +125,9 @@ export const GET: APIRoute = () => {
     '## Events we host',
     '',
     ...eventList.map((e) => `- [${e.name}](${u(`/events/${e.slug}/`)}): ${e.summary}`),
+    `- Another kind of event: describe it in your request, and we will confirm whether ${spaceName('indoor')} or ${spaceName('outdoor')} suits it.`,
     '',
-    '## Questions and answers',
-    '',
-    ...faqs.flatMap((f) => [`### ${f.q}`, '', f.a, '']),
+    ...(faqs.length > 0 ? ['## Questions and answers', '', ...faqs.flatMap((f) => [`### ${f.q}`, '', f.a, ''])] : []),
   ];
 
   const body = lines.join('\n');
