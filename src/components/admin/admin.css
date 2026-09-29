@@ -1649,8 +1649,11 @@ body.is-bare {
 
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
-  /* A dim tinted toward Navy. */
-  background: rgb(var(--navy-rgb) / 0.45);
+  /*
+    A dim tinted toward Navy. A literal, not var(--navy-rgb): ::backdrop does not inherit custom
+    properties in browsers from before 2024, where the dim would disappear.
+  */
+  background: rgba(1, 42, 74, 0.45);
 }
 
 .adm-sheet {
