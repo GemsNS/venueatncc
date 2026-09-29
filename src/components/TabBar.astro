@@ -5,20 +5,29 @@
  * where the top nav shows everything. Keep the breakpoint in step with Header.astro.
  * While it shows, it sets --tabbar-space (global.css), which keeps focused controls, sticky bars
  * and the end of the footer clear of it.
+ * The Book tab goes where the header's Check Availability goes, so on an event page it opens booking
+ * with that event chosen.
  */
 import Icon from './Icon.astro';
-import { tabNav } from '../data/nav';
+import { tabNav, bookHref as defaultBookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 
+interface Props {
+  /** Where the Book tab goes, base-relative: '/book/?event=weddings' on an event page. Defaults to '/book/'. */
+  bookHref?: string;
+}
+
+const { bookHref = defaultBookHref } = Astro.props;
 const path = withoutBase(Astro.url.pathname);
 const isCurrent = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
+const tabHref = (h: string) => (h === defaultBookHref ? bookHref : h);
 ---
 <nav class="tabbar" aria-label="Sections">
   <ul class="tabbar__list">
     {
       tabNav.map((t) => (
         <li>
-          <a class="tabbar__tab" href={href(t.href)} aria-current={isCurrent(t.href) ? 'page' : undefined}>
+          <a class="tabbar__tab" href={href(tabHref(t.href))} aria-current={isCurrent(t.href) ? 'page' : undefined}>
             <Icon name={t.icon} />
             <span>{t.label}</span>
           </a>

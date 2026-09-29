@@ -10,9 +10,11 @@
  *   real photos, and no image may appear twice on a page. There are no toggles between the two.
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)
- *   <name>.jpg                   3:2 landscape, 2400px wide. One entry in `photos`.
- *   <name>-tall.jpg              4:5 portrait, 1600px wide. Attached to <name>.jpg as `tall` for art
- *                                direction on phones. Never listed on its own.
+ *   <name>.jpg                   3:2 landscape, 2400px wide. One entry in `photos`. The home hero,
+ *                                grove-pines.jpg, is the exception: the original's full width (3661px, for
+ *                                full-bleed screens) at its own ratio, which the hero's frames are fitted to.
+ *   <name>-tall.jpg              4:5 portrait, 1600px wide (grove-pines-tall.jpg is 7:10). Attached to
+ *                                <name>.jpg as `tall` for art direction on phones. Never listed on its own.
  *   styled-event-<slug>.jpg      The staged photo of one event (virtual staging: furniture, linens, florals,
  *                                and lighting added; architecture, fixtures, and trees unchanged). Its
  *                                photoDetails entry names the real photo it was made from (styledOf) and the
@@ -72,7 +74,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   'exterior-dusk.jpg': {
     alt: 'The venue building at dusk: tan stucco walls, a lit covered entry, arched windows, and a white cross on the front gable, with tall pines behind',
     caption: 'The building at blue hour',
-    tags: ['hero', 'exterior'],
+    tags: ['exterior'],
     space: 'grounds',
   },
   'hall-windows.jpg': {
@@ -123,12 +125,12 @@ export const photoDetails: Record<string, PhotoDetail> = {
     tags: ['parking'],
     space: 'grounds',
   },
-  // The home hero, chosen by name in src/pages/index.astro. It is another crop of the grove-path original,
-  // so it has no `space`: photosFor('grove') would put it beside grove-path in The Space gallery.
+  // The home hero, and so the venue's photo in structured data (heroPhoto). It is another crop of the
+  // grove-path original, so it has no `space`: photosFor('grove') would put it beside grove-path in The Space.
   'grove-pines.jpg': {
     alt: 'Tall pines rising above the timber gazebo in The Grove, with picnic tables on a paved patio and a paved path across the lawn',
     caption: 'The gazebo under the pines',
-    tags: ['outdoor'],
+    tags: ['hero', 'outdoor'],
   },
 
   // Staged event photos, one per event, in one décor style (brand.md). Registered ahead of their files:
@@ -323,7 +325,10 @@ export function photosTagged(tag: string): VenuePhoto[] {
   return photos.filter((p) => p.tags.includes(tag));
 }
 
-/** The home hero photo: the first photo tagged 'hero' (the building at dusk), else the first photo, else null. */
+/**
+ * The hero photo: the first photo tagged 'hero' (grove-pines, the gazebo under the pines), else the first
+ * photo, else null. It is the venue's image in structured data on every page and the fallback share image.
+ */
 export function heroPhoto(): VenuePhoto | null {
   return photosTagged('hero')[0] ?? photos[0] ?? null;
 }

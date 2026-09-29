@@ -23,6 +23,7 @@ images somewhere else.
 |---|---|---|
 | `name.jpg` | 3:2 landscape, 2400px wide | One photo in `photos` (src/data/photos.ts). |
 | `name-tall.jpg` | 4:5 portrait, 1600px wide | Attached to `name.jpg` as `tall`. Shown instead of the landscape file on phones (below 46.5rem) wherever a page asks for the tall crop. Never listed on its own. |
+| `grove-pines.jpg`, `grove-pines-tall.jpg` | The home hero, the one exception: the landscape file is the original's full width (3661 x 2648) for full-bleed screens, and the portrait file is 7:10 | The hero's frames in src/pages/index.astro are fitted to these two framings (the roof, the gazebo, and the cut through the front table's legs). Re-measure them there if either file changes. |
 | `styled-event-<slug>.jpg` | The staged photo of one event: furniture, linens, florals, and lighting added; architecture, fixtures, and trees unchanged | Its `photoDetails` entry (already registered) names the real photo it was made from (`styledOf`) and the event (`event`). Shown only through `eventPhoto()`, with the badge, and on the event page with the caption "Styled concept. Décor is not included." |
 
 The eight staged files and the real photo each is made from:
@@ -50,12 +51,15 @@ Add an entry in `photoDetails` in `src/data/photos.ts`:
   A staged photo's alt text starts with "Styled concept:".
 - `caption`: a short caption, shown where a page asks for one.
 - `space`: `'hall'`, `'grove'`, or `'grounds'`. `photosFor('hall')` returns The Hall's real photos.
-- `tags`: `hero` for the home hero (the first match wins), plus any labels pages look up with `photosTagged()`.
+- `tags`: `hero` for the photo `heroPhoto()` returns (the first match wins), plus any labels pages look up with `photosTagged()`.
 - `crop`: optional CSS object-position, such as `'center 70%'`, for frames whose ratio differs from the file.
 
 ## Where photos appear
 
-- `heroPhoto()`: the home hero, `exterior-dusk`.
+- `heroPhoto()`: `grove-pines`, tagged `hero`: the venue's image in structured data on every page and the
+  fallback share image. The home page names `grove-pines` directly, since its frames are fitted to it.
+- The home share card: `exterior-dusk`, its left 80% (without the gable cross), named in
+  src/pages/og/_cards.ts. brand.md (Photography) records why the two differ.
 - `eventPhoto(slug)`: the photo that leads each event page (and its tile, when staged): the staged photo
   when `eventsStaged`, otherwise the real photo named by its `styledOf`.
 - `realPhoto(photo)`: the real photo behind a staged one, for share images and structured data.
@@ -68,7 +72,8 @@ source width, crops with CSS to the frame's ratio, and swaps in the tall file on
 
 | File | Space | Subject |
 |---|---|---|
-| `exterior-dusk` | grounds | The building at blue hour, lit entry, pines behind |
+| `grove-pines` | (none) | The gazebo under tall pines, picnic tables in front: the home hero. Another framing of the `grove-path` original, so it has no space and is not in The Space gallery |
+| `exterior-dusk` | grounds | The building at blue hour, lit entry, pines behind: the home share card |
 | `approach-dusk` | grounds | Long paved drive and lawn toward the building at dusk |
 | `driveway` | grounds | Wide paved drive and lot in daylight |
 | `hall-windows` | hall | Arched windows, fireplace feature wall, wood-look floor |

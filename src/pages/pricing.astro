@@ -328,8 +328,15 @@ const photo = photoByName('hall-fireplace');
   }
 
   .offer :global(.icon) {
+    flex: none;
     color: var(--accent-icon);
     margin-top: 0.15em;
+  }
+
+  /* With very large text on a phone the sentence wraps inside the box instead of pushing it past the screen. */
+  .offer > span {
+    min-width: 0;
+    overflow-wrap: break-word;
   }
 
   /* The estimator's controls and result are their own surfaces; no wrapper card around them. */

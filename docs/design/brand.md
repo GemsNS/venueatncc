@@ -27,8 +27,8 @@ alcohol; catering only in the two neutral places listed under Voice.
 
 **Photographs first, in a crisp, quiet frame.** The site is a gallery of the real property set in white and
 navy with sky-blue accents. Caslon headings give it the feel of a printed invitation; the interface stays crisp
-and Apple-like. Spend boldness in one place: the full-bleed hero photograph of the building at blue hour, whose
-dusk sky already belongs to this palette.
+and Apple-like. Spend boldness in one place: the full-bleed hero photograph of The Grove, the timber gazebo under
+tall pines, whose blue sky between the trunks already belongs to this palette.
 
 Avoid the tells of a templated site: no accent bars or rails on cards, no eyebrow labels above headings (the
 single hero kicker is the only exception), no tinted or decorative gradients, no all-caps labels. The light
@@ -131,11 +131,12 @@ serif leads, prices, and italic captions; the system interface stack for body, f
 - **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
 - **No repeats.** No image appears twice on the same page.
 
-### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`)
+### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`, except the home hero)
 
 | File | Subject | Uses |
 |---|---|---|
-| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Home hero |
+| `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3661 x 2648) for full-bleed screens, and `grove-pines-tall` is 7:10 | Home hero; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
+| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Home share image only, cropped to its left 80% so the gable cross is out of frame |
 | `approach-dusk` | The long drive and lawn toward the building at dusk | Arrival band, The grounds |
 | `driveway` | The paved drive and lot in daylight | Parking, The grounds |
 | `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
@@ -144,6 +145,18 @@ serif leads, prices, and italic captions; the system interface stack for body, f
 | `grove-tables` | The Grove: gazebo and picnic tables on the patio | The Grove primary |
 | `gazebo` | The timber gazebo on open lawn | The Grove gallery |
 | `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
+
+The hero and structured data show The Grove, not the building: it is what a client rents, and it keeps the
+gable cross out of the first screen and out of search results. The home share card keeps the building at blue
+hour because a share card's title covers its lower left, where the gazebo would sit in `grove-pines`. Keep
+this split on purpose; move the `hero` tag only with this paragraph.
+
+`grove-pines` and the staged `community-events` tile (made from `grove-path`) come from the same original,
+IMG_4906, in different framings: the hero from the trunks down to the tables, the tile at lawn level with
+staged tables. The no-repeat rule is checked by file name (EventIndex's `avoid`), on purpose: matching by
+original would, under the all-or-nothing rule, turn every event tile into text. All three real Grove photos
+show the gazebo, so it appears four times on the home page (hero, the Grove card, the Weddings and Community
+events tiles); the Grove card keeps `grove-tables`, the widest vantage and the least like the hero.
 
 Describe only what the photos show. Do not claim a kitchen, sound system, stage, bridal suite, rentable tables
 or chairs, Wi-Fi, or AV unless phrased as "ask us". The sanctuary is not part of the rental and is not shown.
@@ -189,8 +202,28 @@ exactly twice, neutrally: the pricing page's rental terms and one FAQ entry.
 
 ## Page direction
 
-**Home.** Full-bleed `exterior-dusk` hero (the phone layout shows the photo first with the text on a Navy
-panel below), kicker, "Celebrate among the pines.", one lead sentence, one primary button; the date checker.
+**Home.** Full-bleed `grove-pines` hero: kicker, "Celebrate among the pines." (when it wraps, it breaks after
+"Celebrate"), one lead sentence, and the date checker, whose Continue to Booking is the page's one primary
+button. Every frame holds the whole gazebo and the copy never covers it:
+
+- Phones: the portrait file whole at 7:10, the copy over the canopy on a Navy scrim, the checker after the
+  photo.
+- Tablets: the landscape file at its own ratio, the copy over the trunks above the gazebo, the checker after
+  the photo.
+- From 64rem: the photo fills the first screen, the title runs across the top on one line, and the checker
+  floats on glass at the bottom right, lined up with the header's call to action and at least 2.5rem clear
+  of the gazebo (it may cover the end of the front picnic table). On a short screen the photo runs on below
+  the fold and the checker rises by as much, so the date field and Continue to Booking stay in the first
+  screen.
+- Narrower than 22rem, shorter than 36rem, or larger text (the breakpoints are in rem): the copy moves to a
+  Navy panel under the photo. On short, wide screens (landscape phones) the photo becomes a band of about
+  58% of the screen that keeps the roof and ends through the gazebo's posts, so the title starts on the
+  first screen.
+
+Crop rule: a frame's bottom edge never runs along a tabletop or a bench; it cuts through legs or posts. The
+scrim runs from 80% to 62% Navy and stays there: over the brightest sky the lead measures 4.6:1 at its worst
+pixel (1920 and 2560 wide, light mode), so it cannot be lighter.
+
 Then the two spaces as real-photo cards, events as staged tiles with the one-line note, a short rates teaser,
 the arrival band, and one closing band. Cut anything the audit finds repeated.
 

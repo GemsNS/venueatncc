@@ -141,6 +141,6 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
       <slot />
     </main>
     {!bare && <Footer />}
-    {!bare && tabBar && <TabBar />}
+    {!bare && tabBar && <TabBar bookHref={bookPath} />}
   </body>
 </html>

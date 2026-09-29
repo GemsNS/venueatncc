@@ -123,6 +123,13 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     font-size: min(0.75rem, 15px);
   }
 
+  /* A phone with very large text (320px at 175%, up to 375px at 200%) has no room beside the lockup for the demo pill. */
+  @media (width < 12rem) {
+    .nav__demo {
+      display: none;
+    }
+  }
+
   .nav__links ul {
     display: flex;
     gap: 0.25rem;

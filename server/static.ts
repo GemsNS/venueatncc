@@ -32,7 +32,8 @@ const isApi = (p: string) => p === '/api' || p.startsWith('/api/');
 
 /**
  * Pages that moved, old path to new path, so links and bookmarks to the old address still land.
- * The GitHub Pages demo cannot redirect, so there the old paths simply 404.
+ * The server answers them with a 301. The GitHub Pages demo cannot send one, so its build publishes a small
+ * redirect page at each old path instead (scripts/demo-redirects.mjs, wired in astro.config.mjs).
  */
 export const MOVED_PAGES: ReadonlyMap<string, string> = new Map([
   // The event page was renamed (docs/design/brand.md, "Separation"); server/db.ts migrates stored inquiries.
