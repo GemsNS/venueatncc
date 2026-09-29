@@ -123,6 +123,13 @@ export const photoDetails: Record<string, PhotoDetail> = {
     tags: ['parking'],
     space: 'grounds',
   },
+  // The home hero, chosen by name in src/pages/index.astro. It is another crop of the grove-path original,
+  // so it has no `space`: photosFor('grove') would put it beside grove-path in The Space gallery.
+  'grove-pines.jpg': {
+    alt: 'Tall pines rising above the timber gazebo in The Grove, with picnic tables on a paved patio and a paved path across the lawn',
+    caption: 'The gazebo under the pines',
+    tags: ['outdoor'],
+  },
 
   // Staged event photos, one per event, in one décor style (brand.md). Registered ahead of their files:
   // until all eight are in src/assets/venue/, none is shown (eventsStaged). styledOf is also the real photo
