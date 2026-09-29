@@ -1,23 +1,25 @@
 ---
 /**
- * Home, per docs/design/brand.md "Page direction: Home":
- * full-bleed hero on the building at dusk with the date checker, a short statement with three facts,
- * The Hall and The Grove as photo cards, events as photo tiles, a rates teaser, the booking steps,
- * the arrival band, four questions, and the closing call to action.
- * No image appears twice in the default view: the Hall card uses hall-fireplace, because the showers
- * tile shows hall-windows.
+ * Home, per docs/design/brand.md "Page direction: Home", in this order:
+ * the hero on the building at dusk with the date checker, the two spaces as real-photo cards, the events,
+ * a rates teaser, the arrival band, and the closing band.
+ *
+ * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
+ * parking and the address in the arrival band, prices in the rates teaser, and how booking works in the
+ * closing band. The hero's one primary button is the date checker's Continue to Booking; the header CTA
+ * and the closing band carry Check Availability.
+ * Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces, and event tiles that
+ * are all staged or all text. No image appears twice.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
 import EventIndex from '../components/EventIndex.astro';
 import LocationBand from '../components/LocationBand.astro';
-import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
-import { heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { publishedFaqs } from '../data/faq';
+import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { bookHref, pricingHref } from '../data/nav';
 import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
 import { href } from '../lib/paths';
@@ -28,13 +30,15 @@ const grove = site.spaces.find((s) => s.id === 'outdoor');
 const hallName = hall?.name ?? 'The Hall';
 const groveName = grove?.name ?? 'The Grove';
 
-/* The two spaces. Features are only what the photos show (brand.md, Photography). */
+/*
+  The two spaces: the teaser for The Space, which carries the full description. Each card shows its space's
+  primary real photo, its capacity (the only capacity on this page), one sentence, and a link.
+*/
 interface SpaceCard {
   id: 'hall' | 'grove';
   name: string;
   capacity: number | undefined;
   sentence: string;
-  features: string[];
   photo: VenuePhoto | undefined;
   href: string;
 }
@@ -44,9 +48,7 @@ const spaceCards: SpaceCard[] = [
     name: hallName,
     capacity: hall?.capacity,
     sentence: 'Our indoor space: an open room for receptions, banquets, showers, and meetings.',
-    features: ['Arched windows', 'Fireplace feature wall', 'Dark wood-look floors'],
-    // hall-windows leads the showers tile below, so the card shows the fireplace view.
-    photo: photoByName('hall-fireplace') ?? photosFor('hall')[0],
+    photo: photosFor('hall')[0],
     href: '/the-space/#hall',
   },
   {
@@ -54,11 +56,16 @@ const spaceCards: SpaceCard[] = [
     name: groveName,
     capacity: grove?.capacity,
     sentence: 'Our outdoor space among tall pines, for ceremonies, reunions, and community gatherings.',
-    features: ['Timber gazebo', 'Picnic tables on a paved patio', 'Open lawn under tall pines'],
     photo: photosFor('grove')[0],
     href: '/the-space/#grove',
   },
 ];
+
+/*
+  Every photo shown elsewhere on this page, so the event tiles never repeat one. LocationBand picks the drive
+  at dusk itself, so it is named here.
+*/
+const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
 
 /* Rates teaser: the lowest hourly rate for each space, straight from the rate card. */
 const spaceNames = { indoor: hallName, outdoor: groveName, both: `${hallName} and ${groveName}` } as const;
@@ -68,20 +75,10 @@ const rates = (['indoor', 'outdoor', 'both'] as const).map((id) => {
 });
 const rateDays = [...new Set(rates.map((r) => r.days))];
 const { lowestPackage } = priceSummary();
-const ratesLead = `Hourly rates by day and space,${lowestPackage ? ` packages from ${formatUSD(lowestPackage)},` : ''} and an instant estimate for any date.`;
-const ratesNote =
-  rateDays.length === 1
-    ? `Starting rates apply ${rateDays[0]}. Every rate, package, and fee is on the pricing page.`
-    : 'Rates vary by day. Every rate, package, and fee is on the pricing page.';
-
-/* Four questions, chosen by their exact text. A question missing from src/data/faq.ts is skipped. */
-const HOME_QUESTIONS = [
-  'How many guests can the venue hold?',
-  'Who can book the venue?',
-  'How do deposits and payments work?',
-  'How do I check if my date is available?',
-];
-const homeFaqs = HOME_QUESTIONS.map((q) => publishedFaqs.find((f) => f.q === q)).filter((f) => f !== undefined);
+const ratesLead = lowestPackage
+  ? `Hourly rates by day and space, and packages from ${formatUSD(lowestPackage)}.`
+  : 'Hourly rates by day and space.';
+const ratesNote = rateDays.length === 1 ? `Starting rates apply ${rateDays[0]}.` : 'Rates vary by day.';
 
 const title = 'Event venue in Suffolk, VA | The Venue at NCC';
 const description = `An event venue among the pines in Suffolk, Virginia: ${hallName} for up to ${hall?.capacity} guests, ${groveName} for up to ${grove?.capacity}, and on-site parking. Check your date online.`;
@@ -102,43 +99,16 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
         <span class="hero__title t-display">Celebrate among the pines.</span>
       </h1>
       <p class="hero__lead">
-        Gather up to {hall?.capacity} guests in {hallName} or {grove?.capacity} in {groveName}, with on-site parking included.
+        <span class="hero__clause">Host your event indoors in {hallName}</span>
+        <span class="hero__clause">or outdoors in {groveName}.</span>
       </p>
-      <div class="btn-row btn-row--stack hero__actions">
-        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
-        <a class="btn btn--outline-light btn--lg" href={href('/the-space/')}>Tour the Space</a>
-      </div>
     </div>
     <div class="hero__checker">
       <DateChecker client:load bookHref={href(bookHref)} />
     </div>
   </section>
 
-  <section class="section intro" aria-labelledby="intro-heading">
-    <div class="container">
-      <h2 id="intro-heading" class="visually-hidden">About the venue</h2>
-      <p class="intro__statement">
-        {site.name} is an event venue among the pines in north Suffolk. We host weddings,
-        banquets, showers, reunions, and meetings in two distinct spaces, and we confirm every booking personally.
-      </p>
-      <dl class="intro__facts">
-        <div class="intro__fact">
-          <dt>Two distinct spaces</dt>
-          <dd>{hallName} indoors and {groveName} outdoors, on one campus.</dd>
-        </div>
-        <div class="intro__fact">
-          <dt>On-site parking</dt>
-          <dd>A large paved lot, included with every booking.</dd>
-        </div>
-        <div class="intro__fact">
-          <dt>On Godwin Boulevard</dt>
-          <dd>Minutes from downtown Suffolk.</dd>
-        </div>
-      </dl>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-labelledby="spaces-heading">
+  <section class="section" aria-labelledby="spaces-heading">
     <div class="container">
       <div class="section-head">
         <h2 id="spaces-heading">Two spaces, one address</h2>
@@ -163,15 +133,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
                     </p>
                   )}
                   <p class="space__sentence secondary">{card.sentence}</p>
-                  <ul class="space__features">
-                    {card.features.map((f) => (
-                      <li>
-                        <Icon name="check" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <a class="link-more space__link" href={href(card.href)}>
+                  <a class="link-more" href={href(card.href)}>
                     Explore {card.name} <Icon name="chevron-right" />
                   </a>
                 </div>
@@ -183,20 +145,17 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     </div>
   </section>
 
-  <section class="section" aria-labelledby="events-heading">
+  <section class="section section--grouped" aria-labelledby="events-heading">
     <div class="container">
-      <div class="section-head section-head--split">
-        <div class="section-head__text">
-          <h2 id="events-heading">Events we host</h2>
-          <p class="t-lead">Weddings, banquets, showers, birthdays, repasts, meetings, reunions, and community gatherings.</p>
-        </div>
-        <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+      <div class="section-head">
+        <h2 id="events-heading">Events we host</h2>
+        {eventsStaged && <p class="t-lead">{EVENTS_STYLED_NOTE}</p>}
       </div>
-      <EventIndex layout="shelf" />
+      <EventIndex layout="shelf" avoid={pagePhotos} />
     </div>
   </section>
 
-  <section class="section section--grouped" aria-labelledby="rates-heading">
+  <section class="section" aria-labelledby="rates-heading">
     <div class="container rates">
       <div class="rates__copy">
         <h2 id="rates-heading">Clear rates, published up front</h2>
@@ -228,49 +187,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     </div>
   </section>
 
-  <section class="section" aria-labelledby="steps-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="steps-heading">How booking works</h2>
-        <p class="t-lead">Three steps from choosing a date to a confirmed booking.</p>
-      </div>
-      <ol class="steps">
-        {
-          site.bookingSteps.map((step, i) => (
-            <li class="steps__item">
-              <span class="steps__num num" aria-hidden="true">
-                {i + 1}
-              </span>
-              <h3>{step.title}</h3>
-              <p class="secondary">{step.body}</p>
-            </li>
-          ))
-        }
-      </ol>
-      <div class="btn-row steps__cta">
-        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
-      </div>
-    </div>
-  </section>
-
   <LocationBand />
-
-  {
-    homeFaqs.length > 0 && (
-      <section class="section" aria-labelledby="faq-heading">
-        <div class="container faq-grid">
-          <div class="section-head faq-grid__head">
-            <h2 id="faq-heading">Before you book</h2>
-            <p class="t-lead">Answers to the questions we hear most.</p>
-            <a class="link-more" href={href('/faq/')}>
-              See All Questions <Icon name="chevron-right" />
-            </a>
-          </div>
-          <FaqList items={homeFaqs} />
-        </div>
-      </section>
-    )
-  }
 
   <CtaBand />
 </BaseLayout>
@@ -374,8 +291,9 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     color: rgb(254 250 224 / 0.92);
   }
 
-  .hero__actions {
-    margin-top: 0.5rem;
+  /* When the sentence needs two lines, it breaks between its clauses; a clause still wraps within itself when it must. */
+  .hero__clause {
+    display: inline-block;
   }
 
   .hero :global(:focus-visible) {
@@ -447,10 +365,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       text-shadow: none;
     }
 
-    .hero__actions {
-      margin-top: 0.25rem;
-    }
-
     .hero__checker {
       grid-row: 3;
     }
@@ -484,50 +398,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       border: 1px solid var(--glass-border);
       box-shadow: var(--glass-edge), var(--glass-shadow);
     }
-  }
-
-  /* ---------- Statement ---------- */
-
-  .intro__statement {
-    max-width: 52rem;
-    font-family: var(--font-serif);
-    font-size: clamp(1.375rem, 1.1rem + 1.1vw, 2.125rem);
-    font-weight: 400;
-    line-height: 1.4;
-    letter-spacing: -0.005em;
-    color: var(--label);
-  }
-
-  .intro__facts {
-    display: grid;
-    gap: 1.5rem clamp(1.5rem, 4vw, 3rem);
-    margin: clamp(2.5rem, 2rem + 2vw, 4rem) 0 0;
-  }
-
-  @media (min-width: 48rem) {
-    .intro__facts {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  .intro__fact {
-    display: grid;
-    align-content: start;
-    gap: 0.4rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--separator);
-  }
-
-  .intro__fact dt {
-    font-family: var(--font-serif);
-    font-size: 1.25rem;
-    line-height: 1.3;
-    color: var(--label);
-  }
-
-  .intro__fact dd {
-    margin: 0;
-    color: var(--label-2);
   }
 
   /* ---------- The two spaces ---------- */
@@ -576,48 +446,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     max-width: 34rem;
   }
 
-  .space__features {
-    display: grid;
-    gap: 0.5rem;
-    margin: 0.25rem 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .space__features li {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: var(--t-callout);
-  }
-
-  .space__features :global(.icon) {
-    width: 1.1em;
-    height: 1.1em;
-    color: var(--accent-text);
-  }
-
-  .space__link {
-    margin-top: 0.25rem;
-  }
-
-  /* ---------- Section heads with a trailing link ---------- */
-
-  .section-head--split {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 0.5rem 2rem;
-    max-width: none;
-  }
-
-  .section-head__text {
-    display: grid;
-    gap: 0.75rem;
-    max-width: 44rem;
-  }
-
   /* ---------- Rates ---------- */
 
   .rates {
@@ -649,8 +477,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     gap: 0.85rem;
   }
 
+  /* On the Cream section the Card-colored list is set off by a hairline, not a shadow. */
   .rates__list {
     margin: 0;
+    border: 1px solid var(--separator);
   }
 
   .rates__row {
@@ -698,79 +528,5 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     padding-inline: 1.25rem;
     color: var(--label-2);
     font-size: var(--t-footnote);
-  }
-
-  /* ---------- Steps ---------- */
-
-  .steps {
-    display: grid;
-    gap: 2rem clamp(1.5rem, 4vw, 3rem);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  @media (min-width: 48rem) {
-    .steps {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  .steps__item {
-    display: grid;
-    align-content: start;
-    gap: 0.6rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--separator);
-  }
-
-  .steps__num {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    line-height: 1;
-    color: var(--accent-text);
-    margin-bottom: 0.5rem;
-  }
-
-  /* One column: the numeral stands beside its step. */
-  @media (width < 48rem) {
-    .steps__item {
-      grid-template-columns: 2.25rem minmax(0, 1fr);
-      column-gap: 1rem;
-    }
-
-    .steps__num {
-      grid-row: span 2;
-      margin-bottom: 0;
-    }
-  }
-
-  .steps__cta {
-    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
-  }
-
-  /* ---------- Questions ---------- */
-
-  .faq-grid {
-    display: grid;
-    gap: 2rem clamp(2rem, 6vw, 5rem);
-  }
-
-  .faq-grid__head {
-    justify-items: start;
-    margin-bottom: 0;
-  }
-
-  /* On the white section the list is set off by a hairline, as on the pricing page, not a faint shadow. */
-  .faq-grid :global(.faqs) {
-    border: 1px solid var(--separator);
-    box-shadow: none;
-  }
-
-  @media (min-width: 56rem) {
-    .faq-grid {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      align-items: start;
-    }
   }
 </style>

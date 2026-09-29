@@ -1,12 +1,20 @@
 ---
 /**
- * Event types as photo tiles. Each tile shows the event's photo from the event photo map
- * (eventPhoto in src/data/photos.ts), its name and one line, and links to its landing page.
- * A styled concept carries its "Styled Concept" badge; the caption is left to the event page itself.
+ * Event types as tiles: each tile is one link to its event page, named by the event, with one line below.
+ *
+ * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts):
+ *   Staged: when every event has its staged photo (eventsStaged), every tile shows its event's staged photo,
+ *     and Photo adds the same "Styled Concept" badge to each. No per-tile caption: the one-line note sits in
+ *     the section head (EVENTS_STYLED_NOTE, home and /events/), and the caption under the event page hero.
+ *   Text: otherwise every tile is text only. Eight events cannot map to eight distinct real photos, so
+ *     tiles never fall back to real photos; those belong to the spaces.
+ * All or nothing per list: a list never mixes photo tiles and text tiles. If a tile's photo is one the page
+ * already shows (the `avoid` prop), the whole list is text, so no image appears twice on a page.
  */
+import Icon from './Icon.astro';
 import Photo from './Photo.astro';
 import { events } from '../data/events';
-import { eventPhoto } from '../data/photos';
+import { eventPhoto, eventsStaged } from '../data/photos';
 import { href } from '../lib/paths';
 import { uid } from '../lib/uid';
 
@@ -15,16 +23,32 @@ interface Props {
   only?: string[];
   headingLevel?: 'h2' | 'h3';
   /**
-   * 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px;
-   * 'trio' is three tiles in one row from 48rem and one column below.
+   * 'grid' wraps; 'shelf' swipes sideways with snap points on small screens and becomes a 4-column grid from 900px
+   * (text tiles are short, so a text shelf is a plain grid at every width); 'trio' is three tiles in one row from
+   * 48rem and one column below.
    */
   layout?: 'grid' | 'shelf' | 'trio';
+  /**
+   * Photos already shown elsewhere on the page, by name or file name ('hall-windows' or 'hall-windows.jpg').
+   * The tiles never repeat one of them.
+   */
+  avoid?: string[];
 }
-const { exclude = [], only, headingLevel = 'h3', layout = 'grid' } = Astro.props;
+const { exclude = [], only, headingLevel = 'h3', layout = 'grid', avoid = [] } = Astro.props;
 const list = only
   ? only.map((slug) => events.find((e) => e.slug === slug)).filter((e) => e !== undefined)
   : events.filter((e) => !exclude.includes(e.slug));
 const Heading = headingLevel;
+
+const avoided = new Set(avoid.map((n) => n.replace(/\.[a-z0-9]+$/i, '')));
+const tilePhotos = eventsStaged ? list.map((e) => eventPhoto(e.slug)) : [];
+const repeats = tilePhotos.filter((p) => p && avoided.has(p.name));
+if (repeats.length > 0) {
+  console.warn(`[EventIndex] ${repeats.map((p) => p?.file).join(', ')} already appear on ${Astro.url.pathname}, so these event tiles are text only.`);
+}
+// Every tile is a staged photo that the page does not already show, or no tile has a photo.
+const withPhotos = eventsStaged && tilePhotos.every((p) => p?.styledOf !== undefined && !avoided.has(p.name));
+
 // The tile is one link named by the event: the photo's description is not part of its name.
 const prefix = uid('event');
 const sizes =
@@ -34,17 +58,22 @@ const sizes =
       ? '(min-width: 75rem) 390px, (min-width: 48rem) 31vw, 92vw'
       : '(min-width: 75rem) 390px, (min-width: 40rem) 48vw, 92vw';
 // "&" stays with the word before it, so a wrapped title never starts a line with it ("Repasts &" / "celebrations of life").
-const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
+const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
 ---
 {
   list.length > 0 && (
-    <ul class:list={['events', `events--${layout}`]}>
-      {list.map((e) => {
-        const photo = eventPhoto(e.slug);
+    <ul class:list={['events', `events--${layout}`, withPhotos ? 'events--photos' : 'events--text']}>
+      {list.map((e, i) => {
+        const photo = withPhotos ? tilePhotos[i] : null;
         const nameId = `${prefix}-${e.slug}`;
         return (
           <li class="events__item">
-            <a class="event-card card" href={href(`/events/${e.slug}/`)} aria-labelledby={nameId} aria-describedby={`${nameId}-summary`}>
+            <a
+              class:list={['event-card', 'card', { 'event-card--text': !photo }]}
+              href={href(`/events/${e.slug}/`)}
+              aria-labelledby={nameId}
+              aria-describedby={`${nameId}-summary`}
+            >
               {photo && <Photo photo={photo} rounded={false} sizes={sizes} caption={false} class="event-card__photo" />}
               <div class="event-card__body">
                 <Heading id={nameId} class="event-card__name t-title-3">
@@ -54,6 +83,7 @@ const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
                   {e.summary}
                 </p>
               </div>
+              {!photo && <Icon name="chevron-right" class="event-card__chevron" />}
             </a>
           </li>
         );
@@ -98,7 +128,9 @@ const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
     }
   }
 
-  .events--shelf {
+  /* ---------- Shelf of photo tiles ---------- */
+
+  .events--shelf.events--photos {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: min(78%, 300px);
@@ -114,22 +146,22 @@ const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
 
   /* Touch screens swipe, and the peeking next card is the cue. */
   @media (pointer: coarse) {
-    .events--shelf {
+    .events--shelf.events--photos {
       scrollbar-width: none;
     }
 
-    .events--shelf::-webkit-scrollbar {
+    .events--shelf.events--photos::-webkit-scrollbar {
       display: none;
     }
   }
 
-  .events--shelf .events__item {
+  .events--shelf.events--photos .events__item {
     scroll-snap-align: start;
   }
 
   /* Wide screens have room for every card: no hidden overflow, no clipped shadows. */
   @media (min-width: 900px) {
-    .events--shelf {
+    .events--shelf.events--photos {
       grid-auto-flow: row;
       grid-auto-columns: auto;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -140,6 +172,29 @@ const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
       padding: 0;
     }
   }
+
+  /* ---------- Shelf of text tiles: every tile in view, one column, then two, then four ---------- */
+
+  .events--shelf.events--text {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 36rem) {
+    .events--shelf.events--text {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .events--shelf.events--text {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  /* ---------- The tile ---------- */
 
   /* The photo runs to the card's edges; the card's radius clips it. */
   .event-card {
@@ -180,14 +235,85 @@ const keepAmp = (name: string) => name.replace(/ & /g, '\u00A0& ');
     font-size: var(--t-subhead);
   }
 
+  /* A text tile: the name and its line, with a chevron that marks the whole tile as a link. */
+  .event-card--text {
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .event-card--text .event-card__body {
+    padding-inline-end: 0.5rem;
+  }
+
+  .event-card--text :global(.event-card__chevron) {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-end: 1rem;
+    color: var(--label-3);
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+
+  .event-card--text:hover :global(.event-card__chevron) {
+    transform: translateX(2px);
+    color: var(--accent-text);
+  }
+
+  /*
+    Compact screens: text tiles join one inset grouped list, rows split by inset hairlines (HIG), rather than
+    a tall stack of separate cards. Every layout does the same, so a text list looks alike on every page.
+  */
+  @media (width < 36rem) {
+    .events--text {
+      gap: 0;
+      background: var(--bg-elevated);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-1);
+      overflow: hidden;
+    }
+
+    .events--text .event-card {
+      position: relative;
+      background: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .events--text .events__item + .events__item .event-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 1.25rem;
+      right: 0;
+      border-top: 1px solid var(--separator);
+    }
+
+    .events--text .event-card:hover {
+      transform: none;
+      box-shadow: none;
+      background: var(--fill-3);
+    }
+
+    /* The list clips its corners, so the focus ring sits inside the row. */
+    .events--text .event-card:focus-visible {
+      outline-offset: -3px;
+      border-radius: 0;
+    }
+  }
+
   /* 200% text on phones: wider cards and tighter padding give the names room. */
   @media (width < 20rem) {
-    .events--shelf {
+    .events--shelf.events--photos {
       grid-auto-columns: 88%;
     }
 
     .event-card__body {
       padding: 0.9rem 1rem;
+    }
+
+    .event-card--text :global(.event-card__chevron) {
+      margin-inline-end: 0.75rem;
     }
   }
 </style>
