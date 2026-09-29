@@ -1,7 +1,7 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
- * 1200 x 630 PNG: a real photo of the property, a Deep Olive scrim for legibility, the light lockup, the page
- * title in Libre Caslon Display in Cream, and one short line in Inter in Sage (docs/design/brand.md, Share
+ * 1200 x 630 PNG: a real photo of the property, a Navy scrim for legibility, the light lockup, the page
+ * title in Libre Caslon Display in white, and one short line in Inter in Ice (docs/design/brand.md, Share
  * images). What each card shows lives in _cards.ts.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
@@ -22,12 +22,12 @@ const PAD = 64;
 const LOCKUP_H = 60;
 const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-/** Deep Olive (#343B24 in brand.md), as RGB for the scrim's stops. */
-const OLIVE = '52, 59, 36';
-const olive = (alpha: number) => `rgba(${OLIVE}, ${alpha})`;
-/** Cream for the title (11.1:1 on Deep Olive) and Sage for the line under it (7.6:1). */
-const CREAM = '#FEFAE0';
-const SAGE = '#CCD5AE';
+/** Navy (#012A4A in brand.md), as RGB for the scrim's stops. */
+const NAVY = '1, 42, 74';
+const navy = (alpha: number) => `rgba(${NAVY}, ${alpha})`;
+/** White for the title (14.7:1 on Navy) and Ice for the line under it (9.4:1). */
+const WHITE = '#FFFFFF';
+const ICE = '#A9D6E5';
 
 const root = process.cwd();
 const fromRoot = (...p: string[]) => path.join(root, ...p);
@@ -94,18 +94,18 @@ export const GET: APIRoute = async ({ props }) => {
   const { card } = props as { card: ShareCard };
   const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo.file)]);
   const size = titleSize(card.title);
-  const scrim = (alpha: number) => olive(Math.min(0.94, alpha));
+  const scrim = (alpha: number) => navy(Math.min(0.94, alpha));
 
-  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: `rgb(${OLIVE})`, fontFamily: 'Inter', color: CREAM }, [
+  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: `rgb(${NAVY})`, fontFamily: 'Inter', color: WHITE }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
     // Legibility scrims only: deepest behind the text at the lower left, a light veil under the lockup.
-    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${scrim(0.78)} 0%, ${scrim(0.5)} 38%, ${scrim(0.1)} 72%, ${olive(0)} 100%)` }),
-    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${scrim(0.8)} 0%, ${scrim(0.32)} 40%, ${olive(0)} 62%, ${olive(0)} 76%, ${olive(0.3)} 100%)` }),
+    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${scrim(0.78)} 0%, ${scrim(0.5)} 38%, ${scrim(0.1)} 72%, ${navy(0)} 100%)` }),
+    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${scrim(0.8)} 0%, ${scrim(0.32)} 40%, ${navy(0)} 62%, ${navy(0)} 76%, ${navy(0.3)} 100%)` }),
     h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: PAD }, [
       h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
       h('div', { display: 'flex', flexDirection: 'column', gap: 20, width: CONTENT_W }, [
         h('div', { fontFamily: 'Libre Caslon Display', fontSize: size, lineHeight: 1.08, letterSpacing: -0.01 * size }, card.title),
-        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: SAGE }, card.line),
+        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: ICE }, card.line),
       ]),
     ]),
   ]);

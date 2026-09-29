@@ -1,9 +1,10 @@
 ---
 /**
- * The closing call to action on a Deep Olive band: a Caslon heading, one sentence, and one Check Availability
+ * The closing call to action on a Navy band: a Caslon heading, one sentence, and one Check Availability
  * button. It is the one place that says how booking works (brand.md, "Redundancy rules"), so it carries no
  * second button and no contact line: the header links the other pages and the footer lists the phone.
- * Plain color, no imagery. Cream text on Deep Olive is 11.1:1; the Caramel button keeps Ink text (6.3:1).
+ * Plain color, no imagery. White text on Navy is 14.7:1 and Ice 9.4:1. Deep Blue would barely separate from
+ * Navy, so the button here takes the dark-mode fill: Sky with a Navy label (5.4:1), Mist on hover.
  * The section stays the last child of <main>, which is how the footer knows to meet it with a hairline.
  */
 import Icon from './Icon.astro';
@@ -40,14 +41,17 @@ const {
 
 <style>
   .cta {
-    background: var(--olive-deep);
-    color: var(--on-deep);
+    background: var(--navy);
+    color: var(--on-navy);
+    --accent: var(--sky);
+    --accent-hover: var(--mist);
+    --on-accent: var(--navy);
   }
 
-  /* Dark mode: Deep Olive sits close to the page color, so a faint sage hairline marks where the band begins. */
+  /* Dark mode: Navy sits close to the Night page, so a faint Bay hairline marks where the band begins. */
   @media (prefers-color-scheme: dark) {
     .cta {
-      border-top: 1px solid var(--on-deep-line);
+      border-top: 1px solid var(--on-navy-line);
     }
   }
 
@@ -70,13 +74,13 @@ const {
   }
 
   .cta h2 {
-    color: var(--on-deep);
+    color: var(--on-navy);
     max-width: 18ch;
   }
 
   .cta__body {
     max-width: 38rem;
-    color: var(--on-deep-2);
+    color: var(--on-navy-2);
     font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
     line-height: 1.5;
   }
@@ -95,7 +99,7 @@ const {
   }
 
   .cta :global(:focus-visible) {
-    outline-color: var(--on-deep);
+    outline-color: var(--on-navy);
   }
 
   @media (forced-colors: active) {

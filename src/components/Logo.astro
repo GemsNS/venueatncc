@@ -2,10 +2,11 @@
 /**
  * The Venue at NCC logo, inlined from src/assets/brand/ so it follows the theme.
  *
- * tone="auto": Ink (#2F2A1F) becomes var(--logo-ink, var(--label)) and Caramel Deep (#8A5A2B) becomes
- * var(--logo-accent, var(--accent-text)), so the logo turns Cream and Caramel in dark mode.
- * tone="white": the light artwork, for photos and Deep Olive. Cream (#FEFAE0) becomes var(--on-deep) and
- * Caramel (#D4A373) becomes var(--on-deep-accent), the same in both appearances.
+ * tone="auto": Navy ink (#012A4A) becomes var(--logo-ink, var(--label)) and the Steel accent (#2A6F97)
+ * becomes var(--logo-accent, var(--accent-icon)), so the logo is Navy and Steel on light surfaces and turns
+ * the dark-mode text color and Mist in dark mode.
+ * tone="white": the light artwork, for photos and Navy. White (#FFFFFF) becomes var(--on-navy) and the Mist
+ * accent (#89C2D9) becomes var(--on-navy-accent), the same in both appearances.
  *
  * Accessible as an image named "The Venue at NCC", or hidden with `decorative` when it sits inside a link
  * that already carries the name.
@@ -40,12 +41,12 @@ const sources = {
 /** The artwork's colors (brand.md, Logo) and the theme variables that replace them. */
 const COLORS: Record<'auto' | 'white', Record<string, string>> = {
   auto: {
-    '#2F2A1F': 'var(--logo-ink, var(--label))',
-    '#8A5A2B': 'var(--logo-accent, var(--accent-text))',
+    '#012A4A': 'var(--logo-ink, var(--label))',
+    '#2A6F97': 'var(--logo-accent, var(--accent-icon))',
   },
   white: {
-    '#FEFAE0': 'var(--logo-light-ink, var(--on-deep, #FEFAE0))',
-    '#D4A373': 'var(--logo-light-accent, var(--on-deep-accent, #D4A373))',
+    '#FFFFFF': 'var(--logo-light-ink, var(--on-navy, #FFFFFF))',
+    '#89C2D9': 'var(--logo-light-accent, var(--on-navy-accent, #89C2D9))',
   },
 };
 

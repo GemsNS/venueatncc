@@ -1,13 +1,15 @@
 /*
   Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md),
-  the palette's warm neutrals and surfaces, and the interface family throughout except the brand name
-  beside the monogram.
+  the palette's white, Frost, and Navy surfaces, and the interface family throughout except the brand
+  name beside the monogram.
   How the palette marks state:
-    Mist surface, Caramel Deep label   the current screen in the sidebar and tab bar, and date tiles
-                                       (4.9:1 on Mist).
-    Caramel fill, Ink label            new requests (the count and the New badge), the selected
-                                       calendar day, and the filled buttons (6.3:1).
-    Caramel Deep                       accent text, links, unread dots, and focus rings.
+    Ice surface, Deep Blue label       the current screen in the sidebar and tab bar, and date tiles
+                                       (6.0:1 on Ice; translucent Mist with a Mist label in dark mode).
+    Ice chip, Navy label               the New badge (9.4:1).
+    Deep Blue fill, white label        the new-request count, the selected calendar day, and the
+                                       filled buttons (9.4:1; Sky with a Navy label in dark mode).
+    Deep Blue                          accent text, links, and unread dots (Mist in dark mode).
+    Lake                               focus rings (Sky in dark mode).
   Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
   Glass only on the sidebar, tab bar, sheets, menus, and toasts.
 */
@@ -20,11 +22,11 @@
   --adm-radius-section: var(--r-lg);
 
   /* Selected navigation and date tiles. */
-  --adm-selected: var(--mist);
+  --adm-selected: var(--selected);
 
   /*
-    Status colors (the global status tokens) with 4.5:1 text on their tints over Linen and Card, in both
-    appearances. New items use Caramel.
+    Status colors (the global status tokens) with 4.5:1 text on their tints over Frost and White, in both
+    appearances. New items use the Ice chip.
   */
   --adm-green: var(--green);
   --adm-green-tint: rgba(52, 199, 89, 0.16);
@@ -39,8 +41,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark Mist (#232719) matches a card, so selection uses a Sage tint that reads on cards and glass. */
-    --adm-selected: rgba(204, 213, 174, 0.14);
     --adm-green-tint: rgba(48, 209, 88, 0.16);
     --adm-orange-tint: rgba(255, 159, 10, 0.16);
     --adm-red-tint: rgba(255, 69, 58, 0.18);
@@ -163,6 +163,12 @@ body.is-bare {
   color: var(--accent-text);
 }
 
+/* The inset focus ring sits on the Ice selection, where Lake is under 3:1, so it takes the accent text color. */
+.adm-tab[aria-current='page']:focus-visible,
+.adm-nav[aria-current='page']:focus-visible {
+  outline-color: var(--accent-text);
+}
+
 .adm-tab__icon {
   position: relative;
   display: grid;
@@ -187,7 +193,7 @@ body.is-bare {
   height: 20px;
   padding: 0 6px;
   border-radius: var(--r-full);
-  /* New requests: Caramel with an Ink count (6.3:1 in both appearances). */
+  /* New requests: the accent fill with its label color (9.4:1 light, 5.4:1 dark). */
   background: var(--accent);
   color: var(--on-accent);
   font-size: 0.75rem;
@@ -203,14 +209,15 @@ body.is-bare {
   margin: 0 0 12px;
   padding: 10px 14px;
   border-radius: var(--r-sm);
-  background: var(--adm-orange-tint);
+  /* Information, not a warning: a Deep Blue tint (Mist in dark mode) with the text color. */
+  background: var(--accent-tint);
   color: var(--label);
   font-size: var(--t-footnote);
   font-weight: 600;
 }
 
 .adm-demo-banner .icon {
-  color: var(--adm-orange);
+  color: var(--accent-icon);
   width: 18px;
   height: 18px;
 }
@@ -256,7 +263,7 @@ body.is-bare {
   flex: none;
   width: 40px;
   height: 40px;
-  color: var(--accent-text);
+  color: var(--accent-icon);
 }
 
 .adm-sidebar__text {
@@ -604,8 +611,8 @@ body.is-bare {
 /* ---------- Badges ---------- */
 
 .badge.adm-tone--accent {
-  background: var(--accent-tint);
-  color: var(--accent-text);
+  background: var(--chip);
+  color: var(--on-chip);
 }
 
 .badge.adm-tone--green {
@@ -904,13 +911,6 @@ body.is-bare {
   width: 100%;
 }
 
-/* Dark mode: the selected segment is an olive-tinted gray raised above the track. */
-@media (prefers-color-scheme: dark) {
-  .adm-segmented .segmented__item[aria-checked='true'] {
-    background: #3a3f2c;
-  }
-}
-
 .adm-segmented .segmented__item:focus-visible {
   outline-offset: -2px;
   border-radius: var(--r-full);
@@ -974,7 +974,7 @@ body.is-bare {
 }
 
 .adm-menu__item:focus-visible {
-  outline: 3px solid var(--accent-text);
+  outline: 3px solid var(--focus-ring);
   outline-offset: -3px;
 }
 
@@ -1649,8 +1649,8 @@ body.is-bare {
 
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
-  /* A dim tinted toward Deep Olive. */
-  background: rgba(23, 25, 15, 0.45);
+  /* A dim tinted toward Navy. */
+  background: rgb(var(--navy-rgb) / 0.45);
 }
 
 .adm-sheet {
@@ -1982,11 +1982,11 @@ body.is-bare {
   }
 }
 
-/* The monogram in Caramel Deep (Caramel in dark mode). */
+/* The monogram in the logo accent: Steel (Mist in dark mode). */
 .adm-signin__mark {
   width: 64px;
   height: 64px;
-  color: var(--accent-text);
+  color: var(--accent-icon);
 }
 
 .adm-signin__title {

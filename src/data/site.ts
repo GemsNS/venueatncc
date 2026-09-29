@@ -8,7 +8,7 @@
  *   phone, email (assumed domain, see contact.email), indoor capacity 100, outdoor capacity 150,
  *   open to anyone, catering not included (the rental is the space and parking), parking included.
  * Space names confirmed for the brand on 2026-09-28: The Hall (indoor) and The Grove (outdoor).
- * Palette confirmed by the owner on 2026-09-28: cream, linen, mist, sage, and caramel (docs/design/brand.md).
+ * Palette: the client's navy and sky blues (docs/design/brand.md, version 3).
  * Confirmed from OpenStreetMap and the US Census geocoder on 2026-09-27: address and geo coordinates.
  *
  * The venue is its own business. Nothing here, or anywhere on the site, connects it to another

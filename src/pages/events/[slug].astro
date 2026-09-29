@@ -267,7 +267,7 @@ const schema = [
     gap: 1.25rem;
     padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
     border-radius: var(--r-lg);
-    background: var(--mist);
+    background: var(--panel);
   }
 
   .ev-checklist ul {
@@ -288,15 +288,13 @@ const schema = [
   }
 
   .ev-checklist li :global(.icon) {
-    color: var(--accent-text);
+    color: var(--accent-icon);
     margin-top: 0.05em;
   }
 
-  /* On Mist the hover tint leaves Caramel Deep text just under 4.5:1, so the label is Ink (Cream in dark). */
   .ev-checklist__visit {
     justify-self: start;
     margin-top: 0.25rem;
-    color: var(--label);
   }
 
   /* ---------- FAQ ---------- */

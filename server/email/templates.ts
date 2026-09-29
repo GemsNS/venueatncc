@@ -4,11 +4,12 @@
  * estimate, read as estimate() wrote them: bookingDeposit is due to reserve the date and the
  * rest (total minus bookingDeposit) is the balance.
  *
- * Brand (docs/design/brand.md): the email lockup as a PNG header on Cream (many clients do not
- * render SVG), a thin Caramel rule, Georgia for headings in place of Caslon, the system sans
- * stack for body text, Caramel Deep links, and the palette's Ink, Ink 2, and Linen. The venue is
- * its own business: the emails name no other organization. The footer is the one place for the
- * address, phone, email, and site, so the body points to it instead of repeating them.
+ * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
+ * render SVG), a thin Steel rule, Georgia for headings in place of Caslon, the system sans
+ * stack for body text, Deep Blue links and button (white label), Navy text, Slate secondary
+ * text, and a Frost reference box. The venue is its own business: the emails name no other
+ * organization. The footer is the one place for the address, phone, email, and site, so the body
+ * points to it instead of repeating them.
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
@@ -29,19 +30,19 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-/** Cream: the page. */
-const CREAM = '#FEFAE0';
-/** Caramel: the rule under the header and the button fill, always with Ink text (6.3:1). */
-const CARAMEL = '#D4A373';
-/** Caramel Deep: links and the reference number. 5.6:1 on Cream. */
-const LINK = '#8A5A2B';
-/** Ink and Ink 2: text and secondary text (13.6:1 and 7.1:1 on Cream). */
-const INK = '#2F2A1F';
-const MUTED = '#5C5443';
-/** Hairlines: the palette's separator over Cream. */
-const RULE = '#E5E1C9';
-/** Linen: the reference box. */
-const TINT = '#FAEDCD';
+/** White: the page, and the button label (9.4:1 on Deep Blue). */
+const WHITE = '#FFFFFF';
+/** Steel: the thin rule under the header. */
+const STEEL = '#2A6F97';
+/** Deep Blue: links, the reference number, and the button fill. 9.4:1 on white. */
+const LINK = '#01497C';
+/** Navy and Slate: text and secondary text (14.7:1 and 7.3:1 on white). */
+const NAVY = '#012A4A';
+const SLATE = '#3E5A6D';
+/** Hairlines: the site's separator (Navy at 12%) over white. */
+const RULE = '#E0E5E9';
+/** Frost: the reference box. */
+const FROST = '#EEF6F9';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 /** Headings: Georgia stands in for Libre Caslon, which email clients do not have. */
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;
@@ -126,17 +127,17 @@ function layout(opts: { preheader: string; body: string; origin: string }): stri
 <meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(site.name)}</title>
 </head>
-<body style="margin:0;padding:0;background:${CREAM};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${CREAM};">${escapeHtml(opts.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM};">
+<body style="margin:0;padding:0;background:${WHITE};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${WHITE};">${escapeHtml(opts.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${WHITE};">
 <tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:${FONT};color:${INK};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:${FONT};color:${NAVY};">
 <tr><td style="padding:0 0 20px 0;">
 <a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${LINK};"></a>
 </td></tr>
-<tr><td height="1" style="height:1px;padding:0;background:${CARAMEL};font-size:1px;line-height:1px;">&nbsp;</td></tr>
+<tr><td height="1" style="height:1px;padding:0;background:${STEEL};font-size:1px;line-height:1px;">&nbsp;</td></tr>
 ${opts.body}
-<tr><td style="padding:24px 0 0 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${MUTED};">
+<tr><td style="padding:24px 0 0 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${SLATE};">
 ${escapeHtml(site.name)}<br>
 ${escapeHtml(fullAddress)}<br>
 <a href="tel:${site.contact.phoneE164}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
@@ -154,18 +155,18 @@ ${escapeHtml(fullAddress)}<br>
 
 /** The page title: Georgia, regular weight, like the site's Caslon titles (never bold). */
 const heading = (text: string) =>
-  `<tr><td style="padding:28px 0 10px 0;font-family:${SERIF};font-size:28px;line-height:34px;font-weight:400;color:${INK};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:28px 0 10px 0;font-family:${SERIF};font-size:28px;line-height:34px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
 
-const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size:16px;line-height:24px;color:${INK};">${html}</td></tr>`;
+const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size:16px;line-height:24px;color:${NAVY};">${html}</td></tr>`;
 
 /** Section headings in sentence case, never all caps. */
 const sectionTitle = (text: string) =>
-  `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${INK};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
 
 function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${TINT};border-radius:12px;">
-<tr><td style="padding:12px 18px;font-size:14px;line-height:20px;color:${MUTED};">Reference<br>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${FROST};border-radius:12px;">
+<tr><td style="padding:12px 18px;font-size:14px;line-height:20px;color:${SLATE};">Reference<br>
 <span style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:1px;color:${LINK};">${escapeHtml(reference)}</span></td></tr>
 </table>
 </td></tr>`;
@@ -176,8 +177,8 @@ function detailTable(rows: [string, string][]): string {
   const trs = rows
     .map(
       ([label, value]) =>
-        `<tr><td valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:14px;line-height:20px;color:${MUTED};width:38%;">${escapeHtml(label)}</td>` +
-        `<td valign="top" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${INK};">${value}</td></tr>`,
+        `<tr><td valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:14px;line-height:20px;color:${SLATE};width:38%;">${escapeHtml(label)}</td>` +
+        `<td valign="top" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};">${value}</td></tr>`,
     )
     .join(NL);
   return `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${trs}</table></td></tr>`;
@@ -185,8 +186,8 @@ function detailTable(rows: [string, string][]): string {
 
 function estimateTable(est: Estimate): string {
   const line = (label: string, amount: string, strong = false) =>
-    `<tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${INK};${strong ? 'font-weight:700;' : ''}">${escapeHtml(label)}</td>` +
-    `<td align="right" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${INK};white-space:nowrap;${strong ? 'font-weight:700;' : ''}">${escapeHtml(amount)}</td></tr>`;
+    `<tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};${strong ? 'font-weight:700;' : ''}">${escapeHtml(label)}</td>` +
+    `<td align="right" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};white-space:nowrap;${strong ? 'font-weight:700;' : ''}">${escapeHtml(amount)}</td></tr>`;
   const rows = [
     ...est.lines.map((l) => line(l.label, formatUSD(l.amount))),
     line('Estimated total', formatUSD(est.total), true),
@@ -197,13 +198,13 @@ function estimateTable(est: Estimate): string {
 
 function bulletList(items: string[]): string {
   const lis = items.map((t) => `<li style="margin:0 0 6px 0;">${escapeHtml(t)}</li>`).join('');
-  return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${MUTED};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
+  return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${SLATE};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
 }
 
 function button(href: string, label: string): string {
   return `<tr><td style="padding:16px 0 8px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="border-radius:999px;background:${CARAMEL};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:600;color:${INK};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
+<td style="border-radius:999px;background:${LINK};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:600;color:${WHITE};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
 </tr></table>
 </td></tr>`;
 }
@@ -335,14 +336,14 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     heading(thanks),
     paragraph(escapeHtml(intro)),
     referenceBox(i.reference),
-    paragraph(`<span style="color:${MUTED};font-size:14px;">Mention this reference when you call or write to us.</span>`),
+    paragraph(`<span style="color:${SLATE};font-size:14px;">Mention this reference when you call or write to us.</span>`),
     sectionTitle('Your request'),
     detailTable(eventRows(i, 'guest').map(([k, v]) => [k, escapeHtml(v)])),
     sectionTitle('Your estimate'),
     estimateTable(est),
     bulletList(est.notes),
     sectionTitle('What happens next'),
-    `<tr><td style="padding:0 0 8px 0;font-size:16px;line-height:24px;color:${INK};"><ol style="margin:0;padding:0 0 0 22px;">${steps
+    `<tr><td style="padding:0 0 8px 0;font-size:16px;line-height:24px;color:${NAVY};"><ol style="margin:0;padding:0 0 0 22px;">${steps
       .map((s) => `<li style="margin:0 0 8px 0;">${escapeHtml(s)}</li>`)
       .join('')}</ol></td></tr>`,
     sectionTitle('Questions'),

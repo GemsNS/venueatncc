@@ -1,6 +1,6 @@
 ---
 /**
- * Site footer on Deep Olive: the light lockup, then "Visit and contact", the site's single contact block
+ * Site footer on Navy: the light lockup, then "Visit and contact", the site's single contact block
  * (address with directions, phone, email), and one link to the FAQ, the only route to /faq/ on phones,
  * where the tab bar has no FAQ tab and the header nav is hidden. It does not repeat the header navigation,
  * the event list, or the booking call to action (brand.md, "Redundancy rules").
@@ -65,8 +65,8 @@ const year = new Date().getFullYear();
 
 <style>
   .footer {
-    background: var(--olive-deep);
-    color: var(--on-deep-2);
+    background: var(--navy);
+    color: var(--on-navy-2);
     font-size: var(--t-footnote);
     line-height: 1.5;
     /* On compact screens the footer's color runs down behind the floating tab bar (--tabbar-space). */
@@ -74,11 +74,11 @@ const year = new Date().getFullYear();
   }
 
   .footer :focus-visible {
-    outline-color: var(--on-deep);
+    outline-color: var(--on-navy);
   }
 
   /*
-    After the Deep Olive closing band the two meet, so the footer drops its top padding and a hairline
+    After the Navy closing band the two meet, so the footer drops its top padding and a hairline
     separates them instead.
   */
   :global(main:has(> .cta:last-child)) + .footer {
@@ -87,13 +87,13 @@ const year = new Date().getFullYear();
 
   :global(main:has(> .cta:last-child)) + .footer .footer__top {
     padding-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-    border-top: 1px solid var(--on-deep-line);
+    border-top: 1px solid var(--on-navy-line);
   }
 
-  /* Dark mode, on pages without the closing band: a faint sage hairline sets the footer off from the page. */
+  /* Dark mode, on pages without the closing band: a faint Bay hairline sets the footer off from the page. */
   @media (prefers-color-scheme: dark) {
     :global(main:not(:has(> .cta:last-child))) + .footer {
-      border-top: 1px solid var(--on-deep-line);
+      border-top: 1px solid var(--on-navy-line);
     }
   }
 
@@ -101,7 +101,7 @@ const year = new Date().getFullYear();
     display: flex;
     padding-bottom: 2.5rem;
     margin-bottom: 2.5rem;
-    border-bottom: 1px solid var(--on-deep-line);
+    border-bottom: 1px solid var(--on-navy-line);
   }
 
   .footer__brand {
@@ -117,14 +117,14 @@ const year = new Date().getFullYear();
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
   }
 
-  /* Interface family: Caslon Display is for titles at 28px and up. Caramel on Deep Olive is 5.2:1. */
+  /* Interface family: Caslon Display is for titles at 28px and up. Mist on Navy is 7.5:1. */
   .footer__head {
     margin-bottom: 0.7rem;
     font-family: var(--font);
     font-size: var(--t-footnote);
     font-weight: 600;
     letter-spacing: 0;
-    color: var(--on-deep-accent);
+    color: var(--on-navy-accent);
   }
 
   /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
@@ -157,11 +157,11 @@ const year = new Date().getFullYear();
   }
 
   .footer a {
-    color: var(--on-deep-2);
+    color: var(--on-navy-2);
   }
 
   .footer a:hover {
-    color: var(--on-deep);
+    color: var(--on-navy);
   }
 
   .footer address {
@@ -191,7 +191,7 @@ const year = new Date().getFullYear();
     gap: 0.4rem 1.5rem;
     margin-top: 2.5rem;
     padding-top: 1.1rem;
-    border-top: 1px solid var(--on-deep-line);
+    border-top: 1px solid var(--on-navy-line);
     font-size: var(--t-caption);
   }
 

@@ -3,26 +3,34 @@
   the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
-    Photographs first, quiet frame. Real photos of the property lead; the cream and sage frame stays calm.
+    Photographs first, quiet frame. Real photos of the property lead; the white and navy frame stays calm.
     Clarity   Legible type and plain words. Every screen has one obvious next step.
     Deference Chrome stays quiet. Glass is for navigation and controls floating over photos only.
 
-  Color      The owner's palette: Cream, Linen, Mist, Sage, and Caramel, with two derived darks and one
-             derived deeper caramel. Nothing else is added.
-    Cream         #FEFAE0  page background.
-    Linen         #FAEDCD  alternate sections (--bg-grouped).
-    Mist          #E9EDC9  quiet panels, selected rows, chips.
-    Sage          #CCD5AE  tags and subtle surfaces; hairlines on Deep Olive. Never text on light.
-    Caramel       #D4A373  the one saturated color: primary fills, always with Ink text (6.3:1), and
-                           the accent on dark surfaces. Never text on Cream (2.2:1).
-    Caramel Deep  #8A5A2B  links and accent text on light surfaces, focus rings, selection outlines (5.6:1).
-    Ink           #2F2A1F  text (13.6:1 on Cream). Ink 2 #5C5443 for secondary text (7.1:1).
-    Deep Olive    #343B24  footer, closing band, photo scrims. Cream text 11.1:1, Caramel 5.2:1.
-    Card          #FFFDF2  cards and inputs on Cream or Linen.
-    Dark mode: page #17190F, grouped #101209, cards #22251A, text Cream, secondary Sage, fills Caramel
-    with Ink text, accent text Caramel.
-    --accent is a fill. Anything that is text, a link, a focus ring, or a selection border uses
-    --accent-text, which keeps 3:1 or better against the page (WCAG 1.4.11).
+  Color      The client's ten blues, plus three neutrals derived from them: White, Frost, and Slate.
+             Nothing else is added. The palette tokens hold the fixed values; components use the role
+             tokens under them (--bg, --label, --accent, and so on), which change with the appearance.
+    Navy          #012A4A  text; the footer, the closing band, the hero's phone panel, and every photo
+                           scrim (--navy-rgb). White text on Navy 14.7:1.
+    Harbor        #013A63  hover and pressed state of the primary button.
+    Deep Blue     #01497C  primary fill with white text (9.4:1); links, accent text, and selected states.
+    Marine        #014F86  alternative link hover.
+    Steel         #2A6F97  logo accent and icons (5.5:1 on White).
+    Lake          #2C7DA0  focus ring (4.6:1 on White). Never text.
+    Bay           #468FAF  decorative only: hairlines on Navy.
+    Sky           #61A5C2  primary fill in dark mode, always with Navy text (5.4:1).
+    Mist          #89C2D9  accent text and the lockup accent on Navy (7.5:1); accent text in dark mode.
+    Ice           #A9D6E5  chips, capacity tags, and selected rows, with Navy text (9.4:1); secondary
+                           text on Navy and in dark mode.
+    White         #FFFFFF  page and cards.
+    Frost         #EEF6F9  alternate sections and quiet panels.
+    Slate         #3E5A6D  secondary text (7.3:1 on White, 6.6:1 on Frost, 4.6:1 on Ice).
+    Never set Sky, Mist, Ice, or Bay as text on White, and never put white text on Sky or lighter.
+    Dark mode: page Night #011A2E, grouped #010F1C, cards #022640, text #EAF4F8, secondary Ice,
+    primary fill Sky with Navy text, accent text Mist (9.1:1 on Night), focus ring Sky, and chips
+    and selected rows in translucent Mist.
+    --accent is a fill. Anything that is text, a link, or a selection border uses --accent-text, and
+    focus rings use --focus-ring; both keep 3:1 or better against the page (WCAG 1.4.11).
     No gradients as decoration. The only gradients are legibility scrims over photographs.
 
   Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
@@ -40,49 +48,67 @@
 :root {
   color-scheme: light dark;
 
-  /* Palette colors that read the same in both appearances */
-  --caramel: #d4a373;
-  --caramel-deep: #8a5a2b;
-  --sage: #ccd5ae;
-  --ink: #2f2a1f;
+  /* The palette (brand.md, Color). The same values in both appearances. */
+  --navy: #012a4a;
+  /* Navy as channels, for scrims and tinted shadows: rgb(var(--navy-rgb) / 0.6). */
+  --navy-rgb: 1 42 74;
+  --harbor: #013a63;
+  --deep-blue: #01497c;
+  --marine: #014f86;
+  --steel: #2a6f97;
+  --lake: #2c7da0;
+  --bay: #468faf;
+  --sky: #61a5c2;
+  --mist: #89c2d9;
+  --ice: #a9d6e5;
+  --white: #ffffff;
+  --frost: #eef6f9;
+  --slate: #3e5a6d;
 
   /* Surfaces */
-  --bg: #fefae0;
-  --bg-grouped: #faedcd;
-  --bg-elevated: #fffdf2;
-  --fill: rgba(92, 84, 67, 0.13);
-  --fill-2: rgba(92, 84, 67, 0.08);
-  --fill-3: rgba(92, 84, 67, 0.05);
-  /* Quiet panels and chips (Mist), and warm alternate surfaces (Linen). */
-  --mist: #e9edc9;
-  --linen: #faedcd;
+  --bg: var(--white);
+  --bg-grouped: var(--frost);
+  --bg-elevated: var(--white);
+  /* A quiet panel inside a White section. */
+  --panel: var(--frost);
+  --fill: rgba(62, 90, 109, 0.13);
+  --fill-2: rgba(62, 90, 109, 0.08);
+  --fill-3: rgba(62, 90, 109, 0.05);
+  /* Chips and capacity tags, and selected rows: Ice with Navy text (9.4:1). */
+  --chip: var(--ice);
+  --on-chip: var(--navy);
+  --selected: var(--ice);
+  /* The selected thumb of a segmented control and other raised controls on a fill track. */
+  --thumb: var(--white);
 
-  /* Labels */
-  --label: #2f2a1f;
-  --label-2: #5c5443;
-  --label-3: #736a58;
-  --separator: rgba(47, 42, 31, 0.12);
-  --separator-strong: rgba(47, 42, 31, 0.24);
+  /* Labels. --label-3 is Slate lightened toward White: 5.2:1 on White, 4.8:1 on Frost. */
+  --label: var(--navy);
+  --label-2: var(--slate);
+  --label-3: #56707f;
+  --separator: rgb(var(--navy-rgb) / 0.12);
+  --separator-strong: rgb(var(--navy-rgb) / 0.24);
 
   /* Brand */
-  --accent: var(--caramel);
+  --accent: var(--deep-blue);
   --accent-fill: var(--accent);
-  --accent-hover: #cb9764;
-  --accent-text: var(--caramel-deep);
-  --on-accent: var(--ink);
-  /*
-    Caramel tints. Caramel Deep text keeps 4.5:1 on both over Cream, Linen, and Card (at least 4.58:1). Over
-    Mist the hover tint falls just short, so a tinted button on a Mist panel takes an Ink label.
-  */
-  --accent-tint: rgba(212, 163, 115, 0.12);
-  --accent-tint-2: rgba(212, 163, 115, 0.16);
+  --accent-hover: var(--harbor);
+  --accent-text: var(--deep-blue);
+  --on-accent: var(--white);
+  /* The logo accent and icons. */
+  --accent-icon: var(--steel);
+  --focus-ring: var(--lake);
+  /* Deep Blue tints for tinted buttons and icon tiles: Deep Blue text keeps at least 7:1 on them. */
+  --accent-tint: rgba(1, 73, 124, 0.08);
+  --accent-tint-2: rgba(1, 73, 124, 0.14);
 
-  /* Deep Olive: the footer, the closing band, and photo scrims, with Cream text and Caramel accents. */
-  --olive-deep: #343b24;
-  --on-deep: #fefae0;
-  --on-deep-2: rgba(254, 250, 224, 0.8);
-  --on-deep-accent: var(--caramel);
-  --on-deep-line: rgba(204, 213, 174, 0.22);
+  /*
+    Navy: the footer, the closing band, the hero's phone panel, and photo scrims, in both appearances.
+    White text 14.7:1, Ice 9.4:1, Mist 7.5:1; Bay hairlines.
+  */
+  --on-navy: var(--white);
+  --on-navy-2: var(--ice);
+  --on-navy-accent: var(--mist);
+  --on-navy-line: rgba(70, 143, 175, 0.4);
 
   /* Status */
   --green: #1b6e30;
@@ -93,17 +119,17 @@
   --red-tint: rgba(255, 59, 48, 0.12);
 
   /* Liquid Glass (navigation and control layer only) */
-  --glass-bg: rgba(254, 250, 224, 0.72);
-  --glass-bg-strong: rgba(254, 250, 224, 0.86);
-  --glass-border: rgba(255, 253, 242, 0.7);
-  --glass-edge: inset 0 1px 0 rgba(255, 253, 242, 0.9), inset 0 -1px 0 rgba(47, 42, 31, 0.04);
-  --glass-shadow: 0 8px 32px rgba(52, 59, 36, 0.12), 0 1px 2px rgba(52, 59, 36, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgb(var(--navy-rgb) / 0.05);
+  --glass-shadow: 0 8px 32px rgb(var(--navy-rgb) / 0.12), 0 1px 2px rgb(var(--navy-rgb) / 0.08);
   --glass-blur: blur(24px) saturate(180%);
 
-  /* Elevation */
-  --shadow-1: 0 1px 2px rgba(47, 42, 31, 0.06), 0 1px 1px rgba(47, 42, 31, 0.03);
-  --shadow-2: 0 2px 6px rgba(47, 42, 31, 0.05), 0 12px 32px rgba(52, 59, 36, 0.08);
-  --shadow-3: 0 4px 12px rgba(47, 42, 31, 0.07), 0 24px 64px rgba(52, 59, 36, 0.14);
+  /* Elevation, tinted toward Navy */
+  --shadow-1: 0 1px 2px rgb(var(--navy-rgb) / 0.08), 0 1px 1px rgb(var(--navy-rgb) / 0.04);
+  --shadow-2: 0 2px 6px rgb(var(--navy-rgb) / 0.06), 0 12px 32px rgb(var(--navy-rgb) / 0.09);
+  --shadow-3: 0 4px 12px rgb(var(--navy-rgb) / 0.08), 0 24px 64px rgb(var(--navy-rgb) / 0.16);
 
   /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
@@ -164,29 +190,39 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #17190f;
-    --bg-grouped: #101209;
-    --bg-elevated: #22251a;
-    --fill: rgba(204, 213, 174, 0.22);
-    --fill-2: rgba(204, 213, 174, 0.14);
-    --fill-3: rgba(204, 213, 174, 0.07);
-    --mist: #232719;
-    --linen: #1c1f13;
+    /* Night page, a deeper grouped background, and raised cards (brand.md, Dark mode). */
+    --bg: #011a2e;
+    --bg-grouped: #010f1c;
+    --bg-elevated: #022640;
+    --panel: #022640;
+    --fill: rgba(169, 214, 229, 0.2);
+    --fill-2: rgba(169, 214, 229, 0.13);
+    --fill-3: rgba(169, 214, 229, 0.07);
+    /* Chips in translucent Mist with Mist text (at least 5:1 on the page and cards); selected rows likewise. */
+    --chip: rgba(137, 194, 217, 0.2);
+    --on-chip: var(--mist);
+    --selected: rgba(137, 194, 217, 0.16);
+    /* Raised controls: Deep Blue sits above the fill track (a card color would sink below it). */
+    --thumb: var(--deep-blue);
 
-    --label: #fefae0;
-    --label-2: #ccd5ae;
-    --label-3: #9a9f86;
-    --separator: rgba(254, 250, 224, 0.14);
-    --separator-strong: rgba(254, 250, 224, 0.26);
+    --label: #eaf4f8;
+    --label-2: var(--ice);
+    --label-3: #7fa0b3;
+    --separator: rgba(234, 244, 248, 0.14);
+    --separator-strong: rgba(234, 244, 248, 0.26);
 
-    /* Caramel fills keep Ink labels (6.3:1); Caramel is also the accent text (7.9:1 on the page). */
-    --accent-hover: #ddb287;
-    --accent-text: var(--caramel);
-    --accent-tint: rgba(212, 163, 115, 0.16);
-    --accent-tint-2: rgba(212, 163, 115, 0.2);
-
-    /* Deep Olive steps down toward the page, and a sage hairline marks where it begins. */
-    --olive-deep: #1e2214;
+    /*
+      Sky fills take Navy labels (5.4:1) and turn Mist on hover (7.5:1). Mist is the accent text (9.1:1
+      on Night) and the icon accent. The focus ring is Sky: Lake falls near 3:1 on the dark surfaces.
+    */
+    --accent: var(--sky);
+    --accent-hover: var(--mist);
+    --accent-text: var(--mist);
+    --on-accent: var(--navy);
+    --accent-icon: var(--mist);
+    --focus-ring: var(--sky);
+    --accent-tint: rgba(137, 194, 217, 0.16);
+    --accent-tint-2: rgba(137, 194, 217, 0.22);
 
     --green: #4cd97b;
     --green-tint: rgba(48, 209, 88, 0.16);
@@ -195,10 +231,10 @@
     --red: #ff7a70;
     --red-tint: rgba(255, 69, 58, 0.18);
 
-    --glass-bg: rgba(34, 37, 26, 0.64);
-    --glass-bg-strong: rgba(34, 37, 26, 0.84);
-    --glass-border: rgba(254, 250, 224, 0.12);
-    --glass-edge: inset 0 1px 0 rgba(254, 250, 224, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(2, 38, 64, 0.64);
+    --glass-bg-strong: rgba(2, 38, 64, 0.84);
+    --glass-border: rgba(234, 244, 248, 0.12);
+    --glass-edge: inset 0 1px 0 rgba(234, 244, 248, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -366,7 +402,7 @@ strong {
 }
 
 :focus-visible {
-  outline: 3px solid var(--accent-text);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -669,15 +705,15 @@ main:focus {
   background: var(--fill-3);
 }
 
-/* Secondary action on Deep Olive and photos: a Cream outline. The primary stays .btn--filled (Caramel). */
+/* Secondary action on Navy and photos: a white outline. The primary stays .btn--filled. */
 .btn--outline-light {
   background: transparent;
-  color: var(--on-deep);
-  box-shadow: inset 0 0 0 1.5px rgba(254, 250, 224, 0.85);
+  color: var(--on-navy);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
 }
 
 .btn--outline-light:hover {
-  background: rgba(254, 250, 224, 0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn--glass {
@@ -761,7 +797,7 @@ a.link-more {
 .pill .icon {
   width: 1.05em;
   height: 1.05em;
-  color: var(--accent-text);
+  color: var(--accent-icon);
 }
 
 .badge {
@@ -776,9 +812,10 @@ a.link-more {
   color: var(--label-2);
 }
 
+/* A chip: Ice with Navy text (translucent Mist with the text color in dark mode). */
 .badge--accent {
-  background: var(--accent-tint);
-  color: var(--accent-text);
+  background: var(--chip);
+  color: var(--on-chip);
 }
 
 .badge--green {
@@ -921,16 +958,16 @@ a.link-more {
 }
 
 /*
-  Focus: the 1px accent border plus a 1px accent shadow make a 2px solid ring, with a soft halo.
+  Focus: the 1px focus-ring border plus a 1px shadow make a 2px solid ring, with a soft halo.
   The transparent outline shows up in forced colors (Windows High Contrast), where shadows are dropped.
 */
 .input:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
   background: var(--bg-elevated);
-  border-color: var(--accent-text);
+  border-color: var(--focus-ring);
   box-shadow:
-    0 0 0 1px var(--accent-text),
+    0 0 0 1px var(--focus-ring),
     0 0 0 5px var(--accent-tint-2);
 }
 
@@ -981,7 +1018,7 @@ textarea.input {
 .segmented__item[aria-pressed='true'],
 .segmented__item[aria-checked='true'],
 .segmented__item[aria-selected='true'] {
-  background: var(--bg-elevated);
+  background: var(--thumb);
   box-shadow:
     inset 0 0 0 2px var(--accent-text),
     0 3px 8px rgba(0, 0, 0, 0.12),

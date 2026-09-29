@@ -333,8 +333,12 @@ describe('email templates', () => {
         assert.ok(!part.includes(String.fromCharCode(8211)), 'no en dash');
       }
       assert.ok(!mail.html.includes('<script>'));
-      assert.ok(mail.html.includes('#D4A373') && mail.html.includes('#8A5A2B'), 'Caramel rule and Caramel Deep links');
-      assert.ok(!mail.html.includes('#4F2A75') && !mail.html.includes('New Community Church'), 'no retired color or church');
+      assert.ok(mail.html.includes('#2A6F97') && mail.html.includes('#01497C'), 'Steel rule and Deep Blue links');
+      assert.ok(mail.html.includes('color:#012A4A'), 'Navy text');
+      for (const retired of ['#4F2A75', '#7C4DB0', '#FEFAE0', '#FAEDCD', '#D4A373', '#8A5A2B', '#2F2A1F', '#5C5443']) {
+        assert.ok(!mail.html.toUpperCase().includes(retired), `no retired color ${retired}`);
+      }
+      assert.ok(!mail.html.includes('New Community Church'), 'no church');
       assert.ok(mail.html.includes('<img src="https://venueatncc.org/brand/email-lockup.png" width="256" height="48" alt="The Venue at NCC"'), 'lockup header');
       assert.ok(mail.html.includes('Georgia'), 'serif headings');
       assert.ok(!mail.html.includes('uppercase'), 'no all-caps labels');
@@ -342,6 +346,10 @@ describe('email templates', () => {
       assert.ok(mail.html.includes(inquiry.reference));
       assert.ok(mail.text.includes(inquiry.reference));
     }
+    assert.ok(
+      venue.html.includes('background:#01497C;') && venue.html.includes('color:#FFFFFF;text-decoration:none;border-radius:999px'),
+      'Deep Blue button with a white label',
+    );
     assert.ok(venue.html.includes('Line one<br>Line &lt;two&gt;'));
     assert.ok(venue.text.includes('Date is taken.'));
     assert.ok(guest.text.includes('text message'));

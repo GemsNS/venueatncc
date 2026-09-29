@@ -384,14 +384,14 @@ const gallerySchema =
     font-size: 0.9375rem;
   }
 
-  /* The visit request: one Mist panel across the column, the words beside the two actions on wide screens. */
+  /* The visit request: one quiet Frost panel across the column, the words beside the two actions on wide screens. */
   .sp-visit {
     display: grid;
     gap: 1.5rem 3rem;
     /* In px at the low end, so very large text keeps room for the words inside the panel. */
     padding: max(24px, min(5vw, 2.75rem));
     border-radius: var(--r-xl);
-    background: var(--mist);
+    background: var(--panel);
   }
 
   @media (min-width: 60rem) {
@@ -410,11 +410,6 @@ const gallerySchema =
     display: grid;
     gap: 0.75rem;
     max-width: 36rem;
-  }
-
-  /* On Mist the hover tint leaves Caramel Deep text just under 4.5:1, so the Call label is Ink (Cream in dark). */
-  .sp-visit .btn--tinted {
-    color: var(--label);
   }
 
   @media (forced-colors: active) {

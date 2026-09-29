@@ -155,7 +155,7 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     }
   }
 
-  /* A small glass pill over the photo; the Deep Olive tint keeps Cream text legible on any frame. */
+  /* A small glass pill over the photo; the Navy tint keeps white text legible on any frame. */
   .photo__badge {
     position: absolute;
     top: 0.75rem;
@@ -166,11 +166,11 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     min-height: 28px;
     padding: 0.25rem 0.75rem;
     border-radius: var(--r-full);
-    background: rgba(30, 34, 20, 0.62);
+    background: rgb(var(--navy-rgb) / 0.72);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     backdrop-filter: blur(12px) saturate(160%);
-    border: 1px solid rgba(254, 250, 224, 0.28);
-    color: var(--on-deep);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: var(--on-navy);
     font-size: var(--t-footnote);
     font-weight: 600;
     line-height: 1.2;
@@ -180,7 +180,7 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     .photo__badge {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
-      background: rgba(30, 34, 20, 0.9);
+      background: rgb(var(--navy-rgb) / 0.92);
     }
   }
 
