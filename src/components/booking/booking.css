@@ -812,14 +812,6 @@ body:not(:has(.tabbar)) .bk-actions {
   }
 }
 
-/* Left-aligned with the form above it, not centered between the form and the summary. */
-.bk-help {
-  margin-top: 28px;
-  font-size: var(--t-footnote);
-  color: var(--label-2);
-  text-align: start;
-}
-
 /* ---------- Progress and step heading ---------- */
 
 .bk-progress-bar {

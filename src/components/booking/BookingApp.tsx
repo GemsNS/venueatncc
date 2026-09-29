@@ -9,7 +9,6 @@
 import './booking.css';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
-import { site } from '../../data/site';
 import { api, isError } from '../../lib/api';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
@@ -17,7 +16,7 @@ import { formatShort, parseKey, todayKey } from '../../shared/dates';
 import { estimate, formatUSD } from '../../shared/pricing';
 import type { ApiError, DateKey, InquiryCreated, SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
-import { ELLIPSIS, TOO_LATE_MESSAGE, focusField, guestsLabel, session, spaceLabel, telHref } from './lib';
+import { ELLIPSIS, TOO_LATE_MESSAGE, focusField, guestsLabel, session, spaceLabel } from './lib';
 import { Spinner } from './ui';
 import { StepContact } from './StepContact';
 import { StepDate } from './StepDate';
@@ -644,10 +643,6 @@ export default function BookingApp() {
 
       <p class="visually-hidden" role="status" aria-live="polite">
         {announce}
-      </p>
-      <p class="bk-help">
-        Prefer to talk? Call <a href={telHref(site.contact.phoneE164)}>{site.contact.phone}</a> or email{' '}
-        <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
       </p>
     </div>
   );

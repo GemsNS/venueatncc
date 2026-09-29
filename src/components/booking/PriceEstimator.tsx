@@ -178,7 +178,8 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
             {hours < minHours && <span class="visually-hidden">, billed as {hoursLabel(minHours)}</span>}
           </p>
         </div>
-        <EstimateView est={est} showTotal={false} />
+        {/* The pricing page states the balance rule once, in Rental terms, so the estimate leaves out its generic reminder. */}
+        <EstimateView est={est} showTotal={false} omitNotes={/^Balance due/i} />
         <a class="btn btn--filled btn--lg bk-pe__cta" href={cta}>
           Continue to Booking
           <Icon name="arrow-right" />

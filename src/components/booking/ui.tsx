@@ -408,10 +408,10 @@ export function payment(est: Estimate): { reserve: number; balance: number; full
  */
 const SAID_ELSEWHERE_ON_PAGE = /parking/i;
 
-export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boolean; showTotal?: boolean }) {
+export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boolean; showTotal?: boolean; omitNotes?: RegExp }) {
   const { est } = props;
   const { reserve, balance, full } = payment(est);
-  const notes = est.notes.filter((n) => !SAID_ELSEWHERE_ON_PAGE.test(n));
+  const notes = est.notes.filter((n) => !SAID_ELSEWHERE_ON_PAGE.test(n) && !(props.omitNotes && props.omitNotes.test(n)));
   return (
     <div class="bk-est">
       <ul class="bk-est__lines">
