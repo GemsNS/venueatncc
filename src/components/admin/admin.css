@@ -1,9 +1,15 @@
 /*
-  Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md):
-  Caramel for selection and new items (Caramel Deep for accent text and rings), the palette's warm
-  neutrals and surfaces, and the interface family throughout except the brand name beside the monogram.
+  Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md),
+  the palette's warm neutrals and surfaces, and the interface family throughout except the brand name
+  beside the monogram.
+  How the palette marks state:
+    Mist surface, Caramel Deep label   the current screen in the sidebar and tab bar, and date tiles
+                                       (4.9:1 on Mist).
+    Caramel fill, Ink label            new requests (the count and the New badge), the selected
+                                       calendar day, and the filled buttons (6.3:1).
+    Caramel Deep                       accent text, links, unread dots, and focus rings.
   Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
-  Glass only on the sidebar, tab bar, sheets, menus, and toasts. Caramel only for interactive or selected.
+  Glass only on the sidebar, tab bar, sheets, menus, and toasts.
 */
 
 :root {
@@ -12,6 +18,9 @@
   --adm-radius-bar: 32px;
   --adm-radius-sidebar: 28px;
   --adm-radius-section: var(--r-lg);
+
+  /* Selected navigation and date tiles. */
+  --adm-selected: var(--mist);
 
   /* Status colors with 4.5:1 text on their tints over Linen and Card, in both appearances. New items use Caramel. */
   --adm-green: #1b6e30;
@@ -27,6 +36,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Dark Mist (#232719) matches a card, so selection uses a Sage tint that reads on cards and glass. */
+    --adm-selected: rgba(204, 213, 174, 0.14);
     --adm-green: #4cd97b;
     --adm-green-tint: rgba(48, 209, 88, 0.16);
     --adm-orange: #ffb340;
@@ -148,7 +159,7 @@ body.is-bare {
 }
 
 .adm-tab[aria-current='page'] {
-  background: var(--accent-tint-2);
+  background: var(--adm-selected);
   color: var(--accent-text);
 }
 
@@ -308,7 +319,7 @@ body.is-bare {
 }
 
 .adm-nav[aria-current='page'] {
-  background: var(--accent-tint);
+  background: var(--adm-selected);
   color: var(--accent-text);
   font-weight: 600;
 }
@@ -705,7 +716,7 @@ body.is-bare {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--accent-tint);
+  background: var(--adm-selected);
   line-height: 1;
 }
 

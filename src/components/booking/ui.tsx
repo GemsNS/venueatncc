@@ -400,9 +400,18 @@ export function payment(est: Estimate): { reserve: number; balance: number; full
   return { reserve: est.bookingDeposit, balance, full: est.total > 0 && balance === 0 };
 }
 
+/**
+ * Estimate notes that the page around an on-page estimate already states in its own place, so the
+ * estimate leaves them out: parking belongs to the pricing page's Included card and the wizard's
+ * Good to know (docs/design/brand.md, "Redundancy rules"). The emails and the admin still list
+ * every note, because there nothing else says it.
+ */
+const SAID_ELSEWHERE_ON_PAGE = /parking/i;
+
 export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boolean; showTotal?: boolean }) {
   const { est } = props;
   const { reserve, balance, full } = payment(est);
+  const notes = est.notes.filter((n) => !SAID_ELSEWHERE_ON_PAGE.test(n));
   return (
     <div class="bk-est">
       <ul class="bk-est__lines">
@@ -454,9 +463,9 @@ export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boo
           </div>
         </dl>
       )}
-      {props.notes !== false && (
+      {props.notes !== false && notes.length > 0 && (
         <ul class="bk-est__notes">
-          {est.notes.map((n) => (
+          {notes.map((n) => (
             <li key={n}>{n}</li>
           ))}
         </ul>

@@ -74,6 +74,9 @@ export const DRAFT_KEY = 'venueatncc:booking-draft';
 
 const isStep = (n: unknown): n is Step => n === 1 || n === 2 || n === 3 || n === 4;
 
+/** An event type the form offers: one of the list's slugs, or "other". */
+const isEventSlug = (s: string) => s === 'other' || eventTypes.some((e) => e.slug === s);
+
 /** Accept a saved draft only if it has the right shape. */
 export function restoreDraft(saved: unknown): Draft | null {
   if (!saved || typeof saved !== 'object') return null;
@@ -88,6 +91,8 @@ export function restoreDraft(saved: unknown): Draft | null {
   if (!isStep(out.reached)) out.reached = out.step;
   if (!parseSpace(out.space)) out.space = 'indoor';
   if (out.date && !parseDate(out.date)) out.date = '';
+  // A saved event type that is no longer on the list (a slug was renamed) is dropped, so the person picks again.
+  if (out.eventType && !isEventSlug(out.eventType)) out.eventType = '';
   return out;
 }
 
@@ -120,7 +125,7 @@ export function applySearch(draft: Draft, params: URLSearchParams, today: DateKe
   const hours = parseIntIn(params.get('hours'), HOURS_MIN, HOURS_MAX);
   if (hours !== null) next.hours = hours;
   const event = params.get('event');
-  if (event && (event === 'other' || eventTypes.some((e) => e.slug === event))) next.eventType = event;
+  if (event && isEventSlug(event)) next.eventType = event;
   if (params.get('visit') === '1') next.wantsVisit = true;
   if (date || space || guests !== null || hours !== null) {
     next.step = 1;

@@ -6,7 +6,9 @@
  *
  * Brand (docs/design/brand.md): the email lockup as a PNG header on Cream (many clients do not
  * render SVG), a thin Caramel rule, Georgia for headings in place of Caslon, the system sans
- * stack for body text, Caramel Deep links, and the palette's Ink, Ink 2, and Linen.
+ * stack for body text, Caramel Deep links, and the palette's Ink, Ink 2, and Linen. The venue is
+ * its own business: the emails name no other organization. The footer is the one place for the
+ * address, phone, email, and site, so the body points to it instead of repeating them.
  */
 import { fullAddress, site } from '../../src/data/site';
 import { eventTypeName } from '../../src/data/event-types';
@@ -45,6 +47,8 @@ const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, 
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;
 /** The PNG lockup (512 x 96), shown at half size. Always the public site, so every mail client can load it. */
 const LOCKUP = { src: `${site.url}/brand/email-lockup.png`, width: 256, height: 48 };
+/** The guest email's questions line. The phone number and address follow in the footer. */
+const QUESTIONS = 'Reply to this email, or call us at the number below.';
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (m) => ENTITIES[m]);
@@ -342,10 +346,8 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
       .map((s) => `<li style="margin:0 0 8px 0;">${escapeHtml(s)}</li>`)
       .join('')}</ol></td></tr>`,
     sectionTitle('Questions'),
-    paragraph(
-      `Call <a href="tel:${site.contact.phoneE164}" style="color:${LINK};">${escapeHtml(site.contact.phone)}</a> or reply to this email. ` +
-        `We are at ${escapeHtml(fullAddress)}.`,
-    ),
+    // The footer is the one place for the phone number and address (brand.md, "Redundancy rules").
+    paragraph(escapeHtml(QUESTIONS)),
   ].join(NL);
 
   const text = [
@@ -367,7 +369,7 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     ...steps.map((s, n) => `${n + 1}. ${s}`),
     '',
     'QUESTIONS',
-    `Call ${site.contact.phone} or reply to this email. We are at ${fullAddress}.`,
+    QUESTIONS,
     '',
     footerText(ctx.origin),
   ].join(NL);
