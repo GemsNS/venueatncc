@@ -1,12 +1,16 @@
 ---
+/**
+ * The events index: the heading and one lead, then every event as a tile. The tiles are the page's
+ * imagery, so the hero has no photo, and the venue's facts (capacities, parking, rates) are left to the
+ * space cards, The Space, and the pricing page. While the event photos are staged (eventsStaged), one
+ * line under the lead says what they show (docs/design/brand.md, "Photography").
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
-import FactStrip from '../../components/FactStrip.astro';
 import CtaBand from '../../components/CtaBand.astro';
-import Photo from '../../components/Photo.astro';
 import { events } from '../../data/events';
-import { photoByName } from '../../data/photos';
+import { EVENTS_STYLED_NOTE, eventsStaged } from '../../data/photos';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 
@@ -14,13 +18,11 @@ const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 
 const title = 'Events at The Venue at NCC in Suffolk, VA';
-const description = `Weddings, showers, birthdays, repasts, meetings, and church events in Suffolk, VA. ${hall?.name} holds up to ${hall?.capacity} and ${grove?.name} up to ${grove?.capacity}, with on-site parking.`;
+const description = `Weddings, showers, birthdays, repasts, meetings, and community events in Suffolk, VA. ${hall?.name} holds up to ${hall?.capacity} and ${grove?.name} up to ${grove?.capacity}, with on-site parking.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },
 ];
-// The drive at dusk: a real photo that none of the event tiles below uses.
-const photo = photoByName('approach-dusk');
 const itemList = {
   '@type': 'ItemList',
   name: `Events at ${site.name}`,
@@ -36,13 +38,10 @@ const itemList = {
   <section class="page-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__grid">
-        <div class="page-hero__copy">
-          <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
-          <p class="t-lead">Choose an occasion for a planning guide, the space that suits it, and a practical checklist.</p>
-          <FactStrip class="page-hero__facts" />
-        </div>
-        {photo && <Photo photo={photo} class="page-hero__photo" sizes="(min-width: 75rem) 560px, 46vw" />}
+      <div class="page-hero__copy">
+        <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
+        <p class="t-lead">Choose an occasion for a planning guide, the space that suits it, and a practical checklist.</p>
+        {eventsStaged && <p class="page-hero__note">{EVENTS_STYLED_NOTE}</p>}
       </div>
     </div>
   </section>
@@ -64,36 +63,19 @@ const itemList = {
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
   }
 
-  .page-hero__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem 4rem;
-    align-items: center;
-    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
-  }
-
   .page-hero__copy {
     display: grid;
     gap: 1.25rem;
     max-width: 48rem;
+    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
   }
 
-  .page-hero :global(.page-hero__facts) {
-    margin-top: 0.5rem;
-  }
-
-  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the tiles. */
-  .page-hero__grid > :global(.page-hero__photo) {
-    display: none;
-  }
-
-  @media (min-width: 64rem) {
-    .page-hero__grid {
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    }
-
-    .page-hero__grid > :global(.page-hero__photo) {
-      display: block;
-    }
+  /* Set like a photo caption: it describes the tiles below. */
+  .page-hero__note {
+    color: var(--label-2);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.4;
   }
 </style>

@@ -1,26 +1,31 @@
 ---
 /**
- * An event landing page: a rectangular photo hero from the event photo map, the planning guide with
- * its checklist, the two spaces as photo cards, how booking works, FAQs, and three related events.
- * Copy lives in src/data/events.ts. Photos only through Photo (docs/design/brand.md): the hero may be a
- * styled concept, which Photo shows with its badge and caption. No image appears twice on a page.
+ * An event landing page: hero, planning guide and checklist, shared-info line, FAQs, related events,
+ * closing band. Copy lives in src/data/events.ts.
+ *
+ * Photos follow one rule (docs/design/brand.md, "Photography"). The hero is eventPhoto(slug): while the
+ * staged set is complete (eventsStaged) it is the event's staged photo, which Photo shows with its
+ * Styled Concept badge, under the caption "Styled concept. Décor is not included."; otherwise it is the
+ * event's real photo, with no badge and no caption. No image appears twice on a page, so the related
+ * tiles skip the hero's photo and each other's.
+ *
+ * Facts that are the same for every event (rates, packages, deposits, fees, payments, parking, visits)
+ * live on the pricing page and /faq/. This page links to them in one line instead of repeating them.
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import EventIndex from '../../components/EventIndex.astro';
 import FaqList from '../../components/FaqList.astro';
-
 import CtaBand from '../../components/CtaBand.astro';
 import Icon from '../../components/Icon.astro';
 import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
-import { site, type SpaceId } from '../../data/site';
-import { eventPhoto, photosFor, realPhoto, type PhotoSpace, type VenuePhoto } from '../../data/photos';
+import { site } from '../../data/site';
+import { eventPhoto, eventsStaged, STYLED_CAPTION } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
-import { priceSummary, formatUSD } from '../../shared/pricing';
 
 export const getStaticPaths = (() => events.map((event) => ({ params: { slug: event.slug }, props: { event } }))) satisfies GetStaticPaths;
 
@@ -36,34 +41,19 @@ const crumbs = [
   { name: event.name, path },
 ];
 
-const { fromHourly } = priceSummary();
-const eventParam = `event=${encodeURIComponent(event.slug)}`;
-const bookLink = `${href(bookHref)}?${eventParam}`;
-const visitLink = `${href(bookHref)}?${eventParam}&visit=1`;
+// The booking page with this event already chosen. Base-relative: href() adds the base where it renders.
+const eventBookPath = `${bookHref}?event=${encodeURIComponent(event.slug)}`;
+const visitLink = href(`${eventBookPath}&visit=1`);
 const plainName = event.name.replace(/&/g, 'and').toLowerCase();
 // Phone numbers in the copy become tap-to-call links that never break across lines.
 const PHONE = site.contact.phone;
 const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
-// The two spaces as photo cards. The space the hero shows leads, and each card uses a different
-// photo of its space than the hero (and than the real photo behind a styled hero), so no image repeats.
-const areaOf: Record<Exclude<SpaceId, 'both'>, PhotoSpace> = { indoor: 'hall', outdoor: 'grove' };
-const heroNames = new Set([photo?.name, realPhoto(photo)?.name].filter(Boolean));
-function cardPhoto(area: PhotoSpace): VenuePhoto | null {
-  const list = photosFor(area);
-  return list.find((p) => !heroNames.has(p.name)) ?? list[0] ?? null;
-}
-const leadSpace: SpaceId = photo?.space === 'grove' ? 'outdoor' : 'indoor';
-const spaceCards = site.spaces
-  .filter((s): s is typeof s & { id: 'indoor' | 'outdoor' } => s.id === 'indoor' || s.id === 'outdoor')
-  .map((space) => ({ space, photo: cardPhoto(areaOf[space.id]) }))
-  .sort((a, b) => Number(b.space.id === leadSpace) - Number(a.space.id === leadSpace));
-
-// Three related events whose tiles show none of the photos already on the page: the event's own
-// related list first, then the other events in list order.
+// Three related events whose tiles repeat no photo already on the page: the event's own related list
+// first, then the other events in list order.
 const RELATED_COUNT = 3;
-const usedPhotos = new Set([photo?.name, ...spaceCards.map((c) => c.photo?.name)].filter(Boolean));
+const usedPhotos = new Set(photo ? [photo.name] : []);
 const related: string[] = [];
 for (const slug of [...event.related, ...events.map((e) => e.slug)]) {
   if (related.length === RELATED_COUNT) break;
@@ -73,6 +63,10 @@ for (const slug of [...event.related, ...events.map((e) => e.slug)]) {
   if (tile) usedPhotos.add(tile);
   related.push(slug);
 }
+
+// The closing band's one Check Availability opens the booking page with this event chosen. Passed as a
+// spread until CtaBand declares the bookHref prop (base-relative path; CtaBand wraps it with href()).
+const ctaBook = { bookHref: eventBookPath };
 
 const schema = [
   breadcrumbs(crumbs),
@@ -88,12 +82,19 @@ const schema = [
         <div class="ev-hero__copy">
           <h1 class="t-large-title">{event.h1}</h1>
           <p class="t-lead">{splitPhone(event.intro[0]).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
-          <div class="btn-row">
-            <a class="btn btn--filled btn--lg" href={bookLink}>Check Availability</a>
-            <a class="btn btn--tinted btn--lg" href={href(pricingHref)}>See Pricing</a>
-          </div>
         </div>
-        {photo && <Photo photo={photo} ratio="3 / 2" priority class="ev-hero__photo" sizes="(min-width: 75rem) 680px, (min-width: 64rem) 56vw, calc(100vw - 2rem)" />}
+        {
+          photo && (
+            <Photo
+              photo={photo}
+              ratio="3 / 2"
+              priority
+              caption={eventsStaged ? STYLED_CAPTION : false}
+              class="ev-hero__photo"
+              sizes="(min-width: 75rem) 680px, (min-width: 64rem) 56vw, calc(100vw - 2rem)"
+            />
+          )
+        }
       </div>
     </div>
   </section>
@@ -110,6 +111,10 @@ const schema = [
             </section>
           ))
         }
+        <p class="ev-shared">
+          Rates, packages, deposits, and fees are the same for every event: the <a href={href(pricingHref)}>pricing page</a> gives an
+          instant estimate for your date, and the <a href={href('/faq/')}>FAQ</a> answers questions about payments, parking, and visits.
+        </p>
       </article>
 
       <aside class="ev-aside" aria-labelledby="checklist-heading">
@@ -125,58 +130,9 @@ const schema = [
               ))
             }
           </ul>
-          <div class="ev-checklist__actions">
-            <a class="btn btn--filled" href={bookLink}>Check Availability</a>
-            <a class="btn btn--plain" href={visitLink}>Request a Visit</a>
-          </div>
+          <a class="btn btn--tinted ev-checklist__visit" href={visitLink}>Request a Visit</a>
         </div>
       </aside>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-labelledby="spaces-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="spaces-heading">{spaceCards.map((c) => c.space.name).join(' and ')}</h2>
-        <p class="t-lead">Book one space, or request both for the same day. We confirm availability for each when we follow up.</p>
-      </div>
-      <ul class="ev-spaces">
-        {
-          spaceCards.map(({ space, photo: spacePhoto }) => (
-            <li class="ev-space card">
-              {spacePhoto && <Photo photo={spacePhoto} ratio="3 / 2" rounded={false} sizes="(min-width: 75rem) 592px, (min-width: 48rem) 48vw, calc(100vw - 2rem)" />}
-              <div class="ev-space__body">
-                <h3 class="ev-space__name">{space.name}</h3>
-                <p class="ev-space__cap num">Up to {space.capacity} guests</p>
-                <p class="secondary">{space.description}</p>
-                <a class="link-more ev-space__link" href={`${href(bookHref)}?space=${space.id}&${eventParam}`}>
-                  Check {space.short} Dates <Icon name="chevron-right" />
-                </a>
-              </div>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="steps-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="steps-heading">How booking works</h2>
-        <p class="t-lead">Rates from {formatUSD(fromHourly)} an hour, with an instant estimate for your date.</p>
-      </div>
-      <ol class="ev-steps">
-        {
-          site.bookingSteps.map((step, i) => (
-            <li class="ev-step">
-              <span class="ev-step__num" aria-hidden="true">{i + 1}</span>
-              <h3 class="t-headline">{step.title}</h3>
-              <p class="secondary">{step.body}</p>
-            </li>
-          ))
-        }
-      </ol>
     </div>
   </section>
 
@@ -207,7 +163,7 @@ const schema = [
     )
   }
 
-  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." />
+  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." {...ctaBook} />
 </BaseLayout>
 
 <style>
@@ -237,11 +193,6 @@ const schema = [
     justify-items: start;
     max-width: 40rem;
   }
-
-  .ev-hero__copy .btn-row {
-    margin-top: 0.5rem;
-  }
-
 
   /* ---------- Planning guide and checklist ---------- */
 
@@ -289,6 +240,16 @@ const schema = [
     font-size: var(--t-body);
     line-height: 1.6;
     color: var(--label);
+  }
+
+  /* The one line that points to the facts every event shares, set apart from the event's own guide. */
+  .ev-shared {
+    margin-top: clamp(2.25rem, 1.75rem + 2vw, 3rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
+    font-size: var(--t-body);
+    line-height: 1.6;
+    color: var(--label-2);
   }
 
   /* Tap-to-call numbers in the copy stay on one line and are underlined like other inline links. */
@@ -341,94 +302,10 @@ const schema = [
     margin-top: 0.05em;
   }
 
-  .ev-checklist__actions {
-    display: grid;
-    gap: 0.25rem;
-    margin-top: 0.25rem;
-  }
-
-  /* ---------- The two spaces ---------- */
-
-  .ev-spaces {
-    display: grid;
-    gap: 1.25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  @media (min-width: 48rem) {
-    .ev-spaces {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.5rem;
-    }
-  }
-
-  .ev-space {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    overflow: hidden;
-  }
-
-  .ev-space__body {
-    display: grid;
-    align-content: start;
-    gap: 0.5rem;
-    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-  }
-
-  .ev-space__name {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
-    line-height: 1.2;
-    letter-spacing: -0.005em;
-  }
-
-  .ev-space__cap {
-    color: var(--accent-text);
-    font-weight: 600;
-    font-size: var(--t-subhead);
-  }
-
-  .ev-space__link {
+  .ev-checklist__visit {
     justify-self: start;
     margin-top: 0.25rem;
   }
-
-  /* ---------- How booking works: a real sequence, so numbered ---------- */
-
-  .ev-steps {
-    display: grid;
-    gap: 1rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  @media (min-width: 48rem) {
-    .ev-steps {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.5rem;
-    }
-  }
-
-  .ev-step {
-    display: grid;
-    align-content: start;
-    gap: 0.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--separator-strong);
-  }
-
-  .ev-step__num {
-    font-family: var(--font-serif);
-    font-size: 1.625rem;
-    line-height: 1;
-    color: var(--accent-text);
-    font-variant-numeric: lining-nums;
-  }
-
 
   /* ---------- FAQ ---------- */
 
