@@ -5,13 +5,16 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import preact from '@astrojs/preact';
 import { site } from './src/data/site.ts';
+import { MOVED_PAGES } from './server/static.ts';
+import { demoRedirects } from './scripts/demo-redirects.mjs';
 
 /**
  * Two targets, one codebase. Astro always builds a static site; interactivity lives in Preact islands.
  *
  *   npm run build        production: static site in dist/, served with the API by server/ (Node)
  *   npm run build:demo   GitHub Pages demo: PUBLIC_DEMO=true, base /venueatncc/, in-browser demo backend,
- *                        noindex everywhere, no sitemap
+ *                        noindex everywhere, no sitemap, and a redirect page at each moved page's old
+ *                        address (production answers those with a 301 from server/static.ts)
  */
 const isDemo = process.env.PUBLIC_DEMO === 'true';
 const demoBase = process.env.DEMO_BASE ?? '/venueatncc/';
@@ -76,6 +79,8 @@ export default defineConfig({
               },
             },
           },
+          // GitHub Pages cannot redirect, so moved pages get a small redirect page each (scripts/demo-redirects.mjs).
+          demoRedirects({ moved: MOVED_PAGES, base: demoBase, site: demoSite }),
         ]
       : [
           // Google ignores changefreq and priority, so they are not set. lastmod is set only when it is real.
