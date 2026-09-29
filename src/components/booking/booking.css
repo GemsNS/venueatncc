@@ -35,6 +35,8 @@
   --bk-green-text: #165826;
   --bk-orange-text: #9a2800;
   --bk-card-edge: 0 0 0 1px var(--separator);
+  /* The date field's calendar popover: a hairline edge, stronger in dark mode where shadows barely show. */
+  --bk-pop-edge: 0 0 0 1px var(--separator);
   color: var(--label);
   font-size: var(--t-body);
 }
@@ -47,6 +49,7 @@
   .bk,
   .bk-app {
     --bk-step-bg: var(--harbor);
+    --bk-pop-edge: 0 0 0 1px var(--separator-strong);
     --bk-green-text: var(--green);
     --bk-orange-text: var(--orange);
   }
@@ -140,6 +143,7 @@
   gap: 4px;
   min-height: 48px;
   padding: 2px;
+  max-width: 100%;
   border-radius: var(--r-full);
   background: var(--fill-2);
   justify-self: start;
@@ -182,14 +186,29 @@
   stroke-width: 2.2;
 }
 
+/*
+  The value keeps a steady width (5.6em) so the buttons stay put as it changes. With 200% text on a phone
+  it gives that up, and its size is capped by the screen width as the calendar days are, so "16 hours"
+  stays on one line between the buttons in the narrowest card.
+*/
 .bk-stepper__value {
   min-width: 5.6em;
+  font-size: min(1em, 7.4vw);
   text-align: center;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (width < 20rem) {
+  .bk-stepper__value {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
 .bk-stepper__input {
   width: 4.6em;
+  min-width: 0;
   min-height: 44px;
   padding: 0 0.25rem;
   border: 0;
@@ -543,6 +562,7 @@
 
 .bk-est {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -555,13 +575,30 @@
   font-size: var(--t-subhead);
 }
 
+/*
+  A label and its amount share a row. When even the label's longest word and the amount cannot fit side
+  by side (200% text on a phone), the amount drops under the label, still at the right edge.
+*/
 .bk-est__line,
 .bk-est__total,
 .bk-est__payrow {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
+  gap: 2px 16px;
+}
+
+.bk-est__line > :first-child,
+.bk-est__total > :first-child,
+.bk-est__payrow > :first-child {
+  flex: 1 1 0;
+}
+
+.bk-est__line > :last-child,
+.bk-est__total > :last-child,
+.bk-est__payrow > :last-child {
+  margin-left: auto;
 }
 
 .bk-est__label {
@@ -1051,35 +1088,49 @@ button.bk-progress__item:hover {
 /* Start time and Hours stack when the choices column is narrow, so the time is never clipped. */
 @container (max-width: 22rem) {
   .bk-pair {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
+/*
+  The month and its arrows share a row. When the month name and the arrows cannot fit side by side
+  (200% text on a phone), the arrows move to a row of their own at the right, so the name stays whole.
+*/
 .bk-cal__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0 8px;
   margin-bottom: 4px;
   padding-left: 8px;
 }
 
+/* An h3 in the wizard and an h2 in the date field's popover; the same size in both. */
 .bk-cal__title {
   font-size: var(--t-headline);
   font-weight: 600;
+  line-height: 1.25;
   letter-spacing: -0.01em;
 }
 
 .bk-cal__nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
+  margin-left: auto;
 }
 
+/* Beside the arrows but out of the flow, so the row never reflows while dates load. */
 .bk-cal__loading {
+  position: absolute;
+  top: 50%;
+  right: 100%;
   display: inline-flex;
   padding: 0 8px;
   color: var(--label-2);
+  transform: translateY(-50%);
 }
 
 .bk-iconbtn {
@@ -1812,10 +1863,7 @@ html:not(.js) .bk-skel {
 
 /* ---------- Date checker (home hero) ---------- */
 
-/*
-  One column that never grows past the card. A date field's intrinsic width grows with its padding and
-  text size, and an auto column would widen the whole checker past its edge at 200% text.
-*/
+/* One column that never grows past the card, whatever the text size. */
 .bk-dc {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1836,46 +1884,6 @@ html:not(.js) .bk-skel {
 
 .bk-dc > .field {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.bk-dc__inputwrap {
-  position: relative;
-}
-
-.bk-dc__inputicon {
-  position: absolute;
-  top: 50%;
-  left: 14px;
-  z-index: 1; /* above the field's own background when it is focused */
-  color: var(--label-2);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-/* The padding is sized from the icon (1.25em), so the icon clears the text at any text size. */
-.bk-dc__input {
-  position: relative;
-  padding-left: calc(14px + 1.25em + 0.65rem);
-}
-
-/*
-  The invisible picker button (stretched over the field below) is its own Tab stop. While it has
-  focus the field matches neither :focus nor :focus-visible, only :focus-within, so draw the ring here.
-*/
-.bk-dc__input:focus-within:not(:focus-visible) {
-  background: var(--bg-elevated);
-  border-color: var(--focus-ring);
-  box-shadow: 0 0 0 4px var(--accent-tint-2);
-}
-
-/* One calendar icon: the native picker button covers the field, so a click anywhere opens it. */
-.bk-dc__input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  inset: 0;
-  width: auto;
-  height: auto;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .bk-dc__status {
@@ -2062,18 +2070,136 @@ html:not(.js) .bk-skel {
 
 /*
   200% text on a phone: the trailing arrow steps aside so the label keeps its words together, and the
-  checker's calendar icon steps aside so the field keeps its whole width for the date. The icon is
-  decorative: the label names the field, and a tap anywhere on it opens the picker.
+  date field's calendar icon steps aside so the date keeps the field's width. The icon is decorative:
+  the label names the field, and its chevron still says it opens.
 */
 @media (width < 20rem) {
   .bk-dc__cta .icon,
   .bk-pe__cta .icon,
-  .bk-dc__inputicon {
+  .bk-datefield__icon {
     display: none;
   }
 
-  .bk-dc__input {
-    padding-left: 0.95rem;
+  .bk-datefield {
+    gap: 0.4rem;
+    padding-inline: 0.6rem;
+  }
+
+  .bk-datefield__chevron {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ---------- Date field and its calendar popover (DateField.tsx) ---------- */
+
+/*
+  A button dressed as a text field: a calendar icon, the date (or "Choose a date"), and a chevron. It
+  takes its fill, radius, height, hover, and focus ring from .input. At large text sizes a long date
+  wraps inside the field rather than running past its edge.
+*/
+.bk-datefield {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bk-datefield__icon {
+  color: var(--label-2);
+}
+
+/* Capped by the screen width like the calendar days, so with 200% text on a phone words stay whole. */
+.bk-datefield__value {
+  flex: 1;
+  min-width: 0;
+  font-size: min(1em, 7.4vw);
+  overflow-wrap: anywhere;
+}
+
+/* Empty, the field reads like a placeholder. */
+.bk-datefield__value.is-empty {
+  color: var(--label-2);
+}
+
+.bk-datefield__chevron {
+  width: 1rem;
+  height: 1rem;
+  color: var(--label-2);
+  transition: transform var(--dur-2) var(--ease-spring);
+}
+
+/* While its calendar is open the field keeps its focus ring, so the two read as one control. */
+.bk-datefield[aria-expanded='true'] {
+  background: var(--bg-elevated);
+  border-color: var(--focus-ring);
+  box-shadow:
+    0 0 0 1px var(--focus-ring),
+    0 0 0 5px var(--accent-tint-2);
+}
+
+.bk-datefield[aria-expanded='true'] .bk-datefield__chevron {
+  transform: rotate(180deg);
+}
+
+/*
+  The popover: a raised card in the top layer, where DateField.tsx sets its width and its place on the
+  page. The browser's modal dialog styles (centered, stretched, capped, bordered) are reset here. It has
+  no padding of its own, so the only click that reaches the dialog itself is a tap on the backdrop.
+  Radii are concentric: 18px outside, 8px inset.
+*/
+.bk-datepop {
+  position: absolute;
+  inset: auto;
+  width: 336px;
+  max-width: calc(100vw - 16px);
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--label);
+  box-shadow: var(--shadow-3), var(--bk-pop-edge);
+}
+
+.bk-datepop[open] {
+  animation: bk-pop-in var(--dur-2) var(--ease-spring);
+}
+
+/* Clear, as a popover leaves the page in view. A tap on it closes the calendar. */
+.bk-datepop::backdrop {
+  background: transparent;
+}
+
+.bk-datepop__body {
+  padding: 8px 8px 12px;
+}
+
+.bk-datepop__msg {
+  padding: 10px 8px 0;
+  color: var(--bk-orange-text);
+  font-size: var(--t-footnote);
+  font-weight: 600;
+}
+
+.bk-datepop__msg:empty {
+  padding: 0;
+}
+
+.bk-cal__close {
+  margin-left: 4px;
+  color: var(--label-2);
+}
+
+@keyframes bk-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
   }
 }
 
@@ -2141,22 +2267,16 @@ html:not(.js) .bk-skel {
   line-height: 1.05;
 }
 
+/* The label sits over the field, so the field keeps one width whether it is empty or holds a date. */
 .bk-pe__date {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-top: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .bk-pe .field {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.bk-pe__dateinput {
-  flex: 1;
-  width: auto;
-  min-width: min(11rem, 100%);
 }
 
 @media (min-width: 900px) {
@@ -2209,7 +2329,7 @@ html:not(.js) .bk-skel {
   /* Text fields show focus with a box-shadow ring, which forced colors drop. */
   .bk .input:focus-visible,
   .bk-app .input:focus-visible,
-  .bk-dc__input:focus-within {
+  .bk-datefield[aria-expanded='true'] {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
@@ -2286,9 +2406,17 @@ html:not(.js) .bk-skel {
   }
 }
 
-@media (width < 30rem) {
-  .bk-pe__dateinput {
-    padding-inline: 0.5rem;
+/*
+  A select cannot wrap its text, so the chosen option is capped by the screen width like the other values,
+  and with 200% text on a phone the field gives up some of its padding.
+*/
+.input.bk-select {
+  font-size: min(var(--t-body), 7.4vw);
+}
+
+@media (width < 20rem) {
+  .input.bk-select {
+    padding-inline: 0.6rem;
   }
 }
 

@@ -4,9 +4,10 @@
  */
 import { href } from '../../lib/paths';
 import { CAPACITY } from '../../shared/capacity';
-import { addDays, dayOfWeek, formatLong, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
+import { addDays, dayOfWeek, formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
 import { formatUSD, pricing, type DayType } from '../../shared/pricing';
 import { SPACE_NAMES, type DateKey, type SpaceChoice } from '../../shared/types';
+import type { CalStatus } from './Calendar';
 
 export const ELLIPSIS = String.fromCharCode(8230);
 export const MIDDOT = String.fromCharCode(183);
@@ -24,6 +25,22 @@ export function formatLongKept(key: DateKey): string {
 }
 
 /**
+ * A chosen date as a date field shows it: "Saturday, October 17". The year is added only when it is not
+ * this year's ("Saturday, January 9, 2027"), as the system date pickers do.
+ */
+export function formatPicked(key: DateKey, today?: DateKey | ''): string {
+  const { y, m, d } = parseKey(key);
+  const sameYear = !today || today.slice(0, 4) === key.slice(0, 4);
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' as const }),
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/**
  * The latest date the server accepts: the same calendar day two years from today.
  * Mirrors latestBookableDate() in server/routes/public.ts; use the shared one once it moves.
  */
@@ -33,6 +50,13 @@ export function latestBookableDate(today: DateKey): DateKey {
 }
 
 export const TOO_LATE_MESSAGE = 'Choose a date within the next two years.';
+
+/** What a calendar says when someone picks a day that cannot be requested. */
+export function unavailableMessage(date: DateKey, status: CalStatus): string {
+  if (status === 'past') return 'That date has passed. Choose another date.';
+  if (status === 'later') return TOO_LATE_MESSAGE;
+  return `${formatShort(date)} is booked. Choose another date.`;
+}
 
 export const SPACES: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 export const SINGLE_SPACES: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];

@@ -16,7 +16,7 @@ import { formatShort, parseKey, todayKey } from '../../shared/dates';
 import { estimate, formatUSD } from '../../shared/pricing';
 import type { ApiError, DateKey, InquiryCreated, SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
-import { ELLIPSIS, TOO_LATE_MESSAGE, focusField, guestsLabel, session, spaceLabel } from './lib';
+import { ELLIPSIS, focusField, guestsLabel, session, spaceLabel, unavailableMessage } from './lib';
 import { Spinner } from './ui';
 import { StepContact } from './StepContact';
 import { StepDate } from './StepDate';
@@ -239,12 +239,7 @@ export default function BookingApp() {
   }, []);
 
   const onUnavailable = (date: DateKey, status: CalStatus) => {
-    const msg =
-      status === 'past'
-        ? 'That date has passed. Choose another date.'
-        : status === 'later'
-          ? TOO_LATE_MESSAGE
-          : `${formatShort(date)} is booked. Choose another date.`;
+    const msg = unavailableMessage(date, status);
     setCalMsg(msg);
     say(msg);
   };

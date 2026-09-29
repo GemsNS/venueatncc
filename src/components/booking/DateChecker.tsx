@@ -1,14 +1,15 @@
 /**
  * "Check a date" for the home page hero (client:load).
- * A native date picker, the status of each space on that date, the next open Saturdays as quick
- * picks, and a primary button into the booking wizard with ?date=&space=.
+ * A date field that opens the booking calendar, the status of each space on that date, the next
+ * open Saturdays as quick picks, and a primary button into the booking wizard with ?date=&space=.
  */
 import './booking.css';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
 import type { DateKey } from '../../shared/types';
-import { SINGLE_SPACES, TOO_LATE_MESSAGE, bookUrl, latestBookableDate, parseDate, spaceLabel } from './lib';
+import { DateField } from './DateField';
+import { ELLIPSIS, SINGLE_SPACES, bookUrl, latestBookableDate, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
@@ -16,10 +17,8 @@ type Single = 'indoor' | 'outdoor';
 
 const WINDOW_DAYS = 120;
 
-/** Typing a date fires an input event per keystroke; speak the result once it settles. */
+/** Speak the result once it settles (a pick and its availability can land in separate renders). */
 const SPEAK_AFTER_MS = 500;
-
-const TOO_EARLY_MESSAGE = 'Choose a date from today on.';
 
 /**
  * One word under each space name. Capacities are not repeated here: the home page space cards, one
@@ -33,10 +32,8 @@ const SPACE_META: Record<Single, string> = {
 export default function DateChecker(props: { bookHref?: string }) {
   const [today, setToday] = useState<DateKey>('');
   const [date, setDate] = useState<DateKey | ''>('');
-  const [raw, setRaw] = useState('');
-  const [touched, setTouched] = useState(false);
   const [space, setSpace] = useState<Single | ''>('');
-  const { days, loading, error, load, retry } = useAvailability();
+  const { days, loading, error, load, ensureMonths, retry } = useAvailability();
   const [windowReady, setWindowReady] = useState(false);
   const [spoken, setSpoken] = useState('');
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -66,17 +63,6 @@ export default function DateChecker(props: { bookHref?: string }) {
 
   // The person's pick when it is free on this date; otherwise the first free space once the date is known.
   const chosen: Single | '' = space && isFree(space) ? space : day ? (SINGLE_SPACES.find((s) => isFree(s)) ?? '') : '';
-
-  const typed = parseDate(raw);
-  // While the year is still being typed it passes through years like 0002; wait for a four-digit year or a blur.
-  const tooEarly = Boolean(typed && today && typed < today && (touched || Number(typed.slice(0, 4)) >= 1000));
-  const tooLate = Boolean(typed && latest && typed > latest);
-
-  const onDate = (value: string) => {
-    setRaw(value);
-    const k = parseDate(value);
-    setDate(k && (!today || (k >= today && k <= latestBookableDate(today))) ? k : '');
-  };
 
   const saturdays: DateKey[] = [];
   if (today) {
@@ -122,14 +108,9 @@ export default function DateChecker(props: { bookHref?: string }) {
     } else dayNews = 'Both spaces are booked. Try one of the open Saturdays below.';
   }
 
-  const errorText = tooEarly ? TOO_EARLY_MESSAGE : tooLate ? TOO_LATE_MESSAGE : '';
-  const speech = errorText
-    ? errorText
-    : statusError
-      ? 'We could not check that date right now.'
-      : date && day
-        ? `${formatLong(date)}. ${dayNews}`
-        : '';
+  // The field shows the date, so the line under it says only what the day means. The announcement
+  // names the date too, for a pick made with the Saturday chips.
+  const speech = statusError ? 'We could not check that date right now.' : date && day ? `${formatLong(date)}. ${dayNews}` : '';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSpoken(speech), SPEAK_AFTER_MS);
@@ -139,45 +120,36 @@ export default function DateChecker(props: { bookHref?: string }) {
   return (
     <div class="bk bk-dc">
       <div class="field">
-        <label class="bk-dc__label" for="bk-dc-date">
+        <span class="bk-dc__label" id="bk-dc-label">
           Check a date
-        </label>
-        <div class="bk-dc__inputwrap">
-          <Icon name="calendar" class="bk-dc__inputicon" />
-          <input
-            id="bk-dc-date"
-            class="input bk-dc__input"
-            type="date"
-            min={today || undefined}
-            max={latest || undefined}
-            value={raw}
-            aria-describedby="bk-dc-status"
-            aria-invalid={errorText ? 'true' : undefined}
-            onInput={(e) => onDate(e.currentTarget.value)}
-            onChange={(e) => onDate(e.currentTarget.value)}
-            onBlur={() => setTouched(true)}
-          />
-        </div>
+        </span>
+        <DateField
+          id="bk-dc-date"
+          labelId="bk-dc-label"
+          value={date}
+          onChange={setDate}
+          today={today}
+          latest={latest}
+          statusOf={(k) => days[k]?.status}
+          loading={loading}
+          error={error}
+          onRetry={retry}
+          onMonth={(view) => ensureMonths(view, 1)}
+          describedBy="bk-dc-status"
+        />
       </div>
 
       <div id="bk-dc-status" class="bk-dc__status">
-        {errorText ? (
-          <p class="field__error">{errorText}</p>
-        ) : !date ? (
-          <p class="bk-dc__hint">Pick a date to see which spaces are open.</p>
+        {!date ? (
+          <p class="bk-dc__hint">See which spaces are open on your day.</p>
         ) : statusPending ? (
           <p class="bk-dc__hint">
-            <Spinner /> Checking {formatShort(date)}
-            {String.fromCharCode(8230)}
+            <Spinner /> Checking availability{ELLIPSIS}
           </p>
         ) : statusError ? (
           <p class="bk-dc__hint">We could not check that date right now.</p>
         ) : day ? (
-          <p class="bk-dc__hint">
-            <span>
-              <strong>{formatLong(date)}</strong>. {dayNews}
-            </span>
-          </p>
+          <p class="bk-dc__hint">{dayNews}</p>
         ) : null}
       </div>
       <p class="visually-hidden" aria-live="polite">
@@ -241,10 +213,7 @@ export default function DateChecker(props: { bookHref?: string }) {
                 type="button"
                 class="bk-chip"
                 aria-pressed={date === k ? 'true' : 'false'}
-                onClick={() => {
-                  setRaw(k);
-                  setDate(k);
-                }}
+                onClick={() => setDate(k)}
               >
                 {formatShort(k)}
               </button>

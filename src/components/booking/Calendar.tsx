@@ -60,6 +60,12 @@ export interface CalendarProps {
   describedBy?: string;
   /** Called when someone picks a day that cannot be booked. */
   onUnavailable?: (date: DateKey, status: CalStatus) => void;
+  /** In a popover: adds a Close button after the month arrows. The wizard's inline calendar has none. */
+  onClose?: () => void;
+  /** Move focus between days without scrolling the page (a popover is placed in view when it opens). */
+  keepScroll?: boolean;
+  /** The month title's heading level: 3 in the wizard's step, 2 as the first heading of a popover. */
+  headingLevel?: 2 | 3;
 }
 
 export function Calendar(props: CalendarProps) {
@@ -92,7 +98,7 @@ export function Calendar(props: CalendarProps) {
   useLayoutEffect(() => {
     if (!wantFocus.current) return;
     wantFocus.current = false;
-    gridRef.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus();
+    gridRef.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus(props.keepScroll ? { preventScroll: true } : undefined);
   });
 
   const atMin = ymIndex(view) <= ymIndex(min);
@@ -148,14 +154,15 @@ export function Calendar(props: CalendarProps) {
   };
 
   const titleId = `${props.id}-title`;
+  const Title = props.headingLevel === 2 ? 'h2' : 'h3';
   const weeks = monthGrid(view.y, view.m);
 
   return (
     <div class="bk-cal">
       <div class="bk-cal__head">
-        <h3 id={titleId} class="bk-cal__title" aria-live="polite">
+        <Title id={titleId} class="bk-cal__title" aria-live="polite">
           {monthTitle(view)}
-        </h3>
+        </Title>
         <div class="bk-cal__nav">
           {props.loading && (
             <span class="bk-cal__loading">
@@ -185,6 +192,11 @@ export function Calendar(props: CalendarProps) {
           >
             <Icon name="chevron-right" />
           </button>
+          {props.onClose && (
+            <button type="button" class="bk-iconbtn bk-cal__close" aria-label="Close" onClick={props.onClose}>
+              <Icon name="x" />
+            </button>
+          )}
         </div>
       </div>
 
