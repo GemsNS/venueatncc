@@ -2,24 +2,28 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
-import FaqList from '../components/FaqList.astro';
 import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import PriceEstimator from '../components/booking/PriceEstimator';
 import { site } from '../data/site';
-import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
 import { photoByName } from '../data/photos';
 import { pricing, formatUSD, type DayType } from '../shared/pricing';
-import { SPACE_NAME, capacityLabel } from '../shared/capacity';
+import { SPACE_NAME } from '../shared/capacity';
 import { todayKey } from '../shared/dates';
 import type { SpaceChoice } from '../shared/types';
 import { breadcrumbs, rateCatalog, venueRates } from '../lib/schema';
 import { href } from '../lib/paths';
 
+/*
+  Each fact on this page has one home (brand.md, Redundancy rules): rates in the hourly table and the
+  packages, fees and special rates in their lists, inclusions in the Included card (the site's only
+  inclusions block), and the deposit and balance in Rental terms. Capacity appears only inside the
+  estimator's space control. Rate questions are answered on /faq/, not repeated here.
+*/
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
-/** The lowest hourly rate for a space, from the rate card. */
+/** The lowest hourly rate for a space, for the meta description only (the page shows the full table). */
 const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
 const title = 'Venue rental rates in Suffolk, VA | The Venue at NCC';
 const description = `Venue rental rates in Suffolk, VA: ${grove?.name} from ${fromRate('outdoor')} an hour and ${hall?.name} from ${fromRate('indoor')}, with on-site parking. Get an instant estimate for your date.`;
@@ -29,7 +33,6 @@ const crumbs = [
 ];
 const spaces: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 const days: DayType[] = ['saturday', 'friday', 'sunday', 'weekday'];
-const pricingFaqs = publishedFaqs.filter((f) => f.topic === 'pricing');
 const offer = pricing.introOffer && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
 const packagesByDay = days
   .map((d) => ({ day: d, items: pricing.packages.filter((p) => p.dayType === d) }))
@@ -40,17 +43,19 @@ const askDiscounts = pricing.discounts.filter((d) => d.appliesTo === 'manual' &&
 const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
 
 /**
- * Capacity next to a space. 'both' never gets a single combined figure (it is not confirmed),
- * so it names each space's own limit instead.
+ * Column and section heads for the hourly rates: the space's name only. 'Both spaces' spells out which
+ * two it means. Capacity is not repeated here (it lives in the estimator's space control).
  */
-const packageSpaceLine = (s: SpaceChoice) => (s === 'both' ? capacityLabel('both') : `${SPACE_NAME[s]}, ${capacityLabel(s).toLowerCase()}`);
-const rateHead = (s: SpaceChoice) =>
-  s === 'both' ? { name: 'Both spaces', detail: SPACE_NAME.both } : { name: SPACE_NAME[s], detail: capacityLabel(s) };
+const rateHead = (s: SpaceChoice): { name: string; detail?: string } =>
+  s === 'both' ? { name: 'Both spaces', detail: SPACE_NAME.both } : { name: SPACE_NAME[s] };
 
 /** Exactly what every rental includes (site.included). */
 const included = site.included;
 
-/** Rental terms: deposit and balance from the pricing module, and the one neutral catering line (brand.md). */
+/**
+ * Rental terms: the site's one full explanation of the deposit and the balance, from the pricing module,
+ * and the one neutral catering line (brand.md). "This is an estimate" is said by the estimator itself.
+ */
 const rentalTerms = [
   pricing.bookingDeposit.type === 'percent'
     ? `A booking deposit of ${pricing.bookingDeposit.value}% of your total reserves your date once we confirm availability.`
@@ -59,7 +64,6 @@ const rentalTerms = [
     ? `The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
     : null,
   'Catering and décor are arranged separately by the client.',
-  'Estimates are confirmed with your final quote.',
 ].filter((t): t is string => t !== null);
 
 const fees = [
@@ -80,10 +84,7 @@ const photo = photoByName('hall-fireplace');
       <div class="page-hero__grid">
         <div class="page-hero__copy">
           <h1 class="t-large-title">Transparent rates for every event</h1>
-          <p class="t-lead">
-            Book {grove?.name} from {fromRate('outdoor')} an hour or {hall?.name} from {fromRate('indoor')}, or reserve a package for
-            a set block of time. On-site parking is included, and every fee is listed on this page.
-          </p>
+          <p class="t-lead">Every rate, package, and fee in one place, with an instant estimate for your date.</p>
           {
             offer && (
               <p class="offer">
@@ -105,10 +106,7 @@ const photo = photoByName('hall-fireplace');
     <div class="container">
       <div class="section-head">
         <h2 id="estimate-heading">Estimate your event</h2>
-        <p class="t-lead">
-          Choose a space, a day, and how long you need it. We apply the best package and any automatic discount. Other special
-          rates are confirmed with your quote.
-        </p>
+        <p class="t-lead">Choose a space, a day, and how long you need it.</p>
       </div>
       <div class="estimator">
         <PriceEstimator client:visible bookHref={href(bookHref)} ssrToday={todayKey()} />
@@ -133,13 +131,13 @@ const photo = photoByName('hall-fireplace');
                 <ul class="pkg-grid">
                   {g.items.map((p) => (
                     <li class="pkg">
-                      <p class="pkg__space secondary t-footnote">{packageSpaceLine(p.space)}</p>
                       <h4 class="t-headline">{p.name}</h4>
+                      <p class="pkg__space">{SPACE_NAME[p.space]}</p>
                       <p class="pkg__price">
                         <span class="price num">{formatUSD(p.price)}</span>
                         <span class="pkg__hours t-subhead secondary">for {p.hours} hours</span>
                       </p>
-                      <p class="t-subhead secondary">{p.description}</p>
+                      {p.description && <p class="t-subhead secondary">{p.description}</p>}
                     </li>
                   ))}
                 </ul>
@@ -155,7 +153,7 @@ const photo = photoByName('hall-fireplace');
     <div class="container">
       <div class="section-head">
         <h2 id="rates-heading">Hourly rates</h2>
-        <p class="t-lead">Charged by the hour. Your rate depends on the space and the day, and each day has a minimum number of hours.</p>
+        <p class="t-lead">Your rate depends on the space and the day, and each day has a minimum number of hours.</p>
       </div>
 
       <div class="card rates rates--table">
@@ -168,7 +166,7 @@ const photo = photoByName('hall-fireplace');
                 spaces.map((s) => (
                   <th scope="col">
                     <span class="rates__space">{rateHead(s).name}</span>
-                    <span class="rates__cap">{rateHead(s).detail}</span>
+                    {rateHead(s).detail && <span class="rates__cap">{rateHead(s).detail}</span>}
                   </th>
                 ))
               }
@@ -201,7 +199,7 @@ const photo = photoByName('hall-fireplace');
             <section class="rates-space" aria-labelledby={`rates-${s}`}>
               <h3 id={`rates-${s}`} class="rates-space__head">
                 <span class="t-headline">{rateHead(s).name}</span>
-                <span class="secondary t-subhead">{rateHead(s).detail}</span>
+                {rateHead(s).detail && <span class="secondary t-subhead">{rateHead(s).detail}</span>}
               </h3>
               <ul class="list-group">
                 {days.map((d) => (
@@ -284,7 +282,6 @@ const photo = photoByName('hall-fireplace');
     <div class="container">
       <div class="section-head">
         <h2 id="terms-heading">Inclusions and terms</h2>
-        <p class="t-lead">What every booking includes, and how a reservation works.</p>
       </div>
       <div class="terms-grid">
         <section class="terms card" aria-labelledby="included-heading">
@@ -309,22 +306,6 @@ const photo = photoByName('hall-fireplace');
       </div>
     </div>
   </section>
-
-  {
-    pricingFaqs.length > 0 && (
-      <section class="section" aria-labelledby="pfaq-heading">
-        <div class="container pfaq">
-          <div class="section-head">
-            <h2 id="pfaq-heading">Pricing questions</h2>
-            <p class="t-lead">
-              Anything else? <a href={`tel:${site.contact.phoneE164}`}>Call {site.contact.phone}</a>.
-            </p>
-          </div>
-          <FaqList items={pricingFaqs} />
-        </div>
-      </section>
-    )
-  }
 
   <CtaBand />
 </BaseLayout>
@@ -440,7 +421,10 @@ const photo = photoByName('hall-fireplace');
     }
   }
 
-  /* Space, name, price, and description share row tracks, so prices line up across a row. */
+  /*
+    Name, space, price, and description share row tracks, so prices line up across a row. A package
+    without a description leaves its last track empty.
+  */
   .pkg {
     display: grid;
     grid-row: span 4;
@@ -450,6 +434,24 @@ const photo = photoByName('hall-fireplace');
     padding: 1.5rem;
     border-radius: var(--r-lg);
     background: var(--bg-grouped);
+  }
+
+  /* The space as a Mist chip under the name (brand.md: Mist for chips, never an eyebrow above a heading). */
+  .pkg__space {
+    justify-self: start;
+    padding: 0.2rem 0.7rem;
+    border-radius: var(--r-full);
+    background: var(--mist);
+    color: var(--label);
+    font-size: var(--t-footnote);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  @media (forced-colors: active) {
+    .pkg__space {
+      border: 1px solid CanvasText;
+    }
   }
 
   .pkg__price {
@@ -480,6 +482,11 @@ const photo = photoByName('hall-fireplace');
     text-align: left;
     vertical-align: middle;
     border-bottom: 1px solid var(--separator);
+  }
+
+  /* Space names line up across the head row; only 'Both spaces' carries a second line. */
+  .rates__table thead th {
+    vertical-align: top;
   }
 
   .rates__table tbody tr:last-child th,
@@ -668,22 +675,5 @@ const photo = photoByName('hall-fireplace');
 
   .pkg > p {
     margin: 0;
-  }
-
-  .pfaq {
-    display: grid;
-    gap: 2rem clamp(2rem, 6vw, 5rem);
-  }
-
-  @media (min-width: 900px) {
-    .pfaq {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      align-items: start;
-    }
-  }
-
-  /* On the white page the list needs a hairline edge to read as a group. */
-  .pfaq :global(.faqs) {
-    border: 1px solid var(--separator);
   }
 </style>

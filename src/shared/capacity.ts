@@ -18,7 +18,11 @@ export const CAPACITY: Record<SpaceChoice, number> = { indoor: 100, outdoor: 150
 export const SPACE_NAME: Record<SpaceChoice, string> = { indoor: 'The Hall', outdoor: 'The Grove', both: 'The Hall and The Grove' };
 const NAME = SPACE_NAME;
 
-/** Plain-language capacity for a space choice, safe to show anywhere. */
+/**
+ * Plain-language capacity for a space choice. The wording is always accurate (no combined figure for
+ * 'both'), but each page states capacity once (brand.md, Redundancy rules): on /pricing/ and /book/
+ * it belongs to the estimator and wizard controls, not to headings or package lines.
+ */
 export function capacityLabel(space: SpaceChoice): string {
   if (space === 'indoor') return `Up to ${CAPACITY.indoor} guests`;
   if (space === 'outdoor') return `Up to ${CAPACITY.outdoor} guests`;

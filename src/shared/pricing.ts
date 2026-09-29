@@ -16,7 +16,11 @@ export type DayType = 'weekday' | 'friday' | 'saturday' | 'sunday';
 export interface PricingPackage {
   id: string;
   name: string;
-  description: string;
+  /**
+   * What the package suits, when there is something to say. The pricing page already shows the day,
+   * the space, and the hours beside it, so the description never repeats them. Omit it otherwise.
+   */
+  description?: string;
   space: SpaceChoice;
   dayType: DayType | 'any';
   hours: number;
@@ -94,20 +98,20 @@ export const pricing: PricingModel = {
   },
   minimumHours: { weekday: 2, friday: 4, saturday: 5, sunday: 3 },
   packages: [
-    { id: 'sat-indoor-6', name: 'Saturday Hall Block', description: 'The Hall for 6 hours. Suited to receptions, showers, and banquets.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
-    { id: 'sat-outdoor-6', name: 'Saturday Grove Block', description: 'The Grove for 6 hours. Suited to ceremonies, reunions, and graduation parties.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
-    { id: 'sat-both-6', name: 'Saturday Hall and Grove Block', description: 'Both spaces for 6 hours, with The Hall available as a rain plan for up to 100 guests.', space: 'both', dayType: 'saturday', hours: 6, price: 1250 },
-    { id: 'sat-indoor-12', name: 'Saturday Full Day, Hall', description: 'The Hall for up to 12 hours, for a long program or a full day of events.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
-    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Grove', description: 'The Grove for up to 12 hours, for an all-day reunion or community day.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
-    { id: 'sat-both-12', name: 'Saturday Wedding and Celebration Day', description: 'Both spaces for up to 12 hours, with a ceremony in The Grove and a reception in either space.', space: 'both', dayType: 'saturday', hours: 12, price: 2200 },
-    { id: 'fri-indoor-6', name: 'Friday Hall Block', description: 'The Hall for 6 hours on a Friday.', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
-    { id: 'fri-outdoor-6', name: 'Friday Grove Block', description: 'The Grove for 6 hours on a Friday.', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
-    { id: 'fri-both-6', name: 'Friday Hall and Grove Block', description: 'Both spaces for 6 hours on a Friday.', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
-    { id: 'fri-both-12', name: 'Friday Full Day, Hall and Grove', description: 'Both spaces for up to 12 hours. Suited to Friday weddings and receptions.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
-    { id: 'sun-indoor-6', name: 'Sunday Hall Block', description: 'The Hall for 6 hours on a Sunday.', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
-    { id: 'sun-outdoor-6', name: 'Sunday Grove Block', description: 'The Grove for 6 hours on a Sunday.', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
-    { id: 'sun-both-6', name: 'Sunday Hall and Grove Block', description: 'Both spaces for 6 hours on a Sunday.', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
-    { id: 'weekday-indoor-8', name: 'Weekday Full Day, Hall', description: 'The Hall for up to 8 hours, Monday to Thursday. Suited to trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
+    { id: 'sat-indoor-6', name: 'Saturday Hall Block', description: 'Suited to receptions, showers, and banquets.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
+    { id: 'sat-outdoor-6', name: 'Saturday Grove Block', description: 'Suited to ceremonies, reunions, and graduation parties.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
+    { id: 'sat-both-6', name: 'Saturday Hall and Grove Block', description: 'The Hall is available as a rain plan.', space: 'both', dayType: 'saturday', hours: 6, price: 1250 },
+    { id: 'sat-indoor-12', name: 'Saturday Full Day, Hall', description: 'For a long program or a full day of events.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
+    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Grove', description: 'For an all-day reunion or community day.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
+    { id: 'sat-both-12', name: 'Saturday Wedding and Celebration Day', description: 'A ceremony in The Grove and a reception in either space.', space: 'both', dayType: 'saturday', hours: 12, price: 2200 },
+    { id: 'fri-indoor-6', name: 'Friday Hall Block', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
+    { id: 'fri-outdoor-6', name: 'Friday Grove Block', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
+    { id: 'fri-both-6', name: 'Friday Hall and Grove Block', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
+    { id: 'fri-both-12', name: 'Friday Full Day, Hall and Grove', description: 'Suited to weddings and receptions.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
+    { id: 'sun-indoor-6', name: 'Sunday Hall Block', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
+    { id: 'sun-outdoor-6', name: 'Sunday Grove Block', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
+    { id: 'sun-both-6', name: 'Sunday Hall and Grove Block', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
+    { id: 'weekday-indoor-8', name: 'Weekday Full Day, Hall', description: 'Suited to trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
   ],
   fees: { cleaning: 100, damageDepositRefundable: 250 },
   bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: 30 },
@@ -208,10 +212,11 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
       ? money((total * model.bookingDeposit.value) / 100)
       : Math.min(total, model.bookingDeposit.value);
 
+  // Notes are about this estimate only. What every rental includes (parking) is stated once per page by
+  // the page itself: the Included card on /pricing/ and "Good to know" in the booking wizard.
   const notes: string[] = [];
   if (billableHours > hours) notes.push(`${model.dayTypes[dayType].label} bookings have a ${minHours}-hour minimum.`);
   if (applicable.length > 1) notes.push('Discounts do not combine, so your estimate uses the best one.');
-  notes.push('On-site parking is included.');
   if (model.bookingDeposit.balanceDueDaysBefore > 0) {
     notes.push(
       payInFull
