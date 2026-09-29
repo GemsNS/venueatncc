@@ -1,0 +1,17 @@
+# Design archive
+
+Files kept for reference. Nothing in this folder is built into or published with the website.
+
+## generated-scenes
+
+Every AI-staged ("styled concept") scene generated from the real photos of The Venue at NCC, in every color
+variation, including drafts that were not used. Keep all of them; remove an image from the site by taking it out
+of `src/assets/venue/`, never by deleting it here.
+
+- `round-1-lavender/`: the first set, styled in white and lavender for the version 1 purple brand.
+  `raw/` holds the images as generated; `web/` holds the upscaled versions that were used on the site.
+- `round-2-warm-neutral/`: the eight event scenes styled in ivory, eucalyptus, natural wood, and peach.
+  These are the images the site uses (copies live in `src/assets/venue/styled-event-*.jpg`).
+- `base-crops/`: the two tighter framings of The Hall that some round 2 scenes were generated from.
+
+The same set is also kept next to the original photos in `C:\NoOnedrive\venue\Generated scenes`.
