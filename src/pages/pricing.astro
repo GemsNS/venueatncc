@@ -2,13 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
-import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import PriceEstimator from '../components/booking/PriceEstimator';
 import { DAY_SHORT, DAY_TYPES } from '../components/booking/lib';
 import { site } from '../data/site';
 import { bookHref } from '../data/nav';
-import { photoByName } from '../data/photos';
 import { pricing, formatUSD, type DayType } from '../shared/pricing';
 import { SPACE_NAME } from '../shared/capacity';
 import { todayKey } from '../shared/dates';
@@ -100,7 +98,6 @@ if (pricing.fees.damageDepositRefundable > 0) {
   });
 }
 
-const photo = photoByName('hall-fireplace');
 ---
 <BaseLayout title={title} description={description} og="pricing" schema={[breadcrumbs(crumbs), rateCatalog(), venueRates()]}>
   <section class="page-hero">
@@ -122,7 +119,6 @@ const photo = photoByName('hall-fireplace');
             )
           }
         </div>
-        {photo && <Photo photo={photo} class="page-hero__photo" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>
     </div>
   </section>
@@ -302,20 +298,6 @@ const photo = photoByName('hall-fireplace');
     max-width: 40rem;
   }
 
-  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the estimate. */
-  .page-hero__grid > :global(.page-hero__photo) {
-    display: none;
-  }
-
-  @media (min-width: 64rem) {
-    .page-hero__grid {
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    }
-
-    .page-hero__grid > :global(.page-hero__photo) {
-      display: block;
-    }
-  }
 
   .offer {
     display: flex;

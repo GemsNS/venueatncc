@@ -16,7 +16,6 @@ import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
 import EventIndex from '../components/EventIndex.astro';
 import LocationBand from '../components/LocationBand.astro';
-import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
 import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
@@ -79,7 +78,7 @@ const spaceCards: SpaceCard[] = [
 const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
 
 /* Rates teaser: the lowest hourly rate for each space, straight from the rate card. */
-const spaceNames = { indoor: hallName, outdoor: groveName, both: `${hallName} and ${groveName}` } as const;
+const spaceNames = { indoor: hallName, outdoor: groveName, both: 'Both spaces' } as const;
 const rates = (['indoor', 'outdoor', 'both'] as const).map((id) => {
   const [day, rate] = (Object.entries(pricing.hourly[id]) as [DayType, number][]).reduce((low, cur) => (cur[1] < low[1] ? cur : low));
   return { id, name: spaceNames[id], rate, days: pricing.dayTypes[day].label };
@@ -122,7 +121,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   <section class="section" aria-labelledby="spaces-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="spaces-heading">Two spaces, one address</h2>
+        <h2 id="spaces-heading">The Hall and The Grove</h2>
       </div>
       <div class="spaces">
         {
@@ -199,7 +198,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
 
   <LocationBand />
 
-  <CtaBand />
 </BaseLayout>
 
 <style>
@@ -720,7 +718,11 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     }
   }
 
+  /* A fixed-width, left-aligned number cell, so the three prices line up on the dollar sign. */
   .rates__num {
+    min-width: 3.4em;
+    text-align: left;
+    font-variant-numeric: lining-nums tabular-nums;
     font-family: var(--font-serif);
     font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.875rem);
     line-height: 1;

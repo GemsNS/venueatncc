@@ -610,8 +610,9 @@
   white-space: nowrap;
 }
 
+/* The minus sign already says it is a discount, so the amount stays in the text color. */
 .bk-est__line[data-kind='discount'] .bk-est__amt {
-  color: var(--bk-green-text);
+  color: var(--label);
 }
 
 .bk-est__total {
@@ -1217,8 +1218,9 @@ button.bk-progress__item:hover {
   transform: translateX(-50%);
 }
 
+/* Open is the default, so open days carry no mark; only partly booked and booked days do. */
 .bk-day[data-status='open'] .bk-day__mark {
-  background: var(--green);
+  background: transparent;
 }
 
 .bk-day[data-status='partial'] .bk-day__mark {
@@ -1275,7 +1277,7 @@ button.bk-progress__item:hover {
 }
 
 .bk-day.is-selected[data-status='open'] .bk-day__mark {
-  background: var(--on-accent);
+  background: transparent;
 }
 
 .bk-day.is-selected[data-status='partial'] .bk-day__mark {

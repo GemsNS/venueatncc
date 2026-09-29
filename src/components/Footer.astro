@@ -34,6 +34,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
             <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
             <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
           </address>
+          {!onFaq && <a class="footer__faq" href={href('/faq/')}>Frequently asked questions</a>}
           {
             site.social.length > 0 && (
               <ul class="footer__social">
@@ -43,16 +44,6 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
           }
         </section>
 
-        {
-          !onFaq && (
-            <nav class="footer__col footer__questions" aria-labelledby="f-questions">
-              <h2 id="f-questions" class="footer__head">Questions</h2>
-              <ul>
-                <li><a href={href('/faq/')}>Frequently asked questions</a></li>
-              </ul>
-            </nav>
-          )
-        }
       </div>
     </div>
 
@@ -124,10 +115,23 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
   }
 
-  /* From 46.5rem the header carries FAQ. */
+  /* The FAQ link sits under the contact details. From 46.5rem the header carries FAQ, so the footer drops it. */
+  .footer__faq {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding-block: 5px;
+  }
+
   @media (min-width: 46.5rem) {
-    .footer__questions {
+    .footer__faq {
       display: none;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .footer__faq {
+      min-height: 44px;
+      padding-block: calc((44px - 1.5em) / 2);
     }
   }
 

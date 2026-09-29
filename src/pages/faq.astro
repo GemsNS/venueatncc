@@ -2,11 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import FaqList from '../components/FaqList.astro';
-import Photo from '../components/Photo.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
 import { publishedFaqs, type Faq } from '../data/faq';
-import { photoByName } from '../data/photos';
 import { breadcrumbs, faqPage } from '../lib/schema';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
@@ -27,7 +25,6 @@ const groups = (
 )
   .map((g) => ({ ...g, id: `faq-${g.topic}`, items: publishedFaqs.filter((f) => f.topic === g.topic) }))
   .filter((g) => g.items.length > 0);
-const photo = photoByName('grove-path');
 ---
 <BaseLayout title={title} description={description} og="faq" schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}>
   <section class="page-hero">
@@ -38,7 +35,6 @@ const photo = photoByName('grove-path');
           <h1 class="t-large-title">Frequently asked questions</h1>
           <p class="t-lead">Answers to the questions we hear most about the spaces, rates, and booking.</p>
         </div>
-        {photo && <Photo photo={photo} class="page-hero__photo" ratio="8 / 5" sizes="(min-width: 75rem) 560px, 46vw" />}
       </div>
     </div>
   </section>
@@ -95,20 +91,6 @@ const photo = photoByName('grove-path');
     max-width: 40rem;
   }
 
-  /* The photo sits beside the copy on wide screens; phones and tablets go straight to the questions. */
-  .page-hero__grid > :global(.page-hero__photo) {
-    display: none;
-  }
-
-  @media (min-width: 64rem) {
-    .page-hero__grid {
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    }
-
-    .page-hero__grid > :global(.page-hero__photo) {
-      display: block;
-    }
-  }
 
   .faq-layout {
     display: grid;

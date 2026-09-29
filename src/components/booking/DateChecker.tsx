@@ -187,9 +187,11 @@ export default function DateChecker(props: { bookHref?: string }) {
               </span>
               <span class="bk-dc__space-cap">{SPACE_META[s]}</span>
               {/* Before a date is chosen the hint above says what to do, so the cards stay quiet. */}
-              <span class="bk-dc__space-status">
-                {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">{statusPending ? 'Checking' : ''}</span>}
-              </span>
+              {(day || statusPending) && (
+                <span class="bk-dc__space-status">
+                  {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">Checking</span>}
+                </span>
+              )}
             </button>
           );
         })}

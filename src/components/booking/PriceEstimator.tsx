@@ -68,6 +68,25 @@ export default function PriceEstimator(props: { bookHref?: string; ssrToday?: Da
   );
   const minHours = pricing.minimumHours[dayType];
 
+  // The pricing page's rate card has its own day picker (radios named rates-day). Keep the two in step:
+  // the rate card follows the estimate's day, and choosing a day on the rate card updates the estimate.
+  useEffect(() => {
+    const radio = document.querySelector<HTMLInputElement>(`input[name="rates-day"][value="${dayType}"]`);
+    if (radio && !radio.checked) radio.checked = true;
+  }, [dayType]);
+  useEffect(() => {
+    const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="rates-day"]')];
+    const onPick = (e: Event) => {
+      const v = (e.target as HTMLInputElement).value as DayType;
+      if ((DAY_TYPES as readonly string[]).includes(v)) {
+        setDayType(v);
+        setDate('');
+      }
+    };
+    radios.forEach((r) => r.addEventListener('change', onPick));
+    return () => radios.forEach((r) => r.removeEventListener('change', onPick));
+  }, []);
+
   const onDate = (k: DateKey) => {
     setDate(k);
     setDayType(dayTypeOf(k));

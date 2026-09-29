@@ -267,10 +267,6 @@ export function Calendar(props: CalendarProps) {
 
       <ul class="bk-legend" aria-label="Calendar key">
         <li>
-          <span class="bk-legend__mark" data-status="open" aria-hidden="true" />
-          Open
-        </li>
-        <li>
           <span class="bk-legend__mark" data-status="partial" aria-hidden="true" />
           Partly booked
         </li>
