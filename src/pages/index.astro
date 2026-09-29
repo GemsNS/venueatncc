@@ -25,9 +25,11 @@ import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricin
 import { href } from '../lib/paths';
 
 /*
-  The hero: the gazebo under the tall pines of The Grove (grove-pines), a real photo in two crops. Phones get
-  the portrait file, so the pines read full height with the copy over their canopy; wider screens get the
-  landscape file. Neither crop is the framing of grove-path, whose staged version is the community events tile.
+  The hero: the gazebo under the tall pines of The Grove (grove-pines), a real photo in two crops of the
+  original behind grove-path, whose staged version is the community events tile. Phones get the portrait
+  file, a framing of its own: the pines at full height, with the copy over their canopy. Wider screens get the
+  landscape file, which overlaps much of grove-path's band but sits higher, on the trunks rather than the
+  tables, and always shows under the copy and the checker.
 */
 const hero = photoByName('grove-pines') ?? heroPhoto();
 const hall = site.spaces.find((s) => s.id === 'indoor');
@@ -431,9 +433,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     Wide screens: the photo fills the first screen under the header, between 3:2 and 2.4:1. On a short
     laptop screen the copy and the gazebo need more height than the screen has (above), so the photo runs on
     below the fold and the checker rises by as much, to stay in the first screen. The title keeps to one line
-    beside the checker's column. The checker floats at the bottom right on glass, aligned with the header,
-    and on very wide screens moves out just enough to keep clear of the gazebo, which stands at 28 to 59
-    percent of the width.
+    beside the checker's column. The checker floats at the bottom right on glass, aligned with the header.
   */
   @media (width >= 70rem) and (height >= 36rem) {
     .hero {
@@ -454,18 +454,26 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       padding-block: clamp(1.75rem, 6svh - 0.5rem, 3.5rem) 1rem;
     }
 
+    /* One line in the copy's width (the title is 9.7em long); the first value is for browsers without container units. */
     .hero__title {
+      font-size: min(max(var(--t-display), 1.7rem), calc((min(100vw - 2 * var(--gutter), var(--max)) - var(--checker-w) - 2rem) / 10));
       font-size: min(max(var(--t-display), 1.7rem), 10cqi);
     }
 
+    /*
+      The gazebo stands at 28 to 59 percent of the width. Where the header's column would bring the checker
+      within 2.5rem of it (very wide screens, larger text), the checker moves out into the margin just enough,
+      never past the gutter. Otherwise the margin is 0 and the checker lines up with the header exactly.
+    */
     .hero__checker {
-      grid-column: content-start / full-end;
+      --edge: max(var(--gutter), calc(50vw - var(--max) / 2));
+      grid-column: content;
       grid-row: photo;
       align-self: end;
       justify-self: end;
       z-index: 1;
       width: var(--checker-w);
-      margin-right: max(var(--gutter), min(calc(50vw - var(--max) / 2), calc(41vw - 26.5rem)));
+      margin-right: clamp(calc(var(--gutter) - var(--edge)), calc(40.8vw - var(--edge) - var(--checker-w) - 2.5rem), 0px);
       padding-block: 2.5rem calc(max(0px, var(--frame-h) - var(--screen-h)) + clamp(2rem, 1rem + 1.5vw, 3rem));
     }
 
