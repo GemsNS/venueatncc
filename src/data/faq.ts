@@ -8,9 +8,10 @@
  * Catering is mentioned in exactly one entry, "Is catering provided?". It is shown on /faq/ only:
  * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
- * The home page looks these questions up by their exact text, so keep them word for word:
- *   "How many guests can the venue hold?", "Who can book the venue?",
- *   "How do deposits and payments work?", "How do I check if my date is available?"
+ * Each answer says a fact once. Parking and the cleaning fee live in "What is included in the rental?".
+ * The 'pricing' group is the question form of /pricing/, which states rates, deposits, and fees in full
+ * and does not repeat these questions. How booking works is said by the closing band on each page, so
+ * the availability answer only points to the calendar and the phone.
  */
 import { site, fullAddress } from './site';
 import { pricing, priceSummary, formatUSD } from '../shared/pricing';
@@ -18,7 +19,7 @@ import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 export interface Faq {
   q: string;
   a: string | null;
-  /** Groups questions on the FAQ page. The pricing page shows the 'pricing' group. */
+  /** Groups questions on the FAQ page. */
   topic: 'booking' | 'space' | 'pricing' | 'about';
 }
 
@@ -28,13 +29,13 @@ const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const deposit =
   pricing.bookingDeposit.type === 'percent'
-    ? `The booking deposit is ${pricing.bookingDeposit.value}% of your total`
-    : `The booking deposit is ${formatUSD(pricing.bookingDeposit.value)}`;
+    ? `a booking deposit of ${pricing.bookingDeposit.value}% of your total`
+    : `a booking deposit of ${formatUSD(pricing.bookingDeposit.value)}`;
 const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
-const payment =
+const balance =
   balanceDays > 0
-    ? `${deposit}, and the balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
-    : `${deposit}.`;
+    ? ` The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
+    : '';
 const damage =
   pricing.fees.damageDepositRefundable > 0
     ? ` A refundable damage deposit of ${formatUSD(pricing.fees.damageDepositRefundable)} is returned after the event if there is no damage.`
@@ -45,7 +46,7 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'How do I check if my date is available?',
-    a: `Use the availability calendar on our booking page. It shows open dates for ${hall?.name} and ${grove?.name}, gives you an instant estimate, and lets you send a request in about two minutes. You can also call ${phone}. We confirm every booking personally.`,
+    a: `Use the availability calendar on our booking page to see open dates for ${hall?.name} and ${grove?.name}, or call ${phone}.`,
   },
   {
     topic: 'booking',
@@ -74,13 +75,8 @@ export const faqs: Faq[] = [
   },
   {
     topic: 'space',
-    q: 'Is parking included?',
-    a: 'Yes. Every booking includes on-site parking in our paved lot.',
-  },
-  {
-    topic: 'space',
     q: 'Is catering provided?',
-    a: 'Rentals include the space and on-site parking. Food service is arranged separately.',
+    a: 'Food service is arranged separately.',
   },
   {
     topic: 'pricing',
@@ -90,7 +86,7 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
-    a: `Once we confirm availability, your booking deposit reserves the date. ${payment}${damage}`,
+    a: `Once we confirm availability, ${deposit} reserves the date.${balance}${damage}`,
   },
   {
     topic: 'pricing',
