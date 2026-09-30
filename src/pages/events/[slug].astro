@@ -1,29 +1,42 @@
 ---
 /**
- * An event landing page: hero, planning guide and checklist, shared-info line, FAQs, related events,
- * closing band. Copy lives in src/data/events.ts.
+ * An event landing page (redesign-spec.md, "/events/[slug]/"; the reference's venue page): the photo hero
+ * with a caption panel (the styled caption inside it), breadcrumbs under it, a sticky anchor bar, About (the intro
+ * beside a second photo), the planning guide in two columns, the checklist beside its heading and the
+ * shared-information line, the questions, three other events as photo cards, and the closing band. Copy
+ * lives in src/data/events.ts.
  *
  * Photos follow one rule (docs/design/brand.md, "Photography"). The hero is eventPhoto(slug): while the
- * staged set is complete (eventsStaged) it is the event's staged photo, which Photo shows with its
- * Styled Concept badge, under the caption "Styled concept. Décor is not included."; otherwise it is the
- * event's real photo, with no badge and no caption. No image appears twice on a page: the related tiles
- * show other events' staged photos, or no photos at all while the set is incomplete.
+ * staged set is complete (eventsStaged) it is the event's staged photo, with its Styled Concept badge and
+ * the caption "Styled concept. Décor is not included." in the hero's panel; otherwise it is the event's real
+ * photo, with no badge and no caption. About shows one second view: on the weddings page the styled indoor
+ * ceremony (the spec's one extra staged photo, with its own styled caption); on every other page the real
+ * photograph of the event's first space, in a view the staged hero is not made from (ABOUT_PHOTOS below,
+ * checked against brand.md's photo table: hall-fireplace is the same view as hall-windows, so the two are
+ * never paired), captioned "<space>, as photographed". The related cards show other events' staged photos.
+ * No image appears twice on a page; without the staged set the related events are cards only when their
+ * real photos would all differ, otherwise links.
  *
  * Facts that are the same for every event (rates, deposits, payments, parking, visits) live on /pricing/
  * (rates by inquiry, since the venue does not publish prices) and /faq/. This page links to them in one
- * line instead of repeating them.
+ * line beside the checklist instead of repeating them.
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import EventHero from './_EventHero.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import EventIndex from '../../components/EventIndex.astro';
-import FaqList from '../../components/FaqList.astro';
+import AnchorBar from '../../components/AnchorBar.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Checklist from '../../components/Checklist.astro';
+import FaqAccordion from '../../components/FaqAccordion.astro';
+import Carousel from '../../components/Carousel.astro';
+import PhotoCard from '../../components/PhotoCard.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import Icon from '../../components/Icon.astro';
 import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
 import { site } from '../../data/site';
-import { eventPhoto, eventsStaged, photoByName, STYLED_CAPTION } from '../../data/photos';
+import { eventPhoto, eventsStaged, photoByName, STYLED_CAPTION, type VenuePhoto } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
@@ -51,100 +64,139 @@ const PHONE = site.contact.phone;
 const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
-// Three related events: the event's own related list first, then the other events in list order. The
-// tiles never repeat the hero: with the staged set each tile shows its own event's staged photo, and
-// without it every tile is text (EventIndex).
+/* The hero's caption: the spaces the event uses as descriptors, the first (most suitable) space's capacity, the lead time. */
+const spaces = event.spaces.map((id) => site.spaces.find((s) => s.id === id)).filter((s) => s !== undefined);
+const capacity = spaces[0]?.capacity;
+const facts = [
+  ...(capacity ? [{ label: 'Capacity', value: `Up to ${capacity} guests` }] : []),
+  { label: 'Booking lead time', value: event.leadTime },
+];
+
+/*
+ * About's second view. Weddings: the styled indoor ceremony. Others: the real photo of the event's first
+ * space in a view the hero's staged photo is not made from (its styledOf), so the two views differ.
+ */
+const ABOUT_PHOTOS: Record<string, string> = {
+  weddings: 'styled-wedding-indoor-ceremony',
+  'receptions-banquets': 'hall-doors',
+  'baby-bridal-showers': 'hall-doors',
+  'birthday-parties': 'hall-doors',
+  'repasts-memorials': 'hall-windows',
+  'meetings-trainings': 'hall-windows',
+  'graduations-reunions': 'gazebo',
+  'community-events': 'main-hall',
+};
+const aboutCandidate = ABOUT_PHOTOS[event.slug] ? photoByName(ABOUT_PHOTOS[event.slug]) : null;
+// Never the hero itself, and never the real photo the hero is made from or shows.
+const heroBase = photo?.styledOf ? photo.styledOf.replace(/\.[a-z0-9]+$/i, '') : photo?.name;
+const aboutPhoto: VenuePhoto | null =
+  aboutCandidate && aboutCandidate.name !== photo?.name && aboutCandidate.name !== heroBase && (eventsStaged || !aboutCandidate.styledOf)
+    ? aboutCandidate
+    : null;
+const aboutSpace = aboutPhoto ? site.spaces.find((s) => (s.id === 'indoor' && aboutPhoto.space === 'hall') || (s.id === 'main' && aboutPhoto.space === 'main') || (s.id === 'outdoor' && aboutPhoto.space === 'grove')) : undefined;
+const aboutCaption = aboutPhoto?.styledOf
+  ? `A ceremony indoors in ${site.spaces.find((s) => s.id === 'main')?.name ?? 'The Main Hall'}. ${STYLED_CAPTION}`
+  : aboutSpace
+    ? `${aboutSpace.name}, as photographed`
+    : aboutPhoto?.caption;
+
+// Three related events: the event's own related list first, then the other events in list order.
 const RELATED_COUNT = 3;
 const related = [...new Set([...event.related, ...events.map((e) => e.slug)])]
-  .filter((slug) => slug !== event.slug && events.some((e) => e.slug === slug))
+  .map((slug) => events.find((e) => e.slug === slug))
+  .filter((e): e is EventType => e !== undefined && e.slug !== event.slug)
   .slice(0, RELATED_COUNT);
+const pagePhotos = new Set([photo?.name, aboutPhoto?.name, heroBase].filter((n): n is string => Boolean(n)));
+const relatedCards = related.map((e) => ({ event: e, photo: eventPhoto(e.slug) }));
+const relatedWithPhotos =
+  relatedCards.every((c) => c.photo !== null && !pagePhotos.has(c.photo.name)) &&
+  new Set(relatedCards.map((c) => c.photo?.name)).size === relatedCards.length;
+
+const anchors = [
+  { id: 'about', label: 'About' },
+  { id: 'guide', label: 'Planning guide' },
+  { id: 'checklist', label: 'Checklist' },
+  ...(event.faqs.length > 0 ? [{ id: 'questions', label: 'Questions' }] : []),
+  ...(related.length > 0 ? [{ id: 'others', label: 'Other events' }] : []),
+];
 
 const schema = [
   breadcrumbs(crumbs),
   eventService({ name: `${event.name} at ${site.name}`, description: event.metaDescription, path, serviceType: event.name }),
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
-const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
-const drivewayPetals = photoByName('styled-driveway-petals');
 ---
 <BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
-  <section class="ev-hero">
+  {
+    photo && (
+      <EventHero photo={photo} id="event-title" eyebrow="Events" title={event.h1} descriptors={spaces.map((s) => s.name)} facts={facts}>
+        {eventsStaged && photo.styledOf && <p class="ev-hero__note">{STYLED_CAPTION}</p>}
+      </EventHero>
+    )
+  }
+
+  <div class="container ev-under">
+    <Breadcrumbs items={crumbs} />
+  </div>
+
+  <AnchorBar items={anchors} label="On this page" />
+
+  <section id="about" class="section ev-target" aria-labelledby="about-heading">
+    <div class:list={['container', 'ev-about', { 'ev-about--photo': aboutPhoto }]}>
+      <div class="ev-about__copy">
+        <h2 id="about-heading" class="eyebrow">About this occasion</h2>
+        {event.intro.map((p, i) => (i === 0 ? <p class="t-serif-lead">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p> : <p class="t-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>))}
+      </div>
+      {
+        aboutPhoto && (
+          <Photo photo={aboutPhoto} tall caption={aboutCaption} class="ev-about__photo" sizes="(min-width: 75rem) 640px, (min-width: 60rem) 50vw, 100vw" />
+        )
+      }
+    </div>
+  </section>
+
+  <section id="guide" class="section ev-target" aria-labelledby="guide-heading">
     <div class="container">
-      <Breadcrumbs items={crumbs} />
-      <div class="ev-hero__grid">
-        <div class="ev-hero__copy">
-          <h1 class="t-large-title">{event.h1}</h1>
-          <p class="t-lead">{splitPhone(event.intro[0]).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
-        </div>
+      <SectionHeading id="guide-heading" eyebrow="Step by step" heading="Planning guide" />
+      <div class="ev-guide">
         {
-          photo && (
-            <Photo
-              photo={photo}
-              ratio="3 / 2"
-              priority
-              caption={eventsStaged ? STYLED_CAPTION : false}
-              class="ev-hero__photo"
-              sizes="(min-width: 75rem) 680px, (min-width: 64rem) 56vw, calc(100vw - 2rem)"
-            />
-          )
+          event.sections.map((s) => (
+            <section class="ev-guide__item" aria-label={s.heading}>
+              <h3 class="t-title-2">{s.heading}</h3>
+              {s.body.map((p) => (
+                <p class="t-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
+              ))}
+            </section>
+          ))
         }
       </div>
     </div>
   </section>
 
-  <section class="ev-main" aria-label="Planning guide">
-    <div class="container ev-body">
-      <article class="ev-article">
-        {event.intro.slice(1).map((p) => <p class="ev-opening t-serif-lead">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>)}
-        {
-          event.sections.map((s) => (
-            <section class="ev-section">
-              <h2>{s.heading}</h2>
-              {s.body.map((p) => <p>{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>)}
-            </section>
-          ))
-        }
-        {
-          event.slug === 'weddings' && indoorCeremony && (
-            <figure class="ev-indoor">
-              <Photo photo={indoorCeremony} ratio="3 / 2" caption="An indoor ceremony in The Main Hall. Styled concept; décor is not included." sizes="(min-width: 64rem) 640px, 92vw" />
-              {drivewayPetals && <Photo photo={drivewayPetals} ratio="3 / 2" caption="Arrival on your wedding day. Styled concept; décor is not included." sizes="(min-width: 64rem) 640px, 92vw" />}
-            </figure>
-          )
-        }
-        <p class="ev-shared">
-          Rates vary with the season, holidays, and the day of the week, so we quote each event personally:
-          <a href={href(pricingHref)}>ask about rates</a>. The <a href={href('/faq/')}>FAQ</a> covers payments, parking, and visits.
-        </p>
-      </article>
-
-      <aside class="ev-aside" aria-labelledby="checklist-heading">
-        <div class="ev-checklist">
-          <h2 id="checklist-heading" class="t-title-3">{event.checklist.heading}</h2>
-          <ul>
-            {
-              event.checklist.items.map((item) => (
-                <li>
-                  <Icon name="check-circle" />
-                  <span>{splitPhone(item).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</span>
-                </li>
-              ))
-            }
-          </ul>
-          <a class="btn btn--tinted ev-checklist__visit" href={visitLink}>Request a Visit</a>
+  <section id="checklist" class="section ev-target" aria-labelledby="checklist-heading">
+    <div class="container ev-check">
+      <div class="ev-check__copy">
+        <SectionHeading id="checklist-heading" eyebrow="Checklist" heading={event.checklist.heading}>
+          <p class="t-lead ev-check__shared">
+            Rates vary with the season, holidays, and the day of the week, so we quote each event personally. The{' '}
+            <a href={href('/faq/')}>FAQ</a> covers payments, parking, and visits.
+          </p>
+        </SectionHeading>
+        <div class="btn-row btn-row--stack ev-check__actions">
+          <a class="btn btn--outline" href={visitLink}>Request a Visit</a>
+          <a class="link-more" href={href(pricingHref)}>Ask about rates <Icon name="chevron-right" /></a>
         </div>
-      </aside>
+      </div>
+      <Checklist items={event.checklist.items} class="ev-check__panel" />
     </div>
   </section>
 
   {
     event.faqs.length > 0 && (
-      <section class="section section--grouped" aria-labelledby="ev-faq-heading">
+      <section id="questions" class="section ev-target" aria-labelledby="questions-heading">
         <div class="container ev-faq">
-          <div class="section-head">
-            <h2 id="ev-faq-heading">Questions about {plainName}</h2>
-          </div>
-          <FaqList items={event.faqs} />
+          <SectionHeading id="questions-heading" eyebrow="Questions" heading={`Questions about ${plainName}`} class="ev-faq__head" />
+          <FaqAccordion items={event.faqs} class="ev-faq__list" />
         </div>
       </section>
     )
@@ -152,12 +204,33 @@ const drivewayPetals = photoByName('styled-driveway-petals');
 
   {
     related.length > 0 && (
-      <section class="section" aria-labelledby="related-heading">
+      <section id="others" class="section ev-target" aria-labelledby="others-heading">
         <div class="container">
-          <div class="section-head">
-            <h2 id="related-heading">Other events we host</h2>
-          </div>
-          <EventIndex only={related} layout="trio" />
+          <SectionHeading id="others-heading" eyebrow="More occasions" heading="Other events we host">
+            <Fragment slot="actions">
+              <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+            </Fragment>
+          </SectionHeading>
+          {relatedWithPhotos ? (
+            <Carousel cols={3} label="Other events we host">
+              {relatedCards.map(
+                (c) =>
+                  c.photo && (
+                    <PhotoCard photo={c.photo} label={c.event.name} meta={c.event.summary} href={`/events/${c.event.slug}/`} sizes="(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw" />
+                  ),
+              )}
+            </Carousel>
+          ) : (
+            <ul class="ev-links">
+              {related.map((e) => (
+                <li>
+                  <a class="link-more" href={href(`/events/${e.slug}/`)}>
+                    {e.name} <Icon name="chevron-right" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </section>
     )
@@ -167,95 +240,30 @@ const drivewayPetals = photoByName('styled-driveway-petals');
 </BaseLayout>
 
 <style>
-  /* ---------- Hero: copy beside a rectangular photo ---------- */
+  /* ---------- Under the hero: the breadcrumbs ---------- */
 
-  .ev-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  .ev-under {
+    padding-block: 1rem;
   }
 
-  .ev-hero__grid {
-    display: grid;
-    gap: clamp(1.75rem, 1.25rem + 2vw, 3rem);
-    align-items: center;
-    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  /* The styled caption inside the hero panel, in the panel's quieter tone (Petal over the scrim, Mauve on the page). */
+  .ev-hero__note {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--on-dark-2);
   }
 
-  @media (min-width: 64rem) {
-    .ev-hero__grid {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      gap: clamp(2.5rem, 4vw, 4rem);
+  @media (width < 46.5rem) {
+    .ev-hero__note {
+      color: var(--label-2);
     }
   }
 
-  .ev-hero__copy {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-    max-width: 40rem;
-  }
-
-  /* ---------- Planning guide and checklist ---------- */
-
-  .ev-main {
-    padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem) var(--section);
-    border-top: 1px solid var(--separator);
-  }
-
-  .ev-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 3rem;
-    align-items: start;
-  }
-
-  @media (min-width: 64rem) {
-    .ev-body {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
-      gap: clamp(3rem, 6vw, 6rem);
-    }
-  }
-
-  .ev-indoor {
-    display: grid;
-    gap: 1.75rem;
-    margin: 2.25rem 0 0;
-  }
-
-  .ev-article {
-    max-width: 40rem;
-  }
-
-  /* Smaller than the section headings on phones, so the Caslon h2s still lead. */
-  .ev-opening {
-    font-size: clamp(1.1875rem, 1rem + 0.8vw, 1.5rem);
-    margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
-  }
-
-  .ev-section + .ev-section {
-    margin-top: clamp(2.25rem, 1.75rem + 2vw, 3rem);
-  }
-
-  /* Caslon Display stays at 28px and up (brand.md). */
-  .ev-section h2 {
-    font-size: min(clamp(1.75rem, 1.5rem + 0.9vw, 2.125rem), 10vw);
-    line-height: 1.15;
-    margin-bottom: 0.9rem;
-  }
-
-  .ev-section p {
-    font-size: var(--t-body);
-    line-height: 1.6;
-    color: var(--label);
-  }
-
-  /* The one line that points to the facts every event shares, set apart from the event's own guide. */
-  .ev-shared {
-    margin-top: clamp(2.25rem, 1.75rem + 2vw, 3rem);
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--separator);
-    font-size: var(--t-body);
-    line-height: 1.6;
-    color: var(--label-2);
+  /* An anchor lands below the header and the sticky anchor bar. */
+  .ev-target {
+    scroll-margin-top: calc(var(--nav-h) + 4rem);
   }
 
   /* Tap-to-call numbers in the copy stay on one line and are underlined like other inline links. */
@@ -266,64 +274,134 @@ const drivewayPetals = photoByName('styled-driveway-petals');
     text-underline-offset: 0.18em;
   }
 
-  .ev-aside {
-    position: sticky;
-    top: calc(var(--nav-h) + 1.5rem);
+  /* ---------- About: the intro beside the second view ---------- */
+
+  .ev-about {
+    display: grid;
+    gap: 2rem clamp(2rem, 5vw, 5rem);
+    align-items: center;
   }
 
-  @media (max-width: 63.99rem) {
-    .ev-aside {
-      position: static;
-      max-width: 40rem;
+  .ev-about__copy {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 38rem;
+  }
+
+  .ev-about__copy .t-copy {
+    color: var(--label);
+  }
+
+  .ev-about :global(.ev-about__photo .photo__frame) {
+    border-radius: var(--r-card);
+  }
+
+  @media (min-width: 60rem) {
+    .ev-about--photo {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
-  .ev-checklist {
+  /* ---------- Planning guide: serif sub-heads over serif copy, two columns from 60rem ---------- */
+
+  .ev-guide {
     display: grid;
-    gap: 1.25rem;
-    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-    border-radius: var(--r-lg);
-    background: var(--panel);
+    gap: 2.5rem clamp(2rem, 5vw, 5rem);
   }
 
-  .ev-checklist ul {
-    display: grid;
-    gap: 0.9rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--t-subhead);
-    line-height: 1.45;
+  @media (min-width: 60rem) {
+    .ev-guide {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  .ev-checklist li {
+  .ev-guide__item {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.7rem;
+    gap: 1rem;
+    align-content: start;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--separator);
+    max-width: 38rem;
+  }
+
+  .ev-guide__item h3 {
+    font-weight: 400;
+  }
+
+  .ev-guide__item p + p {
+    margin-top: 0;
+  }
+
+  .ev-guide__item .t-copy {
+    color: var(--label);
+  }
+
+  /* ---------- Checklist: the heading and the shared line beside the panel ---------- */
+
+  .ev-check {
+    display: grid;
+    gap: 2rem clamp(2rem, 5vw, 5rem);
     align-items: start;
   }
 
-  .ev-checklist li :global(.icon) {
-    color: var(--accent-icon);
-    margin-top: 0.05em;
+  @media (min-width: 60rem) {
+    .ev-check {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
   }
 
-  .ev-checklist__visit {
-    justify-self: start;
-    margin-top: 0.25rem;
+  .ev-check__copy {
+    display: grid;
+    gap: 1.5rem;
   }
 
-  /* ---------- FAQ ---------- */
+  .ev-check__copy :global(.section-head) {
+    margin-bottom: 0;
+  }
+
+  .ev-check__shared {
+    color: var(--label-2);
+  }
+
+  .ev-check__panel {
+    max-width: 38rem;
+  }
+
+  /* ---------- Questions: the heading beside the accordion ---------- */
 
   .ev-faq {
     display: grid;
-    gap: 2rem clamp(2rem, 6vw, 5rem);
+    gap: 1rem clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+
+  .ev-faq :global(.ev-faq__head) {
+    margin-bottom: 0;
+  }
+
+  .ev-faq :global(.ev-faq__list) {
+    max-width: 50rem;
   }
 
   @media (min-width: 60rem) {
     .ev-faq {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-      align-items: start;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+  }
+
+  /* ---------- Related events as links (while the staged set is incomplete) ---------- */
+
+  .ev-links {
+    display: grid;
+    gap: 0.25rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 36rem) {
+    .ev-links {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

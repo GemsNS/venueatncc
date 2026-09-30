@@ -21,6 +21,11 @@
  *   adds one line that links to /pricing/ (Ask about rates) and the FAQ, and its checklist carries the
  *   Request a Visit action. Parking may appear as a checklist task.
  * - Each event states its own booking lead time once, in its section prose or in one FAQ.
+ * - The one exception to both (redesign-spec.md, the event page hero): the hero's caption panel carries
+ *   the event's spaces, the first space's capacity, and the lead time as short facts, the way the
+ *   reference's venue page sums a venue up. `spaces` and `leadTime` below are layout data for that panel
+ *   and the event cards; `leadTime` restates the lead time the event's own prose or FAQ gives, in the
+ *   same words, and `spaces` lists the spaces its first section names, the most suitable first.
  * - FAQs answer only what the page body and /faq/ do not already answer.
  * - Venue facts (space names, capacities, phone) come from site.ts through the constants below, so a
  *   change there flows into every page. Never type them in by hand. The phone appears at most once in
@@ -55,6 +60,13 @@ export interface EventType {
   faqs: { q: string; a: string }[];
   /** Slugs of related event types. */
   related: string[];
+  /**
+   * The spaces the event's first section names, the most suitable first. The hero lists them as its
+   * descriptors and the first one's capacity as a fact (layout data, see above).
+   */
+  spaces: SpaceId[];
+  /** The booking lead time in the words the event's prose or FAQ uses, e.g. "Nine to twelve months". */
+  leadTime: string;
   /** Search phrases this page targets. Reference only; not output as meta keywords. */
   keywords: string[];
 }
@@ -124,6 +136,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['receptions-banquets', 'baby-bridal-showers', 'community-events'],
+    spaces: ['outdoor', 'indoor', 'main'],
+    leadTime: 'Nine to twelve months',
     keywords: [
       'wedding venue Suffolk VA',
       'wedding reception venue Suffolk VA',
@@ -184,6 +198,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['weddings', 'birthday-parties', 'graduations-reunions'],
+    spaces: ['indoor', 'outdoor'],
+    leadTime: 'Three to six months',
     keywords: [
       'banquet hall Suffolk VA',
       'anniversary party venue Suffolk VA',
@@ -238,6 +254,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['weddings', 'birthday-parties', 'receptions-banquets'],
+    spaces: ['indoor', 'outdoor'],
+    leadTime: 'Six to ten weeks',
     keywords: [
       'baby shower venue Suffolk VA',
       'bridal shower venue Suffolk VA',
@@ -295,6 +313,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['graduations-reunions', 'receptions-banquets', 'baby-bridal-showers'],
+    spaces: ['indoor', 'outdoor'],
+    leadTime: 'Two to three months',
     keywords: [
       'birthday party venue Suffolk VA',
       'sweet 16 venue Suffolk VA',
@@ -353,6 +373,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['community-events', 'receptions-banquets', 'meetings-trainings'],
+    spaces: ['indoor', 'outdoor'],
+    leadTime: 'Within a few days',
     keywords: [
       'repast venue Suffolk VA',
       'celebration of life venue Suffolk VA',
@@ -408,6 +430,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['community-events', 'receptions-banquets', 'graduations-reunions'],
+    spaces: ['indoor', 'main', 'outdoor'],
+    leadTime: 'A few weeks',
     keywords: [
       'meeting space Suffolk VA',
       'meeting room rental Suffolk VA',
@@ -472,6 +496,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['birthday-parties', 'receptions-banquets', 'community-events'],
+    spaces: ['outdoor', 'indoor'],
+    leadTime: 'Nine to twelve months',
     keywords: [
       'graduation party venue Suffolk VA',
       'family reunion venue Suffolk VA',
@@ -528,6 +554,8 @@ export const events: EventType[] = [
       },
     ],
     related: ['meetings-trainings', 'receptions-banquets', 'graduations-reunions'],
+    spaces: ['main', 'indoor', 'outdoor'],
+    leadTime: 'A season ahead',
     keywords: [
       'community event space Suffolk VA',
       'nonprofit event venue Suffolk VA',
