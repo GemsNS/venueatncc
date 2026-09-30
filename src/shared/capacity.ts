@@ -21,7 +21,7 @@ const NAME = SPACE_NAME;
 /**
  * Plain-language capacity for a space choice. The wording is always accurate (no combined figure for
  * 'both'), but each page states capacity once (brand.md, Redundancy rules): on /pricing/ and /book/
- * it belongs to the estimator and wizard controls, not to headings or package lines.
+ * it belongs to the wizard and inquiry form controls, not to headings.
  */
 export function capacityLabel(space: SpaceChoice): string {
   if (space === 'indoor') return `Up to ${CAPACITY.indoor} guests`;

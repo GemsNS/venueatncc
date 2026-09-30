@@ -1,5 +1,5 @@
 /**
- * The event types, light enough to ship to the browser (booking wizard, estimator, admin).
+ * The event types, light enough to ship to the browser (booking wizard, inquiry form, admin).
  * The long-form page copy for each lives in src/data/events.ts; slugs must match.
  */
 import type { IconName } from '../shared/icons';

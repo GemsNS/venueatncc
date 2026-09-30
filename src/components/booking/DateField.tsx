@@ -22,7 +22,7 @@ const EDGE = 8;
 const GAP = 8;
 /**
  * The popover matches the field's width within these bounds: at least seven 44px day cells plus its
- * padding, and no wider than a month reads well (the estimator's field spans a wide card on desktop).
+ * padding, and no wider than a month reads well (the inquiry form's field spans a wide card on desktop).
  */
 const MIN_WIDTH = 336;
 const MAX_WIDTH = 368;
