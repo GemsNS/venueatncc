@@ -2,666 +2,86 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
-import CtaBand from '../components/CtaBand.astro';
-import PriceEstimator from '../components/booking/PriceEstimator';
-import { DAY_SHORT, DAY_TYPES } from '../components/booking/lib';
+import InquiryForm from '../components/booking/InquiryForm';
 import { site } from '../data/site';
-import { bookHref } from '../data/nav';
-import { pricing, formatUSD, type DayType } from '../shared/pricing';
-import { SPACE_NAME } from '../shared/capacity';
-import { todayKey } from '../shared/dates';
-import type { SpaceChoice } from '../shared/types';
-import { breadcrumbs, rateCatalog, venueRates } from '../lib/schema';
-import { href } from '../lib/paths';
+import { breadcrumbs } from '../lib/schema';
 
 /*
-  Each fact on this page has one home (brand.md, Redundancy rules): a day's minimum, hourly rates, and
-  packages in that day's panel; fees and special rates in their lists; and what every rental includes, the
-  deposit, and the balance in Rental terms (the site's one full statement of them; /faq/ points here).
-  Capacity appears only inside the estimator's space control. Rate questions are answered on /faq/.
-
-  Rates by day: one panel per day type, all in the HTML (for search engines, and for browsers without
-  :has(), which show every panel under its own heading). A row of native radio buttons, styled as the
-  segmented control, shows one day at a time with CSS alone: arrow keys move between days, no script.
+  Rates and inquiries. The venue does not publish prices: rates vary with the season, holidays, and the day
+  of the week, so the page gives the owner's approved sentence, a Call button, and an inquiry form that sends
+  through the site's own API (the same call and schema as the booking wizard), so every inquiry lands in the
+  admin CRM. No amounts, packages, fees, or estimates appear here, and no price in structured data.
+  The URL stays /pricing/ so existing links keep working.
 */
-const hall = site.spaces.find((s) => s.id === 'indoor');
-const grove = site.spaces.find((s) => s.id === 'outdoor');
-/** The lowest hourly rate for a space, for the meta description only (the page shows every rate). */
-const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
-const title = 'Venue rental rates in Suffolk, VA | The Venue at NCC';
-const description = `Venue rental rates in Suffolk, VA: ${grove?.name} from ${fromRate('outdoor')} an hour and ${hall?.name} from ${fromRate('indoor')}, with on-site parking. Get an instant estimate for your date.`;
+const title = 'Rates and inquiries | The Venue at NCC, Suffolk, VA';
+const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call us or send an inquiry about The Hall, The Grove, or both.`;
 const crumbs = [
   { name: 'Home', path: '/' },
-  { name: 'Pricing', path: '/pricing/' },
+  { name: 'Rates', path: '/pricing/' },
 ];
-const spaces: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
-const offer = pricing.introOffer && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
-
-/** The day shown first, as in the estimator: Saturday, the most requested day. */
-const firstDay: DayType = 'saturday';
-const days = DAY_TYPES.map((d) => ({
-  id: d,
-  label: pricing.dayTypes[d].label,
-  short: DAY_SHORT[d],
-  minHours: pricing.minimumHours[d],
-  packages: pricing.packages.filter((p) => p.dayType === d || p.dayType === 'any'),
-}));
-const hasPackages = pricing.packages.length > 0;
-
-const autoDiscounts = pricing.discounts.filter((d) => d.appliesTo !== 'manual' && d.percent > 0);
-const askDiscounts = pricing.discounts.filter((d) => d.appliesTo === 'manual' && d.percent > 0);
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-const andList = (items: string[]) =>
-  items.length <= 2 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
-/** Which special rates the estimate applies on its own, and which to ask for, said once under the list. */
-const discountNote = [
-  autoDiscounts.length > 0
-    ? `Your estimate applies the ${andList(autoDiscounts.map((d) => lowerFirst(d.label)))} when your event qualifies.`
-    : null,
-  askDiscounts.length > 0 ? `Mention ${autoDiscounts.length > 0 ? 'any other rate' : 'any of these rates'} in your request.` : null,
-  'Discounts apply to the rental and do not combine, so we apply the best one that fits your event.',
-]
-  .filter((s): s is string => s !== null)
-  .join(' ');
-
-const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
-
-/**
- * Rental terms: what every rental includes beyond the space itself (parking), the site's one full
- * explanation of the deposit and the balance, from the pricing module, and the one neutral catering line
- * (brand.md). "This is an estimate" is said by the estimator itself.
- */
-const rentalTerms = [
-  site.policies.parkingIncluded ? 'Every rental includes on-site parking.' : null,
-  pricing.bookingDeposit.type === 'percent'
-    ? `A booking deposit of ${pricing.bookingDeposit.value}% of your total reserves your date once we confirm availability.`
-    : `A booking deposit of ${formatUSD(pricing.bookingDeposit.value)} reserves your date once we confirm availability.`,
-  balanceDays > 0
-    ? `The balance is due ${balanceDays} days before your event. For an event within ${balanceDays} days, the full amount is due when you reserve.`
-    : null,
-  'You arrange catering and décor separately.',
-].filter((t): t is string => t !== null);
-
-interface FeeRow {
-  label: string;
-  detail?: string;
-  unit?: string;
-  amount: string;
-}
-const fees: FeeRow[] = [];
-if (pricing.fees.cleaning > 0) fees.push({ label: 'Cleaning fee', unit: 'per event', amount: formatUSD(pricing.fees.cleaning) });
-if (pricing.fees.damageDepositRefundable > 0) {
-  fees.push({
-    label: 'Refundable damage deposit',
-    detail: 'Returned after your event if there is no damage.',
-    amount: formatUSD(pricing.fees.damageDepositRefundable),
-  });
-}
-
 ---
-<BaseLayout title={title} description={description} og="pricing" schema={[breadcrumbs(crumbs), rateCatalog(), venueRates()]}>
-  <section class="page-hero">
+<BaseLayout title={title} description={description} og="pricing" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
+  <section class="rates-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="page-hero__grid">
-        <div class="page-hero__copy">
-          <h1 class="t-large-title">Transparent rates for every event</h1>
-          <p class="t-lead">Every rate, package, and fee in one place, with an estimate for your date.</p>
-          {
-            offer && (
-              <p class="offer">
-                <Icon name="tag" />
-                <span>
-                  <strong>{offer.name}: {offer.percent}% off the rental</strong> {offer.terms}. It is applied automatically to your
-                  estimate.
-                </span>
-              </p>
-            )
-          }
+      <div class="rates-hero__copy">
+        <h1 class="t-large-title">Rates and inquiries</h1>
+        <p class="t-lead">
+          Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
+          please call us and we will be happy to help you.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+            <Icon name="phone" />
+            Call {site.contact.phone}
+          </a>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section section--grouped" aria-labelledby="estimate-heading">
+  <section class="section section--grouped inquiry" aria-labelledby="inquiry-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="estimate-heading">Estimate your event</h2>
-        <p class="t-lead">Choose a space, a day, and how long you need it.</p>
+        <h2 id="inquiry-heading">Send an inquiry</h2>
+        <p class="t-lead">Tell us about your event, and we will get back to you with availability and pricing for your date.</p>
       </div>
-      <div class="estimator">
-        <PriceEstimator client:visible bookHref={href(bookHref)} ssrToday={todayKey()} />
-      </div>
+      <InquiryForm client:load />
+      <noscript>
+        <div class="card noscript">
+          <p>The inquiry form needs JavaScript. You can reach us directly at
+            <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or
+            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+          </p>
+        </div>
+      </noscript>
     </div>
   </section>
-
-  <section class="section" id="rates" aria-labelledby="rates-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="rates-heading">Rates and fees</h2>
-        {hasPackages && <p class="t-lead">Book by the hour, or choose a package: a set block of time, priced below the hourly rate.</p>}
-      </div>
-
-      <div class="days">
-        <fieldset class="day-pick">
-          <legend class="visually-hidden">Show rates for</legend>
-          <div class="segmented day-pick__track">
-            {
-              days.map((d) => (
-                <label class="segmented__item day-pick__opt">
-                  <input
-                    class="visually-hidden"
-                    type="radio"
-                    name="rates-day"
-                    id={`rates-day-${d.id}`}
-                    value={d.id}
-                    checked={d.id === firstDay}
-                    aria-controls={`day-${d.id}`}
-                  />
-                  <span>{d.short}</span>
-                </label>
-              ))
-            }
-          </div>
-        </fieldset>
-
-        {
-          days.map((d) => (
-            <section class={`day day--${d.id}`} id={`day-${d.id}`} aria-labelledby={`day-${d.id}-title`}>
-              <h3 id={`day-${d.id}-title`} class="day__title serif-label">
-                {d.label}
-              </h3>
-
-              <div class="day__block">
-                <div class="day__head">
-                  <h4 class="day__sub">Hourly rates</h4>
-                  <p class="day__min">
-                    <span class="nowrap">{d.minHours}-hour</span> minimum
-                  </p>
-                </div>
-                <ul class="rows rows--hourly">
-                  {spaces.map((s) => (
-                    <li class="row">
-                      <span class="row__name">{SPACE_NAME[s]}</span>
-                      <span class="row__amount">
-                        <span class="price num">{formatUSD(pricing.hourly[s][d.id])}</span>
-                        <span class="row__unit">an hour</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {d.packages.length > 0 && (
-                <div class="day__block">
-                  <div class="day__head">
-                    <h4 class="day__sub">Packages</h4>
-                  </div>
-                  <ul class="rows rows--grid">
-                    {d.packages.map((p) => (
-                      <li class="row">
-                        <p class="row__name">{p.name}</p>
-                        <span class="row__amount">
-                          <span class="price num">{formatUSD(p.price)}</span>
-                        </span>
-                        <p class="row__detail">
-                          {SPACE_NAME[p.space]}, {p.hours} hours
-                        </p>
-                        {p.description && <p class="row__note">{p.description}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </section>
-          ))
-        }
-      </div>
-
-      <div class="fee-grid">
-        {
-          fees.length > 0 && (
-            <div class="fees">
-              <h3 class="serif-label">Fees</h3>
-              <ul class="rows panel">
-                {fees.map((f) => (
-                  <li class="row">
-                    <p class="row__name">{f.label}</p>
-                    <span class="row__amount">
-                      <span class="price num">{f.amount}</span>
-                      {f.unit && <span class="row__unit">{f.unit}</span>}
-                    </span>
-                    {f.detail && <p class="row__detail">{f.detail}</p>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        }
-
-        {
-          (autoDiscounts.length > 0 || askDiscounts.length > 0) && (
-            <div class="fees">
-              <h3 class="serif-label">Special rates</h3>
-              <ul class="rows panel">
-                {[...autoDiscounts, ...askDiscounts].map((d) => (
-                  <li class="row">
-                    <p class="row__name">{d.label}</p>
-                    <span class="row__amount">
-                      <span class="price num">{d.percent}%</span>
-                      <span class="row__unit">off</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p class="t-footnote secondary fees__note">{discountNote}</p>
-            </div>
-          )
-        }
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--grouped" aria-labelledby="terms-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="terms-heading">Rental terms</h2>
-      </div>
-      <div class="terms card">
-        <ul class="terms__list">
-          {rentalTerms.map((t) => <li>{t}</li>)}
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <CtaBand />
 </BaseLayout>
 
 <style>
-  .page-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  .rates-hero {
+    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4rem);
   }
 
-  .page-hero__grid {
+  .rates-hero__copy {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem 4rem;
-    align-items: center;
+    gap: 1.25rem;
+    max-width: 42rem;
     margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
 
-  .page-hero__copy {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.25rem;
-    max-width: 40rem;
+  .rates-hero__copy .btn-row {
+    margin-top: 0.25rem;
   }
 
-
-  .offer {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-    padding: 1rem 1.25rem;
-    border-radius: var(--r-md);
-    background: var(--accent-tint);
-    color: var(--label);
+  .inquiry .section-head {
+    margin-bottom: clamp(1.5rem, 1.25rem + 1.5vw, 2.5rem);
   }
 
-  .offer :global(.icon) {
-    flex: none;
-    color: var(--accent-icon);
-    margin-top: 0.15em;
-  }
-
-  /* With very large text on a phone the sentence wraps inside the box instead of pushing it past the screen. */
-  .offer > span {
-    min-width: 0;
-    overflow-wrap: break-word;
-  }
-
-  /* The estimator's controls and result are their own surfaces; no wrapper card around them. */
-  .estimator {
-    min-width: 0;
-  }
-
-  /* Prices are set in Libre Caslon Text, regular weight, with lining figures so columns line up. */
-  .price {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    font-variant-numeric: lining-nums tabular-nums;
-    letter-spacing: -0.01em;
-    color: var(--label);
-  }
-
-  /* A serif label between 18 and 28px: Libre Caslon Text, not the display cut (brand.md). */
-  .serif-label {
-    font-family: var(--font-serif);
-    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
-    font-weight: 400;
-    line-height: 1.25;
-    letter-spacing: -0.005em;
-  }
-
-  .nowrap {
-    white-space: nowrap;
-  }
-
-  /* ---------- Rates by day ---------- */
-
-  .days {
-    display: grid;
-    gap: 1rem;
-  }
-
-  /* The day picker only works with :has(); without it every panel shows, under its own heading. */
-  .day-pick {
-    display: none;
-    min-inline-size: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .day-pick__track {
-    width: 100%;
-  }
-
-  .day-pick__opt {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-    text-align: center;
-    line-height: 1.15;
-    white-space: nowrap;
-  }
-
-  /* The selected thumb, as on every segmented control (global.css), with its 2px accent ring. */
-  .day-pick__opt:has(:checked) {
-    background: var(--thumb);
-    box-shadow:
-      inset 0 0 0 2px var(--accent-text),
-      0 3px 8px rgba(0, 0, 0, 0.12),
-      0 3px 1px rgba(0, 0, 0, 0.04);
-    font-weight: 600;
-  }
-
-  .day-pick__opt:has(:focus-visible) {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
-
-  @media (pointer: coarse) {
-    .day-pick__opt {
-      min-height: 44px;
-    }
-  }
-
-  @media (forced-colors: active) {
-    .day-pick__opt:has(:checked) {
-      outline: 3px solid Highlight;
-      outline-offset: -3px;
-    }
-  }
-
-  /* Wide enough for four equal segments sized to the longest label, not the whole page. */
-  @media (min-width: 40rem) {
-    .day-pick__track {
-      width: auto;
-    }
-
-    .day-pick__opt {
-      padding-inline: 1.25rem;
-    }
-  }
-
-  /* Phones: four segments share the row, so the labels step down to the footnote size. */
-  @media (width < 30rem) {
-    .day-pick__opt {
-      padding-inline: 0.4rem;
-      font-size: var(--t-footnote);
-    }
-  }
-
-  /* Narrow phones and large text: two rows of two, and long labels wrap inside their segment. */
-  @media (width < 22.5rem) {
-    .day-pick__track {
-      grid-auto-flow: row;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      border-radius: var(--r-md);
-    }
-
-    .day-pick__opt {
-      padding-block: 0.3rem;
-      border-radius: var(--r-sm);
-      white-space: normal;
-    }
-  }
-
-  /* One day's rates on a Frost panel (a raised card color in dark mode, never darker than the page). */
-  .day {
-    position: relative;
-    display: grid;
-    gap: 1.75rem;
-    padding: clamp(1.25rem, 1rem + 1vw, 2rem);
-    border-radius: var(--r-lg);
-    background: var(--panel);
-  }
-
-  /* With :has(), the picker shows and only the chosen day's panel is displayed. After .day, so it wins. */
-  @supports selector(:has(*)) {
-    .day-pick {
-      display: block;
-    }
-
-    .day {
-      display: none;
-    }
-
-    .days:has(#rates-day-weekday:checked) .day--weekday,
-    .days:has(#rates-day-friday:checked) .day--friday,
-    .days:has(#rates-day-saturday:checked) .day--saturday,
-    .days:has(#rates-day-sunday:checked) .day--sunday {
-      display: grid;
-    }
-
-    /* The selected segment already names the day. */
-    .day__title {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-    }
-  }
-
-  .day__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.25rem 0.75rem;
-    padding-bottom: 0.6rem;
-  }
-
-  .day__sub {
-    font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: 400;
-    line-height: 1.25;
-    letter-spacing: -0.005em;
-  }
-
-  .day__min {
-    color: var(--label-2);
-    font-size: var(--t-subhead);
-  }
-
-  /*
-    Rows: the name and the amount share the first line, and any detail runs the full width below them.
-    Each row carries the hairline above it, so rows in a grid read as columns.
-  */
-  .rows {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    column-gap: 2rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    /* A short row beside a taller one in the same line keeps its lines together at the top. */
-    align-content: start;
-    gap: 0.1rem 1rem;
-    min-width: 0;
-    padding-block: 0.8rem;
-    border-top: 1px solid var(--separator);
-  }
-
-  .row > p {
-    margin: 0;
-  }
-
-  .row__name {
-    font-weight: 600;
-    color: var(--label);
-  }
-
-  .row__detail,
-  .row__note {
-    grid-column: 1 / -1;
-    color: var(--label-2);
-  }
-
-  .row__detail {
-    font-size: var(--t-subhead);
-  }
-
-  .row__note {
-    font-size: var(--t-footnote);
-  }
-
-  .row__amount {
-    grid-row: 1;
-    grid-column: 2;
-    white-space: nowrap;
-    text-align: right;
-  }
-
-  /* Large text on a phone: the amount goes under the name instead of squeezing it. */
-  @media (width < 18rem) {
-    .row {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .row__amount {
-      grid-row: auto;
-      grid-column: 1;
-      text-align: left;
-    }
-  }
-
-  .row__amount .price {
-    font-size: 1.375rem;
-    line-height: 1.2;
-  }
-
-  .row__unit {
-    margin-left: 0.3rem;
-    color: var(--label-2);
-    font-size: var(--t-footnote);
-  }
-
-  @media (min-width: 48rem) {
-    .rows--grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  /* Wide screens: the three hourly rates in a row above three columns of packages. */
-  @media (min-width: 72rem) {
-    .rows--hourly,
-    .rows--grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  /* ---------- Fees and special rates ---------- */
-
-  .fee-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: clamp(2rem, 1.5rem + 2vw, 3rem) 2rem;
-    margin-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-  }
-
-  @media (min-width: 64rem) {
-    .fee-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: start;
-    }
-  }
-
-  .fees {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .fees > .serif-label,
-  .fees__note {
-    padding-left: 0.25rem;
-  }
-
-  /* The same Frost panel as the day's rates; the first row's hairline is hidden by the panel's edge. */
-  .panel {
-    padding: 0 1.1rem;
-    border-radius: var(--r-md);
-    background: var(--panel);
-    overflow: hidden;
-  }
-
-  .panel > .row {
-    margin-top: -1px;
-  }
-
-  /* ---------- Rental terms ---------- */
-
-  /* A white card on the Frost section; a raised card color in dark mode (never darker than the page). */
-  .terms {
-    display: grid;
-    align-content: start;
-    gap: 1rem;
-    max-width: 44rem;
-    padding: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-  }
-
-  .terms__list {
-    display: grid;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .terms__list li {
-    padding-block: 0.8rem;
-    border-top: 1px solid var(--separator);
-    color: var(--label);
-  }
-
-  .terms__list li:first-child {
-    border-top: 0;
-    padding-top: 0.25rem;
-  }
-
-  .terms__list li:last-child {
-    padding-bottom: 0.25rem;
+  .noscript {
+    max-width: 48rem;
+    margin-top: 1rem;
+    padding: 1.5rem;
   }
 </style>
