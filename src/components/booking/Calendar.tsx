@@ -264,7 +264,7 @@ export function Calendar(props: CalendarProps) {
       {props.error && (
         <div class="bk-cal__error" role="alert">
           <p>We could not load open dates. You can still pick a date and we will confirm it.</p>
-          <button type="button" class="btn btn--tinted btn--sm" onClick={props.onRetry}>
+          <button type="button" class="btn btn--outline btn--sm" onClick={props.onRetry}>
             Try Again
           </button>
         </div>

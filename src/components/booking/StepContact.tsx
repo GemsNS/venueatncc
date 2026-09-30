@@ -20,7 +20,10 @@ export function StepContact(props: {
   const phoneNeeded = d.contactPreference !== 'email';
 
   return (
-    <div class="bk-step3">
+    <section class="bk-step3 bk-panel" aria-labelledby="bk-contact-title">
+      <h3 class="bk-panel__title" id="bk-contact-title">
+        How we can reach you
+      </h3>
       <div class="field">
         <label class="field__label" for={fieldId('name')}>
           Your name
@@ -119,6 +122,6 @@ export function StepContact(props: {
         />
         <FieldError errors={errors} field="message" />
       </div>
-    </div>
+    </section>
   );
 }

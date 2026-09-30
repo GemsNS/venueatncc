@@ -131,7 +131,7 @@ export default function DateChecker(props: { bookHref?: string }) {
     <div class="bk bk-dc">
       <div class="field">
         <span class="bk-dc__label" id="bk-dc-label">
-          Check a date
+          Your date
         </span>
         <DateField
           id="bk-dc-date"
@@ -167,12 +167,15 @@ export default function DateChecker(props: { bookHref?: string }) {
       </p>
 
       {statusError && (
-        <button type="button" class="btn btn--tinted btn--sm bk-dc__retry" onClick={retry}>
+        <button type="button" class="btn btn--outline btn--sm bk-dc__retry" onClick={retry}>
           Try Again
         </button>
       )}
 
-      <div class="bk-dc__spaces" role="radiogroup" aria-label="Space">
+      <div class="bk-dc__spaces" role="radiogroup" aria-labelledby="bk-dc-spaces-label">
+        <span class="bk-dc__sats-label field__label" id="bk-dc-spaces-label">
+          Space
+        </span>
         {SINGLE_SPACES.map((s, i) => {
           const free = isFree(s);
           const on = chosen === s;
@@ -208,7 +211,7 @@ export default function DateChecker(props: { bookHref?: string }) {
       </div>
 
       <div class="bk-dc__sats">
-        <p class="bk-dc__sats-label" id="bk-dc-sats">
+        <p class="bk-dc__sats-label field__label" id="bk-dc-sats">
           Next open Saturdays
         </p>
         {!windowReady || (loading && saturdays.length === 0) ? (

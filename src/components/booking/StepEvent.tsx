@@ -1,4 +1,4 @@
-/** Step 2: the kind of event and a visit request. */
+/** Step 2: the kind of event (serif chips), a visit request, and two things good to know. */
 import { useRef } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { OTHER_EVENT, eventTypes } from '../../data/event-types';
@@ -33,10 +33,10 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
 
   return (
     <div class="bk-step2">
-      <div class="field">
-        <span class="field__label" id="bk-event-label">
+      <section class="bk-panel" aria-labelledby="bk-event-label">
+        <h3 class="bk-panel__title" id="bk-event-label">
           What are you planning?
-        </span>
+        </h3>
         <div
           class="bk-tiles"
           role="radiogroup"
@@ -61,102 +61,94 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
                 onClick={() => pick(i)}
                 onKeyDown={(e) => onKeyDown(e, i)}
               >
-                <span class="bk-tile__icon" aria-hidden="true">
-                  <Icon name={t.icon} />
-                </span>
-                <span class="bk-tile__name">{t.name}</span>
                 <span class="bk-tile__check" aria-hidden="true">
                   <Icon name="check" />
                 </span>
+                <span class="bk-tile__name">{t.name}</span>
               </button>
             );
           })}
         </div>
         <FieldError errors={errors} field="eventType" />
-      </div>
 
-      {d.eventType === 'other' && (
-        <div class="field">
-          <label class="field__label" for={fieldId('eventTypeOther')}>
-            What kind of event?
-          </label>
-          <input
-            id={fieldId('eventTypeOther')}
-            class="input"
-            type="text"
-            maxLength={80}
-            autoComplete="off"
-            placeholder="For example, a fundraiser or a club meeting"
-            value={d.eventTypeOther}
-            aria-invalid={errors.eventTypeOther ? 'true' : undefined}
-            aria-describedby={errors.eventTypeOther ? errorId('eventTypeOther') : undefined}
-            onInput={(e) => update({ eventTypeOther: e.currentTarget.value })}
-          />
-          <FieldError errors={errors} field="eventTypeOther" />
-        </div>
-      )}
+        {d.eventType === 'other' && (
+          <div class="field">
+            <label class="field__label" for={fieldId('eventTypeOther')}>
+              What kind of event?
+            </label>
+            <input
+              id={fieldId('eventTypeOther')}
+              class="input"
+              type="text"
+              maxLength={80}
+              autoComplete="off"
+              placeholder="For example, a fundraiser or a club meeting"
+              value={d.eventTypeOther}
+              aria-invalid={errors.eventTypeOther ? 'true' : undefined}
+              aria-describedby={errors.eventTypeOther ? errorId('eventTypeOther') : undefined}
+              onInput={(e) => update({ eventTypeOther: e.currentTarget.value })}
+            />
+            <FieldError errors={errors} field="eventTypeOther" />
+          </div>
+        )}
+      </section>
 
-      <div class="field">
-        <span class="field__label" id="bk-details-label">
-          Visit
-        </span>
+      <section class="bk-panel" aria-labelledby="bk-details-label">
+        <h3 class="bk-panel__title" id="bk-details-label">
+          Visit first
+        </h3>
         <ul class="list-group bk-list" aria-labelledby="bk-details-label">
           <SwitchRow
             id={fieldId('wantsVisit')}
-            icon="map-pin"
-            title="I'd like to see the space first"
+            title="I would like to see the space before I book"
             hint="We will arrange a time with you."
             checked={d.wantsVisit}
             onChange={(wantsVisit) => update({ wantsVisit })}
           />
         </ul>
-      </div>
 
-      {d.wantsVisit && (
-        <div class="field">
-          <label class="field__label" for={fieldId('visitNotes')}>
-            When works for a visit? <span class="bk-optional">Optional</span>
-          </label>
-          <textarea
-            id={fieldId('visitNotes')}
-            class="input bk-textarea--short"
-            maxLength={500}
-            rows={3}
-            placeholder="Days and times that work for you"
-            value={d.visitNotes}
-            aria-invalid={errors.visitNotes ? 'true' : undefined}
-            aria-describedby={describe(errors.visitNotes && errorId('visitNotes'))}
-            onInput={(e) => update({ visitNotes: e.currentTarget.value })}
-          />
-          <FieldError errors={errors} field="visitNotes" />
-        </div>
-      )}
+        {d.wantsVisit && (
+          <div class="field">
+            <label class="field__label" for={fieldId('visitNotes')}>
+              When works for a visit? <span class="bk-optional">Optional</span>
+            </label>
+            <textarea
+              id={fieldId('visitNotes')}
+              class="input bk-textarea--short"
+              maxLength={500}
+              rows={3}
+              placeholder="Days and times that work for you"
+              value={d.visitNotes}
+              aria-invalid={errors.visitNotes ? 'true' : undefined}
+              aria-describedby={describe(errors.visitNotes && errorId('visitNotes'))}
+              onInput={(e) => update({ visitNotes: e.currentTarget.value })}
+            />
+            <FieldError errors={errors} field="visitNotes" />
+          </div>
+        )}
+      </section>
 
-      <div class="field">
-        <span class="field__label" id="bk-included-label">
+      <section class="bk-facts" aria-labelledby="bk-included-label">
+        <h3 class="bk-facts__title" id="bk-included-label">
           Good to know
-        </span>
-        <ul class="list-group bk-list" aria-labelledby="bk-included-label">
+        </h3>
+        <ul class="bk-facts__list">
           <li class="bk-fact">
-            <span class="bk-row-icon" aria-hidden="true">
-              <Icon name="calendar-check" />
-            </span>
+            <Icon name="check" class="bk-fact__check" />
             <span class="bk-fact__text">
-              <strong>We confirm every date personally.</strong>
+              <span>We confirm every date personally.</span>
               <span class="bk-fact__hint">Your quote comes with the payment terms for your date.</span>
             </span>
           </li>
           <li class="bk-fact">
-            <span class="bk-row-icon" aria-hidden="true">
-              <Icon name="parking" />
-            </span>
+            <Icon name="check" class="bk-fact__check" />
             <span class="bk-fact__text">
-              <strong>Parking is included.</strong>
-              <span class="bk-fact__hint">A large paved lot on site.</span>
+              <span>Tables, chairs, and parking are included.</span>
+              <span class="bk-fact__hint">A large paved lot sits beside the building.</span>
             </span>
           </li>
         </ul>
-      </div>
+      </section>
     </div>
   );
 }

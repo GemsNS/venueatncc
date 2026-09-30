@@ -22,6 +22,7 @@ import {
   telHref,
   timeOptionsFor,
 } from './lib';
+import { SpaceThumb, hasSpacePhoto, type SpacePhotos } from './SpaceThumb';
 import { ChoiceList, CountField, Note, Stepper, type ChoiceOption } from './ui';
 import { ymOf, type YM } from './useAvailability';
 import { GUESTS_MAX, GUESTS_MIN, errorId, fieldId, minHoursFor, type Draft } from './wizard';
@@ -42,10 +43,12 @@ export interface StepDateProps {
   onGuests: (n: number) => void;
   /** A short message after someone picks a day that cannot be booked. */
   calMsg: string;
+  /** Real photos of the spaces for the space rows (from the page; the island renders without them). */
+  spacePhotos?: SpacePhotos;
 }
 
 export function StepDate(props: StepDateProps) {
-  const { d, update, errors, today, view, days } = props;
+  const { d, update, errors, today, view, days, spacePhotos } = props;
   const latest = latestBookableDate(today);
   const day = d.date ? days[d.date] : undefined;
   const taken = day ? SINGLE_SPACES.filter((s) => day.spaces[s] === 'taken') : [];
@@ -61,6 +64,7 @@ export function StepDate(props: StepDateProps) {
     hint: SPACE_HINT[s],
     disabled: day ? day.status !== 'past' && day.status !== 'closed' && !spaceIsFree(day, s) : false,
     disabledNote: spaceParts(s).length > 1 && spaceParts(s).some((p) => !taken.includes(p)) ? 'Partly booked' : 'Booked',
+    media: spacePhotos && hasSpacePhoto(spacePhotos, s) ? <SpaceThumb photos={spacePhotos} space={s} /> : undefined,
   }));
 
   // Some spaces taken on the chosen day: say which, so the Booked label is not the only clue.
@@ -73,7 +77,10 @@ export function StepDate(props: StepDateProps) {
 
   return (
     <div class="bk-step1">
-      <section class="bk-panel bk-cal-panel" aria-label="Choose a date">
+      <section class="bk-panel bk-cal-panel" aria-labelledby="bk-cal-panel-title">
+        <h3 class="bk-panel__title" id="bk-cal-panel-title">
+          Choose a date
+        </h3>
         <Calendar
           id={fieldId('date')}
           view={view}
@@ -106,7 +113,10 @@ export function StepDate(props: StepDateProps) {
         </p>
       </section>
 
-      <div class="bk-choices">
+      <section class="bk-panel bk-choices" aria-labelledby="bk-choices-title">
+        <h3 class="bk-panel__title" id="bk-choices-title">
+          Guests, space, and time
+        </h3>
         <div class="field">
           <label class="field__label" for={fieldId('guests')}>
             Guests
@@ -128,7 +138,7 @@ export function StepDate(props: StepDateProps) {
             <Note tone="warn" id={capId}>
               <p>{capErr}</p>
               {suggestion && suggestion !== d.space && suggestionFree && (
-                <button type="button" class="btn btn--tinted btn--sm" onClick={() => update({ space: suggestion, spaceChosen: true })}>
+                <button type="button" class="btn btn--outline btn--sm" onClick={() => update({ space: suggestion, spaceChosen: true })}>
                   Use {spaceLabel(suggestion)}
                 </button>
               )}
@@ -138,7 +148,7 @@ export function StepDate(props: StepDateProps) {
                 </p>
               )}
               {!suggestion && (
-                <a class="btn btn--tinted btn--sm" href={telHref(site.contact.phoneE164)}>
+                <a class="btn btn--outline btn--sm" href={telHref(site.contact.phoneE164)}>
                   Call {site.contact.phone}
                 </a>
               )}
@@ -215,7 +225,7 @@ export function StepDate(props: StepDateProps) {
           . Ask us about time to set up and clean up. Events end by 12:00 midnight.
           {dayType ? ` ${minimumHoursNote(dayType)}` : ''}
         </p>
-      </div>
+      </section>
     </div>
   );
 }

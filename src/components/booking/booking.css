@@ -1,33 +1,31 @@
 /*
-  Booking islands: the wizard and the date checker.
-  Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md) and the
-  interaction rules of the HIG web spec (docs/design/hig-web-spec.md).
+  Booking islands: the wizard on /book/, the date checker on the home page, and the pieces the inquiry form
+  on /pricing/ borrows (fields, the choice list, the stepper, the date field and its calendar, the error
+  summary, the send error, the reference). Built on the tokens, the one button, and the panel rules in
+  src/styles/global.css (docs/design/redesign-spec.md, version 5): white panels with a hairline and a 16px
+  radius on the Blush page, flat at rest; serif (Libre Caslon Text) for the step list, panel titles, space
+  names, event chips, and the summary; the interface family for labels, inputs, and small text; Libre Caslon
+  Display for the step title and the confirmation.
 
   How the palette marks state:
-    Berry fill, white label      the one chosen value and the primary action: the selected day, a
-                                 pressed Saturday chip, a switch that is on, the current step, and
-                                 the filled buttons (7.2:1; Pink Bloom with a Night label in dark mode).
-    Petal surface                a selected row or card: a space choice, an event tile, a date
-                                 checker space. Its ring or radio is Berry (--accent-text),
-                                 which keeps 3:1 against the page and 5.7:1 on Petal; Mauve secondary
-                                 text keeps 6.0:1 on it. Dark mode uses translucent Pink.
-    Petal chip, Plum label       a finished step in the progress list (11.2:1).
-  Status uses green and orange with an icon or text. Glass appears only on the phone action bar
-  (a control layer). Headings and controls use the interface family; the confirmation title uses
-  Libre Caslon Display.
-  Radii are concentric: inner radius = outer radius - inset.
+    Berry fill, white label      the one chosen value and the primary action: the selected day, a pressed
+                                 chip, a switch that is on, and the filled buttons (7.2:1; Pink Bloom with a
+                                 Night label in dark mode).
+    Petal surface                a selected row: a space choice, a date checker space. Its ring or radio is
+                                 Berry (--accent-text), which keeps 3:1 against the page and 5.7:1 on Petal;
+                                 Mauve secondary text keeps 6.0:1 on it. Dark mode uses translucent Pink.
+    Berry underline              the current step in the step list.
+  Status uses green and orange with an icon or text. Nothing here is glass: the phone action bar is a solid
+  page-colored bar with a hairline, the reference's sticky bar.
 */
 
 .bk,
 .bk-app {
-  --bk-pad: 16px;
-  --bk-r-panel: calc(var(--r-sm) + var(--bk-pad)); /* 28px around 12px fields */
+  --bk-pad: clamp(1.25rem, 1rem + 1.25vw, 1.75rem);
   --bk-thumb: var(--thumb);
   --bk-step-bg: var(--bg-elevated);
-  /* Selected rows and cards (Petal), and finished steps (a Petal chip with Plum). */
+  /* Selected rows (Petal). */
   --bk-selected: var(--selected);
-  --bk-done: var(--chip);
-  --bk-on-done: var(--on-chip);
   /*
     Status text shades with 4.5:1 on light surfaces, Petal included (the base tokens are tuned for fills
     and icons): the status green and orange darkened by 20% and 15%.
@@ -37,13 +35,16 @@
   --bk-card-edge: 0 0 0 1px var(--separator);
   /* The date field's calendar popover: a hairline edge, stronger in dark mode where shadows barely show. */
   --bk-pop-edge: 0 0 0 1px var(--separator);
+  /* Inputs sit on a white panel: a Blush fill with a hairline (the reference's bordered fields). */
+  --bk-input-bg: var(--bg);
+  --bk-input-edge: var(--separator-strong);
   color: var(--label);
   font-size: var(--t-body);
 }
 
 /*
-  Dark mode: stepper buttons are Berry, raised above the card (#3A1F2B). Selected rows and finished
-  steps use the global translucent Pink tokens.
+  Dark mode: stepper buttons are Berry, raised above the card (#3A1F2B). Selected rows use the global
+  translucent Pink tokens.
 */
 @media (prefers-color-scheme: dark) {
   .bk,
@@ -71,19 +72,16 @@
 .bk .btn:focus-visible,
 .bk-app .btn:focus-visible,
 .bk-chip:focus-visible,
+.bk-tile:focus-visible,
 .bk-seg .segmented__item:focus-visible,
 .bk-progress__item:focus-visible {
   border-radius: var(--r-full);
 }
 
-.bk-tile:focus-visible {
-  border-radius: 20px;
-}
-
 .bk-dc__space:focus-visible,
 .bk-switch-row__btn:focus-visible,
 .bk-choice__item:focus-visible {
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
 }
 
 .bk-optional {
@@ -91,6 +89,109 @@
   font-size: var(--t-footnote);
   font-weight: 400;
   color: var(--label-2);
+}
+
+/* ---------- Panels ---------- */
+
+/* The one panel: white, 16px, a hairline, flat (the reference's tinted form panel, in our surfaces). */
+.bk-panel {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  min-width: 0;
+  padding: var(--bk-pad);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  box-shadow: var(--bk-card-edge);
+}
+
+/* A panel's title: the serif label between 18 and 22px (global .t-label). */
+.bk-panel__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-title-3);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: var(--label);
+}
+
+/* A quiet Petal panel with check-marked serif lines (the reference's essentials panels, global Checklist). */
+.bk-facts {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  padding: var(--bk-pad);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+
+.bk-facts__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-title-3);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.bk-facts__list,
+.bk-next {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bk-fact,
+.bk-next li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: 1.45;
+}
+
+.bk-fact__check {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.2rem;
+  color: var(--accent-text);
+}
+
+.bk-fact__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The one-line explanation under a fact, in the interface family. */
+.bk-fact__hint {
+  font-family: var(--font);
+  font-size: var(--t-footnote);
+  line-height: 1.4;
+  color: var(--label-2);
+}
+
+/* Inputs on a panel: a Blush fill with a hairline edge. The focus ring comes from global .input. */
+.bk .input,
+.bk-app .input {
+  background: var(--bk-input-bg);
+  border-color: var(--bk-input-edge);
+}
+
+.bk .input:hover,
+.bk-app .input:hover {
+  background: var(--fill-3);
+}
+
+.bk .input:focus-visible,
+.bk-app .input:focus-visible {
+  background: var(--bg-elevated);
+  border-color: var(--focus-ring);
 }
 
 /* ---------- Segmented control ---------- */
@@ -124,6 +225,7 @@
 
 /* ---------- Stepper ---------- */
 
+/* A capsule on the page color with a hairline, its round buttons raised on white. */
 .bk-stepper {
   display: inline-flex;
   align-items: center;
@@ -133,7 +235,8 @@
   padding: 2px;
   max-width: 100%;
   border-radius: var(--r-full);
-  background: var(--fill-2);
+  background: var(--bk-input-bg);
+  box-shadow: inset 0 0 0 1px var(--bk-input-edge);
   justify-self: start;
 }
 
@@ -148,12 +251,16 @@
   border-radius: 50%;
   background: var(--bk-step-bg);
   color: var(--accent-text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 1px var(--separator-strong);
   cursor: pointer;
   transition:
     transform var(--dur-2) var(--ease-spring),
     background-color var(--dur-1) ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.bk-stepper__btn:hover {
+  background: var(--fill-3);
 }
 
 .bk-stepper__btn:active {
@@ -221,23 +328,23 @@
 
 /* ---------- Switch in a list row ---------- */
 
-.bk-list {
-  box-shadow: var(--bk-card-edge);
+/* A grouped list on the page color inside a panel, with a hairline. */
+.list-group.bk-list {
+  background: var(--bk-input-bg);
+  box-shadow: inset 0 0 0 1px var(--bk-input-edge);
 }
 
-.bk-switch-row,
-.bk-fact {
+.bk-switch-row {
   position: relative;
   list-style: none;
 }
 
-.bk-switch-row + .bk-switch-row::before,
-.bk-fact + .bk-fact::before {
+.bk-switch-row + .bk-switch-row::before {
   content: '';
   position: absolute;
   top: 0;
   right: 0;
-  left: calc(16px + 32px + 12px);
+  left: 16px;
   border-top: 1px solid var(--separator);
 }
 
@@ -265,8 +372,7 @@
   outline-offset: -3px;
 }
 
-.bk-switch-row__text,
-.bk-fact__text {
+.bk-switch-row__text {
   display: grid;
   flex: 1;
   gap: 2px;
@@ -274,25 +380,13 @@
 }
 
 .bk-switch-row__title {
+  font-family: var(--font-serif);
   font-size: var(--t-body);
 }
 
-.bk-switch-row__hint,
-.bk-fact__hint {
+.bk-switch-row__hint {
   font-size: var(--t-footnote);
   color: var(--label-2);
-}
-
-.bk-fact {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 60px;
-  padding: 10px 16px;
-}
-
-.bk-fact strong {
-  font-weight: 600;
 }
 
 .bk-row-icon {
@@ -347,23 +441,27 @@
 
 /* ---------- Choice list: the space picker ---------- */
 
+/* Rows on the page color with a hairline; each row a photo, a serif name, one line, and a radio. */
 .bk-choice {
   display: grid;
-  box-shadow: var(--bk-card-edge);
+  border-radius: var(--r-md);
+  background: var(--bk-input-bg);
+  box-shadow: inset 0 0 0 1px var(--bk-input-edge);
+  overflow: hidden;
 }
 
 .bk-choice[aria-invalid='true'] {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--red) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 55%, transparent);
 }
 
 .bk-choice__item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   min-height: 60px;
-  padding: 10px 16px;
+  padding: 10px 16px 10px 12px;
   border: 0;
   background: transparent;
   color: var(--label);
@@ -379,7 +477,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  left: 16px;
+  left: 12px;
   border-top: 1px solid var(--separator);
 }
 
@@ -408,8 +506,9 @@
 }
 
 .bk-choice__title {
-  font-size: var(--t-body);
-  font-weight: 600;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
@@ -445,11 +544,42 @@
   text-decoration: line-through;
 }
 
+.bk-choice__item[aria-disabled='true'] .bk-thumb {
+  opacity: 0.55;
+}
+
 .bk-choice__note {
   flex: none;
   font-size: var(--t-footnote);
   font-weight: 600;
   color: var(--label-2);
+}
+
+/* ---------- Space photos (SpaceThumb.tsx) ---------- */
+
+/* A real photo in the file's own 3:2 shape, so nothing is cropped; the combined choice stacks its two. */
+.bk-thumb {
+  display: grid;
+  flex: none;
+  width: 76px;
+  gap: 2px;
+  border-radius: var(--r-xs);
+  overflow: hidden;
+}
+
+/* Narrow phones: a smaller photo leaves the names room to stay on one or two lines. */
+@media (width < 24rem) {
+  .bk-thumb {
+    width: 60px;
+  }
+}
+
+.bk-thumb__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--fill-2);
 }
 
 /* ---------- Status, notes, spinner ---------- */
@@ -486,7 +616,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   font-size: var(--t-subhead);
   line-height: 1.4;
 }
@@ -561,28 +691,23 @@
   margin-top: 28px;
 }
 
+/*
+  Phones: the action bar sticks to the bottom as a solid bar the width of the screen, on the page color with
+  a hairline (the reference's sticky bar). The container's gutter is undone so the bar runs edge to edge.
+*/
 .bk-actions {
   position: sticky;
-  bottom: calc(86px + env(safe-area-inset-bottom));
+  bottom: 0;
   z-index: 20;
-  margin-top: 20px;
+  margin: 24px calc(-1 * var(--gutter)) 0;
+  padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--separator);
+  background: var(--bg);
 }
 
-/* Without the floating tab bar (the booking page can drop it), the action bar sits at the bottom edge. */
-body:not(:has(.tabbar)) .bk-actions {
-  bottom: calc(10px + env(safe-area-inset-bottom));
-}
-
-/*
-  Keep keyboard focus clear of the fixed bars: the action bar (62px) plus the tab bar (92px) when it
-  is there, plus a margin. Short screens (landscape phones, 400% zoom) let the bars scroll away instead.
-*/
-@media (max-width: 899.98px) {
+/* Keep keyboard focus clear of the bar (about 66px) plus a margin. Short screens let the bar scroll away. */
+@media (max-width: 59.98rem) {
   html:has(.bk-actions) {
-    scroll-padding-bottom: calc(174px + env(safe-area-inset-bottom));
-  }
-
-  html:has(.bk-actions):not(:has(.tabbar)) {
     scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom));
   }
 }
@@ -592,8 +717,7 @@ body:not(:has(.tabbar)) .bk-actions {
     position: static;
   }
 
-  html:has(.bk-actions),
-  html:has(.bk-actions):not(:has(.tabbar)) {
+  html:has(.bk-actions) {
     scroll-padding-bottom: 0;
   }
 }
@@ -602,13 +726,6 @@ body:not(:has(.tabbar)) .bk-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-full);
-  background-color: var(--glass-bg-strong);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-edge), var(--glass-shadow);
 }
 
 .bk-actions__spacer {
@@ -619,12 +736,7 @@ body:not(:has(.tabbar)) .bk-actions {
   display: grid;
   flex: 1;
   min-width: 0;
-  padding-left: 8px;
   line-height: 1.15;
-}
-
-.bk-actions__back + .bk-actions__total {
-  padding-left: 0;
 }
 
 .bk-actions__cap {
@@ -633,18 +745,19 @@ body:not(:has(.tabbar)) .bk-actions {
 }
 
 .bk-actions__val {
+  font-family: var(--font-serif);
   font-size: var(--t-headline);
-  font-weight: 600;
+  white-space: nowrap;
 }
 
 .bk-actions__none {
+  font-family: var(--font-serif);
   font-size: var(--t-subhead);
-  font-weight: 500;
   color: var(--label-2);
 }
 
 .bk-actions__back {
-  padding: 0 1rem 0 0.7rem;
+  padding: 0 1rem 0 0.75rem;
 }
 
 .bk-actions__next {
@@ -656,15 +769,16 @@ body:not(:has(.tabbar)) .bk-actions {
   cursor: progress;
 }
 
-@media (min-width: 900px) {
+/* From 60rem the summary sits beside the steps and the actions close the column under a hairline. */
+@media (min-width: 60rem) {
   .bk-wizard {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
     grid-template-areas:
       'main aside'
       'actions aside';
     grid-template-rows: auto 1fr;
-    column-gap: clamp(28px, 3vw, 48px);
+    column-gap: clamp(2rem, 4vw, 4rem);
     align-items: start;
   }
 
@@ -675,53 +789,46 @@ body:not(:has(.tabbar)) .bk-actions {
   .bk-aside {
     grid-area: aside;
     position: sticky;
-    top: calc(var(--nav-h) + 24px);
+    top: calc(var(--nav-h) + 1.5rem);
     margin-top: 0;
   }
 
   .bk-actions {
     grid-area: actions;
     position: static;
-    margin-top: 32px;
-  }
-
-  .bk-actions__inner {
-    padding: 24px 0 0;
-    border: 0;
-    border-top: 1px solid var(--separator);
-    border-radius: 0;
+    margin: 2rem 0 0;
+    padding: 1.5rem 0 0;
     background: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
   }
 
   .bk-actions__total {
     visibility: hidden;
   }
 
-  .bk-actions__next {
+  .bk-actions__next,
+  .bk-actions__back {
     --btn-h: 52px;
-    padding: 0 1.6rem;
-    font-size: var(--t-headline);
+    padding-inline: 1.75rem;
+    font-size: 1.0625rem;
   }
 
   .bk-actions__back {
-    --btn-h: 52px;
+    padding-left: 1.25rem;
   }
 }
 
 /* ---------- Progress and step heading ---------- */
 
+/* Phones: a four-segment track. */
 .bk-progress-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
-  margin-bottom: 16px;
+  margin-bottom: 1.25rem;
 }
 
 .bk-progress-bar span {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background: var(--fill);
 }
@@ -730,6 +837,7 @@ body:not(:has(.tabbar)) .bk-actions {
   background: var(--accent);
 }
 
+/* Wide screens: the steps as a serif list under a hairline, the current one underlined in Berry. */
 .bk-progress {
   display: none;
 }
@@ -737,116 +845,101 @@ body:not(:has(.tabbar)) .bk-actions {
 .bk-progress ol {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
+  gap: 0 1.75rem;
   margin: 0;
   padding: 0;
+  border-bottom: 1px solid var(--separator);
   list-style: none;
+}
+
+.bk-progress li {
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
 }
 
 .bk-progress__item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 14px 0 8px;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0;
   border: 0;
-  border-radius: var(--r-full);
   background: transparent;
   color: var(--label-2);
-  font: inherit;
-  font-size: var(--t-subhead);
-  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: var(--t-ui);
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 button.bk-progress__item {
-  color: var(--accent-text);
+  color: var(--label);
   cursor: pointer;
 }
 
-button.bk-progress__item:hover {
-  background: var(--fill-3);
+button.bk-progress__item:hover .bk-progress__label {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .bk-progress__n {
-  display: grid;
+  display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--fill-2);
-  color: var(--label-2);
+  min-width: 1.5em;
   font-size: var(--t-footnote);
-  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--label-3);
 }
 
 .bk-progress__n .icon {
   width: 15px;
   height: 15px;
-  stroke-width: 2.6;
+  stroke-width: 2.4;
+  color: var(--accent-text);
 }
 
-[data-state='current'] > .bk-progress__item {
-  background: var(--fill-2);
+.bk-progress li[data-state='current'] {
+  border-bottom-color: var(--accent-text);
+}
+
+.bk-progress li[data-state='current'] > .bk-progress__item {
   color: var(--label);
-  font-weight: 600;
 }
 
-[data-state='current'] .bk-progress__n {
-  background: var(--accent);
-  color: var(--on-accent);
+.bk-progress li[data-state='current'] .bk-progress__n {
+  color: var(--accent-text);
 }
 
-[data-state='done'] .bk-progress__n,
-[data-state='reachable'] .bk-progress__n {
-  background: var(--bk-done);
-  color: var(--bk-on-done);
-}
-
-@media (min-width: 900px) {
+@media (min-width: 60rem) {
   .bk-progress-bar {
     display: none;
   }
 
   .bk-progress {
     display: block;
-    margin-bottom: 20px;
+    margin-bottom: 2rem;
   }
 }
 
 .bk-step-head {
   display: grid;
-  gap: 4px;
-  margin-bottom: 24px;
+  gap: 0.6rem;
+  max-width: 40rem;
+  margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.25rem);
 }
 
 .bk-step-count {
-  font-size: var(--t-footnote);
-  font-weight: 600;
-  color: var(--label-2);
+  margin-bottom: 0.15rem;
 }
 
-/*
-  Where the step chips show, the active chip already says which step this is, so the count is read by
-  screen readers only.
-*/
-@media (min-width: 900px) {
-  .bk-step-count {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-}
-
+/* The step title in Libre Caslon Display (global.css leaves bk- headings to this file). */
 .bk-step-title {
-  font-size: var(--t-title-2);
-  line-height: 1.18;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: var(--t-title-1);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
 }
 
 .bk-step-title:focus,
@@ -856,7 +949,6 @@ button.bk-progress__item:hover {
 
 .bk-step-sub {
   color: var(--label-2);
-  font-size: var(--t-callout);
 }
 
 /* ---------- Error summary ---------- */
@@ -908,21 +1000,11 @@ button.bk-progress__item:hover {
 
 .bk-step1 {
   display: grid;
-  gap: 28px;
-}
-
-.bk-panel {
-  padding: var(--bk-pad);
-  border-radius: var(--bk-r-panel);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-2), var(--bk-card-edge);
+  gap: 1.25rem;
 }
 
 .bk-choices {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  gap: 22px;
+  gap: 1.5rem;
   container-type: inline-size;
 }
 
@@ -933,7 +1015,7 @@ button.bk-progress__item:hover {
 }
 
 .bk-hours-hint {
-  margin-top: -12px;
+  margin-top: -0.75rem;
 }
 
 /*
@@ -942,7 +1024,7 @@ button.bk-progress__item:hover {
 */
 @container (min-width: 44rem) {
   .bk-step1 {
-    grid-template-columns: minmax(0, 23rem) minmax(16rem, 1fr);
+    grid-template-columns: minmax(0, 24rem) minmax(16rem, 1fr);
     align-items: start;
   }
 }
@@ -952,6 +1034,11 @@ button.bk-progress__item:hover {
   .bk-pair {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.bk-cal {
+  display: grid;
+  gap: 0.25rem;
 }
 
 /*
@@ -965,22 +1052,23 @@ button.bk-progress__item:hover {
   justify-content: space-between;
   gap: 0 8px;
   margin-bottom: 4px;
-  padding-left: 8px;
 }
 
-/* An h3 in the wizard and an h2 in the date field's popover; the same size in both. */
+/* The month in the serif: an h3 in the wizard's step and an h2 in the date field's popover. */
 .bk-cal__title {
-  font-size: var(--t-headline);
-  font-weight: 600;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 400;
   line-height: 1.25;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .bk-cal__nav {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   margin-left: auto;
 }
 
@@ -995,28 +1083,44 @@ button.bk-progress__item:hover {
   transform: translateY(-50%);
 }
 
+/* The month arrows: the site's round hairline buttons (global .btn-round), at 40px inside a panel. */
 .bk-iconbtn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  border: 0;
+  border: 1px solid var(--separator-strong);
   border-radius: 50%;
   background: transparent;
-  color: var(--accent-text);
+  color: var(--label);
   cursor: pointer;
+  transition:
+    background-color var(--dur-1) ease,
+    color var(--dur-1) ease;
+}
+
+.bk-iconbtn .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .bk-iconbtn:hover {
-  background: var(--fill-2);
+  background: var(--fill-3);
 }
 
 .bk-iconbtn[aria-disabled='true'] {
   background: transparent;
   color: var(--label-3);
-  opacity: 0.5;
+  border-color: var(--separator);
   cursor: not-allowed;
+}
+
+@media (pointer: coarse) {
+  .bk-iconbtn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .bk-cal__grid {
@@ -1028,7 +1132,8 @@ button.bk-progress__item:hover {
 .bk-cal__grid th {
   padding: 4px 0 6px;
   font-size: var(--t-caption);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   color: var(--label-2);
   text-align: center;
 }
@@ -1161,7 +1266,7 @@ button.bk-progress__item:hover {
   gap: 8px;
   margin-top: 12px;
   padding: 12px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   background: var(--orange-tint);
   font-size: var(--t-footnote);
 }
@@ -1170,8 +1275,8 @@ button.bk-progress__item:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
-  margin: 12px 0 0;
-  padding: 12px 8px 0;
+  margin: 8px 0 0;
+  padding: 12px 0 0;
   border-top: 1px solid var(--separator);
   list-style: none;
   font-size: var(--t-footnote);
@@ -1211,62 +1316,54 @@ button.bk-progress__item:hover {
   text-decoration: line-through;
 }
 
+/* The chosen date under the calendar, in the serif. */
 .bk-cal__chosen {
-  margin-top: 12px;
-  padding: 0 8px;
-  font-size: var(--t-subhead);
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
 }
 
 .bk-cal__msg {
+  font-family: var(--font);
+  font-size: var(--t-subhead);
   color: var(--bk-orange-text);
   font-weight: 600;
 }
 
-/* ---------- Step 2: event tiles ---------- */
+/* ---------- Step 2: event chips ---------- */
 
-.bk-step2,
-.bk-step3 {
+.bk-step2 {
   display: grid;
-  gap: 24px;
+  gap: 1.25rem;
 }
 
-.bk-step3 {
-  max-width: 36rem;
-}
-
+/* The event types as serif capsules (the site's chips): a hairline at rest, Berry with a white label chosen. */
 .bk-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-}
-
-@container (min-width: 560px) {
-  .bk-tiles {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 .bk-tile {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  gap: 10px;
-  min-height: 104px;
-  padding: 12px;
-  border: 1px solid var(--separator);
-  border-radius: 20px;
-  background: var(--bg-elevated);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.4rem 1.125rem;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--separator-strong);
   color: var(--label);
-  font: inherit;
-  font-size: var(--t-subhead);
-  font-weight: 500;
-  line-height: 1.3;
+  font-family: var(--font-serif);
+  font-size: var(--t-ui);
+  font-weight: 400;
+  line-height: 1.2;
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--dur-1) ease,
     background-color var(--dur-1) ease,
+    color var(--dur-1) ease,
+    box-shadow var(--dur-1) ease,
     transform var(--dur-2) var(--ease-spring);
   -webkit-tap-highlight-color: transparent;
 }
@@ -1276,51 +1373,25 @@ button.bk-progress__item:hover {
 }
 
 .bk-tile:active {
-  transform: scale(0.98);
-}
-
-.bk-tile__icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-xs);
-  background: var(--fill-2);
-  color: var(--label-2);
-}
-
-.bk-tile__icon .icon {
-  width: 20px;
-  height: 20px;
+  transform: scale(0.97);
 }
 
 .bk-tile__check {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   display: none;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
+  width: 1em;
+  height: 1em;
 }
 
 .bk-tile__check .icon {
-  width: 14px;
-  height: 14px;
-  stroke-width: 3;
+  width: 1em;
+  height: 1em;
+  stroke-width: 2.6;
 }
 
 .bk-tile[aria-checked='true'] {
-  border-color: var(--accent-text);
-  background: var(--bk-selected);
-  box-shadow: inset 0 0 0 1px var(--accent-text);
-}
-
-.bk-tile[aria-checked='true'] .bk-tile__icon {
   background: var(--accent);
+  box-shadow: none;
   color: var(--on-accent);
 }
 
@@ -1328,25 +1399,29 @@ button.bk-progress__item:hover {
   display: grid;
 }
 
-.bk-tiles[aria-invalid='true'] .bk-tile {
-  border-color: color-mix(in srgb, var(--red) 55%, transparent);
+.bk-tiles[aria-invalid='true'] .bk-tile:not([aria-checked='true']) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 55%, transparent);
 }
 
 .bk-textarea--short {
   min-height: 5.5rem;
 }
 
+/* ---------- Step 3: contact ---------- */
+
+.bk-step3 {
+  max-width: 38rem;
+}
+
 /* ---------- Step 4: review ---------- */
 
 .bk-step4 {
   display: grid;
-  gap: 24px;
+  gap: 1.25rem;
 }
 
 .bk-group {
-  display: grid;
-  align-content: start;
-  gap: 8px;
+  gap: 0.75rem;
 }
 
 .bk-group__head {
@@ -1355,36 +1430,34 @@ button.bk-progress__item:hover {
   justify-content: space-between;
   gap: 8px;
   min-height: 44px;
-  padding-left: 16px;
 }
 
-.bk-group__title {
-  font-size: var(--t-headline);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.bk-group > .bk-group__title {
-  padding-left: 16px;
-}
-
+/* Edit as the site's serif text link with a chevron (global .link-more), as a button. */
 .bk-edit {
-  --btn-h: 44px;
-  font-size: var(--t-callout);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-height: 44px;
 }
 
+.bk-edit:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* Label and value rows split by hairlines. */
 .bk-dl {
   margin: 0;
 }
 
 .bk-dl__row {
-  position: relative;
   display: grid;
   grid-template-columns: minmax(6.5rem, 34%) minmax(0, 1fr);
   align-items: baseline;
   gap: 12px;
-  min-height: 52px;
-  padding: 14px 16px;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--separator);
 }
 
 /* On phones the label sits above its value, so dates, times and emails get the full width. */
@@ -1393,15 +1466,6 @@ button.bk-progress__item:hover {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
-}
-
-.bk-dl__row + .bk-dl__row::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 16px;
-  border-top: 1px solid var(--separator);
 }
 
 .bk-dl dt {
@@ -1417,7 +1481,7 @@ button.bk-progress__item:hover {
 }
 
 .bk-review__fine {
-  font-size: var(--t-footnote);
+  max-width: 40rem;
   color: var(--label-2);
 }
 
@@ -1456,44 +1520,47 @@ button.bk-progress__item:hover {
 /* ---------- Summary card ---------- */
 
 .bk-summary {
-  padding: 20px;
-  border-radius: var(--r-xl);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-2), var(--bk-card-edge);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.bk-summary__title {
-  margin-bottom: 12px;
-  font-size: var(--t-title-3);
-  font-weight: 600;
+.bk-summary__body {
+  display: grid;
+  gap: 0.75rem;
+  padding: var(--bk-pad);
+}
+
+/* The chosen space's photo across the top of the card; the combined choice shows its two side by side. */
+.bk-summary .bk-summary__photo {
+  width: 100%;
+  border-radius: 0;
+}
+
+.bk-summary .bk-summary__photo.bk-thumb--pair {
+  grid-template-columns: 1fr 1fr;
 }
 
 .bk-summary__rows {
-  display: grid;
-  margin: 0 0 16px;
-}
-
-.bk-summary__row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--separator);
-  font-size: var(--t-subhead);
-}
-
-.bk-summary__row dt {
-  flex: none;
-  color: var(--label-2);
-}
-
-.bk-summary__row dd {
   margin: 0;
-  font-weight: 500;
+}
+
+.bk-summary__rows .bk-dl__row {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+}
+
+.bk-summary__rows dd {
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
   text-align: right;
 }
 
 .bk-summary__note {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--separator);
   font-size: var(--t-subhead);
   color: var(--label-2);
 }
@@ -1502,7 +1569,7 @@ button.bk-progress__item:hover {
   The card earns its place only beside the wizard with its rows. On phones the action bar carries the date,
   and on the review step the review shows every row and the same note, so the card is left out there.
 */
-@media (max-width: 899.98px) {
+@media (max-width: 59.98rem) {
   .bk-aside {
     display: none;
   }
@@ -1516,39 +1583,38 @@ button.bk-progress__item:hover {
 
 .bk-success {
   display: grid;
-  gap: 28px;
-  max-width: 960px;
+  gap: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  max-width: 60rem;
   margin-inline: auto;
 }
 
+/* The confirmation reads like a page title: eyebrow, Caslon Display title, lead, and the reference. */
 .bk-success__hero {
   display: grid;
   justify-items: center;
-  gap: 10px;
-  padding: 32px 20px;
-  border-radius: var(--r-xl);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-2), var(--bk-card-edge);
+  gap: 0.75rem;
+  padding-block: clamp(0.5rem, 1vw, 1.5rem) 0;
   text-align: center;
 }
 
+/* A check in a Berry ring (the inquiry form's confirmation on /pricing/ uses it too). */
 .bk-success__badge {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 0.25rem;
+  border: 1px solid var(--accent-text);
   border-radius: 50%;
-  background: var(--green);
-  color: var(--bg-elevated);
+  color: var(--accent-text);
 }
 
 .bk-success__badge .icon {
-  width: 34px;
-  height: 34px;
-  stroke-width: 2.6;
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.2;
 }
 
-/* The confirmation reads like a page title: Caslon Display, at 28px and up only. */
 .bk-success__title {
   font-family: var(--font-display);
   font-size: var(--t-large-title);
@@ -1566,13 +1632,14 @@ button.bk-progress__item:hover {
 .bk-ref {
   display: grid;
   justify-items: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 0.75rem;
 }
 
 .bk-ref__label {
   font-size: var(--t-footnote);
-  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--label-2);
 }
 
@@ -1586,47 +1653,30 @@ button.bk-progress__item:hover {
 
 .bk-success__grid {
   display: grid;
-  gap: 28px;
+  gap: 1.25rem;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 60rem) {
   .bk-success__grid {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
 }
 
-.bk-next {
-  display: grid;
-  gap: 16px;
-  margin: 0;
-  padding: 18px 16px;
-  border-radius: var(--r-md);
-  background: var(--bg-elevated);
-  box-shadow: var(--bk-card-edge);
-  list-style: none;
-}
-
-.bk-next li {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: start;
-  gap: 12px;
-  font-size: var(--t-callout);
-  line-height: 1.4;
-}
-
+/* The numbered steps: a Berry numeral in a hairline ring. */
 .bk-next__n {
   display: grid;
   place-items: center;
+  flex: none;
   width: 28px;
   height: 28px;
+  margin-top: -0.1rem;
+  border: 1px solid var(--accent-text);
   border-radius: 50%;
-  background: var(--fill-2);
+  color: var(--accent-text);
+  font-family: var(--font-serif);
   font-size: var(--t-footnote);
-  font-weight: 700;
 }
-
 
 .bk-demo-note {
   display: flex;
@@ -1682,24 +1732,24 @@ button.bk-progress__item:hover {
 
 .bk-skel__line--title {
   width: min(260px, 70%);
-  height: 30px;
+  height: 40px;
   margin-bottom: 14px;
 }
 
 .bk-skel__block {
   height: 440px;
-  border-radius: var(--bk-r-panel);
+  border-radius: var(--r-lg);
 }
 
 .bk-skel__block--short {
   height: 300px;
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 60rem) {
   .bk-skel {
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
-    column-gap: clamp(28px, 3vw, 48px);
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    column-gap: clamp(2rem, 4vw, 4rem);
   }
 }
 
@@ -1707,24 +1757,24 @@ html:not(.js) .bk-skel {
   display: none;
 }
 
-/* ---------- Date checker (home hero) ---------- */
+/* ---------- Date checker (home page) ---------- */
 
-/* One column that never grows past the card, whatever the text size. */
+/* One white panel beside the section heading; one column that never grows past the card. */
 .bk-dc {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  gap: 1.1rem;
   width: 100%;
   max-width: 460px;
   padding: var(--bk-pad);
-  border-radius: var(--bk-r-panel);
+  border-radius: var(--r-lg);
   background: var(--bg-elevated);
-  box-shadow: var(--shadow-3), var(--bk-card-edge);
+  box-shadow: var(--bk-card-edge);
   text-align: left;
 }
 
 .bk-dc__label {
-  font-size: var(--t-headline);
+  font-size: var(--t-subhead);
   font-weight: 600;
 }
 
@@ -1734,6 +1784,7 @@ html:not(.js) .bk-skel {
 
 .bk-dc__status {
   min-height: 1.4em;
+  margin-top: -0.5rem;
   font-size: var(--t-subhead);
 }
 
@@ -1754,11 +1805,15 @@ html:not(.js) .bk-skel {
   justify-self: start;
 }
 
-/* The three spaces as one row each: the name and what it is, its status on the chosen day, and the radio. */
+/* The three spaces as one row each: the serif name and what it is, its status on the chosen day, and the radio. */
 .bk-dc__spaces {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
+}
+
+.bk-dc__spaces > .field__label {
+  margin-bottom: 0.15rem;
 }
 
 .bk-dc__space {
@@ -1766,11 +1821,11 @@ html:not(.js) .bk-skel {
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid var(--separator);
-  border-radius: var(--r-sm);
-  background: var(--bg-elevated);
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 1px solid var(--bk-input-edge);
+  border-radius: var(--r-md);
+  background: var(--bk-input-bg);
   color: var(--label);
   font: inherit;
   text-align: left;
@@ -1811,8 +1866,8 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__space-name {
-  font-size: var(--t-subhead);
-  font-weight: 600;
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
   line-height: 1.3;
 }
 
@@ -1844,10 +1899,7 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__sats-label {
-  margin-bottom: 6px;
-  font-size: var(--t-footnote);
-  font-weight: 600;
-  color: var(--label-2);
+  margin-bottom: 0.4rem;
 }
 
 .bk-chips {
@@ -1867,6 +1919,7 @@ html:not(.js) .bk-skel {
   padding-inline: 8px;
 }
 
+/* A serif capsule with a hairline; pressed, it takes the Berry fill. */
 .bk-chip {
   display: inline-flex;
   align-items: center;
@@ -1874,28 +1927,34 @@ html:not(.js) .bk-skel {
   padding: 0 14px;
   border: 0;
   border-radius: var(--r-full);
-  background: var(--fill-2);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--separator-strong);
   color: var(--label);
-  font: inherit;
-  font-size: var(--t-subhead);
-  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: var(--t-ui);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background-color var(--dur-1) ease;
+  transition:
+    background-color var(--dur-1) ease,
+    color var(--dur-1) ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .bk-chip:hover {
-  background: var(--fill);
+  background: var(--fill-3);
 }
 
 .bk-chip[aria-pressed='true'] {
   background: var(--accent);
+  box-shadow: none;
   color: var(--on-accent);
 }
 
 .bk-chip--skel {
   width: 96px;
+  box-shadow: none;
+  background: var(--fill-2);
   animation: bk-pulse 1.4s ease-in-out infinite;
 }
 
@@ -1996,7 +2055,6 @@ html:not(.js) .bk-skel {
   The popover: a raised card in the top layer, where DateField.tsx sets its width and its place on the
   page. The browser's modal dialog styles (centered, stretched, capped, bordered) are reset here. It has
   no padding of its own, so the only click that reaches the dialog itself is a tap on the backdrop.
-  Radii are concentric: 18px outside, 8px inset.
 */
 .bk-datepop {
   position: absolute;
@@ -2008,7 +2066,7 @@ html:not(.js) .bk-skel {
   padding: 0;
   overflow: visible;
   border: 0;
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--bg-elevated);
   color: var(--label);
   box-shadow: var(--shadow-3), var(--bk-pop-edge);
@@ -2024,11 +2082,11 @@ html:not(.js) .bk-skel {
 }
 
 .bk-datepop__body {
-  padding: 8px 8px 12px;
+  padding: 12px 12px 14px;
 }
 
 .bk-datepop__msg {
-  padding: 10px 8px 0;
+  padding: 10px 4px 0;
   color: var(--bk-orange-text);
   font-size: var(--t-footnote);
   font-weight: 600;
@@ -2039,7 +2097,7 @@ html:not(.js) .bk-skel {
 }
 
 .bk-cal__close {
-  margin-left: 4px;
+  margin-left: 2px;
   color: var(--label-2);
 }
 
@@ -2061,6 +2119,13 @@ html:not(.js) .bk-skel {
   .bk-seg .segmented__item[aria-checked='true'] {
     outline: 3px solid Highlight;
     outline-offset: -3px;
+  }
+
+  .bk-tile,
+  .bk-chip,
+  .bk-panel,
+  .bk-facts {
+    border: 1px solid CanvasText;
   }
 
   .bk-switch {
@@ -2109,10 +2174,6 @@ html:not(.js) .bk-skel {
 
 /* 200% text on phones: Back and the chosen date share a row, and Next spans the row below. */
 @media (width < 20rem) {
-  .bk-actions__inner {
-    border-radius: var(--r-xl);
-  }
-
   .bk-actions__next {
     flex: 1 1 100%;
     min-width: 0;
@@ -2120,6 +2181,10 @@ html:not(.js) .bk-skel {
 
   .bk-actions__back {
     padding-inline: 0.6rem;
+  }
+
+  .bk-thumb {
+    display: none;
   }
 }
 
@@ -2137,9 +2202,13 @@ html:not(.js) .bk-skel {
   }
 }
 
-/* 200% text on phones: one event tile per row so long names such as "anniversaries" stay whole. */
-@media (width < 20rem) {
-  .bk-tiles {
-    grid-template-columns: minmax(0, 1fr);
+/* ---------- Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-datepop[open],
+  .bk-skel__line,
+  .bk-skel__block,
+  .bk-chip--skel {
+    animation: none;
   }
 }

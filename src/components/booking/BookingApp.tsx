@@ -24,6 +24,7 @@ import { StepEvent } from './StepEvent';
 import { StepReview } from './StepReview';
 import { SuccessView } from './SuccessView';
 import { SummaryCard } from './SummaryCard';
+import type { SpacePhotos } from './SpaceThumb';
 import { addMonths, lastDayOf, useAvailability, useRefreshOnReturn, ymOf, type YM } from './useAvailability';
 import {
   DEFAULT_DRAFT,
@@ -40,6 +41,8 @@ import {
   type Draft,
   type Step,
 } from './wizard';
+
+export type { SpacePhoto, SpacePhotos } from './SpaceThumb';
 
 const SUBTITLES: Record<Step, string> = {
   1: 'Pick a day, then tell us how many guests and how long you need.',
@@ -77,6 +80,10 @@ function initialView(today: DateKey): YM {
 
 const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
+/**
+ * The steps as a numbered serif list under a hairline (the reference's tab bar), the current one underlined in
+ * Berry, finished ones marked with a check and clickable. Phones show a four-segment track instead.
+ */
 function Progress(props: { step: Step; reached: Step; onGo: (s: Step) => void }) {
   return (
     <>
@@ -93,8 +100,8 @@ function Progress(props: { step: Step; reached: Step; onGo: (s: Step) => void })
             const canGo = !current && s.n <= props.reached;
             const inner = (
               <>
-                <span class="bk-progress__n" aria-hidden="true">
-                  {done ? <Icon name="check" /> : s.n}
+                <span class="bk-progress__n num" aria-hidden="true">
+                  {done ? <Icon name="check" /> : `0${s.n}`}
                 </span>
                 <span class="bk-progress__label">{s.nav}</span>
                 {done && <span class="visually-hidden"> (done)</span>}
@@ -137,7 +144,8 @@ function Skeleton() {
   );
 }
 
-export default function BookingApp() {
+export default function BookingApp(props: { spacePhotos?: SpacePhotos }) {
+  const { spacePhotos } = props;
   const [today, setToday] = useState<DateKey>('');
   const [d, setD] = useState<Draft>(DEFAULT_DRAFT);
   const [view, setView] = useState<YM>({ y: 2000, m: 1 });
@@ -527,13 +535,13 @@ export default function BookingApp() {
         <div class="bk-main">
           <Progress step={d.step} reached={d.reached} onGo={jumpTo} />
           <div class="bk-step-head">
-            <p class="bk-step-count">
+            <p class="eyebrow bk-step-count">
               Step {d.step} of {STEPS.length}
             </p>
             <h2 class="bk-step-title" tabIndex={-1} ref={headingRef}>
               {stepInfo.title}
             </h2>
-            <p class="bk-step-sub">{SUBTITLES[d.step]}</p>
+            <p class="bk-step-sub t-lead">{SUBTITLES[d.step]}</p>
           </div>
 
           {summaryItems.length > 0 && (
@@ -576,6 +584,7 @@ export default function BookingApp() {
               onUnavailable={onUnavailable}
               onGuests={onGuests}
               calMsg={calMsg}
+              spacePhotos={spacePhotos}
             />
           )}
           {d.step === 2 && <StepEvent d={d} update={update} errors={errors} />}
@@ -594,13 +603,14 @@ export default function BookingApp() {
         </div>
 
         <aside class="bk-aside" aria-labelledby="bk-summary-title">
-          <SummaryCard d={d} />
+          {/* The chosen space's photo shows here only once the space rows (step 1) are off screen. */}
+          <SummaryCard d={d} spacePhotos={d.step > 1 ? spacePhotos : undefined} />
         </aside>
 
         <div class="bk-actions">
           <div class="bk-actions__inner">
             {d.step > 1 ? (
-              <button type="button" class="btn btn--gray bk-actions__back" onClick={() => goStep((d.step - 1) as Step)}>
+              <button type="button" class="btn btn--outline bk-actions__back" onClick={() => goStep((d.step - 1) as Step)}>
                 <Icon name="chevron-left" />
                 Back
               </button>
@@ -609,7 +619,7 @@ export default function BookingApp() {
             )}
             <div class="bk-actions__total" aria-hidden="true">
               <span class="bk-actions__cap">Your date</span>
-              {d.date ? <span class="bk-actions__val">{formatShort(d.date)}</span> : <span class="bk-actions__none">Pick a date</span>}
+              {d.date ? <span class="bk-actions__val">{formatShort(d.date)}</span> : <span class="bk-actions__none">Not chosen yet</span>}
             </div>
             {d.step < 4 ? (
               <button type="submit" class="btn btn--filled bk-actions__next">
