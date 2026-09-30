@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { eventTypes } from '../../data/event-types';
+import { endsInHours, isClosedDay, startsInHours } from '../../shared/booking-rules';
 import { CAPACITY } from '../../shared/capacity';
 import { CSV_COLUMNS } from '../../shared/csv';
 import { addDays, dayOfWeek, todayKey } from '../../shared/dates';
@@ -179,6 +180,11 @@ test('seed data covers every status, event type, and space, within capacity', as
     assert.match(i.reference, referencePattern);
     assert.match(i.email, /@example\.com$/);
     assert.ok(i.guests >= 1 && i.guests <= CAPACITY[i.space], `${i.name} fits ${i.space}`);
+    // The seed follows the building hours the site enforces: no Sundays, 9:00 AM to 12:00 midnight.
+    assert.ok(!isClosedDay(i.date), `${i.name} is not on a Sunday`);
+    if (i.altDate) assert.ok(!isClosedDay(i.altDate), `${i.name}'s alternate date is not on a Sunday`);
+    assert.ok(startsInHours(i.startTime), `${i.name} starts at 9:00 AM or later`);
+    assert.ok(endsInHours(i.startTime, i.hours), `${i.name} ends by 12:00 midnight`);
     const detail = ok(await api.admin.getInquiry(i.id));
     assert.equal(detail.estimate.total, i.estimateTotal);
     assert.equal(i.estimateTotal, estimate({ date: i.date, space: i.space, hours: i.hours, eventType: i.eventType }).total);
