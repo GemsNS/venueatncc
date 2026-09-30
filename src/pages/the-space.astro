@@ -44,6 +44,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
 
 const title = 'Event spaces in Suffolk, VA | The Venue @ NCC';
 const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See the spaces, amenities, and grounds.`;
+/** The page's place in the site, for structured data only: breadcrumbs are shown on event pages alone (redesign-spec.md). */
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'The Space', path: '/the-space/' },
@@ -107,7 +108,7 @@ const panels: SpacePanel[] = [
     id: 'grove',
     name: grove.name,
     heading: 'Among the pines',
-    lead: `${grove.name} is our outdoor setting for ceremonies, reunions, and gatherings in the open air: a timber gazebo at the centre, picnic tables on a paved patio, open lawn, and tall pines on every side.`,
+    lead: `${grove.name} is our outdoor setting for ceremonies, reunions, and gatherings in the open air: a timber gazebo at its heart, picnic tables on a paved patio, open lawn, and tall pines on every side.`,
     facts: [
       { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
       { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a patio, open lawn, and paths through the trees' },
@@ -231,7 +232,7 @@ const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw';
     galleryPhotos.length > 0 && (
       <section id="gallery" class="section sp-target" aria-labelledby="gallery-heading">
         <div class="container">
-          <SectionHeading id="gallery-heading" eyebrow="Gallery" heading="Photo gallery" lead="More views of the rooms and the grounds. Tap a photo to see it whole." />
+          <SectionHeading id="gallery-heading" eyebrow="Gallery" heading="Photo gallery" lead="More views of the spaces and the grounds. Open any photo to see it whole." />
           <Carousel cols={3} label="Photo gallery">
             {galleryPhotos.map((p) => (
               <PhotoCard photo={p} label={p.caption ?? p.alt} meta={p.space ? SPACE_NAMES[p.space] : undefined} sizes={CARD_SIZES} />
