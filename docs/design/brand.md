@@ -1,4 +1,4 @@
-# The Venue at NCC: brand and redesign spec (version 3)
+# The Venue @ NCC: brand and redesign spec (version 3)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: floating tab bar on phones,
@@ -56,7 +56,7 @@ mode), never as text on white.
 
 | Thing | Public name | Notes |
 |---|---|---|
-| The business | The Venue at NCC | Stand-alone business. Never "NCC Spaces" or "NCC Venues". |
+| The business | The Venue @ NCC | Stand-alone business. Never "NCC Spaces" or "NCC Venues". |
 | Indoor space | The Hall | Up to 100 guests. Data slug stays `indoor`. |
 | Outdoor space | The Grove | Up to 150 guests. Data slug stays `outdoor`. |
 | Both | The Hall and The Grove | Data slug stays `both`. |

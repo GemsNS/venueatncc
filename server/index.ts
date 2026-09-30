@@ -1,5 +1,5 @@
 /**
- * The Venue at NCC server: the REST API (see src/lib/api/http.ts) plus the built static site.
+ * The Venue @ NCC server: the REST API (see src/lib/api/http.ts) plus the built static site.
  *
  *   npm run dev:api     development, restarts on change (tsx watch)
  *   npm run build       builds the site into dist/ and this server into server-dist/index.mjs

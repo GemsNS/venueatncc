@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Promotional website and booking system for The Venue at NCC, an event venue in Suffolk, Virginia.",
+  "description": "Promotional website and booking system for The Venue @ NCC, an event venue in Suffolk, Virginia.",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:site": "astro dev",

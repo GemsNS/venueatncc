@@ -40,7 +40,7 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'Who can book the venue?',
-    a: 'The Venue at NCC is open to the public. Families, businesses, nonprofits, and faith groups can all book.',
+    a: 'The Venue @ NCC is open to the public. Families, businesses, nonprofits, and faith groups can all book.',
   },
   {
     topic: 'booking',
@@ -84,8 +84,8 @@ export const faqs: Faq[] = [
   },
   {
     topic: 'about',
-    q: 'Where is The Venue at NCC?',
-    a: `The Venue at NCC is at ${fullAddress}.`,
+    q: 'Where is The Venue @ NCC?',
+    a: `The Venue @ NCC is at ${fullAddress}.`,
   },
   {
     topic: 'about',

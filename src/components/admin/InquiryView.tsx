@@ -65,7 +65,7 @@ function newestFirst(a: InquiryEvent, b: InquiryEvent): number {
 }
 
 function mailSubject(d: InquiryDetail): string {
-  return `Your request for ${formatLong(d.date)} at The Venue at NCC (${d.reference})`;
+  return `Your request for ${formatLong(d.date)} at The Venue @ NCC (${d.reference})`;
 }
 
 function ContactActions({ d, class: className }: { d: InquiryDetail; class?: string }) {

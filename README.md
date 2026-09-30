@@ -1,6 +1,6 @@
-# The Venue at NCC
+# The Venue @ NCC
 
-Website and booking system for **The Venue at NCC** (venueatncc.org), an event venue at
+Website and booking system for **The Venue @ NCC** (venueatncc.org), an event venue at
 5112 Godwin Blvd, Suffolk, VA 23434.
 
 - A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in the client's navy and sky-blue palette with full dark mode.

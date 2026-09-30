@@ -74,8 +74,8 @@ export const events: EventType[] = [
     slug: 'weddings',
     name: 'Weddings & receptions',
     summary: `Ceremonies at the gazebo in ${GROVE}, your choice of an indoor or outdoor reception, and the whole day on one property.`,
-    metaTitle: 'Wedding venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: a ceremony at the gazebo in ${GROVE}, your choice of an indoor or outdoor reception, and on-site parking.`,
+    metaTitle: 'Wedding venue in Suffolk, VA | The Venue @ NCC',
+    metaDescription: `Plan your wedding at The Venue @ NCC in Suffolk, VA: a ceremony at the gazebo in ${GROVE}, your choice of an indoor or outdoor reception, and on-site parking.`,
     h1: 'A Suffolk wedding venue among the pines',
     intro: [
       `Say your vows at the timber gazebo in ${GROVE}, then celebrate with your choice of an indoor or outdoor reception, all on one wooded property in Suffolk.`,
@@ -131,8 +131,8 @@ export const events: EventType[] = [
     slug: 'receptions-banquets',
     name: 'Banquets & anniversaries',
     summary: 'Anniversary dinners, awards banquets, and formal celebrations.',
-    metaTitle: 'Banquet hall in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Host an anniversary dinner or awards banquet at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and on-site parking is included.`,
+    metaTitle: 'Banquet hall in Suffolk, VA | The Venue @ NCC',
+    metaDescription: `Host an anniversary dinner or awards banquet at The Venue @ NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and on-site parking is included.`,
     h1: 'Banquets and anniversary dinners in Suffolk',
     intro: [
       'A formal evening deserves a room with presence, one that frames a head table or a speaker.',
@@ -191,8 +191,8 @@ export const events: EventType[] = [
     slug: 'baby-bridal-showers',
     name: 'Baby & bridal showers',
     summary: 'Baby showers, bridal showers, and gender reveals for family and friends.',
-    metaTitle: 'Baby and bridal shower venue, Suffolk | The Venue at NCC',
-    metaDescription: `Host a baby shower, bridal shower, or gender reveal at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, with on-site parking included.`,
+    metaTitle: 'Baby and bridal shower venue, Suffolk | The Venue @ NCC',
+    metaDescription: `Host a baby shower, bridal shower, or gender reveal at The Venue @ NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, with on-site parking included.`,
     h1: 'Baby and bridal showers in Suffolk',
     intro: [
       `${HALL} gives a shower an open, graceful room for family and friends.`,
@@ -245,8 +245,8 @@ export const events: EventType[] = [
     slug: 'birthday-parties',
     name: 'Birthdays & milestones',
     summary: 'First birthdays, sweet sixteens, milestone birthdays, and retirement parties.',
-    metaTitle: 'Birthday party venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue at NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and parking is included.`,
+    metaTitle: 'Birthday party venue in Suffolk, VA | The Venue @ NCC',
+    metaDescription: `Plan a sweet sixteen, 50th birthday, or retirement party at The Venue @ NCC in Suffolk, VA. ${HALL} holds up to ${INDOOR} guests, and parking is included.`,
     h1: 'Milestone birthdays and retirement parties',
     intro: [
       'Turning one, sixteen, or fifty deserves a proper room, and so does retiring after decades of work.',
@@ -302,7 +302,7 @@ export const events: EventType[] = [
     slug: 'repasts-memorials',
     name: 'Repasts & celebrations of life',
     summary: 'A calm place for family and friends to gather and remember.',
-    metaTitle: 'Repast venue in Suffolk, VA | The Venue at NCC',
+    metaTitle: 'Repast venue in Suffolk, VA | The Venue @ NCC',
     metaDescription: `A calm place for family and friends to gather after a funeral or memorial in Suffolk, VA. ${HALL} holds up to ${INDOOR}, with on-site parking. Call ${PHONE}.`,
     h1: 'Repasts and celebrations of life',
     intro: [
@@ -360,7 +360,7 @@ export const events: EventType[] = [
     slug: 'meetings-trainings',
     name: 'Meetings & workshops',
     summary: 'Board meetings, trainings, workshops, and nonprofit gatherings.',
-    metaTitle: 'Meeting space in Suffolk, VA | The Venue at NCC',
+    metaTitle: 'Meeting space in Suffolk, VA | The Venue @ NCC',
     metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, and on-site parking is included.`,
     h1: 'Meeting and training space in Suffolk',
     intro: [
@@ -415,8 +415,8 @@ export const events: EventType[] = [
     slug: 'graduations-reunions',
     name: 'Graduations & reunions',
     summary: 'Graduation parties, family reunions, and class reunions.',
-    metaTitle: 'Reunion and graduation venue, Suffolk | The Venue at NCC',
-    metaDescription: `Host a graduation party or family reunion at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests among the pines, with on-site parking.`,
+    metaTitle: 'Reunion and graduation venue, Suffolk | The Venue @ NCC',
+    metaDescription: `Host a graduation party or family reunion at The Venue @ NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests among the pines, with on-site parking.`,
     h1: 'Graduation parties and reunions in Suffolk',
     intro: [
       `Graduations and reunions bring together people who rarely share a room. ${GROVE} gives a large group space to spread out, with open lawn, a timber gazebo, and picnic tables on a patio.`,
@@ -478,8 +478,8 @@ export const events: EventType[] = [
     slug: 'community-events',
     name: 'Community events',
     summary: 'Conferences, civic meetings, and community days for local groups.',
-    metaTitle: 'Community event venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Host a conference, civic meeting, or neighborhood day at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
+    metaTitle: 'Community event venue in Suffolk, VA | The Venue @ NCC',
+    metaDescription: `Host a conference, civic meeting, or neighborhood day at The Venue @ NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
     h1: 'Community events in Suffolk',
     intro: [
       'A conference, a civic forum, or a neighborhood day brings people together around a shared purpose. We give your organization the room to host it, indoors or among the pines.',

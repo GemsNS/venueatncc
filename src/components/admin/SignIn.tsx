@@ -65,7 +65,7 @@ export function SignIn({ notice, onSignedIn }: { notice: string | null; onSigned
         <h1 class="adm-signin__title" tabIndex={-1} ref={titleRef}>
           Sign in
         </h1>
-        <p class="adm-signin__lead">The Venue at NCC staff area</p>
+        <p class="adm-signin__lead">The Venue @ NCC staff area</p>
 
         {notice && (
           <p class="adm-banner adm-banner--info" role="status">

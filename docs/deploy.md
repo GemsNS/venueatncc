@@ -1,4 +1,4 @@
-# Deploying The Venue at NCC
+# Deploying The Venue @ NCC
 
 The production site is one small Node server. It serves the built pages from `dist/` and the API under
 `/api` (booking requests, the calendar, and the admin), keeps everything in one SQLite file
@@ -51,7 +51,7 @@ Typical settings, to confirm in your provider's help pages:
 | Postmark, Amazon SES, Resend, Brevo, Mailgun | from the provider | 587 | `false` | Best deliverability for automated mail. Verify the domain with them first. |
 
 `SMTP_USER` and `SMTP_PASS` are the account's sign-in. `MAIL_FROM` must be an address that account is
-allowed to send as (default `The Venue at NCC <faith@venueatncc.org>`).
+allowed to send as (default `The Venue @ NCC <faith@venueatncc.org>`).
 
 **Deliverability.** So confirmations do not land in spam, add the records your provider gives you in
 GoDaddy DNS: an SPF `TXT` record on `@` (for example `v=spf1 include:spf.protection.outlook.com -all`
@@ -284,7 +284,7 @@ for `/app/data`. Run a single instance: SQLite is one file on one disk.
 
   ```ini
   [Unit]
-  Description=The Venue at NCC
+  Description=The Venue @ NCC
   After=network.target
 
   [Service]

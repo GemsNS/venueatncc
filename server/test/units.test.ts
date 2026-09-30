@@ -339,7 +339,7 @@ describe('email templates', () => {
         assert.ok(!mail.html.toUpperCase().includes(retired), `no retired color ${retired}`);
       }
       assert.ok(!mail.html.includes('New Community Church'), 'no church');
-      assert.ok(mail.html.includes('<img src="https://venueatncc.org/brand/email-lockup.png" width="256" height="48" alt="The Venue at NCC"'), 'lockup header');
+      assert.ok(mail.html.includes('<img src="https://venueatncc.org/brand/email-lockup.png" width="256" height="48" alt="The Venue @ NCC"'), 'lockup header');
       assert.ok(mail.html.includes('Georgia'), 'serif headings');
       assert.ok(!mail.html.includes('uppercase'), 'no all-caps labels');
       assert.ok(mail.html.includes(SPACE_NAMES.both) && mail.text.includes(`Space: ${SPACE_NAMES.both}`), 'spaces by their public names');

@@ -210,7 +210,7 @@ const modules = import.meta.glob<{ default: ImageMetadata }>(
   { eager: true },
 );
 
-const GENERIC_ALT = 'The Venue at NCC in Suffolk, Virginia';
+const GENERIC_ALT = 'The Venue @ NCC in Suffolk, Virginia';
 const CAMERA_WORDS = new Set(['img', 'dsc', 'dscn', 'dscf', 'pxl', 'mvimg', 'photo', 'image', 'screenshot', 'dcim', 'whatsapp', 'edited', 'copy', 'mp', 'portrait', 'night']);
 const TALL_SUFFIX = '-tall';
 const STYLED_PREFIX = 'styled-';
@@ -225,7 +225,7 @@ function altFromFilename(file: string): string {
     .filter((w) => w.length >= 2 && !CAMERA_WORDS.has(w));
   if (words.length < 2) return GENERIC_ALT;
   const base = words.join(' ');
-  return `${base.charAt(0).toUpperCase() + base.slice(1)} at The Venue at NCC in Suffolk, Virginia`;
+  return `${base.charAt(0).toUpperCase() + base.slice(1)} at The Venue @ NCC in Suffolk, Virginia`;
 }
 
 const files = Object.entries(modules).map(([path, mod]) => ({ file: path.split('/').pop() as string, src: mod.default }));

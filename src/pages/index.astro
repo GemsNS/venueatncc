@@ -76,7 +76,7 @@ const spaceCards: SpaceCard[] = [
 */
 const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
 
-const title = 'Event venue in Suffolk, VA | The Venue at NCC';
+const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
 const description = `An event venue among the pines in Suffolk, Virginia: ${hallName} for up to ${hall?.capacity} guests, ${groveName} for up to ${grove?.capacity}, and on-site parking. Check your date online.`;
 ---
 <BaseLayout title={title} description={description} og="home" venueDetails>

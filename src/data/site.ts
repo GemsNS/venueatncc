@@ -1,5 +1,5 @@
 /**
- * The single source of truth for facts about The Venue at NCC.
+ * The single source of truth for facts about The Venue @ NCC.
  *
  * Every page, the booking wizard, the API server, and the structured data (JSON-LD) read from here.
  * Anything not confirmed is left as `null` or `[]`, and the site hides it.
@@ -34,7 +34,7 @@ export interface Space {
 }
 
 export const site = {
-  name: 'The Venue at NCC',
+  name: 'The Venue @ NCC',
   shortName: 'The Venue',
   /** The brand line. Feeds the slogan in the venue structured data. */
   tagline: 'Celebrate among the pines',
@@ -43,7 +43,7 @@ export const site = {
 
   /** Default description used when a page does not set its own. */
   description:
-    'The Venue at NCC is an event venue in Suffolk, Virginia, with The Hall for up to 100 guests, The Grove for up to 150, and on-site parking.',
+    'The Venue @ NCC is an event venue in Suffolk, Virginia, with The Hall for up to 100 guests, The Grove for up to 150, and on-site parking.',
 
   contact: {
     phone: '(948) 205-2934',
