@@ -14,8 +14,8 @@
  *   feature wall, dark wood-look floors, recessed lighting, double doors. The Main Hall: an auditorium with
  *   stage seating in rows, a raised stage, a vaulted ceiling. The Grove: a timber gazebo, open lawn, picnic
  *   tables on a patio, tall pines, paths. The grounds: a long paved drive and a paved lot.
- *   Kitchen access and the other amenities are stated once, on The Space; do not repeat them here.
- *   Never claim or ask about sound, tables and chairs, or setup times.
+ *   Kitchen access, the other amenities, and what the rental includes (tables and chairs among them) are
+ *   stated once, on The Space; do not repeat them here. Never claim or ask about sound or setup times.
  * - State each fact once per page. Capacities appear only in the event's first section, which
  *   describes the spaces. Rates, deposits, parking, and visits are not written here: the event page
  *   adds one line that links to /pricing/ (Ask about rates) and the FAQ, and its checklist carries the

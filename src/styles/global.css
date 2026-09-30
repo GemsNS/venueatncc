@@ -1,45 +1,45 @@
 /*
-  The Venue @ NCC design system. The brand (color, type, imagery) follows docs/design/brand.md;
+  The Venue @ NCC design system. The brand (color, type, imagery) follows docs/design/brand.md (version 4);
   the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
-    Photographs first, quiet frame. Real photos of the property lead; the white and navy frame stays calm.
+    Name first, then photographs. The business name is the first screen's one dominant element, and the
+              real photos of the property follow in a soft, light frame.
     Clarity   Legible type and plain words. Every screen has one obvious next step.
     Deference Chrome stays quiet. Glass is for navigation and controls floating over photos only.
 
-  Color      The client's ten blues, plus three neutrals derived from them: White, Frost, and Slate.
-             Nothing else is added. The palette tokens hold the fixed values; components use the role
-             tokens under them (--bg, --label, --accent, and so on), which change with the appearance.
-    Navy          #012A4A  text, and every photo scrim (--navy-rgb). White text on Navy 14.7:1. In light
-                           mode Navy is for text, buttons, and small accents, never a large surface.
-    Harbor        #013A63  hover and pressed state of the primary button.
-    Deep Blue     #01497C  primary fill with white text (9.4:1); links, accent text, and selected states.
-    Marine        #014F86  alternative link hover.
-    Steel         #2A6F97  logo accent and icons (5.5:1 on White).
-    Lake          #2C7DA0  focus ring (4.6:1 on White). Never text.
-    Bay           #468FAF  decorative only: hairlines on Navy.
-    Sky           #61A5C2  primary fill in dark mode, always with Navy text (5.4:1).
-    Mist          #89C2D9  accent text and the lockup accent on Navy (7.5:1); accent text in dark mode.
-    Ice           #A9D6E5  chips, capacity tags, and selected rows, with Navy text (9.4:1); secondary
-                           text on Navy and in dark mode.
-    White         #FFFFFF  page and cards.
-    Frost         #EEF6F9  alternate sections, quiet panels, and the footer.
-    Ice tint      #D8ECF3  the closing band (Ice 45 percent over White): Navy 12.0:1, Slate 6.0:1,
-                           Deep Blue 7.7:1. Not for --label-3, which falls to 4.3:1 on it.
-    Slate         #3E5A6D  secondary text (7.3:1 on White, 6.6:1 on Frost, 4.6:1 on Ice).
-    Never set Sky, Mist, Ice, or Bay as text on White, and never put white text on Sky or lighter.
-    Dark mode: page Night #011A2E, grouped #010F1C, cards #022640, text #EAF4F8, secondary Ice,
-    primary fill Sky with Navy text, accent text Mist (9.1:1 on Night), focus ring Sky, and chips
-    and selected rows in translucent Mist. The footer and the closing band stay Navy there, a step
-    lighter than the Night page, with a hairline.
+  Color      A pastel pink palette: blush and petal surfaces, white cards, a deep Berry for buttons, links
+             and accents, and a warm Plum ink for text. The palette tokens hold the fixed values; components
+             use the role tokens under them (--bg, --label, --accent, and so on), which change with the
+             appearance.
+    Plum          #3B2430  text and every photo scrim (--ink-rgb). 14.2:1 on White, 12.8:1 on Blush, 11.2:1
+                           on Petal, 9.2:1 on Rose Mist. Never a large surface in light mode.
+    Mauve         #6A4B57  secondary text: 7.6:1 on White, 6.9:1 on Blush, 6.0:1 on Petal, 4.9:1 on Rose Mist.
+    Berry         #9E2B52  primary fill with white text (7.2:1); links, accent text (7.2:1 on White, 6.5:1 on
+                           Blush, 5.7:1 on Petal), selected states, the logo accent.
+    Berry Deep    #7E1F41  hover and pressed state of the primary button (white text 9.7:1).
+    Rose          #B5456E  focus ring (5.2:1 on White, 4.7:1 on Blush, 4.1:1 on Petal). Never text.
+    Pink          #E9A9BB  accent text and the lockup accent on Plum and in dark mode; decorative petals.
+    Rose Mist     #EFC5D0  decorative: petals, hairlines on Plum, stronger tints (Plum text 9.2:1).
+    Petal         #F6DFE5  chips, capacity tags, selected rows, the closing band, quiet panels (Plum 11.2:1).
+    Blush         #FBF1F3  the page's alternate sections, the footer, the welcome surface.
+    White         #FFFFFF  cards and the page.
+    Never set Pink, Rose Mist, or Petal as text on a light surface, and never put white text on Rose or
+    lighter. The tertiary label (--label-3, #7E5F6B) is 5.6:1 on White and 5.1:1 on Blush but 4.4:1 on
+    Petal, so it is not used on Petal or Rose Mist.
+    Dark mode, in the same family: page Mulberry Night #2A151F, grouped #1F0E16, cards #3A1F2B, text
+    #FBEFF2 (15.3:1), secondary #E9C9D3 (11.2:1), tertiary #B58FA0 (6.0:1), primary fill Pink Bloom
+    #F2B7C6 with Night text (10.1:1), accent text Blossom #F5A8BD (9.2:1 on Night, 8.0:1 on cards), focus
+    ring Pink Bloom, and chips and selected rows in translucent Pink.
     --accent is a fill. Anything that is text, a link, or a selection border uses --accent-text, and
     focus rings use --focus-ring; both keep 3:1 or better against the page (WCAG 1.4.11).
     No gradients as decoration. The only gradients are legibility scrims over photographs.
 
   Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
              only at 28px and above where the size allows. Libre Caslon Text 400 and italic for serif
-             leads, captions and large prices. The system stack (SF Pro on Apple, Inter elsewhere) for
-             everything else, sized after the iOS text styles.
+             leads, captions and quiet statements. The system stack (SF Pro on Apple, Inter elsewhere) for
+             everything else, sized after the iOS text styles. Small letterspaced eyebrows (.eyebrow) label
+             a section above its Caslon heading.
 
   Shape      Photos are rectangles with a modest radius (--r-lg) or full bleed. Concentric radii:
              inner radius = outer radius - padding. Capsules for buttons and controls. Minimum hit
@@ -52,72 +52,69 @@
   color-scheme: light dark;
 
   /* The palette (brand.md, Color). The same values in both appearances. */
-  --navy: #012a4a;
-  /* Navy as channels, for scrims and tinted shadows: rgb(var(--navy-rgb) / 0.6). */
-  --navy-rgb: 1 42 74;
-  --harbor: #013a63;
-  --deep-blue: #01497c;
-  --marine: #014f86;
-  --steel: #2a6f97;
-  --lake: #2c7da0;
-  --bay: #468faf;
-  --sky: #61a5c2;
-  --mist: #89c2d9;
-  --ice: #a9d6e5;
+  --ink: #3b2430;
+  /* Plum as channels, for scrims and tinted shadows: rgb(var(--ink-rgb) / 0.6). */
+  --ink-rgb: 59 36 48;
+  --mauve: #6a4b57;
+  --berry: #9e2b52;
+  --berry-deep: #7e1f41;
+  --rose: #b5456e;
+  --pink: #e9a9bb;
+  --rose-mist: #efc5d0;
+  --petal: #f6dfe5;
+  --blush: #fbf1f3;
   --white: #ffffff;
-  --frost: #eef6f9;
-  --slate: #3e5a6d;
 
   /* Surfaces */
   --bg: var(--white);
-  --bg-grouped: var(--frost);
+  --bg-grouped: var(--blush);
   --bg-elevated: var(--white);
   /* A quiet panel inside a White section. */
-  --panel: var(--frost);
-  --fill: rgba(62, 90, 109, 0.13);
-  --fill-2: rgba(62, 90, 109, 0.08);
-  --fill-3: rgba(62, 90, 109, 0.05);
-  /* Chips and capacity tags, and selected rows: Ice with Navy text (9.4:1). */
-  --chip: var(--ice);
-  --on-chip: var(--navy);
-  --selected: var(--ice);
+  --panel: var(--petal);
+  --fill: rgba(106, 75, 87, 0.13);
+  --fill-2: rgba(106, 75, 87, 0.08);
+  --fill-3: rgba(106, 75, 87, 0.05);
+  /* Chips and capacity tags, and selected rows: Petal with Plum text (11.2:1). */
+  --chip: var(--petal);
+  --on-chip: var(--ink);
+  --selected: var(--petal);
   /* The selected thumb of a segmented control and other raised controls on a fill track. */
   --thumb: var(--white);
 
-  /* Labels. --label-3 is Slate lightened toward White: 5.2:1 on White, 4.8:1 on Frost. */
-  --label: var(--navy);
-  --label-2: var(--slate);
-  --label-3: #56707f;
-  --separator: rgb(var(--navy-rgb) / 0.12);
-  --separator-strong: rgb(var(--navy-rgb) / 0.24);
+  /* Labels. --label-3 is Mauve lightened toward White: 5.6:1 on White, 5.1:1 on Blush. Not on Petal. */
+  --label: var(--ink);
+  --label-2: var(--mauve);
+  --label-3: #7e5f6b;
+  --separator: rgb(var(--ink-rgb) / 0.12);
+  --separator-strong: rgb(var(--ink-rgb) / 0.24);
 
   /* Brand */
-  --accent: var(--deep-blue);
+  --accent: var(--berry);
   --accent-fill: var(--accent);
-  --accent-hover: var(--harbor);
-  --accent-text: var(--deep-blue);
+  --accent-hover: var(--berry-deep);
+  --accent-text: var(--berry);
   --on-accent: var(--white);
   /* The logo accent and icons. */
-  --accent-icon: var(--steel);
-  --focus-ring: var(--lake);
-  /* Deep Blue tints for tinted buttons and icon tiles: Deep Blue text keeps at least 7:1 on them. */
-  --accent-tint: rgba(1, 73, 124, 0.08);
-  --accent-tint-2: rgba(1, 73, 124, 0.14);
+  --accent-icon: var(--berry);
+  --focus-ring: var(--rose);
+  /* Berry tints for tinted buttons and icon tiles: Berry text keeps at least 5.5:1 on them. */
+  --accent-tint: rgba(158, 43, 82, 0.09);
+  --accent-tint-2: rgba(158, 43, 82, 0.16);
 
   /*
-    Light bands: the footer on Frost and the closing band on the Ice tint, with Navy text, Slate secondary
-    text, Deep Blue links and buttons, and a hairline. In dark mode both are Navy (below).
+    Light bands: the footer on Blush and the closing band on Petal, with Plum text, Mauve secondary text,
+    Berry links and buttons, and a hairline. In dark mode both are the card color (below).
   */
-  --footer-bg: var(--frost);
-  --band: #d8ecf3;
+  --footer-bg: var(--blush);
+  --band: var(--petal);
 
   /*
-    Text over photographs and their Navy scrims (the home hero on wider screens), in both appearances.
-    White text 14.7:1 on Navy, Ice 9.4:1, Mist 7.5:1; Bay hairlines.
+    Text over photographs and their Plum scrims (the photo viewer, badges in dark mode), in both
+    appearances. White text 14.2:1 on Plum, Petal 11.2:1, Pink 7.3:1; Rose Mist hairlines.
   */
-  --on-navy: var(--white);
-  --on-navy-2: var(--ice);
-  --on-navy-accent: var(--mist);
+  --on-dark: var(--white);
+  --on-dark-2: var(--petal);
+  --on-dark-accent: var(--pink);
 
   /* Status */
   --green: #1b6e30;
@@ -131,21 +128,21 @@
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-bg-strong: rgba(255, 255, 255, 0.86);
   --glass-border: rgba(255, 255, 255, 0.7);
-  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgb(var(--navy-rgb) / 0.05);
-  --glass-shadow: 0 8px 32px rgb(var(--navy-rgb) / 0.12), 0 1px 2px rgb(var(--navy-rgb) / 0.08);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgb(var(--ink-rgb) / 0.05);
+  --glass-shadow: 0 8px 32px rgb(var(--ink-rgb) / 0.12), 0 1px 2px rgb(var(--ink-rgb) / 0.08);
   --glass-blur: blur(24px) saturate(180%);
 
-  /* Elevation, tinted toward Navy */
-  --shadow-1: 0 1px 2px rgb(var(--navy-rgb) / 0.08), 0 1px 1px rgb(var(--navy-rgb) / 0.04);
-  --shadow-2: 0 2px 6px rgb(var(--navy-rgb) / 0.06), 0 12px 32px rgb(var(--navy-rgb) / 0.09);
-  --shadow-3: 0 4px 12px rgb(var(--navy-rgb) / 0.08), 0 24px 64px rgb(var(--navy-rgb) / 0.16);
+  /* Elevation, tinted toward Plum */
+  --shadow-1: 0 1px 2px rgb(var(--ink-rgb) / 0.08), 0 1px 1px rgb(var(--ink-rgb) / 0.04);
+  --shadow-2: 0 2px 6px rgb(var(--ink-rgb) / 0.06), 0 12px 32px rgb(var(--ink-rgb) / 0.09);
+  --shadow-3: 0 4px 12px rgb(var(--ink-rgb) / 0.08), 0 24px 64px rgb(var(--ink-rgb) / 0.16);
 
   /* Type */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
   --font-rounded: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Inter Variable', system-ui, sans-serif;
   /* Page titles at 28px and above. Never bold: the family has one weight. */
   --font-display: 'Libre Caslon Display', 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
-  /* Serif leads, captions (italic), and large prices. */
+  /* Serif leads, captions (italic), and quiet statements. */
   --font-serif: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
   /*
     Title sizes are also capped by screen width (the min() with vw). It only takes effect with very large
@@ -177,7 +174,7 @@
   --max-text: 42rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
   --section: clamp(4rem, 3rem + 5vw, 8rem);
-  /* 56px at default text size; grows with larger text so the bar never clips its links. */
+  /* 56px at default text size (64px from 46.5rem); grows with larger text so the bar never clips its links. */
   --nav-h: 3.5rem;
   /*
     Size classes (HIG): compact below 46.5rem (744px at default text size) shows the floating
@@ -197,48 +194,54 @@
   --dur-3: 480ms;
 }
 
+@media (min-width: 46.5rem) {
+  :root {
+    --nav-h: 4rem;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Night page, a deeper grouped background, and raised cards (brand.md, Dark mode). */
-    --bg: #011a2e;
-    --bg-grouped: #010f1c;
-    --bg-elevated: #022640;
-    --panel: #022640;
-    --fill: rgba(169, 214, 229, 0.2);
-    --fill-2: rgba(169, 214, 229, 0.13);
-    --fill-3: rgba(169, 214, 229, 0.07);
+    /* Mulberry Night page, a deeper grouped background, and raised cards (brand.md, Dark mode). */
+    --bg: #2a151f;
+    --bg-grouped: #1f0e16;
+    --bg-elevated: #3a1f2b;
+    --panel: #3a1f2b;
+    --fill: rgba(242, 183, 198, 0.2);
+    --fill-2: rgba(242, 183, 198, 0.13);
+    --fill-3: rgba(242, 183, 198, 0.07);
     /*
-      Chips in translucent Mist with Ice text: 6.4:1 on Night, and still 5.6:1 on a hovered or selected
-      row, where Mist text would fall below 4.5:1. Selected rows use the same translucent Mist.
+      Chips in translucent Pink with the secondary text: 8:1 or better on Night, and still above 4.5:1 on a
+      hovered or selected row. Selected rows use the same translucent Pink.
     */
-    --chip: rgba(137, 194, 217, 0.2);
-    --on-chip: var(--ice);
-    --selected: rgba(137, 194, 217, 0.16);
-    /* Raised controls: Deep Blue sits above the fill track (a card color would sink below it). */
-    --thumb: var(--deep-blue);
+    --chip: rgba(233, 169, 187, 0.2);
+    --on-chip: #e9c9d3;
+    --selected: rgba(233, 169, 187, 0.16);
+    /* Raised controls: Berry sits above the fill track (a card color would sink below it). */
+    --thumb: var(--berry);
 
-    /* The footer and the closing band: Navy, a step lighter than the Night page, never darker. */
-    --footer-bg: var(--navy);
-    --band: var(--navy);
+    /* The footer and the closing band: the card color, a step lighter than the Night page, never darker. */
+    --footer-bg: #3a1f2b;
+    --band: #3a1f2b;
 
-    --label: #eaf4f8;
-    --label-2: var(--ice);
-    --label-3: #7fa0b3;
-    --separator: rgba(234, 244, 248, 0.14);
-    --separator-strong: rgba(234, 244, 248, 0.26);
+    --label: #fbeff2;
+    --label-2: #e9c9d3;
+    --label-3: #b58fa0;
+    --separator: rgba(251, 239, 242, 0.14);
+    --separator-strong: rgba(251, 239, 242, 0.26);
 
     /*
-      Sky fills take Navy labels (5.4:1) and turn Mist on hover (7.5:1). Mist is the accent text (9.1:1
-      on Night) and the icon accent. The focus ring is Sky: Lake falls near 3:1 on the dark surfaces.
+      Pink Bloom fills take Night labels (10.1:1) and turn lighter on hover. Blossom is the accent text
+      (9.2:1 on Night) and the icon accent. The focus ring is Pink Bloom: Rose falls near 3:1 on the dark surfaces.
     */
-    --accent: var(--sky);
-    --accent-hover: var(--mist);
-    --accent-text: var(--mist);
-    --on-accent: var(--navy);
-    --accent-icon: var(--mist);
-    --focus-ring: var(--sky);
-    --accent-tint: rgba(137, 194, 217, 0.16);
-    --accent-tint-2: rgba(137, 194, 217, 0.22);
+    --accent: #f2b7c6;
+    --accent-hover: #f8cbd6;
+    --accent-text: #f5a8bd;
+    --on-accent: #2a151f;
+    --accent-icon: #f5a8bd;
+    --focus-ring: #f2b7c6;
+    --accent-tint: rgba(242, 183, 198, 0.16);
+    --accent-tint-2: rgba(242, 183, 198, 0.24);
 
     --green: #4cd97b;
     --green-tint: rgba(48, 209, 88, 0.16);
@@ -247,10 +250,10 @@
     --red: #ff7a70;
     --red-tint: rgba(255, 69, 58, 0.18);
 
-    --glass-bg: rgba(2, 38, 64, 0.64);
-    --glass-bg-strong: rgba(2, 38, 64, 0.84);
-    --glass-border: rgba(234, 244, 248, 0.12);
-    --glass-edge: inset 0 1px 0 rgba(234, 244, 248, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(42, 21, 31, 0.64);
+    --glass-bg-strong: rgba(42, 21, 31, 0.84);
+    --glass-border: rgba(251, 239, 242, 0.12);
+    --glass-edge: inset 0 1px 0 rgba(251, 239, 242, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -576,6 +579,60 @@ main:focus {
   justify-items: center;
 }
 
+/*
+  A section head with its actions beside it (the reference site's rhythm): the eyebrow, heading, and lead on
+  the left, one capsule or link on the right, on the heading's last line. Phones stack them.
+*/
+.section-head--row {
+  max-width: none;
+}
+
+.section-head__copy {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44rem;
+}
+
+.section-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+}
+
+@media (min-width: 56rem) {
+  .section-head--row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 1.5rem 3rem;
+  }
+
+  .section-head__actions {
+    justify-content: end;
+    padding-bottom: 0.25rem;
+  }
+}
+
+/* A small letterspaced label above a Caslon heading. Berry on White 7.2:1, on Blush 6.5:1, on Petal 5.7:1. */
+.eyebrow {
+  font-family: var(--font);
+  font-size: var(--t-footnote);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+/* A large, quiet serif statement (the footer's line). */
+.t-statement {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: min(clamp(2rem, 1.4rem + 2.6vw, 3.5rem), 11vw);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -721,10 +778,10 @@ main:focus {
   background: var(--fill-3);
 }
 
-/* Secondary action on Navy and photos: a white outline. The primary stays .btn--filled. */
+/* Secondary action on Plum and photos: a white outline. The primary stays .btn--filled. */
 .btn--outline-light {
   background: transparent;
-  color: var(--on-navy);
+  color: var(--on-dark);
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
 }
 
@@ -844,7 +901,7 @@ a.link-more {
   color: var(--label-2);
 }
 
-/* A chip: Ice with Navy text (translucent Mist with the text color in dark mode). */
+/* A chip: Petal with Plum text (translucent Pink with the secondary text in dark mode). */
 .badge--accent {
   background: var(--chip);
   color: var(--on-chip);

@@ -3,7 +3,7 @@
 Website and booking system for **The Venue @ NCC** (venueatncc.org), an event venue at
 5112 Godwin Blvd, Suffolk, VA 23434.
 
-- A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in the client's navy and sky-blue palette with full dark mode.
+- A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in a pastel pink palette (Blush and Petal surfaces, Berry accents, Plum text) with full dark mode.
 - A live availability calendar, instant price estimates, and a four-step booking request.
 - The venue's own backend: an API server with a SQLite database, email notifications, and a staff admin app. No third-party form services.
 - A static demo of everything on GitHub Pages, where bookings and the admin run in the browser with sample data.

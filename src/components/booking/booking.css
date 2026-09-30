@@ -4,14 +4,14 @@
   interaction rules of the HIG web spec (docs/design/hig-web-spec.md).
 
   How the palette marks state:
-    Deep Blue fill, white label  the one chosen value and the primary action: the selected day, a
+    Berry fill, white label      the one chosen value and the primary action: the selected day, a
                                  pressed Saturday chip, a switch that is on, the current step, and
-                                 the filled buttons (9.4:1; Sky with a Navy label in dark mode).
-    Ice surface                  a selected row or card: a space choice, an event tile, a date
-                                 checker space. Its ring or radio is Deep Blue (--accent-text),
-                                 which keeps 3:1 against the page and 6.0:1 on Ice; Slate secondary
-                                 text keeps 4.6:1 on it. Dark mode uses translucent Mist.
-    Ice chip, Navy label         a finished step in the progress list (9.4:1).
+                                 the filled buttons (7.2:1; Pink Bloom with a Night label in dark mode).
+    Petal surface                a selected row or card: a space choice, an event tile, a date
+                                 checker space. Its ring or radio is Berry (--accent-text),
+                                 which keeps 3:1 against the page and 5.7:1 on Petal; Mauve secondary
+                                 text keeps 6.0:1 on it. Dark mode uses translucent Pink.
+    Petal chip, Plum label       a finished step in the progress list (11.2:1).
   Status uses green and orange with an icon or text. Glass appears only on the phone action bar
   (a control layer). Headings and controls use the interface family; the confirmation title uses
   Libre Caslon Display.
@@ -24,12 +24,12 @@
   --bk-r-panel: calc(var(--r-sm) + var(--bk-pad)); /* 28px around 12px fields */
   --bk-thumb: var(--thumb);
   --bk-step-bg: var(--bg-elevated);
-  /* Selected rows and cards (Ice), and finished steps (an Ice chip with Navy). */
+  /* Selected rows and cards (Petal), and finished steps (a Petal chip with Plum). */
   --bk-selected: var(--selected);
   --bk-done: var(--chip);
   --bk-on-done: var(--on-chip);
   /*
-    Status text shades with 4.5:1 on light surfaces, Ice included (the base tokens are tuned for fills
+    Status text shades with 4.5:1 on light surfaces, Petal included (the base tokens are tuned for fills
     and icons): the status green and orange darkened by 20% and 15%.
   */
   --bk-green-text: #165826;
@@ -42,13 +42,13 @@
 }
 
 /*
-  Dark mode: stepper buttons are Harbor, raised above the card (#022640). Selected rows and finished
-  steps use the global translucent Mist tokens.
+  Dark mode: stepper buttons are Berry, raised above the card (#3A1F2B). Selected rows and finished
+  steps use the global translucent Pink tokens.
 */
 @media (prefers-color-scheme: dark) {
   .bk,
   .bk-app {
-    --bk-step-bg: var(--harbor);
+    --bk-step-bg: var(--berry);
     --bk-pop-edge: 0 0 0 1px var(--separator-strong);
     --bk-green-text: var(--green);
     --bk-orange-text: var(--orange);
@@ -395,7 +395,7 @@
   background: var(--bk-selected);
 }
 
-/* The inset focus ring sits on the Ice selection, where Lake is under 3:1, so it takes the accent text color. */
+/* The inset focus ring sits on the Petal selection, where Rose is under 3:1, so it takes the accent text color. */
 .bk-choice__item[aria-checked='true']:focus-visible {
   outline-color: var(--accent-text);
 }

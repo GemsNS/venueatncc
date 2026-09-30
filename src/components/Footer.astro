@@ -1,28 +1,36 @@
 ---
 /**
- * Site footer on a light Frost band behind a top hairline (Navy in dark mode, --footer-bg): the lockup in
- * its own Navy ink (Logo tone auto), then "Visit and contact", the site's single contact block
- * (the contact person, address with directions, phone, email). On compact screens it adds one link to the FAQ, the only route
- * to /faq/ there, where the tab bar has no FAQ tab and the header nav is hidden; from 46.5rem the header
- * carries FAQ, so the footer does not repeat it, and /faq/ never links to itself. It does not repeat the
+ * Site footer on a Blush band behind a top hairline (the card color in dark mode, --footer-bg), in the shape
+ * of the reference site's: a large Caslon statement (the brand line), then the lockup with one sentence,
+ * "Visit and contact", the site's single contact block (the contact person, address with directions, phone,
+ * email), and "Plan your event" with the two requests that have no header link (a visit, an inquiry) and, on
+ * compact screens, the FAQ, the only route to /faq/ there; from 46.5rem the header carries FAQ, so the footer
+ * does not repeat it, and /faq/ never links to itself. The legal line closes it. It does not repeat the
  * header navigation, the event list, or the booking call to action (brand.md, "Redundancy rules").
- * From 64rem the lockup and the contact block share one row.
  */
 import Logo from './Logo.astro';
-import { site } from '../data/site';
+import { site, cityState } from '../data/site';
+import { bookHref, pricingHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
 const year = new Date().getFullYear();
-const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
+const path = withoutBase(Astro.url.pathname);
+const onFaq = path.startsWith('/faq/');
+const onPricing = path.startsWith('/pricing/');
 ---
 <footer class="footer">
   <div class="container">
+    <p class="footer__statement t-statement">{site.tagline}.</p>
+
     <div class="footer__main">
-      <a class="footer__brand" href={href('/')} aria-label={`${site.name}, home`}>
-        <Logo variant="lockup" tone="auto" height={40} decorative />
-      </a>
+      <div class="footer__brand">
+        <a class="footer__home" href={href('/')} aria-label={`${site.name}, home`}>
+          <Logo variant="lockup" tone="auto" height={40} decorative />
+        </a>
+        <p class="footer__blurb">Indoor and outdoor event rentals in {cityState}.</p>
+      </div>
 
       <div class="footer__grid">
         <section class="footer__col" aria-labelledby="f-visit">
@@ -36,7 +44,6 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
             <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
             <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
           </address>
-          {!onFaq && <a class="footer__faq" href={href('/faq/')}>Frequently asked questions</a>}
           {
             site.social.length > 0 && (
               <ul class="footer__social">
@@ -46,6 +53,14 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
           }
         </section>
 
+        <section class="footer__col" aria-labelledby="f-plan">
+          <h2 id="f-plan" class="footer__head">Plan your event</h2>
+          <ul>
+            <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
+            {!onPricing && <li><a href={href(pricingHref)}>Send an inquiry</a></li>}
+            {!onFaq && <li><a class="footer__faq" href={href('/faq/')}>Frequently asked questions</a></li>}
+          </ul>
+        </section>
       </div>
     </div>
 
@@ -65,9 +80,9 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
 
 <style>
   /*
-    Slate secondary text on Frost is 6.6:1, Deep Blue links 8.5:1, the Navy heading 13.4:1; in dark mode
-    Ice, Mist, and the light text on Navy. The top hairline sets the footer off from a Frost section or
-    the closing band above it.
+    Mauve secondary text on Blush is 6.9:1, Berry links 6.5:1, the Plum heading 12.8:1; in dark mode the
+    light text, its secondary, and Blossom on the card color. The top hairline sets the footer off from a
+    Blush section or the closing band above it.
   */
   .footer {
     background: var(--footer-bg);
@@ -76,20 +91,38 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     font-size: var(--t-footnote);
     line-height: 1.5;
     /* On compact screens the footer's color runs down behind the floating tab bar (--tabbar-space). */
-    padding-block: clamp(3rem, 2.5rem + 2vw, 4.5rem) calc(2rem + var(--tabbar-space));
+    padding-block: clamp(3rem, 2.5rem + 2vw, 5rem) calc(2rem + var(--tabbar-space));
   }
 
-  /* The lockup above the contact block, with space rather than a rule between them. */
+  /* The brand line, large and quiet, above everything else. */
+  .footer__statement {
+    max-width: 22ch;
+    margin-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
+    color: var(--label);
+  }
+
   .footer__main {
     display: grid;
-    gap: 2.25rem;
+    gap: 2.5rem;
     justify-items: start;
+    padding-top: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+    border-top: 1px solid var(--separator);
   }
 
   .footer__brand {
+    display: grid;
+    gap: 0.9rem;
+    justify-items: start;
+  }
+
+  .footer__home {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+  }
+
+  .footer__blurb {
+    max-width: 22rem;
   }
 
   /* Short columns, side by side from the width where both fit, never stretched across the page. */
@@ -99,39 +132,27 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
   }
 
-  /* The FAQ link sits under the contact details. From 46.5rem the header carries FAQ, so the footer drops it. */
-  .footer__faq {
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding-block: 5px;
-  }
-
+  /* From 46.5rem the header carries FAQ, so the footer drops it. */
   @media (min-width: 46.5rem) {
     .footer__faq {
       display: none;
     }
   }
 
-  @media (pointer: coarse) {
-    .footer__faq {
-      min-height: 44px;
-      padding-block: calc((44px - 1.5em) / 2);
-    }
-  }
-
   /*
-    Wide screens: one row, the lockup on the left and the contact block beside it, with the address,
+    Wide screens: one row, the lockup on the left and the two columns beside it, with the address,
     phone, and email side by side.
   */
   @media (min-width: 64rem) {
     .footer__main {
-      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
       gap: 2rem 5rem;
     }
 
     .footer__grid {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: auto auto;
+      gap: 2rem 5rem;
     }
   }
 
@@ -195,16 +216,6 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
 
   .footer address a {
     overflow-wrap: anywhere;
-  }
-
-  /* Wide screens: the address, phone, and email side by side. */
-  @media (min-width: 64rem) {
-    .footer address {
-      grid-auto-flow: column;
-      justify-content: start;
-      align-items: start;
-      column-gap: 3rem;
-    }
   }
 
   .footer .footer__social {

@@ -1,17 +1,25 @@
 ---
 /**
- * Glass navigation bar (HIG: navigation floats above content on the Liquid Glass layer).
- * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the full
- * nav; compact screens hand navigation to the floating tab bar (TabBar.astro). The breakpoints are
- * in rem so that larger text switches to the compact layout sooner instead of overflowing.
+ * The navigation bar: the lockup in the centre, the links on the left, the phone and Check Availability on
+ * the right (the header pattern of the reference site, on the Liquid Glass layer). It starts transparent
+ * over the page's first surface and turns to glass with a hairline once the page scrolls under it.
+ * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the links; compact
+ * screens hand navigation to the floating tab bar (TabBar.astro) and keep the centred lockup and a round
+ * phone button. The breakpoints are in rem so that larger text switches to the compact layout sooner.
  * The brand is always the full lockup (brand.md): 36px tall, or 32px (the minimum) where the links need
  * the room (46.5rem to 64rem), where the demo pill also steps aside.
  *
  * Check Availability is the bar's one action (hig-web-spec.md, Glass nav bar). It is the filled primary
- * on every page but home, whose hero already holds the page's primary button, the date checker's
- * Continue to Booking. There it is tinted, so the first screen shows one filled button (brand.md,
- * Redundancy rules). The style is set per page when the site builds; nothing changes on scroll.
+ * on every page but home, whose photo band already holds the page's primary button, the date checker's
+ * Continue to Booking. There it is tinted, so no screen shows two filled buttons (brand.md, Redundancy
+ * rules). The style is set per page when the site builds.
+ *
+ * On the home page (`morph`) the lockup's two words are hidden until the welcome's large name has scrolled
+ * into their place (src/pages/index.astro, "The morph"); the page's script then sets data-morphed. Readers
+ * who prefer reduced motion, browsers without scripts, and short screens (where the bar scrolls away) see
+ * the lockup at once.
  */
+import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import { site } from '../data/site';
 import { mainNav, bookHref } from '../data/nav';
@@ -21,48 +29,58 @@ import { isDemo } from '../lib/env';
 interface Props {
   /** Where Check Availability goes, base-relative: '/book/?event=weddings' on an event page. Defaults to '/book/'. */
   ctaHref?: string;
+  /** Home only: the lockup's words wait for the welcome's name to arrive (see above). */
+  morph?: boolean;
 }
 
-const { ctaHref = bookHref } = Astro.props;
+const { ctaHref = bookHref, morph = false } = Astro.props;
 const path = withoutBase(Astro.url.pathname);
 const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
 // On the booking page the call to action would link to the page itself.
 const showCta = !current(bookHref);
-// The home hero's date checker carries that page's filled primary button (above).
+// The home page's date checker carries that page's filled primary button (above).
 const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
 ---
-<header class="nav" data-nav>
+<header class="nav" data-nav data-morph={morph ? '' : undefined}>
   <div class="nav__inner container">
-    <a class="nav__brand" href={href('/')} aria-label={`${site.name}, home`}>
-      <Logo variant="lockup" height={36} decorative class="nav__lockup" />
-      <Logo variant="lockup" height={32} decorative class="nav__lockup-sm" />
+    <div class="nav__left">
+      <nav class="nav__links" aria-label="Main">
+        <ul>
+          {
+            mainNav.map((item) => (
+              <li>
+                <a href={href(item.href)} aria-current={path === item.href ? 'page' : current(item.href) ? 'true' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
       {isDemo && <span class="badge badge--accent nav__demo">Demo</span>}
+    </div>
+    <a class="nav__brand" href={href('/')} aria-label={`${site.name}, home`}>
+      <Logo variant="lockup" height={36} decorative class="nav__lockup" data-lockup="lg" />
+      <Logo variant="lockup" height={32} decorative class="nav__lockup-sm" data-lockup="sm" />
     </a>
-    <nav class="nav__links" aria-label="Main">
-      <ul>
-        {
-          mainNav.map((item) => (
-            <li>
-              <a href={href(item.href)} aria-current={path === item.href ? 'page' : current(item.href) ? 'true' : undefined}>
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
-    {
-      showCta && (
-        <a class:list={['btn', ctaTone, 'btn--sm', 'nav__cta']} href={href(ctaHref)}>
-          Check Availability
-        </a>
-      )
-    }
+    <div class="nav__actions">
+      <a class="nav__phone" href={`tel:${site.contact.phoneE164}`} aria-label={`Call ${site.contact.phone}`}>
+        <Icon name="phone" />
+        <span class="nav__phone-num">{site.contact.phone}</span>
+      </a>
+      {
+        showCta && (
+          <a class:list={['btn', ctaTone, 'btn--sm', 'nav__cta']} href={href(ctaHref)}>
+            Check Availability
+          </a>
+        )
+      }
+    </div>
   </div>
 </header>
 
 <script>
-  // Hairline and stronger glass once the page scrolls under the bar.
+  // Hairline and glass once the page scrolls under the bar.
   const nav = document.querySelector<HTMLElement>('[data-nav]');
   if (nav) {
     const onScroll = () => nav.toggleAttribute('data-scrolled', window.scrollY > 4);
@@ -72,37 +90,55 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
 </script>
 
 <style>
+  /* Transparent at the top of the page, so the first surface runs under it; glass and a hairline on scroll. */
   .nav {
     position: sticky;
     top: 0;
     z-index: 60;
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
+    background: transparent;
     border-bottom: 1px solid transparent;
     transition:
       border-color var(--dur-2) ease,
       background-color var(--dur-2) ease;
   }
 
+  /* Home: the bar shares the welcome's Blush until the page scrolls. */
+  .nav[data-morph]:not([data-scrolled]) {
+    background: var(--bg-grouped);
+  }
+
   .nav[data-scrolled] {
     background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     border-bottom-color: var(--separator);
   }
 
-  /* min-height, not height: with larger text the bar grows instead of clipping its links. */
+  /* Three columns: links, the centred brand, actions. min-height, not height: larger text grows the bar. */
   .nav__inner {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     min-height: var(--nav-h);
   }
 
+  /* Each part keeps its column, so the brand stays centred when the links are hidden. */
+  .nav__left {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-self: start;
+    min-width: 0;
+  }
+
   .nav__brand {
+    grid-column: 2;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.6rem;
-    margin-right: auto;
     color: var(--label);
     text-decoration: none;
     min-height: 44px;
@@ -117,14 +153,35 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     display: none;
   }
 
+  /*
+    Home: the lockup's words are hidden until the welcome's name has morphed into their place, then the
+    page's script sets data-morphed (the ring fades in meanwhile, driven by --nav-ring). Readers who prefer
+    reduced motion, and browsers without scripts, see the whole lockup at once.
+  */
+  .nav[data-morph]:not([data-morphed]) :global(.logo [data-part]) {
+    opacity: 0;
+  }
+
+  .nav[data-morph]:not([data-morphed]) :global(.logo circle),
+  .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])) {
+    opacity: var(--nav-ring, 0);
+  }
+
+  @media (prefers-reduced-motion: reduce), (scripting: none), (max-height: 500px) {
+    .nav[data-morph]:not([data-morphed]) :global(.logo [data-part]),
+    .nav[data-morph]:not([data-morphed]) :global(.logo circle),
+    .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])) {
+      opacity: 1;
+    }
+  }
+
   .nav__demo {
     flex: none;
-    margin-left: 0.15rem;
     font-size: min(0.75rem, 15px);
   }
 
-  /* A phone with very large text (320px at 175%, up to 375px at 200%) has no room beside the lockup for the demo pill. */
-  @media (width < 12rem) {
+  /* A narrow phone (320px), or larger text, has no room beside the lockup and the phone for the demo pill. */
+  @media (width < 24rem) {
     .nav__demo {
       display: none;
     }
@@ -165,20 +222,73 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     font-weight: 600;
   }
 
+  .nav__actions {
+    grid-column: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: end;
+    justify-self: end;
+    gap: 0.5rem;
+  }
+
+  /* The phone: the number beside its icon on regular screens, a round 44px button on phones. */
+  .nav__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0 0.7rem;
+    border-radius: var(--r-full);
+    color: var(--label);
+    font-size: var(--t-subhead);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color var(--dur-1) ease;
+  }
+
+  .nav__phone:hover {
+    text-decoration: none;
+    background: var(--fill-3);
+  }
+
+  .nav__phone :global(.icon) {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--accent-icon);
+  }
+
   /* Compact size class: the floating tab bar carries navigation (keep in step with TabBar.astro). */
   @media (width < 46.5rem) {
     .nav__links {
       display: none;
     }
+
+    .nav__phone {
+      width: 44px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .nav__phone-num {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   }
 
   /*
     Regular but narrow (744px to 1023px at default text size): the lockup at its 32px minimum, tighter
-    links, and no demo pill, so the business name, the four links, and the call to action all fit.
+    links, the phone as an icon, and no demo pill, so the name, the four links, and the call to action fit.
   */
   @media (46.5rem <= width < 64rem) {
     .nav__inner {
-      gap: 0.75rem;
+      gap: 0.5rem;
     }
 
     .nav__brand :global(.nav__lockup),
@@ -197,6 +307,21 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     .nav__links a {
       padding: 0 0.5rem;
     }
+
+    .nav__phone {
+      width: 44px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .nav__phone-num {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
   }
 
   /* The capsule is the 36px small size; its hit area reaches 44px (hig-web-spec.md, Layout). */
@@ -211,7 +336,7 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
   }
 
   /* On phones the floating tab bar's Book tab is the primary action, so the header stays uncluttered. */
-  @media (width < 30rem) {
+  @media (width < 46.5rem) {
     .nav__cta {
       display: none;
     }

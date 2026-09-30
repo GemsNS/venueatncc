@@ -1,9 +1,9 @@
 ---
 /**
- * Arrival, on the home page: the drive at dusk beside a heading, one lead, the parking row, and directions.
- * The address, phone, and email are in the footer, the site's single contact block (brand.md, "Redundancy
- * rules"), so they are not listed here. Get Directions is tinted: the closing band keeps the page's one
- * filled call to action.
+ * Arrival, on the home page: the drive at dusk beside a heading, the address, and directions. Parking is in
+ * the home page's feature strip, and the phone and email are in the footer, the site's single contact block
+ * (brand.md, "Redundancy rules"), so neither is repeated here. Get Directions is tinted: the date checker
+ * keeps the page's one filled call to action.
  */
 import Icon from './Icon.astro';
 import Photo from './Photo.astro';
@@ -16,11 +16,11 @@ interface Props {
 }
 const {
   heading = 'Find us in north Suffolk',
-  lead = `${fullAddress}.`,
+  lead = `${fullAddress}. A long paved drive leads past open lawn to the building and the lot.`,
 } = Astro.props;
 const photo = photoByName('approach-dusk');
 ---
-<section class="section section--grouped location" aria-labelledby="location-heading">
+<section class="section location" aria-labelledby="location-heading">
   <div class="container location__grid">
     {
       photo && (
@@ -33,17 +33,9 @@ const photo = photoByName('approach-dusk');
     }
     <div class="location__copy">
       <div class="section-head">
+        <p class="eyebrow">Arrival</p>
         <h2 id="location-heading">{heading}</h2>
         <p class="t-lead">{lead}</p>
-      </div>
-      <div class="list-group">
-        <div class="list-row list-row--icon">
-          <span class="icon-tile"><Icon name="parking" /></span>
-          <div class="list-row__main">
-            <div class="t-headline">On-site parking</div>
-            <div class="list-row__detail">A large paved lot, included with every booking</div>
-          </div>
-        </div>
       </div>
       <div class="btn-row">
         <a class="btn btn--tinted" href={site.address.directionsUrl} rel="noopener" target="_blank">
@@ -74,6 +66,6 @@ const photo = photoByName('approach-dusk');
   }
 
   .location__copy .section-head {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
   }
 </style>

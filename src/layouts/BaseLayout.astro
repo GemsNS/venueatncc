@@ -46,6 +46,8 @@ interface Props {
    * with its event chosen, e.g. '/book/?event=weddings'. Defaults to '/book/'.
    */
   bookPath?: string;
+  /** Home only: the header lockup waits for the welcome's name to morph into it (Header.astro). */
+  morphLogo?: boolean;
 }
 
 const path = withoutBase(Astro.url.pathname);
@@ -62,6 +64,7 @@ const {
   bare = false,
   tabBar = path !== bookHref,
   bookPath = bookHref,
+  morphLogo = false,
 } = Astro.props;
 
 // Canonical URLs point at the real domain. The demo and noindex pages (404, admin) carry none:
@@ -99,8 +102,8 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     {/* The page titles' face. The admin (bare) sets no titles in it. */}
     {!bare && <link rel="preload" href={caslonDisplayFont} as="font" type="font/woff2" crossorigin />}
 
-    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#011A2E" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#FBF1F3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#2A151F" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href={href('/favicon.ico')} sizes="32x32" />
     <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
@@ -136,7 +139,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
   </head>
   <body class:list={{ 'is-bare': bare }}>
     <a class="skip-link" href="#main">Skip to content</a>
-    {!bare && <Header ctaHref={bookPath} />}
+    {!bare && <Header ctaHref={bookPath} morph={morphLogo} />}
     <main id="main" tabindex="-1">
       <slot />
     </main>

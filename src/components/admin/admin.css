@@ -1,15 +1,15 @@
 /*
   Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md),
-  the palette's white, Frost, and Navy surfaces, and the interface family throughout except the brand
+  the palette's White, Blush, and Petal surfaces, and the interface family throughout except the brand
   name beside the monogram.
   How the palette marks state:
-    Ice surface, Deep Blue label       the current screen in the sidebar and tab bar, and date tiles
-                                       (6.0:1 on Ice; translucent Mist with a Mist label in dark mode).
-    Ice chip, Navy label               the New badge (9.4:1).
-    Deep Blue fill, white label        the new-request count, the selected calendar day, and the
-                                       filled buttons (9.4:1; Sky with a Navy label in dark mode).
-    Deep Blue                          accent text, links, and unread dots (Mist in dark mode).
-    Lake                               focus rings (Sky in dark mode).
+    Petal surface, Berry label         the current screen in the sidebar and tab bar, and date tiles
+                                       (5.7:1 on Petal; translucent Pink with a Blossom label in dark mode).
+    Petal chip, Plum label             the New badge (11.2:1).
+    Berry fill, white label            the new-request count, the selected calendar day, and the
+                                       filled buttons (7.2:1; Pink Bloom with a Night label in dark mode).
+    Berry                              accent text, links, and unread dots (Blossom in dark mode).
+    Rose                               focus rings (Pink Bloom in dark mode).
   Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
   Glass only on the sidebar, tab bar, sheets, menus, and toasts.
 */
@@ -25,8 +25,8 @@
   --adm-selected: var(--selected);
 
   /*
-    Status colors (the global status tokens) with 4.5:1 text on their tints over Frost and White, in both
-    appearances. New items use the Ice chip.
+    Status colors (the global status tokens) with 4.5:1 text on their tints over Blush and White, in both
+    appearances. New items use the Petal chip.
   */
   --adm-green: var(--green);
   --adm-green-tint: rgba(52, 199, 89, 0.16);
@@ -163,7 +163,7 @@ body.is-bare {
   color: var(--accent-text);
 }
 
-/* The inset focus ring sits on the Ice selection, where Lake is under 3:1, so it takes the accent text color. */
+/* The inset focus ring sits on the Petal selection, where Rose is under 3:1, so it takes the accent text color. */
 .adm-tab[aria-current='page']:focus-visible,
 .adm-nav[aria-current='page']:focus-visible {
   outline-color: var(--accent-text);
@@ -209,7 +209,7 @@ body.is-bare {
   margin: 0 0 12px;
   padding: 10px 14px;
   border-radius: var(--r-sm);
-  /* Information, not a warning: a Deep Blue tint (Mist in dark mode) with the text color. */
+  /* Information, not a warning: a Berry tint (Pink in dark mode) with the text color. */
   background: var(--accent-tint);
   color: var(--label);
   font-size: var(--t-footnote);
@@ -1711,10 +1711,10 @@ body.is-bare {
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
   /*
-    A dim tinted toward Navy. A literal, not var(--navy-rgb): ::backdrop does not inherit custom
+    A dim tinted toward Plum. A literal, not var(--ink-rgb): ::backdrop does not inherit custom
     properties in browsers from before 2024, where the dim would disappear.
   */
-  background: rgba(1, 42, 74, 0.45);
+  background: rgba(59, 36, 48, 0.45);
 }
 
 .adm-sheet {
@@ -2046,7 +2046,7 @@ body.is-bare {
   }
 }
 
-/* The monogram in the logo accent: Steel (Mist in dark mode). */
+/* The monogram in the logo accent: Berry (Blossom in dark mode). */
 .adm-signin__mark {
   width: 64px;
   height: 64px;

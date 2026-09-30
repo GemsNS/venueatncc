@@ -2,7 +2,7 @@
   The inquiry form on /pricing/ (InquiryForm.tsx). Built on booking.css (fields, choice list, stepper,
   date field, error summary, send error, reference) and the brand tokens in global.css.
 
-  One white card on the page's Frost section (a raised card color in dark mode). Two groups, each under a
+  One white card on the page's Blush section (a raised card color in dark mode). Two groups, each under a
   small Caslon legend. Fields pair up side by side only when the card is wide enough for both at the
   reader's text size (the threshold is in rem), and stack otherwise.
 */

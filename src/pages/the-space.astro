@@ -1,14 +1,15 @@
 ---
 /**
  * The Space: a hero of the three spaces to match the title, then The Hall, The Main Hall, and The Grove,
- * each as a short spec sheet beside its real photos, the amenities, the grounds, then a visit request and
- * the closing band.
+ * each as a short spec sheet beside its real photos, the amenities, the grounds, what the rental includes,
+ * then a visit request and the closing band.
  * Real photos only, with no toggles, no photo shown twice, and no two photos of the same view; only facts
  * the photos show (docs/design/brand.md, Photography).
  *
- * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, parking in
- * the grounds Parking row, the amenities in their own list (this is their one page), the visit request in
- * the visit panel. The venue does not publish prices, so each
+ * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, the lot in
+ * the grounds Parking row, the amenities in their own list (this is their one page), the inclusions (the
+ * space, tables and chairs, parking) in the "What the rental includes" list, the visit request in the
+ * visit panel. The venue does not publish prices, so each
  * space's Rates row links to /pricing/ (Ask about rates) instead of naming an amount. Booking is the header CTA and the closing
  * band, the page's one filled button; the address and phone are in the footer.
  */
@@ -127,7 +128,7 @@ const sections: Section[] = [
     id: 'grounds',
     heading: 'The grounds',
     lead: 'On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot.',
-    rows: [{ label: 'Parking', value: 'On site, included with every booking' }],
+    rows: [{ label: 'Parking', value: 'A large paved lot beside the building, with landscaped islands' }],
     link: { label: 'Get Directions', href: site.address.directionsUrl },
     photos: photosNamed('approach-dusk', 'driveway'),
     flip: true,
@@ -269,6 +270,25 @@ const gallerySchema =
       );
     })
   }
+
+  <section id="included" class="section section--grouped" aria-labelledby="included-heading">
+    <div class="container sp-included">
+      <div class="sp-included__head">
+        <p class="eyebrow">Every booking</p>
+        <h2 id="included-heading" class="t-large-title">What the rental includes</h2>
+      </div>
+      <ul class="sp-included__list">
+        {
+          site.included.map((item) => (
+            <li>
+              <Icon name="check-circle" />
+              <span>{item}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
 
   <section class="section" aria-labelledby="visit-heading">
     <div class="container">
@@ -541,8 +561,49 @@ const gallerySchema =
     font-size: 0.9375rem;
   }
 
+  /* What the rental includes: the site.included list beside its heading, one line per item. */
+  .sp-included {
+    display: grid;
+    gap: 1.5rem 4rem;
+    align-items: start;
+  }
+
+  @media (min-width: 60rem) {
+    .sp-included {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+
+  .sp-included__head {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .sp-included__list {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-width: 34rem;
+  }
+
+  .sp-included__list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .sp-included__list :global(.icon) {
+    color: var(--accent-icon);
+    margin-top: 0.1em;
+  }
+
   /*
-    The visit request: one quiet Frost panel across the column, the words beside the action on wide screens.
+    The visit request: one quiet Petal panel across the column, the words beside the action on wide screens.
     Request a Visit is tinted: the closing band's Check Availability is the page's one filled button.
   */
   .sp-visit {

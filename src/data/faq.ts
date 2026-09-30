@@ -12,7 +12,7 @@
  * discount. The rates answer uses the owner's approved wording with the phone number, and it is the one
  * answer that carries the number (the visit answer says "call us"; the footer has the number too).
  *
- * Each answer says a fact once. Parking lives in "What is included in the rental?". How booking works is
+ * Each answer says a fact once. Parking and the tables and chairs live in "What is included in the rental?". How booking works is
  * said by the closing band on each page, so the availability answer only points to the calendar. The two
  * rental policies each have one answer here (the deposit, the building hours) and are otherwise stated
  * only on /pricing/ (Rates).
@@ -67,7 +67,7 @@ export const faqs: Faq[] = [
   },
   {
     topic: 'space',
-    q: 'Can you help with tables, chairs, and room setup?',
+    q: 'Can you help with room setup?',
     a: 'Please ask when you request a date. Share your guest count and the layout you have in mind, and we will review the setup with you before you reserve.',
   },
   {
@@ -88,7 +88,7 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'What is included in the rental?',
-    a: 'Every rental includes the space you book and on-site parking.',
+    a: 'Every rental includes the space you book, tables and chairs, which you may use if you wish, and on-site parking.',
   },
   {
     topic: 'about',

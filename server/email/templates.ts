@@ -8,9 +8,9 @@
  * reserve the date and the rest (total minus bookingDeposit) is the balance.
  *
  * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
- * render SVG), a thin Steel rule, Georgia for headings in place of Caslon, the system sans
- * stack for body text, Deep Blue links and button (white label), Navy text, Slate secondary
- * text, and a Frost reference box. The venue is its own business: the emails name no other
+ * render SVG), a thin Berry rule, Georgia for headings in place of Caslon, the system sans
+ * stack for body text, Berry links and button (white label), Plum text, Mauve secondary
+ * text, and a Blush reference box. The venue is its own business: the emails name no other
  * organization. The footer is the one place for the address, phone, email, and site, so the body
  * points to it instead of repeating them.
  */
@@ -33,19 +33,19 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-/** White: the page, and the button label (9.4:1 on Deep Blue). */
+/** White: the page, and the button label (7.2:1 on Berry). */
 const WHITE = '#FFFFFF';
-/** Steel: the thin rule under the header. */
-const STEEL = '#2A6F97';
-/** Deep Blue: links, the reference number, and the button fill. 9.4:1 on white. */
-const LINK = '#01497C';
-/** Navy and Slate: text and secondary text (14.7:1 and 7.3:1 on white). */
-const NAVY = '#012A4A';
-const SLATE = '#3E5A6D';
-/** Hairlines: the site's separator (Navy at 12%) over white. */
-const RULE = '#E0E5E9';
-/** Frost: the reference box. */
-const FROST = '#EEF6F9';
+/** Rose: the thin rule under the header. */
+const STEEL = '#B5456E';
+/** Berry: links, the reference number, and the button fill. 7.2:1 on white. */
+const LINK = '#9E2B52';
+/** Plum and Mauve: text and secondary text (14.2:1 and 7.6:1 on white). */
+const NAVY = '#3B2430';
+const SLATE = '#6A4B57';
+/** Hairlines: the site's separator (Plum at 12%) over white. */
+const RULE = '#E7E0E3';
+/** Blush: the reference box. */
+const FROST = '#FBF1F3';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 /** Headings: Georgia stands in for Libre Caslon, which email clients do not have. */
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;

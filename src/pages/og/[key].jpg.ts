@@ -1,7 +1,7 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
- * 1200 x 630 JPEG: a real photo of the property, a Navy scrim for legibility, the light lockup, the page
- * title in Libre Caslon Display in white, and one short line in Inter in Ice (docs/design/brand.md, Share
+ * 1200 x 630 JPEG: a real photo of the property, a Plum scrim for legibility, the light lockup, the page
+ * title in Libre Caslon Display in white, and one short line in Inter in Petal (docs/design/brand.md, Share
  * images). What each card shows lives in _cards.ts. JPEG keeps each card between 62 and 184 KB: some
  * messengers skip link previews for images much over 300 KB, which a lossless PNG of a photo always is.
  */
@@ -23,12 +23,12 @@ const PAD = 64;
 const LOCKUP_H = 60;
 const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-/** Navy (#012A4A in brand.md), as RGB for the scrim's stops. */
-const NAVY = '1, 42, 74';
+/** Plum (#3B2430 in brand.md), as RGB for the scrim's stops. */
+const NAVY = '59, 36, 48';
 const navy = (alpha: number) => `rgba(${NAVY}, ${alpha})`;
-/** White for the title (14.7:1 on Navy) and Ice for the line under it (9.4:1). */
+/** White for the title (14.2:1 on Plum) and Petal for the line under it (11.2:1). */
 const WHITE = '#FFFFFF';
-const ICE = '#A9D6E5';
+const ICE = '#F6DFE5';
 
 const root = process.cwd();
 const fromRoot = (...p: string[]) => path.join(root, ...p);
@@ -132,7 +132,7 @@ export const GET: APIRoute = async ({ props }) => {
     ],
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
-  // Full-resolution color (4:4:4) keeps the white title and the Ice line crisp against the Navy scrim.
+  // Full-resolution color (4:4:4) keeps the white title and the Petal line crisp against the Plum scrim.
   const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
   return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
 };

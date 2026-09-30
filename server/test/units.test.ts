@@ -417,9 +417,9 @@ describe('email templates', () => {
         assert.ok(!part.includes(String.fromCharCode(8211)), 'no en dash');
       }
       assert.ok(!mail.html.includes('<script>'));
-      assert.ok(mail.html.includes('#2A6F97') && mail.html.includes('#01497C'), 'Steel rule and Deep Blue links');
-      assert.ok(mail.html.includes('color:#012A4A'), 'Navy text');
-      for (const retired of ['#4F2A75', '#7C4DB0', '#FEFAE0', '#FAEDCD', '#D4A373', '#8A5A2B', '#2F2A1F', '#5C5443']) {
+      assert.ok(mail.html.includes('#B5456E') && mail.html.includes('#9E2B52'), 'Rose rule and Berry links');
+      assert.ok(mail.html.includes('color:#3B2430'), 'Plum text');
+      for (const retired of ['#4F2A75', '#7C4DB0', '#FEFAE0', '#FAEDCD', '#D4A373', '#8A5A2B', '#2F2A1F', '#5C5443', '#012A4A', '#01497C', '#2A6F97', '#EEF6F9', '#3E5A6D']) {
         assert.ok(!mail.html.toUpperCase().includes(retired), `no retired color ${retired}`);
       }
       assert.ok(!mail.html.includes('New Community Church'), 'no church');
@@ -431,8 +431,8 @@ describe('email templates', () => {
       assert.ok(mail.text.includes(inquiry.reference));
     }
     assert.ok(
-      venue.html.includes('background:#01497C;') && venue.html.includes('color:#FFFFFF;text-decoration:none;border-radius:999px'),
-      'Deep Blue button with a white label',
+      venue.html.includes('background:#9E2B52;') && venue.html.includes('color:#FFFFFF;text-decoration:none;border-radius:999px'),
+      'Berry button with a white label',
     );
     assert.ok(venue.html.includes('Line one<br>Line &lt;two&gt;'));
     assert.ok(venue.text.includes('Date is taken.'));

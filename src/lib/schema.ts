@@ -118,6 +118,7 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     },
     amenityFeature: [
       feature('On-site parking', site.policies.parkingIncluded),
+      feature('Tables and chairs'),
       ...site.spaces.map((s) => feature(`${s.name}, up to ${s.capacity} guests`)),
       ...site.amenities.map((a) => feature(a.name)),
     ],

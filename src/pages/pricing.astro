@@ -13,12 +13,15 @@ import { breadcrumbs } from '../lib/schema';
   admin CRM. No amounts, packages, fees, or estimates appear here, and no price in structured data.
   The URL stays /pricing/ so existing links keep working.
 
-  This is the one page with the rental policies (the deposit and the building hours); the FAQ answers each
-  once, and nothing else repeats them.
+  This is the one page with the rental policies (what the rental includes, the deposit, and the building
+  hours); the FAQ answers each once, and The Space lists the inclusions beside the spaces.
 */
 const title = 'Rates and inquiries | The Venue @ NCC, Suffolk, VA';
 const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call us or send an inquiry about The Hall, The Main Hall, or The Grove.`;
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const included = site.included.map(lowerFirst);
 const policies = [
+  { label: 'Included', value: `Every rental includes ${included.slice(0, -1).join(', ')}, and ${included[included.length - 1]}.` },
   { label: 'Deposits', value: site.depositPolicy },
   { label: 'Hours of operation', value: `Building access ${site.access.days}, ${site.access.hours}.` },
 ];
@@ -117,7 +120,7 @@ const crumbs = [
     font-weight: 500;
   }
 
-  /* The two policies: a quiet Frost panel beside the rates copy on wide screens, under it on phones. */
+  /* The policies: a quiet Petal panel beside the rates copy on wide screens, under it on phones. */
   .rates-policies {
     display: grid;
     gap: 1rem;

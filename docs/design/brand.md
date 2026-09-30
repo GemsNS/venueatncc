@@ -1,78 +1,71 @@
-# The Venue @ NCC: brand and redesign spec (version 3)
+# The Venue @ NCC: brand and redesign spec (version 4)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: floating tab bar on phones,
 capsule buttons, Title Case button labels, sentence-case headings, 44px targets, dark mode, reduced motion,
 glass only on navigation and floating controls, no em or en dashes anywhere in copy.
 
-## What changed in versions 2 and 3, and why
+## What changed in version 4, and why
 
-The owner reviewed version 1 and asked for four things. All are binding.
+The owner reviewed version 3 (the navy and sky-blue site) and asked for five things. All are binding.
 
-1. **New palette.** Version 3 uses the client's blue palette: `#012A4A`, `#013A63`, `#01497C`, `#014F86`,
-   `#2A6F97`, `#2C7DA0`, `#468FAF`, `#61A5C2`, `#89C2D9`, `#A9D6E5`
-   (coolors.co/palette/012a4a-013a63-01497c-014f86-2a6f97-2c7da0-468faf-61a5c2-89c2d9-a9d6e5). It replaces the
-   version 2 sage, cream, and caramel palette, which replaced version 1's white and purple. Neither earlier
-   palette appears anywhere.
-2. **One photo system.** Mixing real and AI-staged photos "seemed random and sloppy." There is now one rule,
-   described under Photography, and it is enforced in code.
-3. **No redundancy.** Every page is audited so facts, calls to action, sections, and photos are not repeated.
-4. **The venue is a separate business from New Community Church.** Nothing on the site, in the brand, in
-   structured data, emails, or share images connects the two.
+1. **The name first.** The first screen of the home page reads "Welcome to The Venue @ NCC", with
+   "The Venue @ NCC" by far the largest type on the site, and as the visitor scrolls that name shrinks and
+   slides into the header lockup. Nothing on the first screen competes with it: no photo, video, date
+   checker, or other copy. The old hero copy ("Event venue in Suffolk, Virginia" / "Celebrate among the
+   pines." / "Versatile indoor and outdoor event rentals...") is gone from the hero. See Home.
+2. **A pastel pink palette.** The navy site was too dark. Version 4 is soft Blush and Petal surfaces, white
+   cards, a deep Berry for buttons and links, and a warm Plum ink for text. Navy, sky, and every earlier
+   palette appear nowhere: not in tokens, admin or booking styles, theme colors, the manifest, share images,
+   emails, or the logo files.
+3. **The reference site's patterns.** The header (links left, lockup centred, phone and call to action
+   right, transparent over the first surface and glass on scroll), the section rhythm (eyebrow, Caslon
+   heading and lead on the left, one action on the right), photo cards with a capacity chip, a feature strip,
+   a quiet rates band, and a footer that opens with a large serif statement. Patterns only, never its content.
+4. **Graphics that never misrepresent the space.** The only motion graphic is one the site draws itself:
+   drifting pastel petals on a canvas behind the welcome. No stock footage, no photos of other venues, no
+   decorative placeholder art. The real photos stay the source of truth for the spaces.
+5. **Tables and chairs.** The rental includes tables and chairs, which clients may use if they wish. It is
+   said where the inclusions are described (The Space, the FAQ, Rates, llms.txt, `amenityFeature`), and the
+   old rule against mentioning them is withdrawn.
 
-Later owner decisions, also binding:
+Still binding from earlier versions:
 
-5. **No published prices.** No dollar amounts, rate tables, packages, estimates, deposit or fee amounts,
-   discounts with amounts, or `priceRange` and `Offer` prices appear on any public page, booking step, guest
-   email, share image, structured data, or llms.txt. Where rates come up, use the approved wording exactly:
-   "Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special
-   offers, please call us and we will be happy to help you." (`RATES_WORDING` in `src/data/faq.ts`), with the
-   phone (948) 205-2934 (`tel:+19482052934`). The rate card in `src/shared/pricing.ts` is internal: it feeds
-   the team email and the admin CRM as an "Internal rate-card guide", and the public inquiry API never returns
-   it. A deposit is named only in the one FAQ entry on payments, with no figure; the wizard and the guest email
-   say we send the quote "with the payment terms for your date".
-6. **Rates is an inquiry page.** `/pricing/` (labelled "Rates" everywhere) gives the approved wording, a Call
-   button, and an inquiry form with specific booking choices that posts to the site's own inquiry API, the same
-   one the booking wizard uses, so every inquiry lands in the admin CRM. The demo build posts to the in-browser
-   demo backend. No third-party form services.
-7. **Lighter tones.** The site felt too dark. In light mode no large surface is Navy; see Color.
-8. **The owner's official copy (September 30, 2026).** Source of truth for facts and tone, adapted to each
-   place rather than pasted as one block, with the church sentences left out:
-   - **Three spaces.** The Main Hall joins The Hall and The Grove: a high-capacity, multi-purpose auditorium
-     with stage seating, up to 100 guests (the same as the indoor limit). It is booked on its own; "The Hall
-     and The Grove" stays the one combined choice. No combined capacity is published.
-   - **Welcome.** Versatile indoor and outdoor event rentals in Suffolk, tailored for any occasion, with
-     elegant backdrops, flexible layouts, and full-day access; fully renovated grounds (never "campus") for
-     weddings, receptions, conferences, banquets, memorials, and community gatherings, with bright natural
-     light and a dedicated stage area. The home hero lead and the spaces intro carry it.
-   - **Amenities**, stated once, as a short list on The Space and in structured data (`site.amenities`):
-     Ballroom seating, Hospitality areas, and Flexible layouts (customizable banquet arrangements with
-     kitchen access, and outdoor grounds). The owner titled the third "Flexible layouts and catering"; the
-     site calls it Flexible layouts so catering stays in its one FAQ entry.
-   - **Rental policies**, stated on Rates (`/pricing/`) and in one FAQ each, nowhere else: a reservation and
-     a non-refundable deposit are required to hold a date (no amount); building access is Monday to
-     Saturday, 9:00 AM to 12:00 midnight. The booking wizard, the inquiry form, the date checker, the
-     calendar, and the server all refuse Sundays and times outside those hours
-     (`src/shared/booking-rules.ts`).
-   - **Contact person:** Faith VanDyke, named in the footer contact block, on the Rates contact line, and in
-     the guest email.
-   - **Schedule a visit:** the visit request on The Space uses the owner's wording (a walk-through or more
-     information, and a personal tour to see how the space fits your vision).
-
-Still binding from version 1: no decorative placeholder art; a professional business voice; never mention
-alcohol; catering only in the one neutral FAQ entry named under Voice.
+- **One photo system** (Photography), **no redundancy** (Redundancy rules), and **the venue is a separate
+  business from New Community Church** (Separation).
+- **No published prices.** No dollar amounts, rate tables, packages, estimates, deposit or fee amounts,
+  discounts with amounts, or `priceRange` and `Offer` prices appear on any public page, booking step, guest
+  email, share image, structured data, or llms.txt. Where rates come up, use the approved wording exactly:
+  "Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special
+  offers, please call us and we will be happy to help you." (`RATES_WORDING` in `src/data/faq.ts`), with the
+  phone (948) 205-2934 (`tel:+19482052934`). The rate card in `src/shared/pricing.ts` is internal.
+- **Rates is an inquiry page.** `/pricing/` (labelled "Rates" everywhere) gives the approved wording, a Call
+  button, the rental information panel, and an inquiry form that posts to the site's own inquiry API. No
+  third-party form services.
+- **The owner's official copy (September 30, 2026)** is the source of truth for facts and tone: three
+  spaces (The Hall 100, The Main Hall 100, The Grove 150); the welcome text (versatile indoor and outdoor
+  event rentals in Suffolk, tailored for any occasion, with elegant backdrops, flexible layouts, and full-day
+  access; fully renovated grounds, never "campus"), which the home spaces section carries; the amenities
+  (Ballroom seating, Hospitality areas, Flexible layouts), stated once on The Space and in structured data;
+  the rental policies (a reservation and a non-refundable deposit hold a date, no amount; building access
+  Monday to Saturday, 9:00 AM to 12:00 midnight), stated on Rates and in one FAQ each, and enforced by the
+  booking rules; the contact person, Faith VanDyke; the visit request wording on The Space.
+- No decorative placeholder art; a professional business voice; never mention alcohol; catering only in the
+  one neutral FAQ entry named under Voice.
 
 ## Concept
 
-**Photographs first, in a crisp, quiet frame.** The site is a gallery of the real property set in white and
-navy with sky-blue accents. Caslon headings give it the feel of a printed invitation; the interface stays crisp
-and Apple-like. Spend boldness in one place: the full-bleed hero photograph of The Grove, the timber gazebo under
-tall pines, whose blue sky between the trunks already belongs to this palette.
+**The name, then the photographs, in a soft pink frame.** The home page opens on the business name alone,
+set in the lockup's own Caslon outlines on a Blush surface with petals drifting behind it, and the name
+becomes the header as the visitor scrolls. Below it the real photographs of the property lead every section,
+in white and Blush with Berry accents. Caslon headings keep the feel of a printed invitation; the interface
+stays crisp and Apple-like.
 
-Avoid the tells of a templated site: no accent bars or rails on cards, no eyebrow labels above headings (the
-single hero kicker is the only exception), no tinted or decorative gradients, no all-caps labels. The light
-blues (Sky, Mist, Ice) appear only as surfaces, tints, chips, and accents on Navy (the hero scrim and dark
-mode), never as text on white.
+Avoid the tells of a templated site: no accent bars or rails on cards, no tinted or decorative gradients, no
+all-caps headings. The one small uppercase element is the letterspaced eyebrow above a section heading
+(`.eyebrow`, Berry), which the reference site's rhythm uses to label a section; headings themselves stay
+sentence case. Pink, Rose Mist, and Petal appear only as surfaces, tints, chips, petals, and accents on Plum,
+never as text on a light surface.
 
 ## Names
 
@@ -101,172 +94,203 @@ features it as the subject: `gable.jpg` is removed from the site.
 
 ## Logo
 
-Files in `src/assets/brand/` (outlined SVG, no font dependency). A Caslon "V" inside a double ring, with
-"The Venue" in Libre Caslon Display and "at NCC" in Libre Caslon Text italic. The ring frames the monogram the
-way a wax seal or an embossed invitation mark would.
+Files in `src/assets/brand/` (outlined SVG, no font dependency), generated by the logo script (`logo-v5.mjs`
+in the tools folder; edit its color constants and copy the results into `src/assets/brand/` and `public/`).
+A Caslon "V" inside a double ring, with "The Venue" in Libre Caslon Display and "@ NCC" in Libre Caslon
+Text italic. The ring frames the monogram the way a wax seal or an embossed invitation mark would.
 
 | File | Colors | Use |
 |---|---|---|
-| `venue-lockup.svg` | ink Navy `#012A4A`, accent Steel `#2A6F97` | Header, footer, email, print on light surfaces |
-| `venue-lockup-white.svg` | white `#FFFFFF`, accent Mist `#89C2D9` | Over photos and on share images |
+| `venue-lockup.svg` | ink Plum `#3B2430`, accent Berry `#9E2B52` | Header, footer, email, print on light surfaces |
+| `venue-lockup-white.svg` | white `#FFFFFF`, accent Pink `#E9A9BB` | Over photos and on share images |
 | `venue-mark.svg` / `-white.svg` | as above | Monogram alone: admin sidebar, avatars |
 | `venue-wordmark.svg` / `-white.svg` | as above | Wordmark alone |
+| `venue-word-the-venue.svg`, `venue-word-at-ncc.svg` | Plum, Berry | The two words of the lockup, each in a tight viewBox, for the home welcome (see Home) |
 
-`src/components/Logo.astro` recolors the SVG through CSS variables by matching these exact hex values
-(`#012A4A` ink, `#2A6F97` accent, `#FFFFFF` light ink, `#89C2D9` light accent). Minimum lockup height 32px.
-Over photos use the light lockup on a Navy scrim. Icons in `public/`: favicon.ico, favicon.svg, favicon-32.png,
-apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Navy with a white monogram);
-`public/brand/email-lockup.png` is the email header.
+In the lockup and wordmark the two word paths carry `data-part="the-venue"` and `data-part="at-ncc"`, so the
+home page can measure where each word sits in the header. `src/components/Logo.astro` recolors the SVG
+through CSS variables by matching these exact hex values (`#3B2430` ink, `#9E2B52` accent, `#FFFFFF` light
+ink, `#E9A9BB` light accent). Minimum lockup height 32px. Icons in `public/`: favicon.ico, favicon.svg,
+favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Berry with a white
+monogram); `public/brand/email-lockup.png` is the email header.
 
 ## Color
 
-The ten palette blues are the brand. The palette has no white and no muted text color, so neutrals are
-derived from it: white for the page and cards, a pale Frost tint of Ice for alternate sections and the footer,
-a light Ice tint for the closing band, and a Slate for secondary text. Nothing else is added.
+A pastel pink palette. Light surfaces are Blush and Petal (with white cards); Berry gives buttons, links, and
+accents real contrast; Plum is the ink. Nothing else is added.
 
-**Light by default.** The owner found the site too dark, so in light mode every large surface is light: White,
-Frost, or the Ice tint. Navy is for text, buttons, and small accents, and for the scrim over the home hero's
-photo on wider screens; it is never a large surface. Specifically:
+**Light by default.** In light mode every large surface is light: White, Blush, or Petal. Plum is for text and
+photo scrims, Berry for buttons and accents; neither is a large surface. Specifically:
 
-- **Footer:** Frost with a top hairline (`--separator`), a Navy "Visit and contact" heading, Slate text,
-  Deep Blue links, and the Navy-ink lockup (`Logo` tone `auto`, not the white artwork).
-- **Closing band (CtaBand):** the Ice tint `#D8ECF3` with a top hairline, a Navy heading, a Slate sentence, and
-  the standard Deep Blue Check Availability button with a white label.
-- **Home hero on phones:** the photo stands alone with nothing over it, and the copy follows on a Frost panel
-  (Deep Blue kicker, Navy title, Slate lead) above the date checker. The same panel serves short screens and
-  larger text.
-- **Home hero from tablets up:** the copy stays over the photo on a Navy scrim, as light as the brightest sky
-  allows: 70% at the top easing to 64% a third of the way down, then a soft fade above the gazebo's roof. From
-  64rem the scrim also fades to 30% of that strength past the end of the copy, so the pines show through
-  beside the header's call to action. Measured at the worst pixel under each line of white copy (768 to 2560
-  wide), the kicker, title, and lead all hold 4.7:1 or better in light mode and 5.2:1 in dark mode. Do not
-  lighten the scrim without measuring again.
-- **Alternate sections:** Frost, never a grey-blue.
-- **Styled Concept badge:** near-white glass with a Navy label in light mode; the Navy tint with a white label
-  in dark mode.
+- **Header:** transparent over the page's first surface (Blush on the home page, White elsewhere), then
+  strong glass with a hairline once the page scrolls under it. Links left, lockup centred, phone and Check
+  Availability right; on phones the links go to the tab bar and the phone becomes a round icon button.
+- **Welcome surface (home):** Blush with petals; Plum name, Berry "@ NCC", Mauve serif "Welcome to", a Berry
+  eyebrow line.
+- **Footer:** Blush with a top hairline, the Plum statement in Caslon, the Plum-ink lockup, Mauve text, and
+  Berry links.
+- **Closing band (CtaBand) and the home rates band:** Petal with a top hairline, a Plum heading, a Mauve
+  sentence, and the Berry button with a white label.
+- **Alternate sections:** Blush. **Quiet panels** (rental policies, checklists, the visit request): Petal.
+- **Chips** (capacity tags, Styled Concept badge on light frames, selected rows): Petal with Plum text.
 
 | Token | Hex | Role |
 |---|---|---|
-| Navy | `#012A4A` | Primary text; photo scrims, favicon; text on light-blue chips; footer and closing band in dark mode only |
-| Harbor | `#013A63` | Hover and pressed state of primary buttons |
-| Deep Blue | `#01497C` | Primary button fill (white text), links and accent text on white, selected states |
-| Marine | `#014F86` | Alternative link hover |
-| Steel | `#2A6F97` | Logo accent, icons, secondary accents |
-| Lake | `#2C7DA0` | Focus ring, active indicators (non-text, 4.6:1 on white) |
-| Bay | `#468FAF` | Decorative only: hairlines on Navy, illustrations of state |
-| Sky | `#61A5C2` | Primary button fill in dark mode (Navy text) |
-| Mist | `#89C2D9` | Accent text and lockup accent on Navy; badges on dark |
-| Ice | `#A9D6E5` | Chips, capacity tags, selected rows (Navy text) |
-| White (derived) | `#FFFFFF` | Page background and cards |
-| Frost (derived) | `#EEF6F9` | Alternate section background, quiet panels, the footer, the home hero's phone panel |
-| Ice tint (derived) | `#D8ECF3` | The closing band (Ice at 45% over white) |
-| Slate (derived) | `#3E5A6D` | Secondary text |
+| Plum | `#3B2430` | Primary text; photo scrims and the photo viewer; text on chips |
+| Mauve | `#6A4B57` | Secondary text |
+| Berry | `#9E2B52` | Primary button fill (white text), links, accent text, eyebrows, icons, the logo accent, selected states |
+| Berry Deep | `#7E1F41` | Hover and pressed state of primary buttons |
+| Rose | `#B5456E` | Focus ring, the email rule (non-text) |
+| Pink | `#E9A9BB` | Lockup accent on Plum and in dark mode; petals; badges on dark |
+| Rose Mist | `#EFC5D0` | Petals, hairlines on Plum, stronger tints |
+| Petal | `#F6DFE5` | Chips, panels, the closing band, the rates band, selected rows |
+| Blush | `#FBF1F3` | Alternate sections, the footer, the welcome surface, the header at the top of home |
+| White | `#FFFFFF` | Page background and cards |
+| Tertiary label (derived) | `#7E5F6B` | `--label-3`: placeholders and chevrons on White and Blush only |
 
-Contrast (checked): Navy on white 14.7:1, Slate on white 7.3:1, Slate on Frost about 6.6:1, Deep Blue on white
-9.4:1, Deep Blue on Frost 8.5:1, Navy on Frost 13.4:1, white on Deep Blue 9.4:1, white on Navy 14.7:1, Ice on
-Navy 9.4:1, Mist on Navy 7.5:1, Navy on Ice 9.4:1, Navy on the Ice tint 12.0:1, Slate on the Ice tint 6.0:1,
-Deep Blue on the Ice tint 7.7:1, Navy on Sky 5.4:1. Never set Sky, Mist, Ice, or Bay as text on white, and never
-put white text on Sky or lighter. The tertiary label (`--label-3`, `#56707F`) is not used on the Ice tint,
-where it falls to 4.3:1.
+Contrast (checked): Plum on White 14.2:1, on Blush 12.8:1, on Petal 11.2:1, on Rose Mist 9.2:1; Mauve on
+White 7.6:1, on Blush 6.9:1, on Petal 6.0:1, on Rose Mist 4.9:1; Berry on White 7.2:1, on Blush 6.5:1, on
+Petal 5.7:1; white on Berry 7.2:1, on Berry Deep 9.7:1; Rose on White 5.2:1, on Blush 4.7:1, on Petal 4.1:1
+(non-text); the tertiary label on White 5.6:1, on Blush 5.1:1, but 4.4:1 on Petal, so it is never set on
+Petal or Rose Mist. Never set Pink, Rose Mist, or Petal as text on a light surface, and never put white text
+on Rose or lighter. A petal at its darkest (Pink at 60% over Blush) still gives Mauve 4.9:1, Plum 9.2:1, and
+Berry 4.7:1, which is why the canvas caps petal opacity at 0.6.
 
-Dark mode: page Night `#011A2E`, grouped `#010F1C`, cards `#022640`, text `#EAF4F8`, secondary Ice
-`#A9D6E5`, primary button Sky `#61A5C2` with Navy text, accent text Mist `#89C2D9` (9.1:1 on Night),
-separators `rgba(234,244,248,0.14)`. Dark mode stays dark but no heavier than before: the footer, the closing
-band, and the home hero's phone panel stay Navy, a step lighter than Night, and the footer and band each
-start with a hairline (tokens `--footer-bg` and `--band`). Map everything onto the existing token names in `global.css`; rename the
-version 2 palette tokens (`--olive-deep`, `--caramel`, `--caramel-deep`, `--sage`, `--mist`, `--linen`,
-`--on-deep-accent` and similar) to version 3 names and update every use. Photo scrims use Navy.
+Dark mode, in the same family: page Mulberry Night `#2A151F`, grouped `#1F0E16`, cards `#3A1F2B`, text
+`#FBEFF2` (15.3:1 on Night), secondary `#E9C9D3` (11.2:1), tertiary `#B58FA0` (6.0:1), primary button Pink
+Bloom `#F2B7C6` with Night text (10.1:1), hover `#F8CBD6`, accent text Blossom `#F5A8BD` (9.2:1 on Night,
+8.0:1 on cards), focus ring Pink Bloom, chips and selected rows in translucent Pink, separators
+`rgba(251,239,242,0.14)`. The footer, the closing band, and the rates band are the card color, a step
+lighter than the Night page, each with a hairline (tokens `--footer-bg` and `--band`). Photo scrims use Plum.
+
+Tokens live in `src/styles/global.css` under the palette names above (`--ink`, `--ink-rgb`, `--mauve`,
+`--berry`, `--berry-deep`, `--rose`, `--pink`, `--rose-mist`, `--petal`, `--blush`, `--white`) and the role
+tokens under them; text over photographs and scrims uses `--on-dark`, `--on-dark-2`, `--on-dark-accent`.
+The admin and booking styles use only the role tokens, so they follow.
 
 ## Type
 
-Unchanged from version 1: Libre Caslon Display for h1, h2 and display sizes from 28px; Libre Caslon Text for
-serif leads and italic captions; the system interface stack for body, forms, buttons, tables, admin.
+Libre Caslon Display for h1, h2, display sizes from 28px, and the footer statement (`.t-statement`); Libre
+Caslon Text for serif leads, italic captions, and the welcome's "Welcome to"; the system interface stack
+(Inter elsewhere) for body, forms, buttons, tables, admin, and the small letterspaced eyebrow (`.eyebrow`,
+13px, 600, 0.14em, uppercase, Berry). Headings are sentence case; button labels Title Case. The pairing
+follows the reference site's light serif display over a quiet sans, with our own faces.
+
+## Header and the morph
+
+The header is a three-column grid: links (Events, The Space, Rates, FAQ), the lockup centred, then the
+phone and Check Availability. It is sticky, transparent at the top, and strong glass with a hairline once
+scrolled (`data-scrolled`). On the home page the lockup's two words stay hidden (opacity 0) until the welcome
+has morphed into them, and the ring fades in over the last part of the way (`--nav-ring`).
+
+The morph (`src/pages/index.astro`): the welcome shows the lockup's two word outlines at display size. On
+load, and on resize, the script measures each word's resting rectangle and its twin's rectangle in the
+header (the `data-part` paths of whichever lockup is displayed). On each scroll frame it sets a transform
+alone, translate and scale from rest toward the twin in step with progress p = scrollY / distance, where the
+distance is the greater of the word's natural travel and about half a screen (at most 420px). At p = 1 the
+header gets `data-morphed`, shows its own lockup, and the welcome's words are hidden; scrolling back reverses
+it. Transforms never touch layout, so nothing below shifts (the photo band's document position is constant
+through every frame). Under `prefers-reduced-motion: reduce`, on short screens (where the bar scrolls away),
+and without scripts, the header lockup shows at once and the welcome stays still.
+
+## Motion and graphics
+
+- **Petals** (`src/components/Petals.astro`): a canvas behind the welcome draws 8 to 22 petals in Rose Mist,
+  Petal, and Pink at 40 to 60 percent opacity, drifting down and swaying. It is written by the site (no
+  license to record), aria-hidden, capped at 2x device pixels, paused while the tab is hidden or the welcome
+  is off screen, and drawn once, still, under reduced motion. It is the only motion graphic. It never stands
+  in for a photo of the space, and it stays behind the name, never over a photograph.
+- **No footage.** No video of this or any other venue, no stock footage, no generic clips. If a loop is ever
+  added it must show no identifiable venue, be small (MP4 and WebM, muted, playsinline, poster, lazy), never
+  cover a real photo, and carry a license note in the repo.
+- Every other transition follows the HIG spec and stops under reduced motion.
 
 ## Photography
 
 ### The rule
 
 - **Real photographs show the spaces.** Everything that shows what a client rents uses real photos only: the
-  home hero, the home space cards, The Space page, the arrival band, share images, and structured data.
+  home photo band, the home space cards, The Space, the arrival band, share images, and structured data.
 - **Staged photographs show events.** Every event tile and every event page hero uses a staged image of that
   event, all eight in one décor style, each with the same small "Styled Concept" badge. The events section on
   the home page and the /events/ page carry one line: "Event photos show our spaces styled for each occasion.
   Décor is not included." Event page heroes carry the caption "Styled concept. Décor is not included."
 - **All or nothing.** If a staged image is missing for any event, no staged image is shown: each event page hero
   shows the real photo its staged image is made from, with no badge or caption, event tiles show no photo, and
-  the one-line note is hidden. This is computed in `src/data/photos.ts` from which files exist, so a
-  half-staged grid can never ship, and a grid of eight real photos (which would repeat rooms) never appears.
+  the one-line note is hidden. This is computed in `src/data/photos.ts` from which files exist.
 - **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
 - **No repeats.** No image appears twice on the same page.
+- **No cropped subjects.** Frames never cut into a photo's subject; the tap-to-enlarge viewer
+  (`src/components/Photo.astro`) shows every photo whole.
 
-### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`, except the home hero)
+### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`, except the home band)
 
 | File | Subject | Uses |
 |---|---|---|
-| `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3661 x 2648) for full-bleed screens, and `grove-pines-tall` is 7:10 | Home hero; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
+| `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3500 x 2532) for full-bleed screens, and `grove-pines-tall` is 7:10 | The home photo band; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
 | `exterior-dusk` | The building at blue hour, lit entry, pines behind | Home share image only, cropped to its left 80% so the gable cross is out of frame |
 | `approach-dusk` | The long drive and lawn toward the building at dusk | Arrival band, The grounds |
 | `driveway` | The paved drive and lot in daylight | Parking, The grounds |
 | `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
 | `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall gallery |
 | `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | The Hall gallery |
-| `main-hall` | The Main Hall down its aisle: red upholstered chairs in rows, the vaulted ceiling, the raised stage (owner's IMG_4937, leveled 1.4 degrees) | Home Main Hall card; The Space hero |
-| `main-hall-stage` | The raised stage up close, with the screen and the front rows (owner's IMG_4940) | The Main Hall gallery |
+| `main-hall` | The Main Hall down its aisle: red upholstered chairs in rows, the vaulted ceiling, the raised stage | Home Main Hall card; The Space hero |
+| `main-hall-stage` | The raised stage up close, with the screen and the front rows | The Main Hall gallery |
 | `grove-tables` | The Grove: gazebo and picnic tables on the patio | The Grove primary |
 | `gazebo` | The timber gazebo on open lawn | The Grove gallery |
 | `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
 
-The hero and structured data show The Grove, not the building: it is what a client rents, and it keeps the
-gable cross out of the first screen and out of search results. The home share card keeps the building at blue
-hour because a share card's title covers its lower left, where the gazebo would sit in `grove-pines`. Keep
-this split on purpose; move the `hero` tag only with this paragraph.
+The photo band and structured data show The Grove, not the building: it is what a client rents, and it keeps
+the gable cross out of the first screens and out of search results. The home share card keeps the building at
+blue hour because a share card's title covers its lower left, where the gazebo would sit in `grove-pines`.
+Keep this split on purpose; move the `hero` tag only with this paragraph.
 
 `grove-pines` and the staged `community-events` tile (made from `grove-path`) come from the same original,
-IMG_4906, in different framings: the hero from the trunks down to the tables, the tile at lawn level with
-staged tables. The no-repeat rule is checked by file name (EventIndex's `avoid`), on purpose: matching by
-original would, under the all-or-nothing rule, turn every event tile into text. All three real Grove photos
-show the gazebo, so it appears four times on the home page (hero, the Grove card, the Weddings and Community
-events tiles); the Grove card keeps `grove-tables`, the widest vantage and the least like the hero.
+IMG_4906, in different framings. The no-repeat rule is checked by file name (EventIndex's `avoid`), on
+purpose: matching by original would, under the all-or-nothing rule, turn every event tile into text.
 
 Describe only what the photos and the owner's copy confirm. The owner confirmed The Main Hall's stage and
-stage seating, kitchen access with banquet arrangements, and private hospitality rooms; state each once, in
-its place (The Space). Do not claim a sound system, bridal suite, rentable tables or chairs, Wi-Fi, or AV
-unless phrased as "ask us". The Main Hall photos show equipment on the stage; describe the room, not the
-equipment.
+stage seating, kitchen access with banquet arrangements, private hospitality rooms, and that the rental
+includes tables and chairs (which clients may use if they wish); state each once, in its place (The Space for
+the amenities and the inclusions, with the inclusions also on Rates, in the FAQ, in llms.txt, and in
+`amenityFeature`). Do not claim a sound system, bridal suite, Wi-Fi, or AV unless phrased as "ask us". The
+Main Hall photos show equipment on the stage; describe the room, not the equipment.
 
 ### Staged event photos
 
 File `styled-event-<slug>.jpg` with a `photoDetails` entry `{ styledOf: '<real base>.jpg', event: '<slug>' }`.
-One décor language across all eight: ivory and cream linens, sage eucalyptus and greenery, natural wood or
-cream chairs, amber candlelight, ivory, peach, and soft caramel blooms. The set was made during version 2; its
-neutral, natural styling sits well with the blue palette, so it is kept. Architecture,
-windows, doors, floors, fixtures, the gazebo, and trees stay exactly as photographed.
+One décor language across all eight: white linens, pink and white roses and peonies, white or clear chairs,
+candlelight, and white runners with pink petals, which sits with the pink palette. Architecture, windows,
+doors, floors, fixtures, the gazebo, and trees stay exactly as photographed. Never delete a generated version;
+archive earlier ones.
 
 | Event slug | Base | Scene |
 |---|---|---|
 | `weddings` | gazebo | Ceremony seating facing the gazebo |
-| `receptions-banquets` | hall-windows | Formal reception rounds and a head table |
-| `baby-bridal-showers` | hall-fireplace | Shower brunch tables and a dessert table |
-| `birthday-parties` | hall-windows (fireplace corner crop) | Milestone dinner party |
-| `repasts-memorials` | hall-doors (window corner crop) | Quiet rounds and a guest book table |
-| `meetings-trainings` | hall-doors | Classroom seating facing the screen |
+| `receptions-banquets` | hall-windows | Formal reception rounds and a sweetheart table |
+| `baby-bridal-showers` | hall-fireplace | Shower tables and a dessert table |
+| `birthday-parties` | hall-windows | Milestone dinner, one long table |
+| `repasts-memorials` | hall-doors | Quiet rounds and a guest book table |
+| `meetings-trainings` | hall-doors | Rows of tables facing the screen |
 | `graduations-reunions` | grove-tables | Picnic tables dressed, lanterns, string lights |
 | `community-events` | grove-path | An outdoor community gathering on the lawn |
 
-One more staged photo sits outside the event set: `styled-wedding-indoor-ceremony.jpg`, a ceremony in The Main
-Hall (`styledOf: 'main-hall.jpg'`), shown on the weddings page under its own caption.
+Two more staged photos sit outside the event set, both on the weddings page under their own captions:
+`styled-wedding-indoor-ceremony.jpg`, a ceremony in The Main Hall (`styledOf: 'main-hall.jpg'`), and
+`styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`).
 
 ## Redundancy rules
 
 - State each fact once per page, in the place it does the most work. Capacities belong to the space cards and
-  The Space; the hero lead says indoor and outdoor without repeating numbers already shown a scroll later.
+  The Space; the welcome carries the name and the location line only.
 - One primary call to action per viewport. The header CTA plus one in-page CTA near the end of the page is
   enough; do not stack Check Availability buttons in hero, steps, band, and footer.
 - A block that repeats across many pages (planning timelines, rates and payment paragraphs, "how booking
   works") lives in one place and is linked, not copied.
-- Footer navigation does not duplicate the header navigation item for item.
-- A section that only restates another page (for example a home FAQ that repeats /faq/) earns its place only if
-  it answers something the visitor needs before scrolling on; otherwise it is cut.
+- Footer navigation does not duplicate the header navigation item for item: the footer's "Plan your event"
+  column holds the requests that have no header link (a visit, an inquiry) and, on compact screens, the FAQ.
+- A section that only restates another page earns its place only if it answers something the visitor needs
+  before scrolling on; otherwise it is cut.
 
 ## Voice
 
@@ -274,51 +298,48 @@ Professional hospitality: confident, warm, precise, brief. "We" for the venue, "
 exclamation points, slang, or jokes. Never in public copy: alcohol, drinks, bar, beer, wine, mimosas, toast,
 "raise a glass", Virginia ABC, BYO, "bring your own", "your own caterer", "caterer of your choice", "the freedom
 to", advice to "ask whether there is a kitchen", and any connection to New Community Church. Catering appears
-exactly once, neutrally, in one FAQ entry. Prices never appear (owner decision 5).
+exactly once, neutrally, in one FAQ entry. Prices never appear.
 
 ## Page direction
 
-**Home.** Full-bleed `grove-pines` hero: kicker, "Celebrate among the pines." (when it wraps, it breaks after
-"Celebrate"), one lead sentence, and the date checker, whose Continue to Booking is the page's one primary
-button. Every frame holds the whole gazebo and the copy never covers it:
+**Home.** In order:
 
-- Phones (below 46.5rem): the portrait file whole at 7:10 with nothing over it, then the copy on a Frost
-  panel (Navy in dark mode), then the checker.
-- Tablets: the landscape file at its own ratio, the copy over the trunks above the gazebo on the Navy scrim,
-  the checker after the photo.
-- From 64rem: the photo fills the first screen, the title runs across the top on one line, and the checker
-  floats on glass at the bottom right, lined up with the header's call to action and at least 2.5rem clear
-  of the gazebo (it may cover the end of the front picnic table). On a short screen the photo runs on below
-  the fold and the checker rises by as much, so the date field and Continue to Booking stay in the first
-  screen.
-- Shorter than 36rem, or larger text (the breakpoints are in rem): the copy moves to the same Frost panel
-  under the photo (Navy in dark mode). On short, wide screens (landscape phones) the photo becomes a band of about
-  58% of the screen that keeps the roof and ends through the gazebo's posts, so the title starts on the
-  first screen.
+1. **The welcome.** On Blush with petals: the h1 "Welcome to The Venue @ NCC", where "Welcome to" is a Caslon
+   Text italic line and the name is the lockup's two word outlines (`Logo` variants `word-the-venue` and
+   `word-at-ncc`, with the name in visually hidden text). The words keep the lockup's proportions through
+   one unit `--u`: from 46.5rem on one line, 74vw wide (at most 68rem); on phones stacked, "The Venue" at
+   92vw, so the whole name fits a 320px screen without wrapping awkwardly. One small Berry eyebrow line,
+   "Event venue in Suffolk, Virginia", closes it. Nothing else shares the first screen's Blush.
+2. **The photo band.** `grove-pines`, full bleed (the portrait file on phones), with the date checker
+   floating on glass at the bottom right from 64rem and as a card under the photo below that. Every frame
+   holds the whole gazebo: a frame's bottom edge never runs along a tabletop or a bench. The checker's
+   Continue to Booking is the page's one filled button; the header CTA is tinted here.
+3. **Three spaces, indoors and out**: eyebrow, heading, the owner's welcome text as the lead, an Explore The
+   Space capsule on the right, then the three real-photo cards (name, capacity chip, one sentence, a link).
+4. **Events we host** (Blush): eyebrow, heading, the styled note, See All Events on the right, the eight
+   staged tiles.
+5. **The feature strip:** three icon rows (Indoors and outdoors, Full-day access, On-site parking).
+6. **Our special rates** (Petal): the approved wording, the Call button, and "Or send an inquiry".
+7. **Find us in north Suffolk:** the drive at dusk, the address, Get Directions.
 
-Crop rule: a frame's bottom edge never runs along a tabletop or a bench; it cuts through legs or posts. The
-scrim runs from 70% to 64% Navy, with a horizontal fade past the copy from 64rem (see Color); white copy
-measures 4.7:1 or better at its worst pixel, so do not lighten it without measuring again.
-
-The date checker lists the three spaces as one row each (name, what it is, the day's status, a radio), so the
-full names never wrap. Then the three spaces as real-photo cards, events as staged tiles with the one-line note, a rates section
-("Our special rates": the approved wording, a Call button, and an "Or send an inquiry" link to /pricing/),
-the arrival band, and one closing band. Cut anything the audit finds repeated.
+The date checker lists the three spaces as one row each (name, what it is, the day's status, a radio), so
+the full names never wrap.
 
 **The Space.** Real photos only. A hero of the three spaces, then The Hall, The Main Hall, The Grove, the
-Premium amenities list, and The grounds (formerly Campus), what the rental includes, and the Schedule a visit
-request.
+Premium amenities list, The grounds, What the rental includes (`site.included`), and the Schedule a visit
+request, then the closing band.
 
 **Rates.** The approved wording, the Call button, the contact line naming Faith VanDyke, the Rental
-information and policies panel (deposit and hours of operation), and the inquiry form.
+information and policies panel (what is included, the deposit, and hours of operation), and the inquiry form.
 
 **Events.** Staged hero per event with badge and caption, the event's unique copy, and links to shared
 information instead of repeated blocks.
 
-**About.** Without the church story the page has little of its own; fold any unique, useful content into The
-Space or FAQ and remove the page and its nav item unless the audit finds a clear reason to keep it.
+**Footer.** The brand line ("Celebrate among the pines.", `site.tagline`) as a large Caslon statement, then
+the lockup with one sentence, Visit and contact, Plan your event, and the legal line.
 
-**Share images.** Real photo background, Navy scrim, light lockup, page title in Caslon, secondary line in Ice.
+**Share images.** Real photo background, Plum scrim, light lockup, page title in Caslon, secondary line in
+Petal. The home card's title is the welcome, "Welcome to The Venue @ NCC".
 
-**Emails.** `email-lockup.png` header on white, a thin Steel rule, Deep Blue links and button (white text),
-Navy text, Georgia for headings, the interface stack for body text.
+**Emails.** `email-lockup.png` header on white, a thin Rose rule, Berry links and button (white text), Plum
+text, Mauve secondary text, a Blush reference box, Georgia for headings, the interface stack for body text.

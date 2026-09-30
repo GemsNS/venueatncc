@@ -216,12 +216,12 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     margin: 0;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
     border: 0;
-    background: rgb(1 26 46 / 0.94);
+    background: rgb(42 21 31 / 0.95);
     color: #fff;
   }
 
   .lightbox::backdrop {
-    background: rgb(1 26 46 / 0.6);
+    background: rgb(42 21 31 / 0.6);
   }
 
   html.lightbox-open {
@@ -282,7 +282,7 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
   }
 
   .lightbox__btn:focus-visible {
-    outline: 3px solid #89c2d9;
+    outline: 3px solid #f2b7c6;
     outline-offset: 2px;
   }
 
@@ -365,8 +365,8 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
   }
 
   /*
-    A small glass pill over the photo. Light mode: near-white glass with a Navy label, legible on any frame
-    (at least 10:1 even over black). Dark mode: the Navy tint with a white label.
+    A small glass pill over the photo. Light mode: near-white glass with a Plum label, legible on any frame
+    (at least 10:1 even over black). Dark mode: the Plum tint with a white label.
   */
   .photo__badge {
     position: absolute;
@@ -383,11 +383,11 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     background: var(--badge-bg);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     backdrop-filter: blur(12px) saturate(160%);
-    border: 1px solid rgb(var(--navy-rgb) / 0.08);
-    box-shadow: 0 1px 3px rgb(var(--navy-rgb) / 0.18);
+    border: 1px solid rgb(var(--ink-rgb) / 0.08);
+    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.18);
     /* With very large text on a narrow frame the label wraps inside the pill instead of running off the photo. */
     max-width: calc(100% - 1.5rem);
-    color: var(--navy);
+    color: var(--ink);
     font-size: var(--t-footnote);
     font-weight: 600;
     line-height: 1.2;
@@ -395,11 +395,11 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
 
   @media (prefers-color-scheme: dark) {
     .photo__badge {
-      --badge-bg: rgb(var(--navy-rgb) / 0.72);
-      --badge-bg-solid: rgb(var(--navy-rgb) / 0.92);
+      --badge-bg: rgb(var(--ink-rgb) / 0.72);
+      --badge-bg-solid: rgb(var(--ink-rgb) / 0.92);
       border-color: rgba(255, 255, 255, 0.28);
       box-shadow: none;
-      color: var(--on-navy);
+      color: var(--on-dark);
     }
   }
 
@@ -431,8 +431,8 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     padding: 8px;
     border-radius: var(--r-full);
     background: rgb(255 255 255 / 0.86);
-    color: var(--navy);
-    box-shadow: 0 1px 3px rgb(var(--navy-rgb) / 0.2);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.2);
     opacity: 0.9;
     transition: opacity var(--dur-1, 0.15s) ease, transform var(--dur-1, 0.15s) ease;
   }

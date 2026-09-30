@@ -1,34 +1,44 @@
 ---
 /**
  * Home, per docs/design/brand.md "Page direction: Home", in this order:
- * the hero on the pines of The Grove with the date checker, the three spaces as real-photo cards, the events,
- * the rates section (the approved wording, a Call button, and a link to the inquiry form), the arrival band, and the closing band.
+ * the welcome (the business name as the first screen's one dominant element, which morphs into the header
+ * lockup on scroll), the photo band of The Grove with the date checker, the three spaces as real-photo
+ * cards, the events, the feature strip, the rates section (the approved wording, a Call button, and a link
+ * to the inquiry form), and the arrival band.
  *
  * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
- * parking and the address in the arrival band, a call to phone for rates in the rates section, and how booking works in the
- * closing band. The hero's one primary button is the date checker's Continue to Booking; the header CTA
- * and the closing band carry Check Availability.
+ * parking in the feature strip, the address in the arrival band, a call to phone for rates in the rates
+ * section. The page's one filled button is the date checker's Continue to Booking; the header CTA is tinted.
  * Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces, and event tiles that
  * are all staged or all text. No image appears twice.
+ *
+ * The morph. The welcome shows the lockup's two words ("The Venue", "@ NCC") as the same outlines the
+ * header lockup carries, at display size. The script below measures where each word rests and where its
+ * twin sits in the header (the paths tagged data-part in Logo.astro), then, on every scroll frame, moves
+ * and scales each word toward its twin with a transform alone (no layout work, so no shift and no jank).
+ * When the words arrive (progress 1) the header shows its own lockup and the welcome's words hide; the
+ * lockup's ring fades in over the last part of the way (--nav-ring). Readers who prefer reduced motion,
+ * short screens (where the bar scrolls away), and browsers without scripts get the header lockup at once.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Photo from '../components/Photo.astro';
 import Icon from '../components/Icon.astro';
+import Logo from '../components/Logo.astro';
+import Petals from '../components/Petals.astro';
 import EventIndex from '../components/EventIndex.astro';
 import LocationBand from '../components/LocationBand.astro';
 import DateChecker from '../components/booking/DateChecker';
-import { site } from '../data/site';
+import { site, cityState } from '../data/site';
 import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { bookHref, pricingHref } from '../data/nav';
 import { href } from '../lib/paths';
+import type { IconName } from '../shared/icons';
 
 /*
-  The hero: the gazebo under the tall pines of The Grove (grove-pines, tagged 'hero'), a real photo in two
-  crops of the original behind grove-path, whose staged version is the community events tile. Phones get the
-  portrait file, a framing of its own: the pines at full height, with the copy over their canopy. Wider
-  screens get the landscape file, nearly the original's full width (leveled by 2.5 degrees) from the trunks above the gazebo down through
-  the legs of the front picnic table. It is named here, not taken from heroPhoto(), because the hero's frames
-  below are fitted to its framing. Its size sets the tablet frame's ratio.
+  The photo band: the gazebo under the tall pines of The Grove (grove-pines, tagged 'hero'), a real photo in
+  two crops of the original behind grove-path. Phones get the portrait file; wider screens the landscape file,
+  nearly the original's full width, from the trunks above the gazebo down through the legs of the front picnic
+  table. Its size sets the band's ratio.
 */
 const hero = photoByName('grove-pines') ?? heroPhoto();
 const heroSize = hero ? `--hero-w: ${hero.src.width}; --hero-h: ${hero.src.height}` : undefined;
@@ -79,6 +89,25 @@ const spaceCards: SpaceCard[] = [
   },
 ];
 
+/* The feature strip: three things true of every booking, each said here and nowhere else on this page. */
+const features: { icon: IconName; name: string; text: string }[] = [
+  {
+    icon: 'building',
+    name: 'Indoors and outdoors',
+    text: `${hallName}, ${mainHallName}, and ${groveName}, booked on their own or ${hallName} and ${groveName} together.`,
+  },
+  {
+    icon: 'calendar',
+    name: 'Full-day access',
+    text: 'Book the hours your event needs, from setup to the last farewell, on one property.',
+  },
+  {
+    icon: 'parking',
+    name: 'On-site parking',
+    text: 'A large paved lot beside the building, included with every booking.',
+  },
+];
+
 /*
   Every photo shown elsewhere on this page, so the event tiles never repeat one. LocationBand picks the drive
   at dusk itself, so it is named here.
@@ -86,41 +115,53 @@ const spaceCards: SpaceCard[] = [
 const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
 
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
-const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
+const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
 ---
-<BaseLayout title={title} description={description} og="home" venueDetails>
-  <section class="hero" aria-labelledby="hero-title" style={heroSize}>
+<BaseLayout title={title} description={description} og="home" venueDetails morphLogo>
+  <section class="welcome" aria-labelledby="hero-title">
+    <div class="welcome__bg" aria-hidden="true">
+      <Petals />
+    </div>
+    <div class="welcome__inner container">
+      <h1 id="hero-title" class="welcome__h1">
+        <span class="welcome__eyebrow" data-welcome-fade>Welcome to</span>
+        <span class="welcome__name">
+          <span class="visually-hidden">The Venue @ NCC</span>
+          <Logo variant="word-the-venue" height="calc(53.07 * var(--u))" decorative class="welcome__word welcome__word--venue" data-part="the-venue" />
+          <Logo variant="word-at-ncc" height="calc(38.63 * var(--u))" decorative class="welcome__word welcome__word--ncc" data-part="at-ncc" />
+        </span>
+      </h1>
+      <p class="welcome__line" data-welcome-fade>Event venue in {cityState}</p>
+    </div>
+  </section>
+
+  <section class="band" aria-label="The Grove and the date checker" style={heroSize}>
     {
       hero && (
-        <div class="hero__media">
+        <div class="band__media">
           <Photo photo={hero} ratio="fill" tall rounded={false} priority sizes="100vw" />
         </div>
       )
     }
-    <div class="hero__scrim" aria-hidden="true"></div>
-    <div class="hero__copy">
-      <h1 id="hero-title" class="hero__h1">
-        <span class="hero__kicker">Event venue in Suffolk, Virginia<span class="visually-hidden">:</span></span>
-        <span class="hero__title t-display"><span class="hero__line">Celebrate</span> <span class="hero__line">among the pines.</span></span>
-      </h1>
-      <p class="hero__lead">
-        <span class="hero__clause">Versatile indoor and outdoor event rentals,</span>
-        <span class="hero__clause">tailored for any occasion.</span>
-      </p>
-    </div>
-    <div class="hero__checker">
+    <div class="band__checker">
       <DateChecker client:load bookHref={href(bookHref)} />
     </div>
   </section>
 
   <section class="section" aria-labelledby="spaces-heading">
     <div class="container">
-      <div class="section-head">
-        <h2 id="spaces-heading">Spaces for every occasion</h2>
-        <p class="t-lead">
-          Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and
-          community gatherings, with elegant backdrops, flexible layouts, and full-day access.
-        </p>
+      <div class="section-head section-head--row">
+        <div class="section-head__copy">
+          <p class="eyebrow">The spaces</p>
+          <h2 id="spaces-heading">Three spaces, indoors and out</h2>
+          <p class="t-lead">
+            Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and
+            community gatherings, with elegant backdrops, flexible layouts, and full-day access.
+          </p>
+        </div>
+        <div class="section-head__actions">
+          <a class="btn btn--tinted" href={href('/the-space/')}>Explore The Space</a>
+        </div>
       </div>
       <div class="spaces">
         {
@@ -135,7 +176,7 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
                     {card.name}
                   </h3>
                   {card.capacity && (
-                    <p class="space__cap">
+                    <p class="space__cap badge badge--accent">
                       <Icon name="users" />
                       Up to {card.capacity} guests
                     </p>
@@ -155,68 +196,301 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
 
   <section class="section section--grouped" aria-labelledby="events-heading">
     <div class="container">
-      <div class="section-head">
-        <h2 id="events-heading">Events we host</h2>
-        {eventsStaged && <p class="t-lead">{EVENTS_STYLED_NOTE}</p>}
+      <div class="section-head section-head--row">
+        <div class="section-head__copy">
+          <p class="eyebrow">Occasions</p>
+          <h2 id="events-heading">Events we host</h2>
+          {eventsStaged && <p class="t-lead">{EVENTS_STYLED_NOTE}</p>}
+        </div>
+        <div class="section-head__actions">
+          <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+        </div>
       </div>
       <EventIndex layout="shelf" avoid={pagePhotos} />
     </div>
   </section>
 
-  <section class="section" aria-labelledby="rates-heading">
-    <div class="container rates">
+  <section class="section section--tight features" aria-label="What every booking includes">
+    <ul class="container features__list">
+      {
+        features.map((f) => (
+          <li class="feature">
+            <span class="feature__icon" aria-hidden="true">
+              <Icon name={f.icon} />
+            </span>
+            <div class="feature__text">
+              <h3 class="t-headline">{f.name}</h3>
+              <p class="secondary">{f.text}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section rates" aria-labelledby="rates-heading">
+    <div class="container rates__inner">
       <div class="rates__copy">
+        <p class="eyebrow">Rates</p>
         <h2 id="rates-heading">Our special rates</h2>
         <p class="t-lead">
           Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
           please call us and we will be happy to help you.
         </p>
-        <div class="btn-row rates__action">
-          <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
-            <Icon name="phone" />
-            Call {site.contact.phone}
-          </a>
-          <a class="link-more rates__link" href={href(pricingHref)}>
-            Or send an inquiry <Icon name="chevron-right" />
-          </a>
-        </div>
+      </div>
+      <div class="btn-row rates__action">
+        <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+          <Icon name="phone" />
+          Call {site.contact.phone}
+        </a>
+        <a class="link-more rates__link" href={href(pricingHref)}>
+          Or send an inquiry <Icon name="chevron-right" />
+        </a>
       </div>
     </div>
   </section>
 
   <LocationBand />
-
 </BaseLayout>
 
+<script>
+  /*
+    The morph (see the note at the top of this file). Transforms only: each word is translated and scaled
+    from where it rests in the welcome to where its twin sits in the header lockup, in step with the scroll.
+  */
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+  const words = [...document.querySelectorAll<SVGSVGElement>('.welcome__word')];
+  const fades = [...document.querySelectorAll<HTMLElement>('[data-welcome-fade]')];
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const short = window.matchMedia('(max-height: 500px)');
+
+  interface Track {
+    el: SVGSVGElement;
+    rest: { left: number; top: number; width: number };
+    to: { left: number; top: number; width: number };
+  }
+
+  if (nav && words.length > 0) {
+    let tracks: Track[] = [];
+    let distance = 1;
+    let morphed = false;
+    let ticking = false;
+    let active = false;
+
+    /** The lockup the header shows at this width (the other is display: none). */
+    const lockup = () =>
+      [...nav.querySelectorAll<SVGSVGElement>('[data-lockup]')].find((el) => el.getBoundingClientRect().width > 0) ?? null;
+
+    function setMorphed(on: boolean) {
+      if (on === morphed) return;
+      morphed = on;
+      nav!.toggleAttribute('data-morphed', on);
+      for (const w of words) w.style.visibility = on ? 'hidden' : '';
+    }
+
+    function apply() {
+      ticking = false;
+      const y = window.scrollY;
+      const p = Math.min(1, Math.max(0, y / distance));
+      if (p < 1 || !morphed) {
+        for (const t of tracks) {
+          const s = 1 + (t.to.width / t.rest.width - 1) * p;
+          const dx = (t.to.left - t.rest.left) * p;
+          const dy = (t.to.top - (t.rest.top - y)) * p;
+          t.el.style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+        }
+      }
+      setMorphed(p >= 1);
+      nav!.style.setProperty('--nav-ring', Math.min(1, Math.max(0, (p - 0.55) / 0.45)).toFixed(3));
+      const fade = Math.max(0, 1 - p * 2.2).toFixed(3);
+      for (const f of fades) f.style.opacity = fade;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(apply);
+    }
+
+    /** Where each word rests (with no transform) and where its twin sits in the header. */
+    function measure() {
+      const lk = lockup();
+      if (!lk) return;
+      for (const w of words) w.style.transform = '';
+      const y = window.scrollY;
+      tracks = words.flatMap((el) => {
+        const twin = lk.querySelector<SVGGraphicsElement>(`[data-part="${el.dataset.part}"]`);
+        if (!twin) return [];
+        const r = el.getBoundingClientRect();
+        const t = twin.getBoundingClientRect();
+        return [{ el, rest: { left: r.left, top: r.top + y, width: r.width }, to: { left: t.left, top: t.top, width: t.width } }];
+      });
+      if (tracks.length === 0) return;
+      // The morph runs over the scroll that would carry the first word up to the bar, and at least about
+      // half a screen, so it is never in a rush: past the natural distance the name hovers at the bar and
+      // shrinks into place while the welcome scrolls on beneath it.
+      distance = Math.max(tracks[0].rest.top - tracks[0].to.top, Math.min(420, window.innerHeight * 0.48));
+      apply();
+    }
+
+    function stop() {
+      active = false;
+      for (const w of words) {
+        w.style.transform = '';
+        w.style.visibility = '';
+      }
+      for (const f of fades) f.style.opacity = '';
+      nav!.style.removeProperty('--nav-ring');
+      nav!.removeAttribute('data-morph');
+      nav!.removeAttribute('data-morphed');
+    }
+
+    function start() {
+      if (still.matches || short.matches) {
+        stop();
+        return;
+      }
+      if (!active) {
+        active = true;
+        nav!.setAttribute('data-morph', '');
+        morphed = false;
+      }
+      measure();
+    }
+
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(start, 80);
+    };
+
+    window.addEventListener('scroll', () => active && schedule(), { passive: true });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('load', onResize);
+    still.addEventListener('change', start);
+    short.addEventListener('change', start);
+    // Larger text or a late font can move the welcome; measure again when it changes size.
+    const welcome = document.querySelector<HTMLElement>('.welcome');
+    if (welcome && 'ResizeObserver' in window) new ResizeObserver(onResize).observe(welcome);
+    start();
+  }
+</script>
+
 <style>
-  /* ---------- Hero ---------- */
+  /* ---------- Welcome ---------- */
 
   /*
-    One grid for the hero, and a photo that is never cropped into its subject: every frame holds the whole
-    gazebo, the copy never covers it, and a frame's bottom edge never runs along a tabletop.
-      Phones (below 46.5rem): the portrait file, full bleed, from the sky over the pines down to the cut
-        between the benches, with nothing over it. The copy follows on a light panel, then the date checker.
-      Tablets (46.5 to 64rem): the landscape file at its own ratio (shorter on short screens), the copy over
-        the trunks above the gazebo, the checker after the photo.
-      Wide screens (from 64rem): the photo fills the first screen. The title runs across the top, the gazebo
-        stands below it, and the checker floats at the bottom right on glass, beside the gazebo.
-    Phones, short screens, and larger text move the copy to a light panel under the photo (below).
-
-    The frames are fitted to the two files' framing, measured on the files at 100vw (the files always span
-    the full width):
-      Landscape (grove-pines.jpg, 3500 x 2532, the leveled original nearly edge to edge): it ends through the legs of
-        the front picnic table, between its two benches. From that edge up to the gazebo's roof is 40.2vw
-        (41vw with the roof's cap); the roof is 32.1vw below the file's top; the gazebo spans 27 to 59
-        percent of the width. So a frame with copy over it is never shorter than 41vw plus the copy's
-        height, and it keeps the file's bottom edge (--photo-pos 50% 100%): the frame loses sky, never tables.
-      Portrait (grove-pines-tall.jpg, 7:10): the roof is 69.9vw below its top; the same cut between the
-        benches is 19.6vw above its bottom, and 53.4vw below the roof.
-    The DateChecker island renders once (its ids are fixed), so CSS alone moves it.
-
-    Rows: the photo spans the copy row and the rest of its height, so the scrim can follow the copy's own
-    height at every text size; then a row for the panel and one for the checker.
+    The first screen: "Welcome to" and the business name, the largest type on the site, centred on the Blush
+    surface with drifting petals behind. --u is one unit of the lockup's own grid in pixels: the two words keep
+    the lockup's proportions (The Venue is 289.49 units wide and 53.07 tall; @ NCC is 143.5 by 38.63 and sits
+    20.47 units lower on the same baseline, 18.69 units to the right), so a scroll later they fit the header
+    exactly. On one line the row is 451.68 units wide; phones stack the two words and "The Venue" spans the
+    screen (92vw), which also keeps the name whole on a 320px screen.
   */
-  .hero {
+  .welcome {
+    --u: calc(min(92vw, 30rem) / 289.49);
+    position: relative;
+    background: var(--bg-grouped);
+  }
+
+  .welcome__bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .welcome__inner {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
+    padding-block: clamp(2.25rem, 1.5rem + 3vw, 4.5rem) clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
+    text-align: center;
+  }
+
+  .welcome__h1 {
+    display: grid;
+    justify-items: center;
+    gap: clamp(0.5rem, 0.25rem + 1vw, 1.25rem);
+    font-weight: 400;
+    text-wrap: initial;
+  }
+
+  /* A quiet serif line above the name: the reader's eye goes to the name. */
+  .welcome__eyebrow {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
+    line-height: 1.2;
+    color: var(--label-2);
+  }
+
+  .welcome__name {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(12 * var(--u));
+    width: 100%;
+  }
+
+  .welcome__word {
+    position: relative;
+    z-index: 61;
+    transform-origin: 0 0;
+    will-change: transform;
+    /* Plum and Berry, whatever the appearance: the name stays the darkest thing on the Blush surface. */
+    --logo-ink: var(--label);
+    --logo-accent: var(--accent-text);
+  }
+
+  .welcome__line {
+    font-family: var(--font);
+    font-size: var(--t-footnote);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  /* From 46.5rem the two words share one line, as they do in the lockup. */
+  @media (min-width: 46.5rem) {
+    .welcome {
+      --u: calc(min(74vw, 68rem) / 451.68);
+    }
+
+    .welcome__name {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: calc(18.69 * var(--u));
+    }
+
+    .welcome__word--ncc {
+      margin-top: calc(20.47 * var(--u));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .welcome__word {
+      will-change: auto;
+    }
+  }
+
+  /* ---------- The photo band and the date checker ---------- */
+
+  /*
+    A photo that is never cropped into its subject: every frame holds the whole gazebo, and a frame's bottom
+    edge never runs along a tabletop. The frames are fitted to the two files' framing at 100vw:
+      Landscape (grove-pines.jpg, 3500 x 2532): it ends through the legs of the front picnic table. From that
+        edge up to the gazebo's roof is 41vw, so a frame keeps the file's bottom edge (--photo-pos 50% 100%)
+        and is never shorter than 41vw: it loses sky, never tables. The gazebo spans 27 to 59 percent of the width.
+      Portrait (grove-pines-tall.jpg, 7:10): the roof is 69.9vw below its top; the cut between the benches is
+        19.6vw above its bottom.
+    Phones: the portrait file as a band, then the checker as a card. Wide screens: the landscape file at up to
+    78 percent of the screen, with the checker floating on glass at the bottom right, lined up with the
+    header and at least 2.5rem clear of the gazebo.
+  */
+  .band {
     --checker-w: 23.75rem;
     --photo-pos: 50% 100%;
     display: grid;
@@ -225,324 +499,75 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
       [content-start] minmax(0, var(--max))
       [content-end] minmax(var(--gutter), 1fr)
       [full-end];
-    grid-template-rows: [photo-start copy-start] auto [copy-end] 1fr [photo-end] auto auto;
+    grid-template-rows: [photo-start] auto [photo-end] auto;
     background: var(--bg-grouped);
   }
 
-  /*
-    Tablets: the landscape file at its own ratio (--hero-w and --hero-h come from the file), shorter on short
-    screens so the checker's card shows under it, but never shorter than the copy and the gazebo need
-    (above). The width is set, so the max-height shortens the frame instead of narrowing it through the ratio.
-  */
-  .hero__media {
+  .band__media {
     grid-column: full;
     grid-row: photo;
-    align-self: start;
     position: relative;
     overflow: hidden;
     width: 100%;
-    aspect-ratio: var(--hero-w, 3661) / var(--hero-h, 2648);
-    max-height: max(calc(100svh - var(--nav-h) - 5rem), calc(41vw + 15rem));
+    aspect-ratio: var(--hero-w, 3500) / var(--hero-h, 2532);
+    max-height: max(calc(100svh - var(--nav-h) - 5rem), calc(41vw + 3rem));
   }
 
-  .hero__media :global(.photo) {
+  .band__media :global(.photo) {
     position: absolute;
     inset: 0;
   }
 
-  /*
-    Legibility scrim in Navy (--navy-rgb) on tablets and wide screens: as tall as the copy, then a soft fade
-    that ends above the gazebo's roof. It is as light as the brightest sky between the trunks allows: 70% at
-    the top easing to 64% by a third of the way down, which keeps every line of white copy (kicker, title,
-    and lead alike) at 4.7:1 or better at its worst pixel, measured from 768 to 2560 wide in light mode
-    (5.2:1 in dark mode). The only gradients on the site are scrims like this one.
-  */
-  .hero__scrim {
-    grid-column: full;
-    grid-row: copy;
-    /* Positioned like the photo, so it paints above it. */
-    position: relative;
-    background: linear-gradient(to bottom, rgb(var(--navy-rgb) / 0.7), rgb(var(--navy-rgb) / 0.64) 30%);
-  }
-
-  .hero__scrim::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 4.5rem;
-    background: linear-gradient(
-      to bottom,
-      rgb(var(--navy-rgb) / 0.64) 0%,
-      rgb(var(--navy-rgb) / 0.4) 25%,
-      rgb(var(--navy-rgb) / 0.18) 55%,
-      rgb(var(--navy-rgb) / 0.05) 82%,
-      rgb(var(--navy-rgb) / 0) 100%
-    );
-  }
-
-  .hero__copy {
+  .band__checker {
     grid-column: content;
-    grid-row: copy;
-    z-index: 1;
-    display: grid;
-    gap: 1rem;
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.75rem) 0.75rem;
-    color: var(--on-navy);
-  }
-
-  .hero__h1 {
-    display: grid;
-    gap: 0.75rem;
-    color: var(--on-navy);
-  }
-
-  /* Over the photo the kicker is white; on the Navy panel it takes the Mist accent (7.5:1), below. */
-  .hero__kicker {
-    font-family: var(--font);
-    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
-    font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: normal;
-    color: var(--on-navy);
-    text-shadow: 0 1px 2px rgb(var(--navy-rgb) / 0.6);
-  }
-
-  /*
-    With very large text the title stays well above the lead's size, not just the vw cap, and "among the
-    pines." still fits one line of a phone at 200% text.
-  */
-  .hero__title {
-    font-size: max(var(--t-display), 1.6rem);
-    color: var(--on-navy);
-    text-shadow: 0 1px 24px rgb(var(--navy-rgb) / 0.45);
-  }
-
-  /*
-    When the title needs two lines it breaks after "Celebrate", and when the lead needs two it breaks between
-    its clauses; each part still wraps within itself when it must.
-  */
-  .hero__line,
-  .hero__clause {
-    display: inline-block;
-  }
-
-  .hero__lead {
-    max-width: 40rem;
-    font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
-    line-height: 1.5;
-    color: var(--on-navy);
-    text-shadow: 0 1px 3px rgb(var(--navy-rgb) / 0.6);
-  }
-
-  .hero :global(:focus-visible) {
-    outline-color: var(--on-navy);
-  }
-
-  .hero__checker :global(:focus-visible) {
-    outline-color: var(--focus-ring);
-  }
-
-  /* Below the wide layout the checker follows the photo, as a plain card on the grouped background. */
-  .hero__checker {
-    grid-column: content;
-    grid-row: 3;
+    grid-row: 2;
     padding-block: 1.25rem 2.5rem;
   }
 
-  .hero__checker :global(.bk-dc) {
+  .band__checker :global(.bk-dc) {
     margin-inline: auto;
   }
 
-  /* Phones: the portrait file at its own 7:10 (shortened below, where the copy moves to the panel). */
+  .band__checker :global(:focus-visible) {
+    outline-color: var(--focus-ring);
+  }
+
+  /* Phones: the portrait file, cut between the benches, keeping the roof from 58vw of height. */
   @media (width < 46.5rem) {
-    .hero__media {
-      aspect-ratio: 7 / 10;
-      max-height: none;
-    }
-
-    .hero__h1 {
-      gap: 0.6rem;
-    }
-  }
-
-  /*
-    Phones, short screens, and larger text: the copy moves to a light panel under the photo, and the checker
-    follows. The panel is the hero's own Frost in light mode (Navy title 13.4:1, Deep Blue kicker 8.5:1, Slate
-    lead 6.6:1) and Navy in dark mode, as before (light title, Mist kicker 7.5:1, Ice lead 9.4:1). The photo
-    becomes a band that keeps the file's bottom edge and, at 44vw or more, the gazebo's roof.
-  */
-  @media (width < 46.5rem), (height < 36rem) {
-    .hero__media {
-      max-height: max(calc(100svh - var(--nav-h) - 5rem), 44vw);
-    }
-
-    .hero__scrim {
-      display: none;
-    }
-
-    .hero__copy {
-      grid-column: full;
-      grid-row: 3;
-      gap: 1rem;
-      padding: 1.75rem var(--gutter) 0.5rem;
-      background: var(--bg-grouped);
-      color: var(--label);
-    }
-
-    .hero__h1,
-    .hero__title {
-      color: var(--label);
-    }
-
-    .hero__title,
-    .hero__kicker,
-    .hero__lead {
-      text-shadow: none;
-    }
-
-    .hero__kicker {
-      color: var(--accent-text);
-    }
-
-    .hero__lead {
-      color: var(--label-2);
-    }
-
-    .hero :global(:focus-visible) {
-      outline-color: var(--focus-ring);
-    }
-
-    .hero__checker {
-      grid-row: 4;
-    }
-  }
-
-  /* Dark mode keeps the Navy panel: a step lighter than the Night page, never darker. */
-  @media (width < 46.5rem) and (prefers-color-scheme: dark), (height < 36rem) and (prefers-color-scheme: dark) {
-    .hero__copy {
-      padding-bottom: 2rem;
-      background: var(--navy);
-    }
-
-    .hero__kicker {
-      color: var(--on-navy-accent);
-    }
-
-    .hero__lead {
-      color: var(--on-navy-2);
-    }
-  }
-
-  /*
-    On a phone the photo gives up height first, so the title shows sooner. The band ends on the same cut
-    between the benches as the landscape file (19.6vw above the portrait file's bottom), and at 58vw or more
-    it keeps the gazebo's roof. It is never taller than the file above that cut (122.9vw), so the file always
-    covers the top of the frame.
-  */
-  @media (width < 46.5rem) {
-    .hero {
+    .band {
       --photo-pos: 50% calc(100% + 19.6vw);
     }
 
-    .hero__media {
+    .band__media {
+      aspect-ratio: 7 / 10;
       max-height: min(122.9vw, max(calc(100svh - var(--nav-h) - 16rem), 58vw));
     }
   }
 
-  /*
-    Short, wide screens (landscape phones, a short window, larger text on a wide screen): the photo takes a
-    little over half the screen, so the kicker and the title start on the first screen. The band is too short
-    for the whole gazebo, so it keeps the roof near its top and ends through the gazebo's posts and railings,
-    above the tables. That holds while the band is at most about 30vw tall in the landscape file and 40vw in
-    the portrait file, hence the ratios; less wide short screens keep the whole gazebo (above).
-  */
+  /* Short, wide screens: the band keeps the roof near its top and ends through the gazebo's posts. */
   @media (height < 36rem) and (min-aspect-ratio: 19 / 10) {
-    .hero {
+    .band {
       --photo-pos: 50% -28.8vw;
     }
 
-    .hero__media {
+    .band__media {
       max-height: 58svh;
     }
   }
 
-  @media (width < 46.5rem) and (height < 36rem) and (min-aspect-ratio: 3 / 2) {
-    .hero {
-      --photo-pos: 50% -65.5vw;
-    }
-
-    .hero__media {
-      max-height: 58svh;
-    }
-  }
-
-  /*
-    Wide screens: the photo fills the first screen under the header, up to the file's own ratio. On a short
-    screen the copy and the gazebo need more height than the screen has (above), so the photo runs on below
-    the fold and the checker rises by as much, to stay in the first screen. The title keeps to one line beside
-    the checker's column. The checker floats at the bottom right on glass, aligned with the header.
-  */
   @media (width >= 64rem) and (height >= 36rem) {
-    .hero {
-      --screen-h: calc(100svh - var(--nav-h) - 1px);
-      /* The copy sits closer to the header here, so it needs 14rem (less on short screens, below). */
-      --copy-room: 14rem;
-      --frame-h: min(calc(100vw * var(--hero-h, 2648) / var(--hero-w, 3661)), max(var(--screen-h), calc(41vw + var(--copy-room))));
-    }
-
-    .hero__media {
+    .band__media {
       aspect-ratio: auto;
-      height: var(--frame-h);
+      height: min(calc(100vw * var(--hero-h, 2532) / var(--hero-w, 3500)), max(calc(41vw + 3rem), 78svh));
       max-height: none;
-    }
-
-    /*
-      The copy ends at --copy-end (its column's start plus its width, below). Past it, beside the header's
-      call to action and above the checker, no text sits on the scrim, so the scrim fades to 30% over 14rem
-      and the pines show through. A mask clips to its element's box, so the scrim's gradient moves to a
-      ::before and each half of the scrim carries the mask.
-    */
-    .hero__scrim {
-      --copy-end: calc(
-        max(var(--gutter), 50vw - var(--max) / 2) + min(60rem, min(100vw - 2 * var(--gutter), var(--max)) - var(--checker-w) - 2rem)
-      );
-      --fade-x: linear-gradient(to right, #000 calc(var(--copy-end) + 1rem), rgb(0 0 0 / 0.3) calc(var(--copy-end) + 15rem));
-      background: none;
-    }
-
-    .hero__scrim::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgb(var(--navy-rgb) / 0.7), rgb(var(--navy-rgb) / 0.64) 30%);
-    }
-
-    .hero__scrim::before,
-    .hero__scrim::after {
-      -webkit-mask-image: var(--fade-x);
-      mask-image: var(--fade-x);
-    }
-
-    .hero__copy {
-      container-type: inline-size;
-      max-width: min(60rem, calc(100% - var(--checker-w) - 2rem));
-      padding-block: clamp(1.75rem, 6svh - 0.5rem, 3.5rem) 1rem;
-    }
-
-    /* One line in the copy's width (the title is 9.7em long); the first value is for browsers without container units. */
-    .hero__title {
-      font-size: min(max(var(--t-display), 1.6rem), calc((min(100vw - 2 * var(--gutter), var(--max)) - var(--checker-w) - 2rem) / 10));
-      font-size: min(max(var(--t-display), 1.6rem), 10cqi);
     }
 
     /*
       The gazebo's right side is at 59 percent of the width. Where the header's column would bring the checker
       within 2.5rem of it (very wide screens, larger text), the checker moves out into the margin just enough,
-      never past the gutter. Otherwise the margin is 0 and the checker lines up with the header exactly.
+      never past the gutter. Otherwise it lines up with the header exactly.
     */
-    .hero__checker {
+    .band__checker {
       --edge: max(var(--gutter), calc(50vw - var(--max) / 2));
       grid-column: content;
       grid-row: photo;
@@ -551,14 +576,11 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
       z-index: 1;
       width: var(--checker-w);
       margin-right: clamp(calc(var(--gutter) - var(--edge)), calc(40.8vw - var(--edge) - var(--checker-w) - 2.5rem), 0px);
-      padding-block: 2.5rem calc(max(0px, var(--frame-h) - var(--screen-h)) + clamp(2rem, 1rem + 1.5vw, 3rem));
+      padding-block: 2.5rem clamp(2rem, 1rem + 1.5vw, 3rem);
     }
 
-    /*
-      The card becomes a glass panel. The glass tokens turn solid under Reduce Transparency, Increase
-      Contrast, and where backdrop-filter is not supported (global.css).
-    */
-    .hero__checker :global(.bk-dc) {
+    /* The card becomes a glass panel; the glass tokens turn solid under Reduce Transparency and Increase Contrast. */
+    .band__checker :global(.bk-dc) {
       max-width: none;
       margin-inline: 0;
       background-color: var(--glass-bg-strong);
@@ -569,50 +591,18 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
     }
   }
 
-  /*
-    64 to 70rem (a 1024px tablet in landscape): a narrower checker keeps 2.5rem clear of the gazebo. Its three
-    Saturdays still share one row, with a little less padding so each date keeps to one line with room to spare.
-  */
+  /* 64 to 70rem (a 1024px tablet in landscape): a narrower checker keeps 2.5rem clear of the gazebo. */
   @media (64rem <= width < 70rem) and (height >= 36rem) {
-    .hero {
+    .band {
       --checker-w: 21rem;
     }
 
-    .hero__checker :global(.bk-dc__sats .bk-chips) {
+    .band__checker :global(.bk-dc__sats .bk-chips) {
       gap: 6px;
     }
 
-    .hero__checker :global(.bk-dc__sats .bk-chip) {
+    .band__checker :global(.bk-dc__sats .bk-chip) {
       padding-inline: 4px;
-    }
-  }
-
-  /*
-    Short wide screens (a 1024 x 768 tablet in landscape, a 1366 x 768 laptop): tighter spacing and a title
-    sized to the screen's height keep the copy short, so the photo runs on less far below the fold and the
-    date field and Continue to Booking sit higher in the first screen.
-  */
-  @media (width >= 64rem) and (36rem <= height < 53rem) {
-    .hero {
-      --copy-room: 12rem;
-    }
-
-    .hero__copy {
-      gap: 0.75rem;
-      padding-block: clamp(1.25rem, 4svh, 2rem) 0.75rem;
-    }
-
-    .hero__h1 {
-      gap: 0.5rem;
-    }
-
-    .hero__title {
-      font-size: min(max(var(--t-display), 1.6rem), calc((min(100vw - 2 * var(--gutter), var(--max)) - var(--checker-w) - 2rem) / 10), 7.5svh);
-      font-size: min(max(var(--t-display), 1.6rem), 10cqi, 7.5svh);
-    }
-
-    .hero__checker {
-      padding-top: 1.5rem;
     }
   }
 
@@ -651,31 +641,111 @@ const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${ha
   }
 
   .space__cap {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--accent-text);
-    font-weight: 600;
+    gap: 0.4rem;
+    min-height: 28px;
+    padding-inline: 0.75rem;
+    font-size: var(--t-footnote);
+  }
+
+  .space__cap :global(.icon) {
+    width: 1rem;
+    height: 1rem;
   }
 
   .space__sentence {
     max-width: 34rem;
   }
 
+  /* ---------- Feature strip ---------- */
+
+  .features {
+    border-top: 1px solid var(--separator);
+  }
+
+  .features__list {
+    display: grid;
+    gap: 1.75rem 2.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .features__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .feature__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--panel);
+    color: var(--accent-text);
+  }
+
+  .feature__icon :global(.icon) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .feature__text {
+    display: grid;
+    gap: 0.3rem;
+    padding-top: 0.55rem;
+  }
+
+  .feature__text h3 {
+    margin: 0;
+  }
+
+  .feature__text p {
+    max-width: 30rem;
+  }
+
   /* ---------- Rates ---------- */
+
+  .rates {
+    background: var(--band);
+  }
+
+  .rates__inner {
+    display: grid;
+    gap: 1.75rem 4rem;
+    align-items: end;
+  }
+
+  @media (min-width: 64rem) {
+    .rates__inner {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+  }
 
   .rates__copy {
     display: grid;
     gap: 1rem;
     justify-items: start;
-    max-width: 34rem;
+    max-width: 38rem;
   }
 
   .rates__action {
-    margin-top: 0.5rem;
-    padding-inline: 0;
     align-items: center;
     column-gap: 1.5rem;
+  }
+
+  @media (min-width: 64rem) {
+    .rates__action {
+      justify-content: end;
+    }
   }
 
   .rates__link {

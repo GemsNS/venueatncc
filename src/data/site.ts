@@ -12,13 +12,13 @@
  *   100 guests (the same as the indoor limit); the amenities; building access Monday to Saturday,
  *   9:00 AM to 12:00 midnight; a reservation and a non-refundable deposit hold a date; the contact
  *   person, Faith VanDyke.
- * Palette: the client's navy and sky blues (docs/design/brand.md, version 3).
+ * Palette: pastel pink, Berry, and Plum (docs/design/brand.md, version 4).
  * Confirmed from OpenStreetMap and the US Census geocoder on 2026-09-27: address and geo coordinates.
  *
  * The venue is its own business. Nothing here, or anywhere on the site, connects it to another
  * organization (brand.md, "Separation").
- * The tagline is the brand line from docs/design/brand.md, also the home page headline. It replaces
- * "Unforgettable Events Await You" from the original venueatncc.org page.
+ * The tagline is the brand line from docs/design/brand.md: the slogan in structured data and the footer's
+ * statement. The home page headline is the welcome, "Welcome to The Venue @ NCC" (version 4).
  *
  * Rates live in src/shared/pricing.ts.
  */
@@ -126,10 +126,11 @@ export const site = {
   },
 
   /**
-   * What a booking includes. Only confirmed items. Catering is not listed as an exclusion here: brand.md
+   * What a booking includes. Only confirmed items. Tables and chairs come with the rental, and clients may
+   * use them if they wish (owner, September 30, 2026). Catering is not listed as an exclusion here: brand.md
    * allows it only in one neutral FAQ entry.
    */
-  included: ['The space you book', 'On-site parking'],
+  included: ['The space you book', 'Tables and chairs, which you may use if you wish', 'On-site parking'],
 
   /**
    * The owner's premium amenities, shown once, on The Space, and in structured data (amenityFeature).

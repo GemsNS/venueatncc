@@ -2,11 +2,15 @@
 /**
  * The Venue @ NCC logo, inlined from src/assets/brand/ so it follows the theme.
  *
- * tone="auto": Navy ink (#012A4A) becomes var(--logo-ink, var(--label)) and the Steel accent (#2A6F97)
- * becomes var(--logo-accent, var(--accent-icon)), so the logo is Navy and Steel on light surfaces and turns
- * the dark-mode text color and Mist in dark mode.
- * tone="white": the light artwork, for photos and Navy. White (#FFFFFF) becomes var(--on-navy) and the Mist
- * accent (#89C2D9) becomes var(--on-navy-accent), the same in both appearances.
+ * tone="auto": Plum ink (#3B2430) becomes var(--logo-ink, var(--label)) and the Berry accent (#9E2B52)
+ * becomes var(--logo-accent, var(--accent-icon)), so the logo is Plum and Berry on light surfaces and turns
+ * the dark-mode text color and Blossom in dark mode.
+ * tone="white": the light artwork, for photos and Plum. White (#FFFFFF) becomes var(--on-dark) and the Pink
+ * accent (#E9A9BB) becomes var(--on-dark-accent), the same in both appearances.
+ *
+ * The two word variants ('word-the-venue', 'word-at-ncc') are the lockup's own word outlines, each in a
+ * tight viewBox, for the home page welcome: the same shapes the header lockup carries (tagged data-part),
+ * so the welcome can morph into the header on scroll.
  *
  * Accessible as an image named "The Venue @ NCC", or hidden with `decorative` when it sits inside a link
  * that already carries the name.
@@ -17,9 +21,11 @@ import mark from '../assets/brand/venue-mark.svg?raw';
 import markWhite from '../assets/brand/venue-mark-white.svg?raw';
 import wordmark from '../assets/brand/venue-wordmark.svg?raw';
 import wordmarkWhite from '../assets/brand/venue-wordmark-white.svg?raw';
+import wordTheVenue from '../assets/brand/venue-word-the-venue.svg?raw';
+import wordAtNcc from '../assets/brand/venue-word-at-ncc.svg?raw';
 
 interface Props {
-  variant?: 'lockup' | 'mark' | 'wordmark';
+  variant?: 'lockup' | 'mark' | 'wordmark' | 'word-the-venue' | 'word-at-ncc';
   tone?: 'auto' | 'white';
   /** Rendered height: a number of pixels or any CSS length. Minimum 32px for the lockup. */
   height?: number | string;
@@ -28,25 +34,32 @@ interface Props {
   title?: string;
   /** Hide from assistive technology, e.g. inside a link labeled "The Venue @ NCC, home". */
   decorative?: boolean;
+  /** Any other attribute (data-*, id) is passed through to the svg element. */
+  [key: `data-${string}`]: string | undefined;
 }
 
-const { variant = 'lockup', tone = 'auto', height = 36, class: className, title = 'The Venue @ NCC', decorative = false } = Astro.props;
+const { variant = 'lockup', tone = 'auto', height = 36, class: className, title = 'The Venue @ NCC', decorative = false, ...rest } = Astro.props;
 
 const sources = {
   lockup: { auto: lockup, white: lockupWhite },
   mark: { auto: mark, white: markWhite },
   wordmark: { auto: wordmark, white: wordmarkWhite },
+  'word-the-venue': { auto: wordTheVenue, white: wordTheVenue },
+  'word-at-ncc': { auto: wordAtNcc, white: wordAtNcc },
 } as const;
 
 /** The artwork's colors (brand.md, Logo) and the theme variables that replace them. */
 const COLORS: Record<'auto' | 'white', Record<string, string>> = {
   auto: {
-    '#012A4A': 'var(--logo-ink, var(--label))',
-    '#2A6F97': 'var(--logo-accent, var(--accent-icon))',
+    '#3B2430': 'var(--logo-ink, var(--label))',
+    '#9E2B52': 'var(--logo-accent, var(--accent-icon))',
   },
   white: {
-    '#FFFFFF': 'var(--logo-light-ink, var(--on-navy, #FFFFFF))',
-    '#89C2D9': 'var(--logo-light-accent, var(--on-navy-accent, #89C2D9))',
+    '#FFFFFF': 'var(--logo-light-ink, var(--on-dark, #FFFFFF))',
+    '#E9A9BB': 'var(--logo-light-accent, var(--on-dark-accent, #E9A9BB))',
+    // The word variants carry the dark artwork; in the white tone they take the light colors.
+    '#3B2430': 'var(--logo-light-ink, var(--on-dark, #FFFFFF))',
+    '#9E2B52': 'var(--logo-light-accent, var(--on-dark-accent, #E9A9BB))',
   },
 };
 
@@ -57,9 +70,11 @@ const recolor = (svg: string) =>
   );
 
 const raw = sources[variant][tone];
-const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(raw);
-const vbW = Number(viewBox?.[1] ?? 100);
-const vbH = Number(viewBox?.[2] ?? 100);
+const viewBox = /viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/.exec(raw);
+const vbX = Number(viewBox?.[1] ?? 0);
+const vbY = Number(viewBox?.[2] ?? 0);
+const vbW = Number(viewBox?.[3] ?? 100);
+const vbH = Number(viewBox?.[4] ?? 100);
 const cssHeight = typeof height === 'number' ? `${height}px` : height;
 const width = typeof height === 'number' ? Math.round((height * vbW) / vbH) : undefined;
 
@@ -71,7 +86,7 @@ const inner = recolor(raw)
 ---
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox={`0 0 ${vbW} ${vbH}`}
+  viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
   class:list={['logo', `logo--${variant}`, className]}
   width={width}
   height={typeof height === 'number' ? height : undefined}
@@ -80,6 +95,7 @@ const inner = recolor(raw)
   aria-label={decorative ? undefined : title}
   aria-hidden={decorative ? 'true' : undefined}
   focusable="false"
+  {...rest}
   set:html={inner}
 />
 

@@ -44,7 +44,7 @@ export const shareCards: Record<string, ShareCard> = {
   // The building at blue hour without its gable: the cross may appear in photos of the building, but never
   // beside the headline as a subject (brand.md, Separation). The left 80% keeps the lit entry and the pines.
   home: {
-    title: 'Celebrate among the pines.',
+    title: `Welcome to ${site.name}`,
     line: `Event venue in ${site.address.city}, ${site.address.regionName}`,
     photo: { ...byName('exterior-dusk'), region: { left: 0, top: 0, width: 0.8, height: 1 } },
   },
