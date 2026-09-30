@@ -15,7 +15,7 @@ import { offBrandPhrase } from '../../lib/schema';
 export interface ShareCard {
   /** The page title, set in Libre Caslon Display. Sentence case. */
   title: string;
-  /** One short line under the title, set in Inter. No trailing period. */
+  /** One short line under the title, set in Libre Caslon Text. No trailing period. */
   line: string;
   /**
    * The photo behind the text: a file in src/assets/venue/ and its caption. `region` crops the file first,

@@ -145,7 +145,7 @@ export function SettingsView({ onReset }: { onReset: () => Promise<string | null
           </div>
         </dl>
         <div class="adm-section__foot">
-          <button type="button" class="btn btn--gray" onClick={signOut}>
+          <button type="button" class="btn btn--outline" onClick={signOut}>
             <Icon name="log-out" />
             Sign Out
           </button>

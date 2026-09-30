@@ -103,7 +103,7 @@ export function ErrorBanner({ message, onRetry }: { message: string; onRetry?: (
       <Icon name="info" />
       <p>{message}</p>
       {onRetry && (
-        <button type="button" class="btn btn--gray btn--sm adm-btn-44" onClick={onRetry}>
+        <button type="button" class="btn btn--outline btn--sm adm-btn-44" onClick={onRetry}>
           Try Again
         </button>
       )}

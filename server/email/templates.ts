@@ -7,11 +7,12 @@
  * figure, labelled "Internal rate-card guide", read as estimate() wrote it: bookingDeposit is due to
  * reserve the date and the rest (total minus bookingDeposit) is the balance.
  *
- * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
- * render SVG), a thin Berry rule, Georgia for headings in place of Caslon, the system sans
- * stack for body text, Berry links and button (white label), Plum text, Mauve secondary
- * text, and a Blush reference box. The venue is its own business: the emails name no other
- * organization. The footer is the one place for the address, phone, email, and site, so the body
+ * Brand (docs/design/brand.md; redesign-spec.md, "Emails and share images"): the site's Blush page with
+ * one white card (a hairline edge, 16px corners), the email lockup as a PNG header (many clients do not
+ * render SVG), a thin Rose rule, Georgia at regular weight for headings and the button label in place of
+ * Caslon, the system sans stack for body text, Berry links and a Berry capsule button (white label), Plum
+ * text, Mauve secondary text, and a Petal reference panel. The venue is its own business: the emails name
+ * no other organization. The footer is the one place for the address, phone, email, and site, so the body
  * points to it instead of repeating them.
  */
 import { fullAddress, site } from '../../src/data/site';
@@ -33,21 +34,23 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-/** White: the page, and the button label (7.2:1 on Berry). */
+/** White: the card, and the button label (7.2:1 on Berry). */
 const WHITE = '#FFFFFF';
 /** Rose: the thin rule under the header. */
 const STEEL = '#B5456E';
-/** Berry: links, the reference number, and the button fill. 7.2:1 on white. */
+/** Berry: links, the reference number, and the button fill. 7.2:1 on white, 5.7:1 on Petal. */
 const LINK = '#9E2B52';
 /** Plum and Mauve: text and secondary text (14.2:1 and 7.6:1 on white). */
 const NAVY = '#3B2430';
 const SLATE = '#6A4B57';
 /** Hairlines: the site's separator (Plum at 12%) over white. */
 const RULE = '#E7E0E3';
-/** Blush: the reference box. */
+/** Blush: the page behind the card. */
 const FROST = '#FBF1F3';
+/** Petal: the reference panel (Plum 11.2:1, Mauve 6.0:1). */
+const PETAL = '#F6DFE5';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
-/** Headings: Georgia stands in for Libre Caslon, which email clients do not have. */
+/** Headings and the button label: Georgia stands in for Libre Caslon, which email clients do not have. */
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;
 /** The PNG lockup (512 x 96), shown at half size. Always the public site, so every mail client can load it. */
 const LOCKUP = { src: `${site.url}/brand/email-lockup.png`, width: 256, height: 48 };
@@ -126,17 +129,19 @@ function layout(opts: { preheader: string; body: string; origin: string }): stri
 <meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(site.name)}</title>
 </head>
-<body style="margin:0;padding:0;background:${WHITE};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${WHITE};">${escapeHtml(opts.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${WHITE};">
-<tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;font-family:${FONT};color:${NAVY};">
+<body style="margin:0;padding:0;background:${FROST};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${FROST};">${escapeHtml(opts.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${FROST};">
+<tr><td align="center" style="padding:32px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:${WHITE};border:1px solid ${RULE};border-radius:16px;font-family:${FONT};color:${NAVY};">
+<tr><td style="padding:28px 28px 0 28px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding:0 0 20px 0;">
 <a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${LINK};"></a>
 </td></tr>
 <tr><td height="1" style="height:1px;padding:0;background:${STEEL};font-size:1px;line-height:1px;">&nbsp;</td></tr>
 ${opts.body}
-<tr><td style="padding:24px 0 0 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${SLATE};">
+<tr><td style="padding:24px 0 32px 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${SLATE};">
 ${escapeHtml(site.name)}<br>
 ${escapeHtml(fullAddress)}<br>
 <a href="tel:${site.contact.phoneE164}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
@@ -144,6 +149,8 @@ ${escapeHtml(fullAddress)}<br>
 <a href="mailto:${escapeHtml(site.contact.email)}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.email)}</a>
 &nbsp;&middot;&nbsp;
 <a href="${escapeHtml(opts.origin)}/" style="color:${LINK};text-decoration:none;">${escapeHtml(host)}</a>
+</td></tr>
+</table>
 </td></tr>
 </table>
 </td></tr>
@@ -162,10 +169,11 @@ const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size
 const sectionTitle = (text: string) =>
   `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
 
+/** The reference on a Petal panel (the site's quiet panel surface), the number in Berry. */
 function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${FROST};border-radius:12px;">
-<tr><td style="padding:12px 18px;font-size:14px;line-height:20px;color:${SLATE};">Reference<br>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${PETAL};border-radius:12px;">
+<tr><td style="padding:14px 20px;font-size:14px;line-height:20px;color:${SLATE};">Reference<br>
 <span style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:1px;color:${LINK};">${escapeHtml(reference)}</span></td></tr>
 </table>
 </td></tr>`;
@@ -200,10 +208,11 @@ function bulletList(items: string[]): string {
   return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${SLATE};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
 }
 
+/** The site's one button: a Berry capsule with a serif label in white (Georgia for Caslon Text). */
 function button(href: string, label: string): string {
   return `<tr><td style="padding:16px 0 8px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="border-radius:999px;background:${LINK};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:600;color:${WHITE};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
+<td style="border-radius:999px;background:${LINK};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 26px;font-family:${SERIF};font-size:17px;font-weight:400;line-height:20px;color:${WHITE};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
 </tr></table>
 </td></tr>`;
 }

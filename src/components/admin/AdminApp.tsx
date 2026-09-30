@@ -262,7 +262,7 @@ export default function AdminApp() {
               icon="info"
               title="That page does not exist"
               action={
-                <a class="btn btn--gray" href="#/">
+                <a class="btn btn--outline" href="#/">
                   Go to Today
                 </a>
               }

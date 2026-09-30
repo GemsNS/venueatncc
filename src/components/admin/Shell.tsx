@@ -1,4 +1,4 @@
-/** App chrome: a glass sidebar at 744px and wider, a floating glass tab bar on phones. */
+/** App chrome: the Plum sidebar at 744px and wider (the footer's surface), a solid tab row along the bottom on phones. */
 import type { ComponentChildren } from 'preact';
 import { SHOW_DEMO } from './demo-tools';
 import type { AdminStats, AdminUser } from '../../shared/types';
@@ -63,7 +63,7 @@ export function Shell({
 
   return (
     <div class="adm">
-      <nav class="adm-sidebar glass" aria-label="Admin">
+      <nav class="adm-sidebar" aria-label="Admin">
         <div class="adm-sidebar__brand">
           <Monogram class="adm-sidebar__mark" />
           <span class="adm-sidebar__text">
@@ -109,7 +109,7 @@ export function Shell({
         {children}
       </div>
 
-      <nav class="adm-tabbar glass" aria-label="Admin tabs">
+      <nav class="adm-tabbar" aria-label="Admin tabs">
         {NAV.map((item) => (
           <a key={item.id} class="adm-tab" href={hrefFor(item)} aria-current={current === item.id ? 'page' : undefined}>
             <span class="adm-tab__icon">
