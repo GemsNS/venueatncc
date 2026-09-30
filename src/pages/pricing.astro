@@ -1,168 +1,218 @@
 ---
+/**
+ * Rates and inquiries (redesign-spec.md, "/pricing/ Rates"; the reference's contact and tour page).
+ *
+ * In order: a serif title band on Petal; the rates split (the approved wording beside a real photo of The
+ * Hall, a Call button, and the contact person); the rental information and policies as three checklist
+ * panels (what the rental includes, the deposit, the building hours); then the contact section, a portrait
+ * photo beside the inquiry form, whose field groups sit in Petal panels. The form sends through the site's
+ * own API (the same call and schema as the booking wizard), so every inquiry lands in the admin CRM.
+ *
+ * The venue does not publish prices: no amounts, packages, fees, or estimates appear here, and no price
+ * in structured data. The phone number appears once, on the Call button. This is the one page with the
+ * rental policies; the FAQ answers each once, and The Space lists the inclusions beside the spaces.
+ * The URL stays /pricing/ so existing links keep working. Breadcrumbs are for event pages only.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
+import ImageTextSplit from '../components/ImageTextSplit.astro';
+import Checklist from '../components/Checklist.astro';
+import Photo from '../components/Photo.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import InquiryForm from '../components/booking/InquiryForm';
 import { site } from '../data/site';
-import { breadcrumbs } from '../lib/schema';
+import { photoByName, type VenuePhoto } from '../data/photos';
 
-/*
-  Rates and inquiries. The venue does not publish prices: rates vary with the season, holidays, and the day
-  of the week, so the page gives the owner's approved sentence, a Call button, and an inquiry form that sends
-  through the site's own API (the same call and schema as the booking wizard), so every inquiry lands in the
-  admin CRM. No amounts, packages, fees, or estimates appear here, and no price in structured data.
-  The URL stays /pricing/ so existing links keep working.
-
-  This is the one page with the rental policies (what the rental includes, the deposit, and the building
-  hours); the FAQ answers each once, and The Space lists the inclusions beside the spaces.
-*/
 const title = 'Rates and inquiries | The Venue @ NCC, Suffolk, VA';
 const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call us or send an inquiry about The Hall, The Main Hall, or The Grove.`;
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-const included = site.included.map(lowerFirst);
-const policies = [
-  { label: 'Included', value: `Every rental includes ${included.slice(0, -1).join(', ')}, and ${included[included.length - 1]}.` },
-  { label: 'Deposits', value: site.depositPolicy },
-  { label: 'Hours of operation', value: `Building access ${site.access.days}, ${site.access.hours}.` },
-];
-const crumbs = [
-  { name: 'Home', path: '/' },
-  { name: 'Rates', path: '/pricing/' },
+
+/* The approved wording (brand.md, "No published prices"), without the number: the Call button carries it. */
+const ratesLead =
+  'Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us and we will be happy to help you.';
+
+const hallPhoto = photoByName('hall-fireplace');
+
+/*
+ * The photo beside the form: the reference sets a portrait photograph beside its contact form. The 4:5 file
+ * is used at every width, so nothing is cropped into the gazebo. It is a different photo from the one in
+ * the rates split (no image appears twice on a page).
+ */
+const gazebo = photoByName('gazebo');
+const formPhoto: VenuePhoto | null = gazebo?.tall ? { ...gazebo, src: gazebo.tall, tall: undefined } : gazebo;
+
+const panels: { title: string; items: string[] }[] = [
+  { title: 'What the rental includes', items: [...site.included] },
+  { title: 'Holding your date', items: [site.depositPolicy] },
+  { title: 'Hours of operation', items: [site.access.days, site.access.hours] },
 ];
 ---
-<BaseLayout title={title} description={description} og="pricing" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
-  <section class="rates-hero">
+<BaseLayout title={title} description={description} og="pricing" pageType="ContactPage">
+  <section class="band-section title-band" aria-labelledby="page-title">
     <div class="container">
-      <Breadcrumbs items={crumbs} />
-      <div class="rates-hero__layout">
-        <div class="rates-hero__copy">
-          <h1 class="t-large-title">Rates and inquiries</h1>
-          <p class="t-lead">
-            Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
-            please call us and we will be happy to help you.
-          </p>
-          <div class="btn-row">
-            <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
-              <Icon name="phone" />
-              Call {site.contact.phone}
-            </a>
-          </div>
-          <p class="rates-hero__contact secondary">
-            Ask for {site.contact.contactName}, or email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
-          </p>
-        </div>
+      <p class="eyebrow">Rates</p>
+      <h1 id="page-title">Rates and inquiries</h1>
+    </div>
+  </section>
 
-        <section class="rates-policies" aria-labelledby="policies-heading">
-          <h2 id="policies-heading" class="t-title-3">Rental information and policies</h2>
-          <dl class="rates-policies__list">
-            {
-              policies.map((p) => (
-                <div>
-                  <dt>{p.label}</dt>
-                  <dd>{p.value}</dd>
-                </div>
-              ))
-            }
-          </dl>
-        </section>
+  <section class="section" aria-labelledby="rates-heading">
+    <div class="container">
+      {
+        hallPhoto ? (
+          <ImageTextSplit photo={hallPhoto} id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead}>
+            <Fragment slot="actions">
+              <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+                <Icon name="phone" />
+                Call {site.contact.phone}
+              </a>
+              <p class="rates__contact secondary">
+                Ask for {site.contact.contactName}, or email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+              </p>
+            </Fragment>
+          </ImageTextSplit>
+        ) : (
+          <SectionHeading id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead}>
+            <Fragment slot="actions">
+              <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+                <Icon name="phone" />
+                Call {site.contact.phone}
+              </a>
+            </Fragment>
+          </SectionHeading>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="policies-heading">
+    <div class="container">
+      <SectionHeading id="policies-heading" eyebrow="Good to know" heading="Rental information and policies" />
+      <div class="panels">
+        {panels.map((p) => <Checklist title={p.title} items={p.items} />)}
       </div>
     </div>
   </section>
 
-  <section class="section section--grouped inquiry" aria-labelledby="inquiry-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 id="inquiry-heading">Send an inquiry</h2>
-        <p class="t-lead">Tell us about your event, and we will get back to you with availability and pricing for your date.</p>
+  <section class="section" aria-labelledby="inquiry-heading">
+    <div class="container contact">
+      {formPhoto && <Photo photo={formPhoto} ratio="4 / 5" sizes="(min-width: 75rem) 520px, (min-width: 60rem) 42vw, 100vw" class="contact__photo" />}
+      <div class="contact__form">
+        <SectionHeading
+          id="inquiry-heading"
+          eyebrow="Contact us"
+          heading="Send an inquiry"
+          lead="Tell us about your event, and we will get back to you with availability and pricing for your date."
+        />
+        <InquiryForm client:load />
+        <noscript>
+          <div class="card noscript">
+            <p>
+              The inquiry form needs JavaScript. You can reach us directly at <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or
+              <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+            </p>
+          </div>
+        </noscript>
       </div>
-      <InquiryForm client:load />
-      <noscript>
-        <div class="card noscript">
-          <p>The inquiry form needs JavaScript. You can reach us directly at
-            <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or
-            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
-          </p>
-        </div>
-      </noscript>
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .rates-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4rem);
+  /* ---------- Title band (the reference's contact page opens with a serif title on a tinted band) ---------- */
+
+  .title-band {
+    background: var(--band);
+    padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
 
-  .rates-hero__layout {
+  .title-band .container {
     display: grid;
-    gap: 2rem 4rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    gap: 0.75rem;
   }
 
-  @media (min-width: 60rem) {
-    .rates-hero__layout {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      align-items: end;
-    }
-  }
-
-  .rates-hero__copy {
-    display: grid;
-    gap: 1.25rem;
-    max-width: 42rem;
-  }
-
-  .rates-hero__copy .btn-row {
-    margin-top: 0.25rem;
-  }
-
-  .rates-hero__contact a {
-    font-weight: 500;
-  }
-
-  /* The policies: a quiet Petal panel beside the rates copy on wide screens, under it on phones. */
-  .rates-policies {
-    display: grid;
-    gap: 1rem;
-    align-content: start;
-    padding: max(20px, min(4vw, 2rem));
-    border-radius: var(--r-xl);
-    background: var(--panel);
-  }
-
-  .rates-policies__list {
-    margin: 0;
-  }
-
-  .rates-policies__list > div {
-    display: grid;
-    gap: 0.25rem;
-    padding-block: 0.85rem;
-    border-top: 1px solid var(--separator);
-  }
-
-  .rates-policies__list dt {
-    color: var(--label);
-    font-weight: 600;
-  }
-
-  .rates-policies__list dd {
-    margin: 0;
-    color: var(--label-2);
+  .title-band h1 {
+    line-height: 1.05;
   }
 
   @media (forced-colors: active) {
-    .rates-policies {
-      border: 1px solid CanvasText;
+    .title-band {
+      border-bottom: 1px solid CanvasText;
     }
   }
 
-  .inquiry .section-head {
-    margin-bottom: clamp(1.5rem, 1.25rem + 1.5vw, 2.5rem);
+  /* ---------- Rates ---------- */
+
+  /* The contact line takes the row under the Call button. */
+  .rates__contact {
+    flex-basis: 100%;
+    font-family: var(--font-serif);
+  }
+
+  .rates__contact a {
+    color: var(--accent-text);
+  }
+
+  /* ---------- Policies: three checklist panels in a row, stacked on phones ---------- */
+
+  .panels {
+    display: grid;
+    gap: var(--space-4, 1rem);
+  }
+
+  /* Two across on tablets; an odd last panel takes the full row rather than leaving a gap beside it. */
+  @media (min-width: 36rem) {
+    .panels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panels > :global(.checklist:last-child:nth-child(odd)) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .panels {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+
+    .panels > :global(.checklist:last-child:nth-child(odd)) {
+      grid-column: auto;
+    }
+  }
+
+  /* ---------- Contact: a portrait photo beside the form (the reference's contact page) ---------- */
+
+  .contact {
+    display: grid;
+    gap: 2.5rem clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+
+  .contact :global(.contact__photo .photo__frame) {
+    border-radius: var(--r-card);
+  }
+
+  .contact__form {
+    min-width: 0;
+  }
+
+  .contact__form :global(.section-head) {
+    max-width: none;
+  }
+
+  @media (min-width: 60rem) {
+    .contact {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+
+    /* The photo keeps the form company as it scrolls. */
+    .contact :global(.contact__photo) {
+      position: sticky;
+      top: calc(var(--nav-h) + 1.5rem);
+    }
   }
 
   .noscript {
-    max-width: 48rem;
     margin-top: 1rem;
     padding: 1.5rem;
   }
