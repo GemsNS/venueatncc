@@ -1,8 +1,16 @@
 ---
+/**
+ * Check availability (redesign-spec.md, "/book/"; the reference's contact and tour page): a serif title band
+ * on Petal, then the booking wizard. The island gets one small real photo of each space (the file's own 3:2
+ * shape, so nothing is cropped) for the space rows and the summary card. No two rows share a photo, and the
+ * summary shows the chosen space's photo only on the steps where the rows are not on screen, so no image
+ * appears twice on the page (brand.md, "No repeats").
+ */
+import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumbs from '../components/Breadcrumbs.astro';
-import BookingApp from '../components/booking/BookingApp';
+import BookingApp, { type SpacePhoto, type SpacePhotos } from '../components/booking/BookingApp';
 import { site } from '../data/site';
+import { photoByName, type VenuePhoto } from '../data/photos';
 import { breadcrumbs } from '../lib/schema';
 
 const title = 'Check availability | Book The Venue @ NCC, Suffolk, VA';
@@ -12,26 +20,43 @@ const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Check availability', path: '/book/' },
 ];
+
+/** A small responsive rendering of one real photo for the island (WebP, 1x and 2x of a 160px frame). */
+async function thumb(photo: VenuePhoto | null): Promise<SpacePhoto | null> {
+  if (!photo) return null;
+  const [one, two] = await Promise.all([
+    getImage({ src: photo.src, width: 240, format: 'webp' }),
+    getImage({ src: photo.src, width: 480, format: 'webp' }),
+  ]);
+  return { src: one.src, srcset: `${one.src} 240w, ${two.src} 480w`, alt: photo.alt };
+}
+
+/* The Hall, The Main Hall, and The Grove each get their own photo; the combined choice shows two others. */
+const spacePhotos: SpacePhotos = {
+  indoor: await thumb(photoByName('hall-windows')),
+  main: await thumb(photoByName('main-hall')),
+  outdoor: await thumb(photoByName('grove-tables')),
+  bothA: await thumb(photoByName('hall-doors')),
+  bothB: await thumb(photoByName('gazebo')),
+};
 ---
 <BaseLayout title={title} description={description} og="book" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
-  <section class="book-hero">
-    <div class="container">
-      <Breadcrumbs items={crumbs} />
-      <div class="book-hero__copy">
-        <h1 class="t-large-title">Check availability</h1>
-        <p class="t-lead">Choose a date and a space, and send your request in about two minutes.</p>
-      </div>
+  <section class="book-title">
+    <div class="container book-title__inner">
+      <p class="eyebrow">Availability</p>
+      <h1>Check availability</h1>
+      <p class="t-lead book-title__lead">Choose a date and a space, and send your request in about two minutes.</p>
     </div>
   </section>
 
-  <section class="book-app">
+  <section class="section book-app">
     <div class="container">
-      <BookingApp client:load />
+      <BookingApp client:load spacePhotos={spacePhotos} />
       <noscript>
-        <div class="card noscript">
-          <h2 class="t-title-1">Book by phone or email</h2>
-          <p>The booking calendar needs JavaScript. You can still book with us directly:</p>
-          <p>
+        <div class="book-noscript">
+          <h2 class="t-title-2">Book by phone or email</h2>
+          <p class="t-copy">The booking calendar needs JavaScript. You can still book with us directly:</p>
+          <p class="t-copy">
             <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a> or
             <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
           </p>
@@ -42,25 +67,33 @@ const crumbs = [
 </BaseLayout>
 
 <style>
-  .book-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(1.75rem, 1.25rem + 2vw, 3rem);
+  /* The reference's contact page opens with a title band: the serif h1 alone on a warm surface. */
+  .book-title {
+    background: var(--band);
+    padding-block: clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
   }
 
-  /* A short Caslon title and one lead, so the calendar stays close to the top of the page. */
-  .book-hero__copy {
+  .book-title__inner {
     display: grid;
-    gap: 1rem;
-    max-width: 44rem;
-    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+    gap: 0.75rem;
+  }
+
+  .book-title__lead {
+    max-width: 38rem;
+    color: var(--label-2);
   }
 
   .book-app {
-    padding-bottom: clamp(3rem, 2rem + 4vw, 6rem);
+    padding-top: clamp(2.5rem, 1.75rem + 3vw, 4rem);
   }
 
-  .noscript {
+  .book-noscript {
     display: grid;
     gap: 0.75rem;
-    padding: 2rem;
+    max-width: 36rem;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    border-radius: var(--r-lg);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 1px var(--separator);
   }
 </style>

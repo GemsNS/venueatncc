@@ -1,4 +1,4 @@
-/** Step 4: an inset grouped summary with Edit links, the honeypot, and any send error. */
+/** Step 4: the request in three white panels with an Edit link each, the honeypot, and any send error. */
 import type { Ref } from 'preact';
 import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
@@ -14,16 +14,17 @@ const PREF_LABEL = { email: 'Email', phone: 'Phone call', text: 'Text message' }
 function Group(props: { title: string; step: Step; onEdit: (step: Step) => void; rows: [string, string][] }) {
   const headId = `bk-review-${props.step}`;
   return (
-    <section class="bk-group" aria-labelledby={headId}>
+    <section class="bk-panel bk-group" aria-labelledby={headId}>
       <div class="bk-group__head">
-        <h3 id={headId} class="bk-group__title">
+        <h3 id={headId} class="bk-panel__title">
           {props.title}
         </h3>
-        <button type="button" class="btn btn--plain btn--sm bk-edit" onClick={() => props.onEdit(props.step)}>
+        <button type="button" class="link-more bk-edit" onClick={() => props.onEdit(props.step)}>
           Edit<span class="visually-hidden"> {props.title.toLowerCase()}</span>
+          <Icon name="chevron-right" />
         </button>
       </div>
-      <dl class="list-group bk-list bk-dl">
+      <dl class="bk-dl">
         {props.rows.map(([k, v]) => (
           <div class="bk-dl__row" key={k}>
             <dt>{k}</dt>
@@ -70,7 +71,7 @@ export function StepReview(props: {
       <Group title="Your event" step={2} onEdit={props.onEdit} rows={rows2} />
       <Group title="Contact" step={3} onEdit={props.onEdit} rows={rows3} />
 
-      <p class="bk-review__fine">
+      <p class="bk-review__fine t-copy">
         This is a request, not a booking yet. We confirm availability and send your quote personally, with the payment terms for your date.
       </p>
 
@@ -105,7 +106,7 @@ export function StepReview(props: {
                 Try Again
               </button>
             )}
-            <a class={props.rateLimited ? 'btn btn--filled' : 'btn btn--gray'} href={telHref(site.contact.phoneE164)}>
+            <a class={props.rateLimited ? 'btn btn--filled' : 'btn btn--outline'} href={telHref(site.contact.phoneE164)}>
               <Icon name="phone" />
               Call {site.contact.phone}
             </a>

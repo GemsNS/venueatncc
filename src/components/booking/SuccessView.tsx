@@ -1,4 +1,8 @@
-/** Confirmation after a request is sent. It shows no amounts: we confirm availability and send each quote personally. */
+/**
+ * Confirmation after a request is sent: a Caslon Display title, the reference, the request in a white panel
+ * and what happens next in a Petal panel. It shows no amounts: we confirm availability and send each quote
+ * personally.
+ */
 import type { Ref } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
@@ -38,23 +42,24 @@ export function SuccessView(props: {
     ['Event', eventTypeName(d.eventType, d.eventTypeOther.trim())],
   ];
 
+  const steps = [
+    ['We confirm availability.', 'We check the calendar and your details.'],
+    ['We send your quote personally.', `We contact you ${REACH[d.contactPreference]} with your quote and to confirm the details.`],
+    ['Accept the quote to reserve the date.', 'Your quote explains how to hold the date.'],
+  ];
+
   return (
     <div class="bk-success">
       <div class="bk-success__hero">
-        <span class="bk-success__badge" aria-hidden="true">
-          <Icon name="check" />
-        </span>
+        <p class="eyebrow">Request sent</p>
         <h2 class="bk-success__title" tabIndex={-1} ref={props.headingRef}>
-          Request sent
+          {firstName ? `Thank you, ${firstName}.` : 'Thank you.'}
         </h2>
-        <p class="bk-success__lead">
-          {firstName ? `Thank you, ${firstName}. ` : 'Thank you. '}
-          We have your request for {d.date ? formatLongKept(d.date) : 'your date'}.
-        </p>
+        <p class="bk-success__lead t-lead">We have your request for {d.date ? formatLongKept(d.date) : 'your date'} and will be in touch soon.</p>
         <div class="bk-ref">
           <span class="bk-ref__label">Your reference</span>
-          <span class="bk-ref__code">{created.reference}</span>
-          <button type="button" class="btn btn--gray btn--sm" onClick={copy}>
+          <span class="bk-ref__code num">{created.reference}</span>
+          <button type="button" class="btn btn--outline btn--sm" onClick={copy}>
             {copied ? 'Copied' : 'Copy'}
           </button>
           <span class="visually-hidden" role="status">
@@ -74,11 +79,11 @@ export function SuccessView(props: {
       )}
 
       <div class="bk-success__grid">
-        <section class="bk-group" aria-labelledby="bk-success-summary">
-          <h3 id="bk-success-summary" class="bk-group__title">
+        <section class="bk-panel bk-group" aria-labelledby="bk-success-summary">
+          <h3 id="bk-success-summary" class="bk-panel__title">
             Your request
           </h3>
-          <dl class="list-group bk-list bk-dl">
+          <dl class="bk-dl">
             {rows.map(([k, v]) => (
               <div class="bk-dl__row" key={k}>
                 <dt>{k}</dt>
@@ -88,35 +93,22 @@ export function SuccessView(props: {
           </dl>
         </section>
 
-        <section class="bk-group" aria-labelledby="bk-next-title">
-          <h3 id="bk-next-title" class="bk-group__title">
+        <section class="bk-facts" aria-labelledby="bk-next-title">
+          <h3 id="bk-next-title" class="bk-facts__title">
             What happens next
           </h3>
           <ol class="bk-next">
-            <li>
-              <span class="bk-next__n" aria-hidden="true">
-                1
-              </span>
-              <span>
-                <strong>We confirm availability.</strong> We check the calendar and your details.
-              </span>
-            </li>
-            <li>
-              <span class="bk-next__n" aria-hidden="true">
-                2
-              </span>
-              <span>
-                <strong>We send your quote personally.</strong> We contact you {REACH[d.contactPreference]} with your quote and to confirm the details.
-              </span>
-            </li>
-            <li>
-              <span class="bk-next__n" aria-hidden="true">
-                3
-              </span>
-              <span>
-                <strong>Accept the quote to reserve the date.</strong>
-              </span>
-            </li>
+            {steps.map(([head, text], i) => (
+              <li key={head}>
+                <span class="bk-next__n num" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span class="bk-fact__text">
+                  <span>{head}</span>
+                  <span class="bk-fact__hint">{text}</span>
+                </span>
+              </li>
+            ))}
           </ol>
         </section>
       </div>
@@ -125,7 +117,7 @@ export function SuccessView(props: {
         <a class="btn btn--filled btn--lg" href={href('/')}>
           Done
         </a>
-        <button type="button" class="btn btn--gray btn--lg" onClick={props.onPlanAnother}>
+        <button type="button" class="btn btn--outline btn--lg" onClick={props.onPlanAnother}>
           Plan Another Event
         </button>
       </div>

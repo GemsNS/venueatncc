@@ -123,6 +123,8 @@ export interface ChoiceOption<T extends string> {
   disabled?: boolean;
   /** Shown in place of the radio when the option cannot be chosen, such as "Booked". */
   disabledNote?: string;
+  /** A small picture at the row's start (a real photo of a space). Decorative: the title names the row. */
+  media?: ComponentChildren;
 }
 
 /** An inset grouped list of radio rows, for choices that need a line of explanation each. */
@@ -143,7 +145,7 @@ export function ChoiceList<T extends string>(props: {
     <div
       role="radiogroup"
       id={id}
-      class="bk-choice list-group"
+      class="bk-choice"
       aria-labelledby={props.labelId}
       aria-describedby={props.describedBy || undefined}
       aria-invalid={props.invalid ? 'true' : undefined}
@@ -171,6 +173,7 @@ export function ChoiceList<T extends string>(props: {
             }}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
+            {o.media}
             <span class="bk-choice__text">
               <span class="bk-choice__title" id={`${base}-t`}>
                 {o.title}
