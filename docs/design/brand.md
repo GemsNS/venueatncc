@@ -20,8 +20,25 @@ The owner reviewed version 1 and asked for four things. All are binding.
 4. **The venue is a separate business from New Community Church.** Nothing on the site, in the brand, in
    structured data, emails, or share images connects the two.
 
+Later owner decisions, also binding:
+
+5. **No published prices.** No dollar amounts, rate tables, packages, estimates, deposit or fee amounts,
+   discounts with amounts, or `priceRange` and `Offer` prices appear on any public page, booking step, guest
+   email, share image, structured data, or llms.txt. Where rates come up, use the approved wording exactly:
+   "Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special
+   offers, please call us and we will be happy to help you." (`RATES_WORDING` in `src/data/faq.ts`), with the
+   phone (948) 205-2934 (`tel:+19482052934`). The rate card in `src/shared/pricing.ts` is internal: it feeds
+   the team email and the admin CRM as an "Internal rate-card guide", and the public inquiry API never returns
+   it. A deposit is named only in the one FAQ entry on payments, with no figure; the wizard and the guest email
+   say we send the quote "with the payment terms for your date".
+6. **Rates is an inquiry page.** `/pricing/` (labelled "Rates" everywhere) gives the approved wording, a Call
+   button, and an inquiry form with specific booking choices that posts to the site's own inquiry API, the same
+   one the booking wizard uses, so every inquiry lands in the admin CRM. The demo build posts to the in-browser
+   demo backend. No third-party form services.
+7. **Lighter tones.** The site felt too dark. In light mode no large surface is Navy; see Color.
+
 Still binding from version 1: no decorative placeholder art; a professional business voice; never mention
-alcohol; catering only in the two neutral places listed under Voice.
+alcohol; catering only in the one neutral FAQ entry named under Voice.
 
 ## Concept
 
@@ -32,7 +49,8 @@ tall pines, whose blue sky between the trunks already belongs to this palette.
 
 Avoid the tells of a templated site: no accent bars or rails on cards, no eyebrow labels above headings (the
 single hero kicker is the only exception), no tinted or decorative gradients, no all-caps labels. The light
-blues (Sky, Mist, Ice) appear only as surfaces, chips, and accents on Navy, never as text on white.
+blues (Sky, Mist, Ice) appear only as surfaces, tints, chips, and accents on Navy (the hero scrim and dark
+mode), never as text on white.
 
 ## Names
 
@@ -66,8 +84,8 @@ way a wax seal or an embossed invitation mark would.
 
 | File | Colors | Use |
 |---|---|---|
-| `venue-lockup.svg` | ink Navy `#012A4A`, accent Steel `#2A6F97` | Header, email, print on light surfaces |
-| `venue-lockup-white.svg` | white `#FFFFFF`, accent Mist `#89C2D9` | On Navy and over photos |
+| `venue-lockup.svg` | ink Navy `#012A4A`, accent Steel `#2A6F97` | Header, footer, email, print on light surfaces |
+| `venue-lockup-white.svg` | white `#FFFFFF`, accent Mist `#89C2D9` | Over photos and on share images |
 | `venue-mark.svg` / `-white.svg` | as above | Monogram alone: admin sidebar, avatars |
 | `venue-wordmark.svg` / `-white.svg` | as above | Wordmark alone |
 
@@ -139,7 +157,7 @@ version 2 palette tokens (`--olive-deep`, `--caramel`, `--caramel-deep`, `--sage
 ## Type
 
 Unchanged from version 1: Libre Caslon Display for h1, h2 and display sizes from 28px; Libre Caslon Text for
-serif leads, prices, and italic captions; the system interface stack for body, forms, buttons, tables, admin.
+serif leads and italic captions; the system interface stack for body, forms, buttons, tables, admin.
 
 ## Photography
 
@@ -213,7 +231,7 @@ windows, doors, floors, fixtures, the gazebo, and trees stay exactly as photogra
   The Space; the hero names the two spaces without repeating numbers already shown a scroll later.
 - One primary call to action per viewport. The header CTA plus one in-page CTA near the end of the page is
   enough; do not stack Check Availability buttons in hero, steps, band, and footer.
-- A block that repeats across many pages (planning timelines, rates and deposit paragraphs, "how booking
+- A block that repeats across many pages (planning timelines, rates and payment paragraphs, "how booking
   works") lives in one place and is linked, not copied.
 - Footer navigation does not duplicate the header navigation item for item.
 - A section that only restates another page (for example a home FAQ that repeats /faq/) earns its place only if
@@ -225,7 +243,7 @@ Professional hospitality: confident, warm, precise, brief. "We" for the venue, "
 exclamation points, slang, or jokes. Never in public copy: alcohol, drinks, bar, beer, wine, mimosas, toast,
 "raise a glass", Virginia ABC, BYO, "bring your own", "your own caterer", "caterer of your choice", "the freedom
 to", advice to "ask whether there is a kitchen", and any connection to New Community Church. Catering appears
-exactly twice, neutrally: the pricing page's rental terms and one FAQ entry.
+exactly once, neutrally, in one FAQ entry. Prices never appear (owner decision 5).
 
 ## Page direction
 
@@ -233,25 +251,26 @@ exactly twice, neutrally: the pricing page's rental terms and one FAQ entry.
 "Celebrate"), one lead sentence, and the date checker, whose Continue to Booking is the page's one primary
 button. Every frame holds the whole gazebo and the copy never covers it:
 
-- Phones: the portrait file whole at 7:10, the copy over the canopy on a Navy scrim, the checker after the
-  photo.
-- Tablets: the landscape file at its own ratio, the copy over the trunks above the gazebo, the checker after
-  the photo.
+- Phones (below 46.5rem): the portrait file whole at 7:10 with nothing over it, then the copy on a Frost
+  panel (Navy in dark mode), then the checker.
+- Tablets: the landscape file at its own ratio, the copy over the trunks above the gazebo on the Navy scrim,
+  the checker after the photo.
 - From 64rem: the photo fills the first screen, the title runs across the top on one line, and the checker
   floats on glass at the bottom right, lined up with the header's call to action and at least 2.5rem clear
   of the gazebo (it may cover the end of the front picnic table). On a short screen the photo runs on below
   the fold and the checker rises by as much, so the date field and Continue to Booking stay in the first
   screen.
-- Narrower than 22rem, shorter than 36rem, or larger text (the breakpoints are in rem): the copy moves to a
-  Navy panel under the photo. On short, wide screens (landscape phones) the photo becomes a band of about
+- Shorter than 36rem, or larger text (the breakpoints are in rem): the copy moves to the same Frost panel
+  under the photo (Navy in dark mode). On short, wide screens (landscape phones) the photo becomes a band of about
   58% of the screen that keeps the roof and ends through the gazebo's posts, so the title starts on the
   first screen.
 
 Crop rule: a frame's bottom edge never runs along a tabletop or a bench; it cuts through legs or posts. The
-scrim runs from 80% to 62% Navy and stays there: over the brightest sky the lead measures 4.6:1 at its worst
-pixel (1920 and 2560 wide, light mode), so it cannot be lighter.
+scrim runs from 70% to 64% Navy, with a horizontal fade past the copy from 64rem (see Color); white copy
+measures 4.7:1 or better at its worst pixel, so do not lighten it without measuring again.
 
-Then the two spaces as real-photo cards, events as staged tiles with the one-line note, a short rates teaser,
+Then the two spaces as real-photo cards, events as staged tiles with the one-line note, a rates section
+("Our special rates": the approved wording, a Call button, and an "Or send an inquiry" link to /pricing/),
 the arrival band, and one closing band. Cut anything the audit finds repeated.
 
 **The Space.** Real photos only. The Hall, The Grove, and The grounds (formerly Campus), what the rental

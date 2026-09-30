@@ -71,7 +71,7 @@ export function StepReview(props: {
       <Group title="Contact" step={3} onEdit={props.onEdit} rows={rows3} />
 
       <p class="bk-review__fine">
-        This is a request, not a booking yet. We confirm availability, then your booking deposit reserves the date.
+        This is a request, not a booking yet. We confirm availability and send your quote personally, with the payment terms for your date.
       </p>
 
       {/* Build-time gate, so the production bundle carries none of this. */}

@@ -110,7 +110,7 @@ export const site = {
 
   /**
    * What a booking includes. Only confirmed items. Catering is not listed as an exclusion here: brand.md
-   * allows it only in the pricing page's rental terms and in one FAQ entry.
+   * allows it only in one neutral FAQ entry.
    */
   included: ['The space you book', 'On-site parking'],
 

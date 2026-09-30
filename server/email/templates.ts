@@ -111,7 +111,7 @@ export function paymentRows(est: Estimate): [string, string][] {
 }
 
 /** The last step in the guest email, in the site's wording. It names no amount. */
-export const RESERVE_STEP = 'We confirm availability and send your quote personally. Your booking deposit then reserves the date.';
+export const RESERVE_STEP = 'We confirm availability and send your quote personally, with the payment terms for your date.';
 
 // ---------------------------------------------------------------- HTML building blocks
 

@@ -6,7 +6,7 @@ import { eventTypes } from '../../data/event-types';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { formatShort } from '../../shared/dates';
-import { dayTypeOf, pricing } from '../../shared/pricing';
+import { dayTypeOf, minimumHours } from '../../shared/booking-rules';
 import { fieldErrors, inquiryInputSchema } from '../../shared/schemas';
 import type { AvailabilityDay, ContactPreference, DateKey, InquiryInput, SpaceChoice } from '../../shared/types';
 import { HOURS_MAX, HOURS_MIN, TOO_LATE_MESSAGE, latestBookableDate, parseDate, parseIntIn, parseSpace, spaceLabel } from './lib';
@@ -97,9 +97,9 @@ export function restoreDraft(saved: unknown): Draft | null {
 }
 
 /** Prefill from ?date=&space=&guests=&event=&hours=&visit=1 (links from the home page, pricing, and the space page). */
-/** The fewest hours that can be booked on a date: the day's minimum from the rate card, or HOURS_MIN with no date. */
+/** The fewest hours that can be booked on a date: the day's minimum from the booking rules, or HOURS_MIN with no date. */
 export function minHoursFor(date: DateKey | ''): number {
-  return date ? Math.max(HOURS_MIN, pricing.minimumHours[dayTypeOf(date)]) : HOURS_MIN;
+  return date ? Math.max(HOURS_MIN, minimumHours[dayTypeOf(date)]) : HOURS_MIN;
 }
 
 /**

@@ -387,7 +387,7 @@ export const events: EventType[] = [
       heading: 'Meeting and training checklist',
       items: [
         'Write a short agenda with start, break, and end times.',
-        'Estimate your headcount.',
+        'Count your expected attendees.',
         'Check your date on the availability calendar.',
         'Get budget approval before you send your request.',
         'Visit the room to plan your layout.',

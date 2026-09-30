@@ -3,7 +3,7 @@ import { site } from '../../data/site';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
 import { formatEndTime, formatShort, formatTime } from '../../shared/dates';
-import { dayTypeOf } from '../../shared/pricing';
+import { dayTypeOf } from '../../shared/booking-rules';
 import type { AvailabilityDay, DateKey } from '../../shared/types';
 import { Calendar, type CalStatus } from './Calendar';
 import {

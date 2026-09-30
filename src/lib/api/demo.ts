@@ -388,7 +388,7 @@ export const demoApi: VenueApi = {
     const earlier = load();
     const used = earlier.formTokenUses?.[data.formToken];
     const repeat = used && used.fingerprint === fingerprint ? earlier.inquiries.find((i) => i.id === used.inquiryId) : undefined;
-    if (repeat) return { ok: true as const, reference: repeat.reference, estimate: repeat.estimate, demo: true };
+    if (repeat) return { ok: true as const, reference: repeat.reference, demo: true };
 
     const today = todayKey();
     const latest = latestBookableDate(today);
@@ -445,7 +445,7 @@ export const demoApi: VenueApi = {
       const uses = Object.fromEntries(Object.entries(db.formTokenUses ?? {}).filter(([, u]) => u.usedAt >= cutoff));
       uses[data.formToken] ??= { inquiryId: record.id, fingerprint, usedAt: now };
       db.formTokenUses = uses;
-      return { ok: true as const, reference, estimate: est, demo: true };
+      return { ok: true as const, reference, demo: true };
     });
   },
 

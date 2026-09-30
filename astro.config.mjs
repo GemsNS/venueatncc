@@ -1,6 +1,7 @@
 // @ts-check
 import { execFileSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import preact from '@astrojs/preact';
@@ -96,6 +97,18 @@ export default defineConfig({
   ],
   vite: {
     plugins: [
+      {
+        // Outside the demo build, src/lib/api/index.ts gets a stub for ./demo. The demo backend imports
+        // the internal rate card, and a static edge from every island to it would ship the card in a
+        // shared public chunk. With the stub, only the admin bundle carries it.
+        name: 'venue:demo-off',
+        enforce: 'pre',
+        resolveId(source, importer) {
+          if (isDemo || source !== './demo' || !importer) return null;
+          if (!/[\\/]src[\\/]lib[\\/]api[\\/]index\.ts$/.test(importer)) return null;
+          return fileURLToPath(new URL('./src/lib/api/demo-off.ts', import.meta.url));
+        },
+      },
       {
         // With trailingSlash 'always', Astro's dev server would answer /api/* with its 404 page
         // before Vite's proxy runs. Move the proxy middleware to the front of the stack.

@@ -118,7 +118,6 @@
   --on-navy: var(--white);
   --on-navy-2: var(--ice);
   --on-navy-accent: var(--mist);
-  --on-navy-line: rgba(70, 143, 175, 0.4);
 
   /* Status */
   --green: #1b6e30;

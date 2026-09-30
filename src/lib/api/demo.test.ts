@@ -107,13 +107,13 @@ test('availability has one day per date with per-space state', async () => {
   assert.ok(isError(bad));
 });
 
-test('submitInquiry happy path returns a reference and the rate card estimate', async () => {
+test('submitInquiry happy path returns a reference, keeps the rate card estimate internal', async () => {
   const input = await validInput({ phone: '', message: '  Looking forward to it.  ' });
   const res = ok(await api.submitInquiry(input));
   assert.equal(res.ok, true);
   assert.equal(res.demo, true);
   assert.match(res.reference, referencePattern);
-  assert.deepEqual(res.estimate, estimate({ date: input.date, space: input.space, hours: input.hours, eventType: input.eventType }));
+  assert.equal('estimate' in res, false, 'the public response carries no estimate');
 });
 
 test('submitInquiry rejects a filled honeypot', async () => {

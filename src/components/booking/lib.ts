@@ -5,7 +5,7 @@
 import { href } from '../../lib/paths';
 import { CAPACITY } from '../../shared/capacity';
 import { formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
-import { pricing, type DayType } from '../../shared/pricing';
+import { dayTypes, minimumHours, type DayType } from '../../shared/booking-rules';
 import { SPACE_NAMES, type DateKey, type SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
 
@@ -114,8 +114,8 @@ export const DAY_SHORT: Record<DayType, string> = {
 
 /** A plain sentence about the minimum booking length for a day type (the one booking rule the site states). */
 export function minimumHoursNote(dayType: DayType): string {
-  const min = pricing.minimumHours[dayType];
-  return `${pricing.dayTypes[dayType].label} bookings have a ${min}-hour minimum.`;
+  const min = minimumHours[dayType];
+  return `${dayTypes[dayType].label} bookings have a ${min}-hour minimum.`;
 }
 
 export function hoursLabel(n: number): string {

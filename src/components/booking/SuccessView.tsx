@@ -114,7 +114,7 @@ export function SuccessView(props: {
                 3
               </span>
               <span>
-                <strong>Your booking deposit reserves the date.</strong>
+                <strong>Accept the quote to reserve the date.</strong>
               </span>
             </li>
           </ol>

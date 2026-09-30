@@ -2,7 +2,7 @@
 /**
  * Home, per docs/design/brand.md "Page direction: Home", in this order:
  * the hero on the pines of The Grove with the date checker, the two spaces as real-photo cards, the events,
- * a rates teaser, the arrival band, and the closing band.
+ * the rates section (the approved wording, a Call button, and a link to the inquiry form), the arrival band, and the closing band.
  *
  * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
  * parking and the address in the arrival band, a call to phone for rates in the rates section, and how booking works in the
@@ -19,7 +19,7 @@ import LocationBand from '../components/LocationBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
 import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { bookHref } from '../data/nav';
+import { bookHref, pricingHref } from '../data/nav';
 import { href } from '../lib/paths';
 
 /*
@@ -162,6 +162,9 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
           <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
             <Icon name="phone" />
             Call {site.contact.phone}
+          </a>
+          <a class="link-more rates__link" href={href(pricingHref)}>
+            Or send an inquiry <Icon name="chevron-right" />
           </a>
         </div>
       </div>
@@ -649,11 +652,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   /* ---------- Rates ---------- */
 
   .rates__copy {
-    max-width: 44rem;
-  }
-
-
-  .rates__copy {
     display: grid;
     gap: 1rem;
     justify-items: start;
@@ -661,92 +659,16 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   .rates__action {
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     padding-inline: 0;
+    align-items: center;
+    column-gap: 1.5rem;
   }
 
-  .rates__panel {
-    display: grid;
-    gap: 0.85rem;
-  }
-
-  /* On the White section the white list is set off by a hairline, not a shadow. */
-  .rates__list {
-    margin: 0;
-    border: 1px solid var(--separator);
-  }
-
-  .rates__row {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.25rem 1.5rem;
-    min-height: 64px;
-    padding: 1rem 1.25rem;
-  }
-
-  .rates__row + .rates__row::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 1.25rem;
-    right: 0;
-    border-top: 1px solid var(--separator);
-  }
-
-  .rates__name {
-    font-weight: 600;
-  }
-
-  /*
-    The price is right-aligned on every row, also when a long name pushes it onto its own line. "from" and
-    "an hour" never break inside, so with very large text the price wraps between its parts, not mid-phrase.
-  */
-  .rates__price {
+  .rates__link {
     display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    align-items: baseline;
-    gap: 0.4rem;
-    margin: 0 0 0 auto;
-    color: var(--label-2);
-    font-size: var(--t-subhead);
-  }
-
-  .rates__from,
-  .rates__unit {
-    white-space: nowrap;
-  }
-
-  /* 200% text on a phone: the price takes its own line under the name, aligned with it, and the note and button use the full width. */
-  @media (width < 20rem) {
-    .rates__price {
-      margin-left: 0;
-      justify-content: flex-start;
-    }
-
-    .rates__action,
-    .rates__note {
-      padding-inline: 0;
-    }
-  }
-
-  /* A fixed-width, left-aligned number cell, so the three prices line up on the dollar sign. */
-  .rates__num {
-    min-width: 3.4em;
-    text-align: left;
-    font-variant-numeric: lining-nums tabular-nums;
-    font-family: var(--font-serif);
-    font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.875rem);
-    line-height: 1;
-    color: var(--label);
-  }
-
-  .rates__note {
-    padding-inline: 1.25rem;
-    color: var(--label-2);
-    font-size: var(--t-footnote);
+    align-items: center;
+    min-height: 44px;
+    font-weight: 600;
   }
 </style>

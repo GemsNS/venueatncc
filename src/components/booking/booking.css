@@ -1368,6 +1368,7 @@ button.bk-progress__item:hover {
 }
 
 .bk-edit {
+  --btn-h: 44px;
   font-size: var(--t-callout);
 }
 
@@ -1496,13 +1497,17 @@ button.bk-progress__item:hover {
   color: var(--label-2);
 }
 
+/*
+  The card earns its place only beside the wizard with its rows. On phones the action bar carries the date,
+  and on the review step the review shows every row and the same note, so the card is left out there.
+*/
 @media (max-width: 899.98px) {
-  .bk-summary__rows {
+  .bk-aside {
     display: none;
   }
 }
 
-.bk-app[data-step='4'] .bk-summary__rows {
+.bk-app[data-step='4'] .bk-aside {
   display: none;
 }
 

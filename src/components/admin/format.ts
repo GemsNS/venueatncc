@@ -1,6 +1,6 @@
 /** Labels and formatting for the admin app. Prices always come from src/shared/pricing.ts. */
 import { INQUIRY_STATUSES, SPACE_NAMES, type BlockKind, type InquiryStatus, type SpaceChoice } from '../../shared/types';
-import { formatUSD } from '../../shared/pricing';
+import { formatUSD } from '../../shared/money';
 import { VENUE_TZ, formatEndTime, formatTime } from '../../shared/dates';
 
 export { formatUSD };

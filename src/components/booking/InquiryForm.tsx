@@ -7,7 +7,7 @@
  * inquiry lands in the admin CRM; in the demo build it goes to the in-browser demo backend.
  *
  * The venue does not publish prices, so nothing here shows an amount: the success state gives the
- * reference and what happens next, and ignores the estimate the API returns for the team.
+ * reference and what happens next. The API keeps its internal estimate for the team and never returns it.
  */
 import './booking.css';
 import './inquiry.css';

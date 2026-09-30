@@ -11,10 +11,10 @@ import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
-import { pricing, type DayType } from '../shared/pricing';
+import { dayTypes, minimumHours, type DayType } from '../shared/booking-rules';
 
 /** Minimum hours are a booking rule, not a price, so they are stated. The venue publishes no prices. */
-const DAY_TYPES = Object.keys(pricing.dayTypes) as DayType[];
+const DAY_TYPES = Object.keys(dayTypes) as DayType[];
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -72,12 +72,12 @@ export const GET: APIRoute = () => {
     '',
     `- ${RATES_WORDING}`,
     `- Ask about rates for your date: ${u('/pricing/')}`,
-    `- Minimum hours: ${DAY_TYPES.map((d) => `${pricing.dayTypes[d].label} ${pricing.minimumHours[d]}`).join(', ')}`,
+    `- Minimum hours: ${DAY_TYPES.map((d) => `${dayTypes[d].label} ${minimumHours[d]}`).join(', ')}`,
     '',
     '## Booking',
     '',
     '- Booking is open to the public.',
-    '- How it works: choose a date and a space and send a request. We confirm availability and send your quote personally, and a booking deposit then reserves the date.',
+    '- How it works: choose a date and a space and send a request. We confirm availability and send your quote personally, with the payment terms for your date.',
     '- Visits: ask for a visit when you send your request, or call us.',
     `- Check availability and request a date: ${u('/book/')}`,
     '',

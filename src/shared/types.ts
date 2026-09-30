@@ -99,7 +99,6 @@ export interface Estimate {
 export interface InquiryCreated {
   ok: true;
   reference: string;
-  estimate: Estimate;
   /** Demo mode only: true when nothing was sent anywhere. */
   demo?: boolean;
 }

@@ -143,7 +143,7 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
             </span>
             <span class="bk-fact__text">
               <strong>We confirm every date personally.</strong>
-              <span class="bk-fact__hint">Your booking deposit then reserves the date.</span>
+              <span class="bk-fact__hint">Your quote comes with the payment terms for your date.</span>
             </span>
           </li>
           <li class="bk-fact">

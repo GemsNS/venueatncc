@@ -6,7 +6,7 @@ import { addDays, todayKey } from '../../src/shared/dates';
 import { estimate } from '../../src/shared/pricing';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
-import type { AvailabilityResponse, InquiryCreated } from '../../src/shared/types';
+import type { AvailabilityResponse, Estimate, InquiryCreated } from '../../src/shared/types';
 import { createHash } from 'node:crypto';
 import { GUEST_CONFIRMATIONS_PER_HOUR } from '../routes/public';
 import { createHarness, formToken, freshIp, HOME_INLINE_SCRIPT, inquiryBody, ORIGIN, submitInquiry, type Harness } from './helpers';
@@ -77,8 +77,8 @@ describe('public API', () => {
       assert.equal(created.ok, true);
       assert.match(created.reference, referencePattern);
       const expected = estimate({ date: body.date, space: body.space, hours: body.hours, eventType: body.eventType }, undefined, today());
-      assert.deepEqual(created.estimate, JSON.parse(JSON.stringify(expected)));
-      assert.ok(created.estimate.total > 1);
+      assert.equal('estimate' in created, false, 'the public response carries no estimate');
+      assert.ok(expected.total > 1);
 
       const row = h.db.prepare('SELECT * FROM inquiries WHERE reference = ?').get(created.reference) as Record<string, unknown>;
       assert.equal(row.status, 'new');
@@ -190,7 +190,7 @@ describe('public API', () => {
       assert.equal(again.status, 200);
       const b = (await again.json()) as InquiryCreated;
       assert.equal(b.reference, a.reference);
-      assert.deepEqual(b.estimate, a.estimate);
+      assert.equal('estimate' in b, false);
       const count = (h.db.prepare("SELECT COUNT(*) AS n FROM inquiries WHERE email = 'riley@example.com'").get() as { n: number }).n;
       assert.equal(count, 1);
       // Changed details with the same token are a new request.
@@ -228,13 +228,14 @@ describe('public API', () => {
     test('the guest email names no amount, says we send the quote personally, and never repeats the typed name', async () => {
       const res = await submitInquiry(h, { name: 'https://evil.example/login Customer', email: 'victim@example.com' });
       assert.equal(res.status, 201);
-      const { reference, estimate: est } = (await res.json()) as InquiryCreated;
+      const { reference } = (await res.json()) as InquiryCreated;
+      const est = JSON.parse((h.db.prepare('SELECT estimate_json FROM inquiries WHERE reference = ?').get(reference) as { estimate_json: string }).estimate_json) as Estimate;
       await h.whenIdle();
       const files = fs.readdirSync(h.config.outboxDir).filter((f) => f.includes(reference));
       const guestHtml = fs.readFileSync(path.join(h.config.outboxDir, files.find((f) => f.includes('-guest-') && f.endsWith('.html'))!), 'utf8');
       assert.ok(!guestHtml.includes('evil.example'));
       assert.ok(guestHtml.includes('Thank you for your request.'));
-      assert.ok(guestHtml.includes('We confirm availability and send your quote personally.'));
+      assert.ok(guestHtml.includes('We confirm availability and send your quote personally, with the payment terms for your date.'));
       assert.ok(!guestHtml.includes('Due to reserve the date'));
       assert.ok(!/\$[0-9]/.test(guestHtml), 'no dollar amount in the guest email');
       // The team still sees the internal rate-card guide.

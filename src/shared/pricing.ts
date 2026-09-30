@@ -14,10 +14,12 @@
  * should confirm them before relying on the internal guide.
  */
 import { SPACE_NAME } from './capacity';
-import { dayOfWeek, daysBetween, todayKey } from './dates';
+import { daysBetween, todayKey } from './dates';
+import { BALANCE_DUE_DAYS_BEFORE } from './money';
+import { dayTypeOf as ruleDayTypeOf, dayTypes, minimumHours, type DayType } from './booking-rules';
 import type { DateKey, Estimate, EstimateLine, SpaceChoice } from './types';
 
-export type DayType = 'weekday' | 'friday' | 'saturday' | 'sunday';
+export type { DayType };
 
 export interface PricingPackage {
   id: string;
@@ -91,18 +93,14 @@ export const pricing: PricingModel = {
     // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
     both: { label: SPACE_NAME.both, capacity: 150 },
   },
-  dayTypes: {
-    weekday: { label: 'Monday to Thursday', days: [1, 2, 3, 4] },
-    friday: { label: 'Friday', days: [5] },
-    saturday: { label: 'Saturday', days: [6] },
-    sunday: { label: 'Sunday', days: [0] },
-  },
+  // Booking rules, shared with the public site through ./booking-rules.
+  dayTypes,
   hourly: {
     indoor: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
     outdoor: { weekday: 85, friday: 115, saturday: 140, sunday: 100 },
     both: { weekday: 140, friday: 180, saturday: 220, sunday: 165 },
   },
-  minimumHours: { weekday: 2, friday: 4, saturday: 5, sunday: 3 },
+  minimumHours,
   packages: [
     { id: 'sat-indoor-6', name: 'Saturday Hall Block', description: 'Suited to receptions, showers, and banquets.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
     { id: 'sat-outdoor-6', name: 'Saturday Grove Block', description: 'Suited to ceremonies, reunions, and graduation parties.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
@@ -120,7 +118,7 @@ export const pricing: PricingModel = {
     { id: 'weekday-indoor-8', name: 'Weekday Full Day, Hall', description: 'Suited to trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
   ],
   fees: { cleaning: 100, damageDepositRefundable: 250 },
-  bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: 30 },
+  bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: BALANCE_DUE_DAYS_BEFORE },
   discounts: [
     { id: 'repast', label: 'Repast and celebration of life rate', percent: 25, appliesTo: 'eventType:repasts-memorials' },
     { id: 'weekday-daytime', label: 'Weekday daytime, Monday to Thursday, ending by 4 PM', percent: 20, appliesTo: 'manual' },
@@ -139,11 +137,7 @@ export const pricing: PricingModel = {
 
 
 export function dayTypeOf(date: DateKey, model: PricingModel = pricing): DayType {
-  const dow = dayOfWeek(date);
-  for (const [id, def] of Object.entries(model.dayTypes) as [DayType, { days: number[] }][]) {
-    if (def.days.includes(dow)) return id;
-  }
-  return 'weekday';
+  return ruleDayTypeOf(date, model.dayTypes);
 }
 
 const money = (n: number) => Math.round(n);
@@ -248,14 +242,4 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
   };
 }
 
-/** Internal: the lowest hourly rate and package price. Never publish them; remove once nothing imports it. */
-export function priceSummary(model: PricingModel = pricing): { fromHourly: number; lowestPackage: number | null } {
-  const allHourly = Object.values(model.hourly).flatMap((byDay) => Object.values(byDay));
-  const lowestPackage = model.packages.length > 0 ? Math.min(...model.packages.map((p) => p.price)) : null;
-  return { fromHourly: Math.min(...allHourly), lowestPackage };
-}
-
-const MINUS = String.fromCharCode(0x2212);
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-/** Whole-dollar USD. Negative amounts use a true minus sign, e.g. for discounts. */
-export const formatUSD = (n: number) => (n < 0 ? MINUS + usd.format(-n) : usd.format(n));
+export { formatUSD } from './money';

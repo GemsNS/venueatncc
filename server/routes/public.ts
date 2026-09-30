@@ -210,7 +210,7 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (used && used.bodyHash === fingerprint) {
       const earlier = repo.getInquiryDetail(used.inquiryId);
       if (earlier) {
-        const again: InquiryCreated = { ok: true, reference: earlier.reference, estimate: earlier.estimate };
+        const again: InquiryCreated = { ok: true, reference: earlier.reference };
         return c.json(again, 200);
       }
     }
@@ -289,7 +289,8 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
     // 6. Email the venue and the guest in the background. Failures are logged, never returned.
     ctx.tasks.run(`emails for ${reference}`, () => sendInquiryEmails(ctx, id, est, conflict));
 
-    const body: InquiryCreated = { ok: true, reference, estimate: est };
+    // The estimate stays internal (team email and admin); the public response carries only the reference.
+    const body: InquiryCreated = { ok: true, reference };
     return c.json(body, 201);
   });
 

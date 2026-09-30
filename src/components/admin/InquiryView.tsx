@@ -4,7 +4,7 @@ import { api, isError } from '../../lib/api';
 import { capacityError } from '../../shared/capacity';
 import { formatLong, formatShort, todayKey } from '../../shared/dates';
 import { formatPhone } from '../../shared/phone';
-import { pricing } from '../../shared/pricing';
+import { BALANCE_DUE_DAYS_BEFORE } from '../../shared/money';
 import type { IconName } from '../../shared/icons';
 import { INQUIRY_STATUSES, type CalendarBlock, type InquiryDetail, type InquiryEvent, type InquiryStatus } from '../../shared/types';
 import { Icon } from '../islands/Icon';
@@ -401,7 +401,7 @@ export function InquiryView({ id }: { id: number }) {
               {est.dayTypeLabel} rates, {plural(est.billableHours, 'billable hour')}.{' '}
               {est.billableHours > est.hours ? `${plural(est.hours, 'hour')} requested. ` : ''}
               {est.total > 0 && est.bookingDeposit >= est.total
-                ? `Requested within ${pricing.bookingDeposit.balanceDueDaysBefore} days of the event, so the full amount is due to reserve. `
+                ? `Requested within ${BALANCE_DUE_DAYS_BEFORE} days of the event, so the full amount is due to reserve. `
                 : ''}
               Rate-card figure saved when the request came in. The guest was not shown an amount; quote personally.
             </p>

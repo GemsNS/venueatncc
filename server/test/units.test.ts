@@ -420,7 +420,7 @@ describe('email templates', () => {
         assert.ok(!/estimat/i.test(part), 'no estimate');
         assert.ok(!/Due to reserve|Balance|Refundable damage deposit/.test(part), 'no payment rows');
       }
-      assert.ok(guest.text.includes('We confirm availability and send your quote personally. Your booking deposit then reserves the date.'));
+      assert.ok(guest.text.includes('We confirm availability and send your quote personally, with the payment terms for your date.'));
     }
   });
 
