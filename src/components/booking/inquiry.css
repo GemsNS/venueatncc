@@ -2,57 +2,127 @@
   The inquiry form on /pricing/ (InquiryForm.tsx). Built on booking.css (fields, choice list, stepper,
   date field, error summary, send error, reference) and the brand tokens in global.css.
 
-  One white card on the page's Blush section (a raised card color in dark mode). Two groups, each under a
-  small Caslon legend. Fields pair up side by side only when the card is wide enough for both at the
-  reader's text size (the threshold is in rem), and stack otherwise.
+  The reference's contact form (redesign-spec.md, "/pricing/ Rates"): no card around the form; each field
+  group sits in a tinted panel (Petal, the card color in dark mode) under a serif legend, with white
+  hairline inputs inside it; the filled Submit sits at the right with a line of fine print beneath it.
+  Fields pair up side by side only when the panel is wide enough for both at the reader's text size (the
+  threshold is in rem), and stack otherwise.
 */
 
 .bk-iq {
   container-type: inline-size;
-  max-width: 48rem;
 }
 
 .bk-iq__form,
 .bk-iq__done {
   display: grid;
-  gap: 28px;
-  padding: clamp(1.25rem, 0.9rem + 1.6vw, 2.25rem);
-  border-radius: var(--r-xl);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-1), var(--bk-card-edge);
+  gap: 24px;
 }
 
+/* A field group: the reference's tinted panel. */
 .bk-iq__group {
   display: grid;
   gap: 22px;
   min-inline-size: 0;
   margin: 0;
-  padding: 0;
+  padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
   border: 0;
+  border-radius: var(--r-lg);
+  background: var(--panel);
 }
 
-.bk-iq__group + .bk-iq__group {
-  padding-top: 28px;
-  border-top: 1px solid var(--separator);
+@media (forced-colors: active) {
+  .bk-iq__group {
+    border: 1px solid CanvasText;
+  }
 }
 
-/* A legend between 18 and 28px: Libre Caslon Text, not the display cut (brand.md, Type). */
+/* The legend: a serif label between 18 and 22px (Libre Caslon Text, not the display cut). */
 .bk-iq__legend {
   float: left;
   width: 100%;
   margin-bottom: 0;
   padding: 0;
   font-family: var(--font-serif);
-  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  font-size: var(--t-title-3);
   font-weight: 400;
   line-height: 1.25;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   color: var(--label);
 }
 
 /* The float keeps the legend inside the grid; clear it so the first field starts below it. */
 .bk-iq__legend + * {
   clear: both;
+}
+
+/*
+  Inputs on the tinted panel: white (the card color in dark mode, where the panel is the same color) with a
+  hairline, so every field keeps a visible edge in both appearances.
+*/
+.bk-iq .input {
+  background: var(--bg-elevated);
+  border-color: var(--separator-strong);
+}
+
+.bk-iq .input:hover {
+  background: var(--bg-elevated);
+  border-color: var(--label-3);
+}
+
+.bk-iq .input:focus-visible,
+.bk-iq .bk-datefield[aria-expanded='true'] {
+  border-color: var(--focus-ring);
+}
+
+.bk-iq .input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+/* The space picker: a white list with a hairline, like the inputs. */
+.bk-iq .bk-choice {
+  border-radius: var(--r-sm);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 1px var(--separator-strong);
+}
+
+.bk-iq .bk-choice[aria-invalid='true'] {
+  box-shadow: 0 0 0 1px var(--red);
+}
+
+.bk-iq .bk-choice__item:first-child {
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+
+.bk-iq .bk-choice__item:last-child {
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+}
+
+/* The stepper's track: white on the panel, with the same hairline; its buttons sit on a quiet fill. */
+.bk-iq .bk-stepper {
+  background: var(--bg-elevated);
+  box-shadow: inset 0 0 0 1px var(--separator-strong);
+}
+
+.bk-iq .bk-stepper__btn {
+  background: var(--fill-2);
+  box-shadow: none;
+}
+
+.bk-iq .bk-stepper__btn[aria-disabled='true'] {
+  background: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bk-iq .bk-stepper__btn {
+    background: var(--berry);
+    color: var(--white);
+  }
+
+  .bk-iq .bk-stepper__btn[aria-disabled='true'] {
+    background: transparent;
+    color: var(--label-3);
+  }
 }
 
 .bk-iq__pair {
@@ -82,26 +152,25 @@
   margin-top: -10px;
 }
 
+/* Submit at the right with the fine print beneath it (the reference's form ends this way). */
 .bk-iq__send {
   display: grid;
-  justify-items: start;
+  justify-items: end;
   gap: 12px;
+  padding-top: 4px;
+}
+
+.bk-iq__submit {
+  min-width: 11rem;
 }
 
 .bk-iq__fine {
-  font-size: var(--t-footnote);
+  max-width: 28rem;
+  font-family: var(--font-serif);
+  font-size: var(--t-subhead);
+  line-height: 1.4;
   color: var(--label-2);
-}
-
-/* On a phone the primary button spans the card, so it is easy to reach with a thumb. */
-@container (max-width: 30rem) {
-  .bk-iq__send {
-    justify-items: stretch;
-  }
-
-  .bk-iq__submit {
-    width: 100%;
-  }
+  text-align: right;
 }
 
 .bk-iq__submit[aria-disabled='true'] {
@@ -110,6 +179,18 @@
 }
 
 /* ---------- Sent ---------- */
+
+.bk-iq__done {
+  padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+
+@media (forced-colors: active) {
+  .bk-iq__done {
+    border: 1px solid CanvasText;
+  }
+}
 
 .bk-iq__done-head {
   display: grid;
@@ -134,12 +215,21 @@
 
 .bk-iq__done-lead {
   max-width: 34rem;
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: 1.5;
   color: var(--label-2);
 }
 
+.bk-iq .bk-ref__code {
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
 .bk-iq__rows {
-  background: var(--panel);
+  background: var(--bg-elevated);
   border-radius: var(--r-md);
+  box-shadow: 0 0 0 1px var(--separator-strong);
 }
 
 .bk-iq__done-actions {

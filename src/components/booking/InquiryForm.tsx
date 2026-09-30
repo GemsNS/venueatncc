@@ -318,7 +318,7 @@ export default function InquiryForm() {
             <div class="bk-ref">
               <span class="bk-ref__label">Your reference</span>
               <span class="bk-ref__code">{done.created.reference}</span>
-              <button type="button" class="btn btn--gray btn--sm" onClick={copy}>
+              <button type="button" class="btn btn--outline btn--sm" onClick={copy}>
                 {copied ? 'Copied' : 'Copy'}
               </button>
               <span class="visually-hidden" role="status">
@@ -347,7 +347,7 @@ export default function InquiryForm() {
           </dl>
 
           <div class="btn-row bk-iq__done-actions">
-            <button type="button" class="btn btn--gray btn--lg" onClick={sendAnother}>
+            <button type="button" class="btn btn--outline btn--lg" onClick={sendAnother}>
               Send Another Inquiry
             </button>
           </div>
@@ -723,7 +723,7 @@ export default function InquiryForm() {
                   Try Again
                 </button>
               )}
-              <a class={sendError.rateLimited ? 'btn btn--filled' : 'btn btn--gray'} href={telHref(site.contact.phoneE164)}>
+              <a class={sendError.rateLimited ? 'btn btn--filled' : 'btn btn--outline'} href={telHref(site.contact.phoneE164)}>
                 <Icon name="phone" />
                 Call {site.contact.phone}
               </a>

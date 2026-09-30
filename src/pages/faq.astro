@@ -1,72 +1,64 @@
 ---
+/**
+ * Frequently asked questions (redesign-spec.md, "/faq/"; the reference's FAQ pattern on its venue pages).
+ *
+ * A serif title band on Petal, a sticky bar of the topics, then one group per topic: the topic's serif
+ * head on the left and its questions as a hairline accordion on the right (the reference's two-column
+ * section with the heading beside the copy), the groups split by hairlines, and the closing band.
+ * Only questions with an answer are published (src/data/faq.ts). Breadcrumbs are for event pages only.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumbs from '../components/Breadcrumbs.astro';
-import FaqList from '../components/FaqList.astro';
+import AnchorBar from '../components/AnchorBar.astro';
+import FaqAccordion from '../components/FaqAccordion.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
 import { publishedFaqs, type Faq } from '../data/faq';
-import { breadcrumbs, faqPage } from '../lib/schema';
+import { faqPage } from '../lib/schema';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const title = 'FAQ | Booking The Venue @ NCC in Suffolk, VA';
 const description = `Answers about capacity, hours, rates, deposits, and booking at The Venue @ NCC in Suffolk, VA: ${hall?.name} and ${mainHall?.name} for ${hall?.capacity} guests each, ${grove?.name} for ${grove?.capacity}.`;
-const crumbs = [
-  { name: 'Home', path: '/' },
-  { name: 'FAQ', path: '/faq/' },
-];
+
 const groups = (
   [
-    { topic: 'booking', title: 'Booking' },
-    { topic: 'space', title: 'The spaces' },
-    { topic: 'pricing', title: 'Rates and payments' },
-    { topic: 'about', title: 'About the venue' },
-  ] as { topic: Faq['topic']; title: string }[]
+    { topic: 'booking', title: 'Booking', blurb: 'Dates, visits, and who can book.' },
+    { topic: 'space', title: 'The spaces', blurb: 'Capacity, layouts, and what each space offers.' },
+    { topic: 'pricing', title: 'Rates and payments', blurb: 'How rates work and what a rental includes.' },
+    { topic: 'about', title: 'About the venue', blurb: 'Where we are and what we host.' },
+  ] as { topic: Faq['topic']; title: string; blurb: string }[]
 )
   .map((g) => ({ ...g, id: `faq-${g.topic}`, items: publishedFaqs.filter((f) => f.topic === g.topic) }))
   .filter((g) => g.items.length > 0);
+const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
 ---
-<BaseLayout title={title} description={description} og="faq" schema={[breadcrumbs(crumbs), faqPage(publishedFaqs)]}>
-  <section class="page-hero">
-    <div class="container">
-      <Breadcrumbs items={crumbs} />
-      <div class="page-hero__grid">
-        <div class="page-hero__copy">
-          <h1 class="t-large-title">Frequently asked questions</h1>
-          <p class="t-lead">Answers to the questions we hear most about the spaces, rates, and booking.</p>
-        </div>
-      </div>
+<BaseLayout title={title} description={description} og="faq" schema={[faqPage(publishedFaqs)]}>
+  <section class="band-section title-band" aria-labelledby="page-title">
+    <div class="container title-band__inner">
+      <p class="eyebrow">Help</p>
+      <h1 id="page-title">Frequently asked questions</h1>
+      <p class="t-lead">Answers to the questions we hear most about the spaces, rates, and booking.</p>
     </div>
   </section>
 
-  <section class="section section--grouped faq-body">
-    <div class="container faq-layout">
-      <nav class="faq-topics" aria-label="Topics">
-        <ul>
-          {
-            groups.map((g) => (
-              <li>
-                <a class="faq-topics__link" href={`#${g.id}`}>
-                  {g.title}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
-      <div class="faq-groups">
-        {
-          groups.map((g) => (
-            <section class="faq-group" aria-labelledby={g.id}>
-              <h2 id={g.id} class="faq-group__title">
+  <AnchorBar items={anchors} label="Topics" />
+
+  <section class="section faq-body">
+    <div class="container">
+      {
+        groups.map((g) => (
+          <section class="faq-group" id={g.id} aria-labelledby={`${g.id}-title`}>
+            <div class="faq-group__head">
+              <h2 id={`${g.id}-title`} class="t-title-2">
                 {g.title}
               </h2>
-              <FaqList items={g.items} />
-            </section>
-          ))
-        }
-      </div>
+              <p class="faq-group__blurb">{g.blurb}</p>
+            </div>
+            <FaqAccordion items={g.items} class="faq-group__list" />
+          </section>
+        ))
+      }
     </div>
   </section>
 
@@ -74,120 +66,83 @@ const groups = (
 </BaseLayout>
 
 <style>
-  .page-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  /* ---------- Title band (the reference's serif title on a tinted band) ---------- */
+
+  .title-band {
+    background: var(--band);
+    padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
   }
 
-  .page-hero__grid {
+  .title-band__inner {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem 4rem;
-    align-items: center;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    gap: 0.75rem;
   }
 
-  .page-hero__copy {
-    display: grid;
-    gap: 1.25rem;
-    max-width: 40rem;
+  .title-band h1 {
+    line-height: 1.05;
   }
 
-
-  .faq-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2rem 4rem;
+  .title-band .t-lead {
+    max-width: 36rem;
   }
 
-  /* Topic links: a wrapping row of capsules on phones, a sticky list beside the questions on wide screens. */
-  .faq-topics ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .faq-topics__link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0.4rem 1rem;
-    border-radius: var(--r-full);
-    background: var(--bg-elevated);
-    box-shadow: inset 0 0 0 1px var(--separator);
-    color: var(--label);
-    font-size: var(--t-subhead);
-    font-weight: 500;
-    transition: background-color var(--dur-1) ease;
-  }
-
-  .faq-topics__link:hover {
-    background: var(--accent-tint);
-    color: var(--accent-text);
-    text-decoration: none;
-  }
-
-  /* Press state; no scale when the visitor asks for reduced motion. */
-  @media (prefers-reduced-motion: no-preference) {
-    .faq-topics__link:active {
-      transform: scale(0.97);
+  @media (forced-colors: active) {
+    .title-band {
+      border-bottom: 1px solid CanvasText;
     }
   }
 
-  @media (min-width: 64rem) {
-    .faq-layout {
-      grid-template-columns: 13rem minmax(0, 1fr);
-      align-items: start;
-    }
+  /* ---------- Groups: the head beside the questions, hairlines between groups ---------- */
 
-    .faq-topics {
-      position: sticky;
-      top: calc(var(--nav-h) + 2rem);
-    }
-
-    .faq-topics ul {
-      flex-direction: column;
-      flex-wrap: nowrap;
-      gap: 0.25rem;
-      padding-left: 1rem;
-      border-left: 1px solid var(--separator);
-    }
-
-    .faq-topics__link {
-      padding-inline: 0;
-      background: none;
-      box-shadow: none;
-      border-radius: 0;
-      font-size: var(--t-body);
-    }
-
-    .faq-topics__link:hover {
-      background: none;
-      text-decoration: underline;
-      text-underline-offset: 0.18em;
-    }
-  }
-
-  .faq-groups {
-    display: grid;
-    gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-    max-width: 50rem;
+  .faq-body {
+    padding-top: calc(var(--section) * 0.6);
   }
 
   .faq-group {
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem 3rem;
+    padding-block: calc(var(--section) * 0.6);
+    /* The page's scroll padding already clears the header; this clears the sticky topic bar (52px) too. */
+    scroll-margin-top: calc(52px + 0.5rem);
   }
 
-  /* A serif label between 18 and 28px is set in Libre Caslon Text (brand.md), not the display cut. */
-  .faq-group__title {
-    padding-left: 0.25rem;
+  .faq-group + .faq-group {
+    border-top: 1px solid var(--separator);
+  }
+
+  .faq-group:first-child {
+    padding-top: 0;
+  }
+
+  .faq-group:last-child {
+    padding-bottom: 0;
+  }
+
+  .faq-group__head {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+
+  .faq-group__blurb {
     font-family: var(--font-serif);
-    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
-    font-weight: 400;
-    line-height: 1.25;
-    letter-spacing: -0.005em;
+    color: var(--label-2);
+    max-width: 20rem;
+  }
+
+  .faq-group :global(.faq-group__list) {
+    max-width: 50rem;
+  }
+
+  @media (min-width: 60rem) {
+    .faq-group {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      gap: 2rem 4rem;
+    }
+
+    .faq-group__head {
+      position: sticky;
+      top: calc(var(--nav-h) + 52px + 2rem);
+    }
   }
 </style>
