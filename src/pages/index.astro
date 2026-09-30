@@ -158,8 +158,6 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
           Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
           please call us and we will be happy to help you.
         </p>
-      </div>
-      <div class="rates__panel">
         <div class="btn-row rates__action">
           <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
             <Icon name="phone" />
@@ -600,17 +598,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
 
   /* ---------- Rates ---------- */
 
-  .rates {
-    display: grid;
-    gap: 2rem clamp(2rem, 6vw, 5rem);
-    align-items: start;
+  .rates__copy {
+    max-width: 44rem;
   }
 
-  @media (min-width: 56rem) {
-    .rates {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-  }
 
   .rates__copy {
     display: grid;
@@ -620,7 +611,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   .rates__action {
-    margin-top: 0.5rem;
+    margin-top: 1.5rem;
     padding-inline: 0;
   }
 
