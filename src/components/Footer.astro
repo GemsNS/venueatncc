@@ -1,184 +1,195 @@
 ---
 /**
- * Site footer on a Blush band behind a top hairline (the card color in dark mode, --footer-bg), in the shape
- * of the reference site's: a large Caslon statement (the brand line), then the lockup with one sentence,
- * "Visit and contact", the site's single contact block (the contact person, address with directions, phone,
- * email), and "Plan your event" with the two requests that have no header link (a visit, an inquiry) and, on
- * compact screens, the FAQ, the only route to /faq/ there; from 46.5rem the header carries FAQ, so the footer
- * does not repeat it, and /faq/ never links to itself. The legal line closes it. It does not repeat the
- * header navigation, the event list, or the booking call to action (brand.md, "Redundancy rules").
+ * The footer (redesign-spec.md, Footer): the site's one dark surface, Plum, in the shape of the reference's
+ * footer. Row one: a two-line statement with Check Availability on the left and three link columns on the
+ * right (Explore, Plan, Visit: the address with directions, the phone, the email, and the contact person,
+ * the site's contact block). Row two: the very large centred serif statement (the brand line). Row three:
+ * the white lockup and the legal line. Blush text on Plum is 12.8:1, Pink 7.3:1, white 14.2:1.
  */
 import Logo from './Logo.astro';
 import { site, cityState } from '../data/site';
-import { bookHref, pricingHref } from '../data/nav';
-import { href, withoutBase } from '../lib/paths';
+import { mainNav, bookHref, pricingHref } from '../data/nav';
+import { href } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
+interface Props {
+  /** Where Check Availability goes, base-relative. Event pages pass /book/?event=<slug>. */
+  bookHref?: string;
+}
+
+const { bookHref: book = bookHref } = Astro.props;
 const year = new Date().getFullYear();
-const path = withoutBase(Astro.url.pathname);
-const onFaq = path.startsWith('/faq/');
-const onPricing = path.startsWith('/pricing/');
+const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Hall';
+const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
 ---
 <footer class="footer">
   <div class="container">
-    <p class="footer__statement t-statement">{site.tagline}.</p>
-
-    <div class="footer__main">
-      <div class="footer__brand">
-        <a class="footer__home" href={href('/')} aria-label={`${site.name}, home`}>
-          <Logo variant="lockup" tone="auto" height={40} decorative />
-        </a>
-        <p class="footer__blurb">Indoor and outdoor event rentals in {cityState}.</p>
+    <div class="footer__top">
+      <div class="footer__intro">
+        <p class="footer__blurb">
+          Three spaces on one property in {cityState}: {hall}, The Main Hall, and {grove}, with tables, chairs, and parking included.
+        </p>
+        <a class="btn btn--light" href={href(book)}>Check Availability</a>
       </div>
 
-      <div class="footer__grid">
+      <div class="footer__cols">
+        <section class="footer__col" aria-labelledby="f-explore">
+          <h2 id="f-explore" class="footer__head">Explore</h2>
+          <ul>
+            {mainNav.map((item) => <li><a href={href(item.href)}>{item.label}</a></li>)}
+          </ul>
+        </section>
+
+        <section class="footer__col" aria-labelledby="f-plan">
+          <h2 id="f-plan" class="footer__head">Plan</h2>
+          <ul>
+            <li><a href={href(book)}>Check availability</a></li>
+            <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
+            <li><a href={href(pricingHref)}>Send an inquiry</a></li>
+          </ul>
+        </section>
+
         <section class="footer__col" aria-labelledby="f-visit">
-          <h2 id="f-visit" class="footer__head">Visit and contact</h2>
+          <h2 id="f-visit" class="footer__head">Visit</h2>
           <address>
-            <span class="footer__person">{site.contact.contactName}</span>
             <a href={site.address.directionsUrl} rel="noopener" target="_blank">
               {site.address.street}<br />{site.address.city}, {site.address.region} {site.address.postalCode}
               <span class="visually-hidden">, directions open in a new tab</span>
             </a>
             <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
             <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+            <span class="footer__person">{site.contact.contactName}</span>
           </address>
-          {
-            site.social.length > 0 && (
-              <ul class="footer__social">
-                {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
-              </ul>
-            )
-          }
-        </section>
-
-        <section class="footer__col" aria-labelledby="f-plan">
-          <h2 id="f-plan" class="footer__head">Plan your event</h2>
-          <ul>
-            <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
-            {!onPricing && <li><a href={href(pricingHref)}>Send an inquiry</a></li>}
-            {!onFaq && <li><a class="footer__faq" href={href('/faq/')}>Frequently asked questions</a></li>}
-          </ul>
         </section>
       </div>
     </div>
 
-    <div class="footer__legal">
-      <p>Copyright © {year} {site.name}. All rights reserved.</p>
-      {
-        isDemo && (
-          <p>
-            This is a demo. Booking requests stay in your browser and no emails are sent.{' '}
-            <a href={href('/admin/')}>Open the demo admin</a> and sign in as {DEMO_ADMIN_EMAIL} with the password {DEMO_ADMIN_PASSWORD}.
-          </p>
-        )
-      }
+    <p class="footer__statement t-statement">{site.tagline}.</p>
+
+    <div class="footer__bottom">
+      <a class="footer__home" href={href('/')} aria-label={`${site.name}, home`}>
+        <Logo variant="lockup" tone="white" height={36} decorative />
+      </a>
+      <div class="footer__legal">
+        <p>Copyright © {year} {site.name}. All rights reserved.</p>
+        {
+          site.social.length > 0 && (
+            <ul class="footer__social">
+              {site.social.map((s) => <li><a href={s.url} rel="noopener me">{s.label}</a></li>)}
+            </ul>
+          )
+        }
+        {
+          isDemo && (
+            <p>
+              This is a demo. Booking requests stay in your browser and no emails are sent.{' '}
+              <a href={href('/admin/')}>Open the demo admin</a> and sign in as {DEMO_ADMIN_EMAIL} with the password {DEMO_ADMIN_PASSWORD}.
+            </p>
+          )
+        }
+      </div>
     </div>
   </div>
 </footer>
 
 <style>
-  /*
-    Mauve secondary text on Blush is 6.9:1, Berry links 6.5:1, the Plum heading 12.8:1; in dark mode the
-    light text, its secondary, and Blossom on the card color. The top hairline sets the footer off from a
-    Blush section or the closing band above it.
-  */
   .footer {
     background: var(--footer-bg);
-    border-top: 1px solid var(--separator);
-    color: var(--label-2);
-    font-size: var(--t-footnote);
+    color: var(--on-dark-2);
+    font-size: var(--t-subhead);
     line-height: 1.5;
-    /* On compact screens the footer's color runs down behind the floating tab bar (--tabbar-space). */
-    padding-block: clamp(3rem, 2.5rem + 2vw, 5rem) calc(2rem + var(--tabbar-space));
+    padding-block: clamp(3rem, 2.5rem + 2vw, 4.5rem) calc(2rem + env(safe-area-inset-bottom));
   }
 
-  /* The brand line, large and quiet, above everything else. */
-  .footer__statement {
-    max-width: 22ch;
-    margin-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
-    color: var(--label);
+  .footer a {
+    color: var(--on-dark);
   }
 
-  .footer__main {
+  .footer a.btn--light {
+    color: var(--ink);
+  }
+
+  .footer__top {
     display: grid;
-    gap: 2.5rem;
-    justify-items: start;
-    padding-top: clamp(2rem, 1.5rem + 1.5vw, 3rem);
-    border-top: 1px solid var(--separator);
+    gap: 2.5rem 4rem;
+    align-items: start;
   }
 
-  .footer__brand {
-    display: grid;
-    gap: 0.9rem;
-    justify-items: start;
-  }
-
-  .footer__home {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
-  .footer__blurb {
-    max-width: 22rem;
-  }
-
-  /* Short columns, side by side from the width where both fit, never stretched across the page. */
-  .footer__grid {
-    display: grid;
-    gap: 2rem 4rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 18rem));
-  }
-
-  /* From 46.5rem the header carries FAQ, so the footer drops it. */
-  @media (min-width: 46.5rem) {
-    .footer__faq {
-      display: none;
-    }
-  }
-
-  /*
-    Wide screens: one row, the lockup on the left and the two columns beside it, with the address,
-    phone, and email side by side.
-  */
   @media (min-width: 64rem) {
-    .footer__main {
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: start;
-      gap: 2rem 5rem;
-    }
-
-    .footer__grid {
-      grid-template-columns: auto auto;
-      gap: 2rem 5rem;
+    .footer__top {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     }
   }
 
-  /* Interface family: Caslon Display is for titles at 28px and up. */
+  .footer__intro {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+
+  /* The statement, in the serif at 18px, Blush on Plum. */
+  .footer__blurb {
+    max-width: 28rem;
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--on-dark);
+  }
+
+  /* Phones: Explore and Plan side by side, Visit beneath at full width, so the email never breaks. */
+  .footer__cols {
+    display: grid;
+    gap: 2rem 2.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer__col:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (min-width: 40rem) {
+    .footer__cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .footer__col:last-child {
+      grid-column: auto;
+    }
+  }
+
+  /* The column heads: small letterspaced serif, Pink. */
   .footer__head {
-    margin-bottom: 0.7rem;
-    font-family: var(--font);
-    font-size: var(--t-footnote);
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--label);
+    margin-bottom: 0.6rem;
+    font-family: var(--font-serif);
+    font-size: var(--t-caption);
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--on-dark-accent);
   }
 
-  /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
   .footer ul {
     display: grid;
-    gap: 0;
     margin: -5px 0 0;
     padding: 0;
     list-style: none;
   }
 
+  /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
   .footer li a,
   .footer address a {
     display: inline-block;
     padding-block: 5px;
+    font-family: var(--font-serif);
+    font-size: var(--t-ui);
+    text-decoration: none;
+  }
+
+  .footer li a:hover,
+  .footer address a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   /* Touch screens: every link is a full 44px target (HIG). */
@@ -195,21 +206,9 @@ const onPricing = path.startsWith('/pricing/');
     }
   }
 
-  .footer a {
-    color: var(--accent-text);
-  }
-
-  /* The contact person, named once, above the address, phone, and email. */
-  .footer__person {
-    padding-block: 5px;
-    color: var(--label);
-    font-weight: 600;
-  }
-
   .footer address {
     display: grid;
     justify-items: start;
-    gap: 0;
     margin-top: -5px;
     font-style: normal;
   }
@@ -218,8 +217,54 @@ const onPricing = path.startsWith('/pricing/');
     overflow-wrap: anywhere;
   }
 
-  .footer .footer__social {
-    margin-top: 0.7rem;
+  .footer__person {
+    padding-block: 5px;
+    font-family: var(--font-serif);
+    font-size: var(--t-ui);
+    color: var(--on-dark-2);
+  }
+
+  /* The brand line: very large, centred, white. */
+  .footer__statement {
+    margin-block: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+    text-align: center;
+    color: var(--on-dark);
+  }
+
+  .footer__bottom {
+    display: grid;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(251, 241, 243, 0.18);
+  }
+
+  @media (min-width: 48rem) {
+    .footer__bottom {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+    }
+
+    .footer__legal {
+      text-align: right;
+      justify-items: end;
+    }
+  }
+
+  .footer__home {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    justify-self: start;
+  }
+
+  .footer__legal {
+    display: grid;
+    gap: 0.4rem;
+    font-size: var(--t-footnote);
+  }
+
+  .footer__legal p + p {
+    margin-top: 0;
   }
 
   .footer__legal a {
@@ -227,21 +272,11 @@ const onPricing = path.startsWith('/pricing/');
     text-underline-offset: 0.18em;
   }
 
-  .footer__legal {
+  .footer__social {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.5rem;
-    margin-top: 2.5rem;
-    padding-top: 1.1rem;
-    border-top: 1px solid var(--separator);
-    font-size: var(--t-caption);
+    gap: 1rem;
   }
 
-  .footer__legal p + p {
-    margin-top: 0;
-  }
-
-  /* Forced colors: the band becomes the system background, and the lockup follows the text color. */
   @media (forced-colors: active) {
     .footer {
       border-top: 1px solid CanvasText;

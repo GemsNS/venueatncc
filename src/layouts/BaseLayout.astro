@@ -5,10 +5,10 @@ import '@fontsource/libre-caslon-text/latin-400-italic.css';
 import '../styles/global.css';
 import interFont from '@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2?url';
 import caslonDisplayFont from '@fontsource/libre-caslon-display/files/libre-caslon-display-latin-400-normal.woff2?url';
+import caslonTextFont from '@fontsource/libre-caslon-text/files/libre-caslon-text-latin-400-normal.woff2?url';
 import { getImage } from 'astro:assets';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import TabBar from '../components/TabBar.astro';
 import JsonLd from '../components/JsonLd.astro';
 import { site } from '../data/site';
 import { heroPhoto } from '../data/photos';
@@ -36,11 +36,8 @@ interface Props {
   venueDetails?: boolean;
   /** Hide the site chrome (used by the admin app). */
   bare?: boolean;
-  /**
-   * Show the floating tab bar on compact screens. Off by default on the booking page, where the
-   * wizard's own action bar holds the bottom of the screen and a third bar would cover the calendar.
-   */
-  tabBar?: boolean;
+  /** What sits under the transparent header at the top of the page: a light surface (default) or a photo hero. */
+  headerOver?: 'light' | 'photo';
   /**
    * Where the header's Check Availability goes, base-relative. An event page passes the booking page
    * with its event chosen, e.g. '/book/?event=weddings'. Defaults to '/book/'.
@@ -62,7 +59,7 @@ const {
   schema = [],
   venueDetails = false,
   bare = false,
-  tabBar = path !== bookHref,
+  headerOver = 'light',
   bookPath = bookHref,
   morphLogo = false,
 } = Astro.props;
@@ -101,6 +98,8 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <link rel="preload" href={interFont} as="font" type="font/woff2" crossorigin />
     {/* The page titles' face. The admin (bare) sets no titles in it. */}
     {!bare && <link rel="preload" href={caslonDisplayFont} as="font" type="font/woff2" crossorigin />}
+    {/* The interface serif: nav links and buttons sit above the fold on every page. */}
+    {!bare && <link rel="preload" href={caslonTextFont} as="font" type="font/woff2" crossorigin />}
 
     <meta name="theme-color" content="#FBF1F3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#2A151F" media="(prefers-color-scheme: dark)" />
@@ -139,11 +138,10 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
   </head>
   <body class:list={{ 'is-bare': bare }}>
     <a class="skip-link" href="#main">Skip to content</a>
-    {!bare && <Header ctaHref={bookPath} morph={morphLogo} />}
+    {!bare && <Header ctaHref={bookPath} morph={morphLogo} over={headerOver} />}
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {!bare && <Footer />}
-    {!bare && tabBar && <TabBar bookHref={bookPath} />}
+    {!bare && <Footer bookHref={bookPath} />}
   </body>
 </html>

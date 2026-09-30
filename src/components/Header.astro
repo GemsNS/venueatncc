@@ -1,28 +1,29 @@
 ---
 /**
- * The navigation bar: the lockup in the centre, the links on the left, the phone and Check Availability on
- * the right (the header pattern of the reference site, on the Liquid Glass layer). It starts transparent
- * over the page's first surface and turns to glass with a hairline once the page scrolls under it.
- * Size classes: regular screens (46.5rem, 744px at default text size, and wider) show the links; compact
- * screens hand navigation to the floating tab bar (TabBar.astro) and keep the centred lockup and a round
- * phone button. The breakpoints are in rem so that larger text switches to the compact layout sooner.
- * The brand is always the full lockup (brand.md): 36px tall, or 32px (the minimum) where the links need
- * the room (46.5rem to 70rem), where the demo pill also steps aside.
+ * The navigation bar (redesign-spec.md, Header): the links on the left, the lockup in the centre, the phone
+ * and Check Availability on the right, all in the interface serif. It is transparent over a page's hero
+ * (`[data-hero]`, the home video) and turns into a solid Blush bar with a hairline once the hero has scrolled
+ * past; pages without a hero get the solid bar after 8px. No glass.
  *
- * Check Availability is the bar's one action (hig-web-spec.md, Glass nav bar). It is the filled primary
- * on every page but home, whose photo band already holds the page's primary button, the date checker's
- * Continue to Booking. There it is tinted, so no screen shows two filled buttons (brand.md, Redundancy
- * rules). The style is set per page when the site builds.
+ * Size classes: regular screens (60rem, 960px at default text size, and wider) show the links and the
+ * call to action; compact screens show a menu button on the left, the lockup centred, and a round phone
+ * button on the right. The menu button opens the full-screen menu (a native dialog: focus trapped, Escape
+ * closes, focus returns to the button, the page does not scroll behind it) with large serif links, the
+ * filled Check Availability, and the phone. There is no bottom bar.
+ *
+ * `over="photo"` (a page whose hero is a photograph under the transparent bar) sets white text and the
+ * white lockup until the bar turns solid.
  *
  * On the home page (`morph`) the lockup's two words are hidden until the welcome's large name has scrolled
  * into their place (src/pages/index.astro, "The morph"); the page's script then sets data-morphed. Readers
  * who prefer reduced motion, browsers without scripts, and short screens (where the bar scrolls away) see
- * the lockup at once.
+ * the lockup at once. The morph and the solid bar are both tied to the hero's height, so the name lands in
+ * the bar as the bar turns solid.
  */
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
-import { site } from '../data/site';
-import { mainNav, bookHref } from '../data/nav';
+import { site, fullAddress } from '../data/site';
+import { mainNav, menuNav, bookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
 
@@ -31,19 +32,22 @@ interface Props {
   ctaHref?: string;
   /** Home only: the lockup's words wait for the welcome's name to arrive (see above). */
   morph?: boolean;
+  /** What sits under the transparent bar at the top of the page: a light surface (default) or a photo. */
+  over?: 'light' | 'photo';
 }
 
-const { ctaHref = bookHref, morph = false } = Astro.props;
+const { ctaHref = bookHref, morph = false, over = 'light' } = Astro.props;
 const path = withoutBase(Astro.url.pathname);
 const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
 // On the booking page the call to action would link to the page itself.
 const showCta = !current(bookHref);
-// The home page's date checker carries that page's filled primary button (above).
-const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
 ---
-<header class="nav" data-nav data-morph={morph ? '' : undefined}>
+<header class="nav" data-nav data-morph={morph ? '' : undefined} data-over={over}>
   <div class="nav__inner container">
     <div class="nav__left">
+      <button type="button" class="btn-round nav__menu" aria-label="Open menu" aria-haspopup="dialog" aria-controls="site-menu" data-menu-open>
+        <Icon name="menu" />
+      </button>
       <nav class="nav__links" aria-label="Main">
         <ul>
           {
@@ -60,8 +64,7 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
       {isDemo && <span class="badge badge--accent nav__demo">Demo</span>}
     </div>
     <a class="nav__brand" href={href('/')} aria-label={`${site.name}, home`}>
-      <Logo variant="lockup" height={36} decorative class="nav__lockup" data-lockup="lg" />
-      <Logo variant="lockup" height={32} decorative class="nav__lockup-sm" data-lockup="sm" />
+      <Logo variant="lockup" height="var(--lockup-h)" decorative class="nav__lockup" data-lockup="lg" />
     </a>
     <div class="nav__actions">
       <a class="nav__phone" href={`tel:${site.contact.phoneE164}`} aria-label={`Call ${site.contact.phone}`}>
@@ -70,7 +73,7 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
       </a>
       {
         showCta && (
-          <a class:list={['btn', ctaTone, 'btn--sm', 'nav__cta']} href={href(ctaHref)}>
+          <a class="btn btn--filled btn--sm nav__cta" href={href(ctaHref)}>
             Check Availability
           </a>
         )
@@ -79,39 +82,111 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
   </div>
 </header>
 
+<dialog class="menu" id="site-menu" aria-label="Menu" data-menu>
+  <div class="menu__bar container">
+    <button type="button" class="btn-round menu__close" aria-label="Close menu" data-menu-close>
+      <Icon name="x" />
+    </button>
+    <Logo variant="lockup" height="var(--lockup-h)" decorative class="menu__lockup" />
+  </div>
+  <nav class="menu__nav container" aria-label="Menu">
+    <ul class="menu__list">
+      {
+        menuNav.map((item) => (
+          <li>
+            <a class="menu__link" href={href(item.href)} aria-current={path === item.href ? 'page' : current(item.href) ? 'true' : undefined}>
+              {item.label}
+              <Icon name="chevron-right" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="menu__actions">
+      {
+        showCta && (
+          <a class="btn btn--filled btn--lg" href={href(ctaHref)}>
+            Check Availability
+          </a>
+        )
+      }
+      <a class="btn btn--outline btn--lg" href={`tel:${site.contact.phoneE164}`}>
+        <Icon name="phone" />
+        Call {site.contact.phone}
+      </a>
+    </div>
+    <p class="menu__address secondary">{fullAddress}</p>
+  </nav>
+</dialog>
+
 <script>
-  // Hairline and glass once the page scrolls under the bar.
+  // The solid bar: once the hero (the home video) has scrolled past the bar, or after 8px on pages without one.
   const nav = document.querySelector<HTMLElement>('[data-nav]');
   if (nav) {
-    const onScroll = () => nav.toggleAttribute('data-scrolled', window.scrollY > 4);
+    const hero = document.querySelector<HTMLElement>('[data-hero]');
+    const threshold = () => (hero ? Math.max(8, hero.offsetHeight - nav.offsetHeight) : 8);
+    let limit = threshold();
+    const onScroll = () => nav.toggleAttribute('data-solid', window.scrollY >= limit);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => {
+      limit = threshold();
+      onScroll();
+    });
+  }
+
+  // The full-screen menu on compact screens.
+  const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
+  const opener = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+  if (menu && opener) {
+    const open = () => {
+      menu.showModal();
+      document.documentElement.classList.add('menu-open');
+      menu.querySelector<HTMLElement>('[data-menu-close]')?.focus();
+    };
+    const close = () => menu.close();
+    opener.addEventListener('click', open);
+    menu.querySelector('[data-menu-close]')?.addEventListener('click', close);
+    menu.addEventListener('close', () => {
+      document.documentElement.classList.remove('menu-open');
+      opener.focus();
+    });
+    // A link inside the menu closes it (same-page anchors would otherwise leave it open).
+    menu.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) close();
+    });
+    // Widening past the compact class closes it, so the page is never left locked behind a hidden dialog.
+    const regular = window.matchMedia('(min-width: 60rem)');
+    regular.addEventListener('change', () => regular.matches && menu.open && close());
   }
 </script>
 
 <style>
-  /* Transparent at the top of the page, so the first surface runs under it; glass and a hairline on scroll. */
+  /* Transparent at the top of the page, so the hero runs under it; solid Blush and a hairline on scroll. */
   .nav {
+    --lockup-h: 32px;
     position: sticky;
     top: 0;
     z-index: 60;
     background: transparent;
     border-bottom: 1px solid transparent;
+    color: var(--label);
     transition:
       border-color var(--dur-2) ease,
-      background-color var(--dur-2) ease;
+      background-color var(--dur-2) ease,
+      color var(--dur-2) ease;
   }
 
-  /* Home: the bar shares the welcome's Blush until the page scrolls. */
-  .nav[data-morph]:not([data-scrolled]) {
-    background: var(--bg-grouped);
-  }
-
-  .nav[data-scrolled] {
-    background: var(--glass-bg-strong);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
+  .nav[data-solid] {
+    background: var(--bg);
     border-bottom-color: var(--separator);
+  }
+
+  /* Over a photo hero: white text and the white lockup until the bar turns solid. */
+  .nav[data-over='photo']:not([data-solid]) {
+    color: var(--white);
+    --logo-ink: var(--white);
+    --logo-accent: var(--pink);
   }
 
   /* Three columns: links, the centred brand, actions. min-height, not height: larger text grows the bar. */
@@ -138,19 +213,13 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    color: var(--label);
+    color: inherit;
     text-decoration: none;
     min-height: 44px;
   }
 
   .nav__brand:hover {
     text-decoration: none;
-  }
-
-  /* The smaller lockup stands in only where the links need the room (below). */
-  .nav__brand :global(.nav__lockup-sm) {
-    display: none;
   }
 
   /*
@@ -163,7 +232,9 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
   }
 
   .nav[data-morph]:not([data-morphed]) :global(.logo circle),
-  .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])) {
+  .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])),
+  /* Phones (the welcome stacks its words): "@ NCC" fades in with the ring while "The Venue" travels. */
+  .nav[data-morph][data-morph-stack]:not([data-morphed]) :global(.logo [data-part='at-ncc']) {
     opacity: var(--nav-ring, 0);
   }
 
@@ -187,6 +258,10 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     }
   }
 
+  .nav__menu {
+    border-color: transparent;
+  }
+
   .nav__links ul {
     display: flex;
     gap: 0.25rem;
@@ -195,32 +270,33 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     list-style: none;
   }
 
+  /* The reference's serif nav links at 16px. */
   .nav__links a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    padding: 0 0.8rem;
+    padding: 0 0.75rem;
     border-radius: var(--r-full);
-    color: var(--label);
-    font-size: var(--t-subhead);
-    font-weight: 500;
+    color: inherit;
+    font-family: var(--font-serif);
+    font-size: var(--t-ui);
+    font-weight: 400;
     white-space: nowrap;
-    opacity: 0.86;
-    transition:
-      opacity var(--dur-1) ease,
-      background-color var(--dur-1) ease;
+    text-decoration: none;
+    transition: background-color var(--dur-1) ease;
   }
 
   .nav__links a:hover {
-    opacity: 1;
-    text-decoration: none;
-    background: var(--fill-3);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 1px;
   }
 
   .nav__links a[aria-current] {
-    opacity: 1;
-    color: var(--accent-text);
-    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--accent-text);
   }
 
   .nav__actions {
@@ -229,7 +305,7 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     align-items: center;
     justify-content: end;
     justify-self: end;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   /* The phone: the number beside its icon on regular screens, a round 44px button on phones. */
@@ -238,30 +314,61 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     align-items: center;
     gap: 0.45rem;
     min-height: 44px;
-    padding: 0 0.7rem;
+    padding: 0 0.5rem;
     border-radius: var(--r-full);
-    color: var(--label);
-    font-size: var(--t-subhead);
-    font-weight: 500;
+    color: inherit;
+    font-family: var(--font-serif);
+    font-size: var(--t-ui);
     white-space: nowrap;
-    transition: background-color var(--dur-1) ease;
   }
 
   .nav__phone:hover {
-    text-decoration: none;
-    background: var(--fill-3);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 1px;
   }
 
   .nav__phone :global(.icon) {
     width: 1.1rem;
     height: 1.1rem;
-    color: var(--accent-icon);
   }
 
-  /* Compact size class: the floating tab bar carries navigation (keep in step with TabBar.astro). */
-  @media (width < 46.5rem) {
-    .nav__links {
+  /* The capsule is the 36px small size; its hit area reaches 44px (hig-web-spec.md, Layout). */
+  .nav__cta {
+    position: relative;
+    font-size: var(--t-ui);
+  }
+
+  .nav__cta::before {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+
+  /* Regular size class: the links and the call to action; no menu button. */
+  @media (min-width: 60rem) {
+    .nav {
+      --lockup-h: 36px;
+    }
+
+    .nav__menu {
       display: none;
+    }
+  }
+
+  /* Compact size class: the menu button, the centred lockup, and the round phone button. */
+  @media (width < 60rem) {
+    .nav__links,
+    .nav__cta {
+      display: none;
+    }
+
+    .nav__left {
+      margin-left: -0.5rem;
+    }
+
+    .nav__actions {
+      margin-right: -0.5rem;
     }
 
     .nav__phone {
@@ -284,22 +391,21 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
   }
 
   /*
-    Regular but narrow (744px to 1119px at default text size, a 1024px tablet included): the lockup at its
+    Regular but narrow (960px to 1119px at default text size, a 1024px tablet included): the lockup at its
     32px minimum, tighter links, the phone as an icon, and no demo pill, so the name, the four links, and
     the call to action fit on one row.
   */
-  @media (46.5rem <= width < 70rem) {
+  @media (60rem <= width < 70rem) {
+    .nav {
+      --lockup-h: 32px;
+    }
+
     .nav__inner {
       gap: 0.5rem;
     }
 
-    .nav__brand :global(.nav__lockup),
     .nav__demo {
       display: none;
-    }
-
-    .nav__brand :global(.nav__lockup-sm) {
-      display: block;
     }
 
     .nav__links ul {
@@ -326,28 +432,102 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     }
   }
 
-  /* The capsule is the 36px small size; its hit area reaches 44px (hig-web-spec.md, Layout). */
-  .nav__cta {
-    position: relative;
-  }
-
-  .nav__cta::before {
-    content: '';
-    position: absolute;
-    inset: -4px 0;
-  }
-
-  /* On phones the floating tab bar's Book tab is the primary action, so the header stays uncluttered. */
-  @media (width < 46.5rem) {
-    .nav__cta {
-      display: none;
-    }
-  }
-
   /* Short screens (landscape phones, 400% zoom): the bar scrolls away with the page to leave room for content. */
   @media (max-height: 500px) {
     .nav {
       position: relative;
+    }
+  }
+
+  /* ---------- The full-screen menu ---------- */
+
+  .menu {
+    --lockup-h: 32px;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0 0 max(2rem, env(safe-area-inset-bottom));
+    border: 0;
+    background: var(--bg);
+    color: var(--label);
+    overflow-y: auto;
+  }
+
+  .menu::backdrop {
+    background: var(--bg);
+  }
+
+  :global(html.menu-open) {
+    overflow: hidden;
+  }
+
+  /* The bar mirrors the header: the close button where the menu button was, the lockup centred. */
+  .menu__bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    min-height: var(--nav-h);
+  }
+
+  .menu__close {
+    justify-self: start;
+    margin-left: -0.5rem;
+    border-color: transparent;
+  }
+
+  .menu__nav {
+    display: grid;
+    gap: 2rem;
+    padding-top: 1.5rem;
+  }
+
+  .menu__list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Large serif links, the reference's menu. */
+  .menu__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.5rem;
+    color: var(--label);
+    font-family: var(--font-display);
+    font-size: min(2.25rem, 10vw);
+    line-height: 1.15;
+    text-decoration: none;
+  }
+
+  .menu__link :global(.icon) {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--label-3);
+  }
+
+  .menu__link[aria-current] {
+    color: var(--accent-text);
+  }
+
+  .menu__actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .menu__address {
+    font-family: var(--font-serif);
+    font-size: var(--t-callout);
+  }
+
+  @media (min-width: 60rem) {
+    .menu,
+    .menu::backdrop {
+      display: none;
     }
   }
 </style>

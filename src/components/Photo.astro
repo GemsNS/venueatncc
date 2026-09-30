@@ -22,7 +22,7 @@ interface Props {
   ratio?: string;
   /** Use the 4:5 portrait file, in a 4:5 frame, on phones (when the photo has one). */
   tall?: boolean;
-  /** Rounded corners (var(--r-lg)). false for full bleed. */
+  /** Rounded corners (var(--r-card)). false for full bleed. */
   rounded?: boolean;
   class?: string;
   /** A caption under the photo. true uses the photo's own caption; false shows none, even for a styled concept. */
@@ -330,7 +330,7 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
   }
 
   .photo--rounded .photo__frame {
-    border-radius: var(--r-lg);
+    border-radius: var(--r-card);
   }
 
   .photo--fill,

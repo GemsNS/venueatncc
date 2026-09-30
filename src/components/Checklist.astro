@@ -1,0 +1,77 @@
+---
+/**
+ * A check-marked panel (redesign-spec.md, Checklist; the reference's packages "essentials" grid): a Petal
+ * panel with a serif title and a list of items, each with a check icon. Several panels sit in a row.
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  title?: string;
+  items: string[];
+  headingLevel?: 'h2' | 'h3';
+  id?: string;
+  class?: string;
+}
+
+const { title, items, headingLevel = 'h3', id, class: className } = Astro.props;
+const Heading = headingLevel;
+---
+<div class:list={['checklist', className]}>
+  {title && <Heading id={id} class="checklist__title">{title}</Heading>}
+  <ul class="checklist__list">
+    {
+      items.map((item) => (
+        <li class="checklist__item">
+          <Icon name="check" class="checklist__check" />
+          <span>{item}</span>
+        </li>
+      ))
+    }
+  </ul>
+  <slot />
+</div>
+
+<style>
+  .checklist {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    border-radius: var(--r-lg);
+    background: var(--panel);
+    color: var(--label);
+  }
+
+  .checklist__title {
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .checklist__list {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .checklist__item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-family: var(--font-serif);
+    font-size: var(--t-body);
+    line-height: 1.45;
+  }
+
+  .checklist :global(.checklist__check) {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    color: var(--accent-text);
+  }
+</style>

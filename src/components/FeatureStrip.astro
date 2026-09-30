@@ -1,0 +1,90 @@
+---
+/**
+ * The reference's "We Do, So You Can" row (redesign-spec.md, FeatureStrip): three or four items, each a line
+ * icon, a serif title, and one sentence in the interface family, in columns on regular screens and stacked
+ * on phones.
+ */
+import Icon from './Icon.astro';
+import type { IconName } from '../shared/icons';
+
+interface Props {
+  items: { icon: IconName; name: string; text: string }[];
+  headingLevel?: 'h3' | 'h2';
+  class?: string;
+}
+
+const { items, headingLevel = 'h3', class: className } = Astro.props;
+const Heading = headingLevel;
+---
+<ul class:list={['features', className]} style={`--n: ${items.length}`}>
+  {
+    items.map((f) => (
+      <li class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <Icon name={f.icon} />
+        </span>
+        <Heading class="feature__name">{f.name}</Heading>
+        <p class="feature__text">{f.text}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .features {
+    display: grid;
+    gap: 2rem 2.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 36rem) {
+    .features {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .features {
+      grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+    }
+  }
+
+  .feature {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    justify-items: start;
+  }
+
+  .feature__icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 0.25rem;
+    color: var(--label);
+  }
+
+  .feature__icon :global(.icon) {
+    width: 24px;
+    height: 24px;
+    stroke-width: 1.5;
+  }
+
+  .feature__name {
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .feature__text {
+    max-width: 22rem;
+    font-size: var(--t-subhead);
+    line-height: 1.45;
+    color: var(--label-2);
+  }
+</style>

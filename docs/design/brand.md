@@ -1,9 +1,37 @@
-# The Venue @ NCC: brand and redesign spec (version 4)
+# The Venue @ NCC: brand and redesign spec (version 5)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
-(colors, type, imagery). The interaction model from that spec still applies: floating tab bar on phones,
-capsule buttons, Title Case button labels, sentence-case headings, 44px targets, dark mode, reduced motion,
-glass only on navigation and floating controls, no em or en dashes anywhere in copy.
+(colors, type, imagery). The interaction model from that spec still applies: capsule buttons, Title Case
+button labels, sentence-case headings, 44px targets, dark mode, reduced motion, no em or en dashes anywhere
+in copy. The layout system, the section patterns, and the page plans are in `redesign-spec.md` (version 5),
+which page owners build from; the creative director's decisions in `fable-advice.md` are binding.
+
+## Version 5 amendments (the reference-site rebuild)
+
+The client asked for the site to be rebuilt on the patterns of https://www.wedgewoodweddings.com/. These
+amendments supersede the matching version 4 rules below wherever the two differ.
+
+1. **A video hero.** The home page hero is a full-viewport, muted, looping royalty-free clip of white rose
+   petals on a pink ground (`public/media/hero-petals.*`, credited in `public/media/CREDITS.md`) under a Blush
+   overlay, with the welcome centred over it. The version 4 rule "no footage" is withdrawn; the rule that no
+   clip may show an identifiable venue, building, room, or person stays. The petals canvas is removed.
+2. **Navigation.** The floating tab bar is gone, and no bottom bar replaces it (the reference has none).
+   Phones get a menu button on the left, the lockup centred, the phone on the right, and a full-screen menu
+   with large serif links, Check Availability, and the phone; the closing band on every page carries Check
+   Availability too. The header is transparent over the home hero and a solid Blush bar (not glass) once the
+   hero has scrolled past; inner pages start with the solid bar.
+3. **One serif for the interface.** Libre Caslon Text sets nav links, button labels, leads, card labels, and
+   section copy; the interface stack (Inter) stays for forms, the wizard, the admin, chips, and small labels.
+4. **Surfaces.** The page is Blush; White is for cards, form panels, and caption panels; sections are divided
+   by hairlines rather than alternating bands. The footer is the one dark surface: Plum with Blush text, Pink
+   links, and the white lockup, in the shape of the reference's footer (a very large centred serif statement).
+5. **Cards.** Photo cards carry their label and capacity inside the photo over a bottom scrim, 12px radius,
+   in horizontal carousels; there is no white card body under a photo.
+6. **Buttons.** One button: the Berry capsule (`.btn--filled`), a hairline outline, and a white capsule for
+   photos. The header's Check Availability is filled on every page, and an in-page primary may be filled too;
+   the one-filled-button-per-viewport rule is withdrawn.
+7. **The morph** runs over the hero's height (0 to 100svh minus the bar), so the name lands in the header as
+   the bar turns solid.
 
 ## What changed in version 4, and why
 
@@ -122,9 +150,10 @@ accents real contrast; Plum is the ink. Nothing else is added.
 **Light by default.** In light mode every large surface is light: White, Blush, or Petal. Plum is for text and
 photo scrims, Berry for buttons and accents; neither is a large surface. Specifically:
 
-- **Header:** transparent over the page's first surface (Blush on the home page, White elsewhere), then
-  strong glass with a hairline once the page scrolls under it. Links left, lockup centred, phone and Check
-  Availability right; on phones the links go to the tab bar and the phone becomes a round icon button.
+- **Header (version 5):** transparent over the home hero, then a solid Blush bar with a hairline once the hero
+  has scrolled past; inner pages start with the solid bar. Links left, lockup centred, phone and Check
+  Availability right; on phones a menu button opens the full-screen menu and the phone becomes a round icon
+  button.
 - **Welcome surface (home):** Blush with petals; Plum name, Berry "@ NCC", Mauve serif "Welcome to", a Berry
   eyebrow line.
 - **Footer:** Blush with a top hairline, the Plum statement in Caslon, the Plum-ink lockup, Mauve text, and
@@ -195,14 +224,14 @@ and without scripts, the header lockup shows at once and the welcome stays still
 
 ## Motion and graphics
 
-- **Petals** (`src/components/Petals.astro`): a canvas behind the welcome draws 8 to 22 petals in Rose Mist,
-  Petal, and Pink at 40 to 60 percent opacity, drifting down and swaying. It is written by the site (no
-  license to record), aria-hidden, capped at 2x device pixels, paused while the tab is hidden or the welcome
-  is off screen, and drawn once, still, under reduced motion. It is the only motion graphic. It never stands
-  in for a photo of the space, and it stays behind the name, never over a photograph.
-- **No footage.** No video of this or any other venue, no stock footage, no generic clips. If a loop is ever
-  added it must show no identifiable venue, be small (MP4 and WebM, muted, playsinline, poster, lazy), never
-  cover a real photo, and carry a license note in the repo.
+- **The hero loop** (`src/components/HeroVideo.astro`, version 5): a royalty-free clip of white rose petals on
+  a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, WebM and MP4 under 350 KB each,
+  fixed behind the welcome under a Blush overlay so the Plum name keeps at least 7:1 on its brightest frame.
+  It shows no identifiable venue, building, room, or person, never covers a real photo, and its source,
+  author, and license are recorded in `public/media/CREDITS.md`. Under reduced motion the video is hidden and
+  the poster shows; the script also pauses it.
+- **No other footage.** No video of this or any other venue, and no clip that could be mistaken for the
+  property. The petals canvas of version 4 is removed.
 - Every other transition follows the HIG spec and stops under reduced motion.
 
 ## Photography

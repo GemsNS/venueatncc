@@ -1,47 +1,44 @@
 ---
 /**
- * Home, per docs/design/brand.md "Page direction: Home", in this order:
- * the welcome (the business name as the first screen's one dominant element, which morphs into the header
- * lockup on scroll), the photo band of The Grove with the date checker, the three spaces as real-photo
- * cards, the events, the feature strip, the rates section (the approved wording, a Call button, and a link
- * to the inquiry form), and the arrival band.
+ * Home (docs/design/redesign-spec.md, "Home"), in this order: the video hero with the welcome (the business
+ * name as the first screen's one dominant element, which morphs into the header lockup on scroll), the three
+ * spaces as photo cards in a carousel, the date checker beside its copy, the events carousel, the feature
+ * strip, the rates band (the approved wording, a Call button, and a link to the inquiry form), the arrival
+ * split, and the closing band.
  *
- * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
- * parking in the feature strip, the address in the arrival band, a call to phone for rates in the rates
- * section. The page's one filled button is the date checker's Continue to Booking; the header CTA is tinted.
- * Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces, and event tiles that
- * are all staged or all text. No image appears twice.
+ * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards, tables,
+ * chairs, and parking in the feature strip, the address in the arrival split, a call to phone for rates in
+ * the rates band. Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces and the
+ * arrival, staged photos with their badge for the events. No image appears twice.
  *
  * The morph. The welcome shows the lockup's two words ("The Venue", "@ NCC") as the same outlines the
  * header lockup carries, at display size. The script below measures where each word rests and where its
  * twin sits in the header (the paths tagged data-part in Logo.astro), then, on every scroll frame, moves
  * and scales each word toward its twin with a transform alone (no layout work, so no shift and no jank).
- * When the words arrive (progress 1) the header shows its own lockup and the welcome's words hide; the
- * lockup's ring fades in over the last part of the way (--nav-ring). Readers who prefer reduced motion,
- * short screens (where the bar scrolls away), and browsers without scripts get the header lockup at once.
+ * The morph runs over the hero's height less the bar, the same distance after which the header turns solid
+ * (Header.astro), so the name lands in the bar as the bar appears. When the words arrive (progress 1) the
+ * header shows its own lockup and the welcome's words hide; the lockup's ring fades in over the last part of
+ * the way (--nav-ring). Readers who prefer reduced motion, short screens (where the bar scrolls away), and
+ * browsers without scripts get the header lockup at once.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Photo from '../components/Photo.astro';
-import Icon from '../components/Icon.astro';
+import HeroVideo from '../components/HeroVideo.astro';
 import Logo from '../components/Logo.astro';
-import Petals from '../components/Petals.astro';
-import EventIndex from '../components/EventIndex.astro';
-import LocationBand from '../components/LocationBand.astro';
+import Icon from '../components/Icon.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Carousel from '../components/Carousel.astro';
+import PhotoCard from '../components/PhotoCard.astro';
+import FeatureStrip from '../components/FeatureStrip.astro';
+import ImageTextSplit from '../components/ImageTextSplit.astro';
+import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
-import { site, cityState } from '../data/site';
-import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { site, cityState, fullAddress } from '../data/site';
+import { events } from '../data/events';
+import { EVENTS_STYLED_NOTE, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { bookHref, pricingHref } from '../data/nav';
 import { href } from '../lib/paths';
 import type { IconName } from '../shared/icons';
 
-/*
-  The photo band: the gazebo under the tall pines of The Grove (grove-pines, tagged 'hero'), a real photo in
-  two crops of the original behind grove-path. Phones get the portrait file; wider screens the landscape file,
-  nearly the original's full width, from the trunks above the gazebo down through the legs of the front picnic
-  table. Its size sets the band's ratio.
-*/
-const hero = photoByName('grove-pines') ?? heroPhoto();
-const heroSize = hero ? `--hero-w: ${hero.src.width}; --hero-h: ${hero.src.height}` : undefined;
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
@@ -49,47 +46,26 @@ const hallName = hall?.name ?? 'The Hall';
 const mainHallName = mainHall?.name ?? 'The Main Hall';
 const groveName = grove?.name ?? 'The Grove';
 
-/*
-  The three spaces: the teaser for The Space, which carries the full description and the amenities. Each card
-  shows its space's primary real photo, its capacity (the only capacity on this page), one sentence on what
-  the space is, and a link.
-*/
+/* The three spaces: each card shows its space's primary real photo, its capacity (the only capacity on this page). */
 interface SpaceCard {
   id: 'hall' | 'main-hall' | 'grove';
   name: string;
   capacity: number | undefined;
-  sentence: string;
   photo: VenuePhoto | undefined;
   href: string;
 }
 const spaceCards: SpaceCard[] = [
-  {
-    id: 'hall',
-    name: hallName,
-    capacity: hall?.capacity,
-    sentence: 'Arched windows, a fireplace feature wall, and dark wood-look floors.',
-    photo: photosFor('hall')[0],
-    href: '/the-space/#hall',
-  },
-  {
-    id: 'main-hall',
-    name: mainHallName,
-    capacity: mainHall?.capacity,
-    sentence: 'A multi-purpose auditorium with stage seating under a vaulted ceiling.',
-    photo: photosFor('main')[0],
-    href: '/the-space/#main-hall',
-  },
-  {
-    id: 'grove',
-    name: groveName,
-    capacity: grove?.capacity,
-    sentence: 'A timber gazebo and picnic tables on a patio under tall pines.',
-    photo: photosFor('grove')[0],
-    href: '/the-space/#grove',
-  },
+  { id: 'hall', name: hallName, capacity: hall?.capacity, photo: photosFor('hall')[0], href: '/the-space/#hall' },
+  { id: 'main-hall', name: mainHallName, capacity: mainHall?.capacity, photo: photosFor('main')[0], href: '/the-space/#main-hall' },
+  { id: 'grove', name: groveName, capacity: grove?.capacity, photo: photosFor('grove')[0], href: '/the-space/#grove' },
 ];
 
-/* The feature strip: three things true of every booking, each said here and nowhere else on this page. */
+/* The events: every tile is that event's staged photo with its badge, or the list is text (photos.ts). */
+const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n)));
+const eventCards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
+const eventsWithPhotos = eventsStaged && eventCards.every((c) => c.photo?.styledOf !== undefined && !pagePhotos.has(c.photo.name));
+
+/* The feature strip: four things true of every booking, each said here and nowhere else on this page. */
 const features: { icon: IconName; name: string; text: string }[] = [
   {
     icon: 'building',
@@ -102,27 +78,25 @@ const features: { icon: IconName; name: string; text: string }[] = [
     text: 'Book the hours your event needs, from setup to the last farewell, on one property.',
   },
   {
+    icon: 'check-circle',
+    name: 'Tables and chairs included',
+    text: 'They come with the rental, and you may use them if you wish.',
+  },
+  {
     icon: 'parking',
     name: 'On-site parking',
     text: 'A large paved lot beside the building, included with every booking.',
   },
 ];
 
-/*
-  Every photo shown elsewhere on this page, so the event tiles never repeat one. LocationBand picks the drive
-  at dusk itself, so it is named here.
-*/
-const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
+const arrival = photoByName('approach-dusk');
 
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
 const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
 ---
 <BaseLayout title={title} description={description} og="home" venueDetails morphLogo>
-  <section class="welcome" aria-labelledby="hero-title">
-    <div class="welcome__bg" aria-hidden="true">
-      <Petals />
-    </div>
-    <div class="welcome__inner container">
+  <HeroVideo labelledby="hero-title" class="welcome">
+    <div class="welcome__inner">
       <h1 id="hero-title" class="welcome__h1">
         <span class="welcome__eyebrow" data-welcome-fade>Welcome to</span>
         <span class="welcome__name">
@@ -132,125 +106,148 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         </span>
       </h1>
       <p class="welcome__line" data-welcome-fade>Event venue in {cityState}</p>
+      <div class="welcome__actions" data-welcome-fade>
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+      </div>
     </div>
-  </section>
+  </HeroVideo>
 
-  <section class="band" aria-label="The Grove and the date checker" style={heroSize}>
-    {
-      hero && (
-        <div class="band__media">
-          <Photo photo={hero} ratio="fill" tall rounded={false} priority sizes="100vw" />
-        </div>
-      )
-    }
-    <div class="band__checker">
-      <DateChecker client:load bookHref={href(bookHref)} />
-    </div>
-  </section>
+  <div class="page">
+    <section class="section" aria-labelledby="spaces-heading">
+      <div class="container">
+        <SectionHeading
+          id="spaces-heading"
+          eyebrow="The spaces"
+          heading="Three spaces, indoors and out"
+          lead="Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and community gatherings, with elegant backdrops, flexible layouts, and full-day access."
+        >
+          <Fragment slot="actions">
+            <a class="btn btn--filled" href={href('/the-space/')}>Explore The Space</a>
+            <a class="link-more" href={href(bookHref)}>Check Availability <Icon name="chevron-right" /></a>
+          </Fragment>
+        </SectionHeading>
+        <Carousel cols={3} label="The spaces">
+          {
+            spaceCards.map(
+              (card) =>
+                card.photo && (
+                  <PhotoCard
+                    photo={card.photo}
+                    label={card.name}
+                    meta={card.capacity ? `Up to ${card.capacity} guests` : undefined}
+                    href={card.href}
+                    sizes="(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw"
+                  />
+                ),
+            )
+          }
+        </Carousel>
+      </div>
+    </section>
 
-  <section class="section" aria-labelledby="spaces-heading">
-    <div class="container">
-      <div class="section-head section-head--row">
-        <div class="section-head__copy">
-          <p class="eyebrow">The spaces</p>
-          <h2 id="spaces-heading">Three spaces, indoors and out</h2>
-          <p class="t-lead">
-            Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and
-            community gatherings, with elegant backdrops, flexible layouts, and full-day access.
-          </p>
+    <section class="section" aria-labelledby="date-heading">
+      <div class="container checker">
+        <div class="checker__copy">
+          <SectionHeading
+            id="date-heading"
+            eyebrow="Availability"
+            heading="Check a date"
+            lead="See which spaces are open on your day, then send your request in about two minutes. We confirm every booking personally."
+          />
         </div>
-        <div class="section-head__actions">
-          <a class="btn btn--tinted" href={href('/the-space/')}>Explore The Space</a>
+        <div class="checker__panel">
+          <DateChecker client:load bookHref={href(bookHref)} />
         </div>
       </div>
-      <div class="spaces">
+    </section>
+
+    <section class="section" aria-labelledby="events-heading">
+      <div class="container">
+        <SectionHeading id="events-heading" eyebrow="Occasions" heading="Events we host" lead={eventsWithPhotos ? EVENTS_STYLED_NOTE : undefined}>
+          <Fragment slot="actions">
+            <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+          </Fragment>
+        </SectionHeading>
         {
-          spaceCards.map((card) => {
-            return (
-              <article class="space card" aria-labelledby={`space-${card.id}`}>
-                {card.photo && (
-                  <Photo photo={card.photo} caption={false} sizes="(min-width: 75rem) 370px, (min-width: 56rem) 30vw, 92vw" />
-                )}
-                <div class="space__body">
-                  <h3 id={`space-${card.id}`} class="space__name t-title-1">
-                    {card.name}
-                  </h3>
-                  {card.capacity && (
-                    <p class="space__cap badge badge--accent">
-                      <Icon name="users" />
-                      Up to {card.capacity} guests
-                    </p>
-                  )}
-                  <p class="space__sentence secondary">{card.sentence}</p>
-                  <a class="link-more" href={href(card.href)}>
-                    Explore {card.name} <Icon name="chevron-right" />
+          eventsWithPhotos ? (
+            <Carousel cols={4} label="Events we host">
+              {eventCards.map(
+                (c) =>
+                  c.photo && (
+                    <PhotoCard
+                      photo={c.photo}
+                      label={c.event.name}
+                      href={`/events/${c.event.slug}/`}
+                      sizes="(min-width: 75rem) 300px, (min-width: 46.5rem) 23vw, 82vw"
+                    />
+                  ),
+              )}
+            </Carousel>
+          ) : (
+            <ul class="event-links">
+              {events.map((e) => (
+                <li>
+                  <a class="link-more" href={href(`/events/${e.slug}/`)}>
+                    {e.name} <Icon name="chevron-right" />
                   </a>
-                </div>
-              </article>
-            );
-          })
+                </li>
+              ))}
+            </ul>
+          )
         }
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="section section--grouped" aria-labelledby="events-heading">
-    <div class="container">
-      <div class="section-head section-head--row">
-        <div class="section-head__copy">
-          <p class="eyebrow">Occasions</p>
-          <h2 id="events-heading">Events we host</h2>
-          {eventsStaged && <p class="t-lead">{EVENTS_STYLED_NOTE}</p>}
-        </div>
-        <div class="section-head__actions">
-          <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
-        </div>
+    <section class="section" aria-labelledby="included-heading">
+      <div class="container">
+        <SectionHeading id="included-heading" eyebrow="Every booking" heading="What every booking includes" />
+        <FeatureStrip items={features} />
       </div>
-      <EventIndex layout="shelf" avoid={pagePhotos} />
-    </div>
-  </section>
+    </section>
 
-  <section class="section section--tight features" aria-label="What every booking includes">
-    <ul class="container features__list">
-      {
-        features.map((f) => (
-          <li class="feature">
-            <span class="feature__icon" aria-hidden="true">
-              <Icon name={f.icon} />
-            </span>
-            <div class="feature__text">
-              <h3 class="t-headline">{f.name}</h3>
-              <p class="secondary">{f.text}</p>
-            </div>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  <section class="section rates" aria-labelledby="rates-heading">
-    <div class="container rates__inner">
-      <div class="rates__copy">
-        <p class="eyebrow">Rates</p>
-        <h2 id="rates-heading">Our special rates</h2>
-        <p class="t-lead">
-          Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
-          please call us and we will be happy to help you.
-        </p>
+    <section class="section band-section rates" aria-labelledby="rates-heading">
+      <div class="container">
+        <SectionHeading
+          id="rates-heading"
+          eyebrow="Rates"
+          heading="Our special rates"
+          lead="Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us and we will be happy to help you."
+        >
+          <Fragment slot="actions">
+            <a class="btn btn--filled" href={`tel:${site.contact.phoneE164}`}>
+              <Icon name="phone" />
+              Call {site.contact.phone}
+            </a>
+            <a class="link-more" href={href(pricingHref)}>Or send an inquiry <Icon name="chevron-right" /></a>
+          </Fragment>
+        </SectionHeading>
       </div>
-      <div class="btn-row rates__action">
-        <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
-          <Icon name="phone" />
-          Call {site.contact.phone}
-        </a>
-        <a class="link-more rates__link" href={href(pricingHref)}>
-          Or send an inquiry <Icon name="chevron-right" />
-        </a>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <LocationBand />
+    {
+      arrival && (
+        <section class="section" aria-labelledby="location-heading">
+          <div class="container">
+            <ImageTextSplit
+              photo={arrival}
+              id="location-heading"
+              eyebrow="Getting here"
+              heading="Find us in north Suffolk"
+              lead={`${fullAddress}. A long paved drive leads past open lawn to the building and the lot.`}
+            >
+              <Fragment slot="actions">
+                <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
+                  Get Directions<span class="visually-hidden">, opens in a new tab</span>
+                </a>
+              </Fragment>
+            </ImageTextSplit>
+          </div>
+        </section>
+      )
+    }
+
+    <CtaBand />
+  </div>
 </BaseLayout>
 
 <script>
@@ -259,6 +256,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     from where it rests in the welcome to where its twin sits in the header lockup, in step with the scroll.
   */
   const nav = document.querySelector<HTMLElement>('[data-nav]');
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
   const words = [...document.querySelectorAll<SVGSVGElement>('.welcome__word')];
   const fades = [...document.querySelectorAll<HTMLElement>('[data-welcome-fade]')];
   const still = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -270,14 +268,17 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     to: { left: number; top: number; width: number };
   }
 
-  if (nav && words.length > 0) {
+  if (nav && hero && words.length > 0) {
     let tracks: Track[] = [];
     let distance = 1;
     let morphed = false;
     let ticking = false;
     let active = false;
+    // Below 46.5rem the welcome stacks its two words (see the styles below).
+    const compact = window.matchMedia('(width < 46.5rem)');
+    let stacked = compact.matches;
 
-    /** The lockup the header shows at this width (the other is display: none). */
+    /** The lockup the header shows at this width. */
     const lockup = () =>
       [...nav.querySelectorAll<SVGSVGElement>('[data-lockup]')].find((el) => el.getBoundingClientRect().width > 0) ?? null;
 
@@ -292,17 +293,26 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       ticking = false;
       const y = window.scrollY;
       const p = Math.min(1, Math.max(0, y / distance));
+      // Ease-out: the name leaves quickly and settles gently into the bar.
+      const e = 1 - Math.pow(1 - p, 2);
       if (p < 1 || !morphed) {
         for (const t of tracks) {
-          const s = 1 + (t.to.width / t.rest.width - 1) * p;
-          const dx = (t.to.left - t.rest.left) * p;
-          const dy = (t.to.top - (t.rest.top - y)) * p;
+          const s = 1 + (t.to.width / t.rest.width - 1) * e;
+          const dx = (t.to.left - t.rest.left) * e;
+          // Where the word would sit on screen with the page's scroll alone, and where it is headed. Once the
+          // scroll would carry it above its place in the bar, it holds there and shrinks into place instead.
+          const natural = t.rest.top - y;
+          const top = Math.max(natural + (t.to.top - natural) * e, t.to.top);
+          const dy = top - natural;
           t.el.style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+          // Phones stack the two words, so "@ NCC" would cross "The Venue" on the way: there it fades out as
+          // the morph starts, and the lockup's own "@ NCC" fades in with the ring.
+          if (stacked && t.el.dataset.part === 'at-ncc') t.el.style.opacity = Math.max(0, 1 - p * 2.5).toFixed(3);
         }
       }
       setMorphed(p >= 1);
-      nav!.style.setProperty('--nav-ring', Math.min(1, Math.max(0, (p - 0.55) / 0.45)).toFixed(3));
-      const fade = Math.max(0, 1 - p * 2.2).toFixed(3);
+      nav!.style.setProperty('--nav-ring', Math.min(1, Math.max(0, (p - 0.6) / 0.4)).toFixed(3));
+      const fade = Math.max(0, 1 - p * 2.5).toFixed(3);
       for (const f of fades) f.style.opacity = fade;
     }
 
@@ -316,7 +326,12 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     function measure() {
       const lk = lockup();
       if (!lk) return;
-      for (const w of words) w.style.transform = '';
+      for (const w of words) {
+        w.style.transform = '';
+        w.style.opacity = '';
+      }
+      stacked = compact.matches;
+      nav!.toggleAttribute('data-morph-stack', stacked);
       const y = window.scrollY;
       tracks = words.flatMap((el) => {
         const twin = lk.querySelector<SVGGraphicsElement>(`[data-part="${el.dataset.part}"]`);
@@ -326,10 +341,8 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         return [{ el, rest: { left: r.left, top: r.top + y, width: r.width }, to: { left: t.left, top: t.top, width: t.width } }];
       });
       if (tracks.length === 0) return;
-      // The morph runs over the scroll that would carry the first word up to the bar, and at least about
-      // half a screen, so it is never in a rush: past the natural distance the name hovers at the bar and
-      // shrinks into place while the welcome scrolls on beneath it.
-      distance = Math.max(tracks[0].rest.top - tracks[0].to.top, Math.min(420, window.innerHeight * 0.48));
+      // The morph runs over the hero's height less the bar: the same scroll after which the bar turns solid.
+      distance = Math.max(1, hero!.offsetHeight - nav!.offsetHeight);
       apply();
     }
 
@@ -338,11 +351,13 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       for (const w of words) {
         w.style.transform = '';
         w.style.visibility = '';
+        w.style.opacity = '';
       }
       for (const f of fades) f.style.opacity = '';
       nav!.style.removeProperty('--nav-ring');
       nav!.removeAttribute('data-morph');
       nav!.removeAttribute('data-morphed');
+      nav!.removeAttribute('data-morph-stack');
     }
 
     function start() {
@@ -370,8 +385,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     still.addEventListener('change', start);
     short.addEventListener('change', start);
     // Larger text or a late font can move the welcome; measure again when it changes size.
-    const welcome = document.querySelector<HTMLElement>('.welcome');
-    if (welcome && 'ResizeObserver' in window) new ResizeObserver(onResize).observe(welcome);
+    if ('ResizeObserver' in window) new ResizeObserver(onResize).observe(hero);
     start();
   }
 </script>
@@ -380,31 +394,18 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
   /* ---------- Welcome ---------- */
 
   /*
-    The first screen: "Welcome to" and the business name, the largest type on the site, centred on the Blush
-    surface with drifting petals behind. --u is one unit of the lockup's own grid in pixels: the two words keep
-    the lockup's proportions (The Venue is 289.49 units wide and 53.07 tall; @ NCC is 143.5 by 38.63 and sits
-    20.47 units lower on the same baseline, 18.69 units to the right), so a scroll later they fit the header
-    exactly. On one line the row is 451.68 units wide; phones stack the two words and "The Venue" spans the
-    screen (92vw), which also keeps the name whole on a 320px screen.
+    The first screen: "Welcome to" and the business name, the largest type on the site, centred over the
+    petals. --u is one unit of the lockup's own grid in pixels: the two words keep the lockup's proportions
+    (The Venue is 289.49 units wide and 53.07 tall; @ NCC is 143.5 by 38.63 and sits 20.47 units lower on the
+    same baseline, 18.69 units to the right), so a scroll later they fit the header exactly. On one line the
+    row is 451.68 units wide; phones stack the two words and "The Venue" spans the screen (92vw), which also
+    keeps the name whole on a 320px screen.
   */
-  .welcome {
-    --u: calc(min(92vw, 30rem) / 289.49);
-    position: relative;
-    background: var(--bg-grouped);
-  }
-
-  .welcome__bg {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-
   .welcome__inner {
-    position: relative;
+    --u: calc(min(92vw, 30rem) / 289.49);
     display: grid;
     justify-items: center;
-    gap: clamp(1rem, 0.75rem + 1vw, 1.5rem);
-    padding-block: clamp(2.25rem, 1.5rem + 3vw, 4.5rem) clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
+    gap: clamp(1.25rem, 0.75rem + 1.5vw, 2rem);
     text-align: center;
   }
 
@@ -433,28 +434,40 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     width: 100%;
   }
 
+  /* The words rise above the sticky bar (z-index 60) while they travel into it. */
   .welcome__word {
     position: relative;
     z-index: 61;
     transform-origin: 0 0;
     will-change: transform;
-    /* Plum and Berry, whatever the appearance: the name stays the darkest thing on the Blush surface. */
+    /* Plum and Berry, whatever the appearance: the name stays the darkest thing on the surface. */
     --logo-ink: var(--label);
     --logo-accent: var(--accent-text);
+    /* A soft halo in the page color behind the glyphs, so the name reads on the clip's pinkest frame. */
+    filter: drop-shadow(0 0 10px var(--bg)) drop-shadow(0 0 2px var(--bg));
+  }
+
+  .welcome__eyebrow,
+  .welcome__line {
+    text-shadow: 0 0 12px var(--bg), 0 0 3px var(--bg);
   }
 
   .welcome__line {
-    font-family: var(--font);
-    font-size: var(--t-footnote);
-    font-weight: 600;
-    letter-spacing: 0.14em;
+    font-family: var(--font-serif);
+    font-size: var(--t-subhead);
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--accent-text);
   }
 
+  .welcome__actions {
+    display: flex;
+    justify-content: center;
+  }
+
   /* From 46.5rem the two words share one line, as they do in the lockup. */
   @media (min-width: 46.5rem) {
-    .welcome {
+    .welcome__inner {
       --u: calc(min(74vw, 68rem) / 451.68);
     }
 
@@ -476,240 +489,56 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     }
   }
 
-  /* ---------- The photo band and the date checker ---------- */
+  /* ---------- The page over the fixed video ---------- */
 
-  /*
-    A photo that is never cropped into its subject: every frame holds the whole gazebo, and a frame's bottom
-    edge never runs along a tabletop. The frames are fitted to the two files' framing at 100vw:
-      Landscape (grove-pines.jpg, 3500 x 2532): it ends through the legs of the front picnic table. From that
-        edge up to the gazebo's roof is 41vw, so a frame keeps the file's bottom edge (--photo-pos 50% 100%)
-        and is never shorter than 41vw: it loses sky, never tables. The gazebo spans 27 to 59 percent of the width.
-      Portrait (grove-pines-tall.jpg, 7:10): the roof is 69.9vw below its top; the cut between the benches is
-        19.6vw above its bottom.
-    Phones: the portrait file as a band, then the checker as a card. Wide screens: the landscape file at up to
-    78 percent of the screen, with the checker floating on glass at the bottom right, lined up with the
-    header and at least 2.5rem clear of the gazebo.
-  */
-  .band {
-    --checker-w: 23.75rem;
-    --photo-pos: 50% 100%;
-    display: grid;
-    grid-template-columns:
-      [full-start] minmax(var(--gutter), 1fr)
-      [content-start] minmax(0, var(--max))
-      [content-end] minmax(var(--gutter), 1fr)
-      [full-end];
-    grid-template-rows: [photo-start] auto [photo-end] auto;
-    background: var(--bg-grouped);
-  }
-
-  .band__media {
-    grid-column: full;
-    grid-row: photo;
+  .page {
     position: relative;
-    overflow: hidden;
-    width: 100%;
-    aspect-ratio: var(--hero-w, 3500) / var(--hero-h, 2532);
-    max-height: max(calc(100svh - var(--nav-h) - 5rem), calc(41vw + 3rem));
+    z-index: 1;
+    background: var(--bg);
   }
 
-  .band__media :global(.photo) {
-    position: absolute;
-    inset: 0;
+  /* ---------- Check a date ---------- */
+
+  .checker {
+    display: grid;
+    gap: 2rem 4rem;
+    align-items: center;
   }
 
-  .band__checker {
-    grid-column: content;
-    grid-row: 2;
-    padding-block: 1.25rem 2.5rem;
+  @media (min-width: 60rem) {
+    .checker {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+      justify-content: space-between;
+    }
   }
 
-  .band__checker :global(.bk-dc) {
-    margin-inline: auto;
+  .checker__copy :global(.section-head) {
+    margin-bottom: 0;
   }
 
-  .band__checker :global(:focus-visible) {
+  .checker__panel :global(.bk-dc) {
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .checker__panel :global(:focus-visible) {
     outline-color: var(--focus-ring);
   }
 
-  /* Phones: the portrait file, cut between the benches, keeping the roof from 58vw of height. */
-  @media (width < 46.5rem) {
-    .band {
-      --photo-pos: 50% calc(100% + 19.6vw);
-    }
+  /* ---------- Events as text (while the staged set is incomplete) ---------- */
 
-    .band__media {
-      aspect-ratio: 7 / 10;
-      max-height: min(122.9vw, max(calc(100svh - var(--nav-h) - 16rem), 58vw));
-    }
-  }
-
-  /* Short, wide screens: the band keeps the roof near its top and ends through the gazebo's posts. */
-  @media (height < 36rem) and (min-aspect-ratio: 19 / 10) {
-    .band {
-      --photo-pos: 50% -28.8vw;
-    }
-
-    .band__media {
-      max-height: 58svh;
-    }
-  }
-
-  @media (width >= 64rem) and (height >= 36rem) {
-    .band__media {
-      aspect-ratio: auto;
-      height: min(calc(100vw * var(--hero-h, 2532) / var(--hero-w, 3500)), max(calc(41vw + 3rem), 78svh));
-      max-height: none;
-    }
-
-    /*
-      The gazebo's right side is at 59 percent of the width. Where the header's column would bring the checker
-      within 2.5rem of it (very wide screens, larger text), the checker moves out into the margin just enough,
-      never past the gutter. Otherwise it lines up with the header exactly.
-    */
-    .band__checker {
-      --edge: max(var(--gutter), calc(50vw - var(--max) / 2));
-      grid-column: content;
-      grid-row: photo;
-      align-self: end;
-      justify-self: end;
-      z-index: 1;
-      width: var(--checker-w);
-      margin-right: clamp(calc(var(--gutter) - var(--edge)), calc(40.8vw - var(--edge) - var(--checker-w) - 2.5rem), 0px);
-      padding-block: 2.5rem clamp(2rem, 1rem + 1.5vw, 3rem);
-    }
-
-    /* The card becomes a glass panel; the glass tokens turn solid under Reduce Transparency and Increase Contrast. */
-    .band__checker :global(.bk-dc) {
-      max-width: none;
-      margin-inline: 0;
-      background-color: var(--glass-bg-strong);
-      -webkit-backdrop-filter: var(--glass-blur);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-edge), var(--glass-shadow);
-    }
-  }
-
-  /* 64 to 70rem (a 1024px tablet in landscape): a narrower checker keeps 2.5rem clear of the gazebo. */
-  @media (64rem <= width < 70rem) and (height >= 36rem) {
-    .band {
-      --checker-w: 21rem;
-    }
-
-    .band__checker :global(.bk-dc__sats .bk-chips) {
-      gap: 6px;
-    }
-
-    .band__checker :global(.bk-dc__sats .bk-chip) {
-      padding-inline: 4px;
-    }
-  }
-
-  /* ---------- The three spaces ---------- */
-
-  .spaces {
+  .event-links {
     display: grid;
-    gap: clamp(1.25rem, 2.5vw, 1.75rem);
-  }
-
-  @media (min-width: 56rem) {
-    .spaces {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  /* 12px around a 20px photo radius makes the card's 32px corner concentric. */
-  .space {
-    display: flex;
-    flex-direction: column;
-    padding: 0.75rem;
-    border-radius: var(--r-xl);
-  }
-
-  .space__body {
-    display: grid;
-    flex: 1;
-    align-content: start;
-    justify-items: start;
-    gap: 0.75rem;
-    padding: 1.25rem 0.75rem 0.5rem;
-  }
-
-  .space__name {
-    margin-top: 0.25rem;
-  }
-
-  .space__cap {
-    gap: 0.4rem;
-    min-height: 28px;
-    padding-inline: 0.75rem;
-    font-size: var(--t-footnote);
-  }
-
-  .space__cap :global(.icon) {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .space__sentence {
-    max-width: 34rem;
-  }
-
-  /* ---------- Feature strip ---------- */
-
-  .features {
-    border-top: 1px solid var(--separator);
-  }
-
-  .features__list {
-    display: grid;
-    gap: 1.75rem 2.5rem;
+    gap: 0.25rem 2rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  @media (min-width: 48rem) {
-    .features__list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+  @media (min-width: 36rem) {
+    .event-links {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-  }
-
-  .feature {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .feature__icon {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--panel);
-    color: var(--accent-text);
-  }
-
-  .feature__icon :global(.icon) {
-    width: 22px;
-    height: 22px;
-  }
-
-  .feature__text {
-    display: grid;
-    gap: 0.3rem;
-    padding-top: 0.55rem;
-  }
-
-  .feature__text h3 {
-    margin: 0;
-  }
-
-  .feature__text p {
-    max-width: 30rem;
   }
 
   /* ---------- Rates ---------- */
@@ -718,40 +547,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     background: var(--band);
   }
 
-  .rates__inner {
-    display: grid;
-    gap: 1.75rem 4rem;
-    align-items: end;
-  }
-
-  @media (min-width: 64rem) {
-    .rates__inner {
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    }
-  }
-
-  .rates__copy {
-    display: grid;
-    gap: 1rem;
-    justify-items: start;
-    max-width: 38rem;
-  }
-
-  .rates__action {
-    align-items: center;
-    column-gap: 1.5rem;
-  }
-
-  @media (min-width: 64rem) {
-    .rates__action {
-      justify-content: end;
-    }
-  }
-
-  .rates__link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    font-weight: 600;
+  .rates :global(.section-head) {
+    margin-bottom: 0;
   }
 </style>

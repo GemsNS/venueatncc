@@ -1,0 +1,36 @@
+---
+/**
+ * The reference's section header (redesign-spec.md, SectionHeading): an optional eyebrow, the light 48px
+ * serif h2 on the left, a half-width lead beneath, and the actions (a pill and a text link with a chevron,
+ * passed in the `actions` slot) aligned right on the heading's line. Phones stack everything.
+ */
+interface Props {
+  id: string;
+  heading: string;
+  eyebrow?: string;
+  lead?: string;
+  level?: 'h1' | 'h2';
+  /** Centre the copy (a title band with no actions). */
+  center?: boolean;
+  class?: string;
+}
+
+const { id, heading, eyebrow, lead, level = 'h2', center = false, class: className } = Astro.props;
+const Heading = level;
+const hasActions = Astro.slots.has('actions');
+---
+<div class:list={['section-head', { 'section-head--row': hasActions, 'section-head--center': center }, className]}>
+  <div class="section-head__copy">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <Heading id={id}>{heading}</Heading>
+    {lead && <p class="t-lead">{lead}</p>}
+    <slot />
+  </div>
+  {
+    hasActions && (
+      <div class="section-head__actions">
+        <slot name="actions" />
+      </div>
+    )
+  }
+</div>

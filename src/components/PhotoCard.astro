@@ -1,0 +1,136 @@
+---
+/**
+ * The one card (redesign-spec.md, PhotoCard): a photo in a 12px frame with a bottom gradient scrim, the label
+ * and a meta line inside the photo (the reference's venue cards), and the Styled Concept badge on a staged
+ * photo. With `href` the whole card is a link named by its label; without one it is a figure whose photo
+ * opens in the full-screen viewer (Photo.astro). The frame is 3:2 on regular screens and, with `tall`, the
+ * 4:5 portrait file on phones, so no photo is cropped into its subject.
+ */
+import Photo from './Photo.astro';
+import type { VenuePhoto } from '../data/photos';
+import { href as toHref } from '../lib/paths';
+import { uid } from '../lib/uid';
+
+interface Props {
+  photo: VenuePhoto;
+  label: string;
+  meta?: string;
+  /** Base-relative link. Omit for a gallery card (tap to enlarge). */
+  href?: string;
+  sizes?: string;
+  tall?: boolean;
+  ratio?: string;
+  priority?: boolean;
+  /** Heading level of the label. */
+  headingLevel?: 'h2' | 'h3' | 'p';
+  class?: string;
+}
+
+const {
+  photo,
+  label,
+  meta,
+  href,
+  sizes = '(min-width: 75rem) 420px, (min-width: 46.5rem) 33vw, 82vw',
+  tall = true,
+  ratio = '3 / 2',
+  priority = false,
+  headingLevel = 'h3',
+  class: className,
+} = Astro.props;
+
+const Heading = headingLevel;
+const id = uid('pcard');
+const Tag = href ? 'a' : 'div';
+---
+<Tag class:list={['pcard', { 'pcard--link': href }, className]} href={href ? toHref(href) : undefined} aria-labelledby={href ? id : undefined}>
+  <Photo photo={photo} ratio={ratio} tall={tall} rounded={false} caption={false} zoom={!href} priority={priority} sizes={sizes} class="pcard__photo">
+    <span class="pcard__scrim" aria-hidden="true"></span>
+    <span class="pcard__text">
+      <Heading id={id} class="pcard__label">{label}</Heading>
+      {meta && <span class="pcard__meta">{meta}</span>}
+    </span>
+  </Photo>
+</Tag>
+
+<style>
+  .pcard {
+    display: block;
+    position: relative;
+    border-radius: var(--r-card);
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--white);
+    text-decoration: none;
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+
+  .pcard--link:hover {
+    text-decoration: none;
+  }
+
+  .pcard--link:hover :global(.photo__img) {
+    transform: scale(1.03);
+  }
+
+  .pcard :global(.photo__img) {
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  .pcard :global(.photo__frame) {
+    border-radius: var(--r-card);
+  }
+
+  /* The bottom scrim: Plum from 0 to 0.7, so white type keeps at least 4.5:1 over any photo. */
+  .pcard__scrim {
+    position: absolute;
+    inset: 40% 0 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, rgb(var(--scrim-rgb) / 0), rgb(var(--scrim-rgb) / 0.72));
+    pointer-events: none;
+  }
+
+  .pcard__text {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 3;
+    display: grid;
+    gap: 0.15rem;
+    padding: 1.1rem 1.25rem 1.15rem;
+    pointer-events: none;
+  }
+
+  /* On a gallery card the enlarge button covers the frame; the text still shows above it, not clickable. */
+  .pcard :global(.photo__zoom) {
+    z-index: 2;
+  }
+
+  .pcard__label {
+    margin: 0;
+    color: var(--white);
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+
+  .pcard__meta {
+    font-family: var(--font-serif);
+    font-size: var(--t-subhead);
+    color: var(--white);
+    opacity: 0.92;
+  }
+
+  .pcard--link:focus-visible {
+    outline-offset: -3px;
+    border-radius: var(--r-card);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pcard--link:hover :global(.photo__img) {
+      transform: none;
+    }
+  }
+</style>

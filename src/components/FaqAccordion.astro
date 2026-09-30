@@ -1,0 +1,104 @@
+---
+/**
+ * Questions and answers (redesign-spec.md, FaqAccordion): native disclosure rows split by hairlines, no card,
+ * the question in the serif with a chevron, the answer in the serif Mauve. No script needed.
+ */
+interface Props {
+  items: { q: string; a: string }[];
+  openFirst?: boolean;
+  class?: string;
+}
+const { items, openFirst = false, class: className } = Astro.props;
+
+// Keep "@ NCC" on one line inside questions. The whole name would be too wide for a phone at 200% text.
+const NBSP = String.fromCharCode(160);
+const keepTogether = (q: string) => q.replace(/@ NCC/g, `@${NBSP}NCC`);
+
+// Phone numbers in answers, such as "(757) 555-0142", become tap-to-call links that never break across lines.
+// split() with a capturing group keeps each number at an odd index.
+const PHONE = /(\(\d{3}\) \d{3}-\d{4})/;
+const telHref = (phone: string) => `tel:+1${phone.replace(/\D/g, '')}`;
+const withPhoneLinks = (a: string) => a.split(PHONE);
+---
+<div class:list={['faqs', className]}>
+  {
+    items.map((item, i) => (
+      <details class="faq" open={openFirst && i === 0}>
+        <summary class="faq__q">
+          <span>{keepTogether(item.q)}</span>
+          <svg class="icon faq__chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </summary>
+        <div class="faq__a">
+          <p>{withPhoneLinks(item.a).map((part, j) => (j % 2 === 1 ? <a class="faq__tel" href={telHref(part)}>{part}</a> : part))}</p>
+        </div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faqs {
+    border-top: 1px solid var(--separator);
+  }
+
+  .faq {
+    border-bottom: 1px solid var(--separator);
+  }
+
+  .faq__q {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    min-height: 56px;
+    padding: 1rem 0;
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    line-height: 1.3;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  /* The question gives way to the chevron, and a word too long for the row breaks rather than overflowing. */
+  .faq__q span {
+    min-width: 0;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
+  }
+
+  .faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__chev {
+    flex: none;
+    color: var(--label-3);
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+
+  .faq[open] .faq__chev {
+    transform: rotate(180deg);
+    color: var(--accent-text);
+  }
+
+  .faq__a {
+    padding: 0 0 1.25rem;
+    max-width: 62ch;
+    font-family: var(--font-serif);
+    line-height: 1.55;
+    color: var(--label-2);
+  }
+
+  .faq__tel {
+    white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .faq__q:focus-visible {
+    outline-offset: 4px;
+  }
+</style>

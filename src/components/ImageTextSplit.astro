@@ -1,0 +1,89 @@
+---
+/**
+ * A photo beside copy (redesign-spec.md, ImageTextSplit; the reference's "Getting to" and contact sections):
+ * the photo on the left (or right with `flip`), and on the right an eyebrow, a heading, the slotted copy, and
+ * the actions (`actions` slot). Phones stack the photo first. The photo keeps its 3:2 shape (the 4:5 file on
+ * phones) and opens in the viewer.
+ */
+import Photo from './Photo.astro';
+import type { VenuePhoto } from '../data/photos';
+
+interface Props {
+  photo: VenuePhoto;
+  id: string;
+  heading: string;
+  eyebrow?: string;
+  lead?: string;
+  flip?: boolean;
+  level?: 'h1' | 'h2';
+  sizes?: string;
+  class?: string;
+}
+
+const {
+  photo,
+  id,
+  heading,
+  eyebrow,
+  lead,
+  flip = false,
+  level = 'h2',
+  sizes = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw',
+  class: className,
+} = Astro.props;
+const Heading = level;
+---
+<div class:list={['split', { 'split--flip': flip }, className]}>
+  <Photo photo={photo} tall sizes={sizes} class="split__photo" />
+  <div class="split__copy">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <Heading id={id}>{heading}</Heading>
+    {lead && <p class="t-lead">{lead}</p>}
+    <slot />
+    {
+      Astro.slots.has('actions') && (
+        <div class="btn-row split__actions">
+          <slot name="actions" />
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .split {
+    display: grid;
+    gap: 2rem clamp(2rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  .split :global(.split__photo .photo__frame) {
+    border-radius: var(--r-card);
+  }
+
+  .split__copy {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    max-width: 34rem;
+  }
+
+  .split__copy h2,
+  .split__copy h1 {
+    line-height: 1.08;
+  }
+
+  .split__actions {
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .split--flip :global(.split__photo) {
+      order: 2;
+    }
+  }
+</style>

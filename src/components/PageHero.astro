@@ -1,0 +1,189 @@
+---
+/**
+ * The inner-page hero (redesign-spec.md, PageHero; the reference's venue page): a full-bleed photograph
+ * (the 4:5 file on phones, never cropped into its subject) with a Plum bottom scrim and a rounded, translucent
+ * caption panel bottom-left holding an eyebrow, the h1, an optional line of descriptors, and up to three
+ * fact columns (LABEL / value). The photo is the page's main image and loads first. A staged photo keeps
+ * its badge; the styled caption goes beneath the hero where the page shows it.
+ */
+import Photo from './Photo.astro';
+import type { VenuePhoto } from '../data/photos';
+
+interface Props {
+  photo: VenuePhoto;
+  id: string;
+  title: string;
+  eyebrow?: string;
+  descriptors?: string[];
+  facts?: { label: string; value: string }[];
+  /** Height of the band on regular screens, as a CSS length. */
+  height?: string;
+  class?: string;
+}
+
+const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh', class: className } = Astro.props;
+---
+<section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`}>
+  <div class="phero__media">
+    <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" caption={false} class="phero__photo" />
+    <div class="phero__scrim" aria-hidden="true"></div>
+  </div>
+  <div class="container phero__inner">
+    <div class="phero__panel">
+      {eyebrow && <p class="phero__eyebrow">{eyebrow}</p>}
+      <h1 id={id} class="phero__title">{title}</h1>
+      {
+        descriptors.length > 0 && (
+          <p class="phero__descriptors">
+            {descriptors.map((d, i) => (
+              <>
+                {i > 0 && <span class="phero__dot" aria-hidden="true">·</span>}
+                <span>{d}</span>
+              </>
+            ))}
+          </p>
+        )
+      }
+      {
+        facts.length > 0 && (
+          <dl class="phero__facts">
+            {facts.map((f) => (
+              <div class="phero__fact">
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .phero {
+    position: relative;
+    display: grid;
+    align-items: end;
+    min-height: max(28rem, var(--phero-h));
+    isolation: isolate;
+    color: var(--white);
+  }
+
+  .phero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .phero__media :global(.phero__photo),
+  .phero__media :global(.phero__photo .photo__frame) {
+    height: 100%;
+  }
+
+  /* The Plum scrim under the panel: white type keeps 4.5:1 over any frame. */
+  .phero__scrim {
+    position: absolute;
+    inset: 30% 0 0;
+    background: linear-gradient(to bottom, rgb(var(--scrim-rgb) / 0), rgb(var(--scrim-rgb) / 0.62));
+    pointer-events: none;
+  }
+
+  .phero__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: 1.25rem;
+  }
+
+  /* The reference's caption box: rounded, translucent Plum, blurred behind. */
+  .phero__panel {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+    max-width: 34rem;
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    border-radius: var(--r-xl);
+    background: rgb(var(--scrim-rgb) / 0.55);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .phero__panel {
+      background: rgb(var(--scrim-rgb) / 0.92);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  .phero__eyebrow {
+    font-family: var(--font-serif);
+    font-size: var(--t-footnote);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--on-dark-accent);
+  }
+
+  .phero__title {
+    color: var(--white);
+    font-size: var(--t-large-title);
+    line-height: 1.05;
+  }
+
+  .phero__descriptors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    font-family: var(--font-serif);
+    font-size: var(--t-headline);
+    color: var(--on-dark-2);
+  }
+
+  .phero__dot {
+    opacity: 0.7;
+  }
+
+  .phero__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, auto));
+    gap: 0.75rem 2rem;
+    width: 100%;
+    margin: 0.5rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .phero__fact {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .phero__fact dt {
+    font-family: var(--font-serif);
+    font-size: var(--t-caption);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--on-dark-2);
+  }
+
+  .phero__fact dd {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: var(--t-headline);
+    color: var(--white);
+  }
+
+  @media (width < 46.5rem) {
+    .phero {
+      min-height: max(30rem, 80svh);
+    }
+
+    .phero__panel {
+      max-width: none;
+      width: 100%;
+    }
+  }
+</style>

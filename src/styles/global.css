@@ -1,14 +1,19 @@
 /*
-  The Venue @ NCC design system. The brand (color, type, imagery) follows docs/design/brand.md (version 4);
+  The Venue @ NCC design system. The layout system, section rhythm, and components follow
+  docs/design/redesign-spec.md (brand version 5, modelled on the reference site's patterns); the brand
+  (color, type, imagery rules) follows docs/design/brand.md (version 4) where the spec does not override it;
   the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
     Name first, then photographs. The business name is the first screen's one dominant element, and the
               real photos of the property follow in a soft, light frame.
     Clarity   Legible type and plain words. Every screen has one obvious next step.
-    Deference Chrome stays quiet. Glass is for navigation and controls floating over photos only.
+    Deference Chrome stays quiet: a transparent bar over the hero, then a solid Blush bar. Glass is for
+              the photo badge and the viewer only.
+    Rhythm    One warm page surface (Blush), hairline rules between sections, generous vertical space, flat
+              cards with hairline edges, and photo-led cards with a scrim and white type.
 
-  Color      A pastel pink palette: blush and petal surfaces, white cards, a deep Berry for buttons, links
+  Color      A pastel pink palette: a Blush page, white cards, Petal panels, a deep Berry for buttons, links
              and accents, and a warm Plum ink for text. The palette tokens hold the fixed values; components
              use the role tokens under them (--bg, --label, --accent, and so on), which change with the
              appearance.
@@ -22,8 +27,9 @@
     Pink          #E9A9BB  accent text and the lockup accent on Plum and in dark mode; decorative petals.
     Rose Mist     #EFC5D0  decorative: petals, hairlines on Plum, stronger tints (Plum text 9.2:1).
     Petal         #F6DFE5  chips, capacity tags, selected rows, the closing band, quiet panels (Plum 11.2:1).
-    Blush         #FBF1F3  the page's alternate sections, the footer, the welcome surface.
-    White         #FFFFFF  cards and the page.
+    Blush         #FBF1F3  the page.
+    White         #FFFFFF  cards, form panels, and caption panels.
+    The footer is the one dark surface: Plum, with Blush text (12.8:1), Pink links (7.3:1), and the white lockup.
     Never set Pink, Rose Mist, or Petal as text on a light surface, and never put white text on Rose or
     lighter. The tertiary label (--label-3, #7E5F6B) is 5.6:1 on White and 5.1:1 on Blush but 4.4:1 on
     Petal, so it is not used on Petal or Rose Mist.
@@ -36,10 +42,10 @@
     No gradients as decoration. The only gradients are legibility scrims over photographs.
 
   Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
-             only at 28px and above where the size allows. Libre Caslon Text 400 and italic for serif
-             leads, captions and quiet statements. The system stack (SF Pro on Apple, Inter elsewhere) for
-             everything else, sized after the iOS text styles. Small letterspaced eyebrows (.eyebrow) label
-             a section above its Caslon heading.
+             only at 28px and above where the size allows. Libre Caslon Text 400 and italic for the
+             interface serif: nav links, button labels, leads, card labels, eyebrows, captions, and section
+             copy (.t-copy). The system stack (SF Pro on Apple, Inter elsewhere) for forms, the wizard, the
+             admin, chips, and small labels, sized after the iOS text styles.
 
   Shape      Photos are rectangles with a modest radius (--r-lg) or full bleed. Concentric radii:
              inner radius = outer radius - padding. Capsules for buttons and controls. Minimum hit
@@ -65,12 +71,15 @@
   --blush: #fbf1f3;
   --white: #ffffff;
 
-  /* Surfaces */
-  --bg: var(--white);
-  --bg-grouped: var(--blush);
+  /* Surfaces: the page is Blush (the reference's warm page), white cards and forms, Petal panels. */
+  --bg: var(--blush);
+  /* A white section between Blush ones, where a page needs the change (the inquiry form, the wizard). */
+  --bg-grouped: var(--white);
   --bg-elevated: var(--white);
-  /* A quiet panel inside a White section. */
+  /* A quiet tinted panel: checklist boxes, the footer band, the plain closing band. */
   --panel: var(--petal);
+  /* Photo scrims: Plum as channels, rgb(var(--scrim-rgb) / 0.6). */
+  --scrim-rgb: 59 36 48;
   --fill: rgba(106, 75, 87, 0.13);
   --fill-2: rgba(106, 75, 87, 0.08);
   --fill-3: rgba(106, 75, 87, 0.05);
@@ -102,10 +111,10 @@
   --accent-tint-2: rgba(158, 43, 82, 0.16);
 
   /*
-    Light bands: the footer on Blush and the closing band on Petal, with Plum text, Mauve secondary text,
+    Light bands: the footer and the plain closing band on Petal, with Plum text, Mauve secondary text,
     Berry links and buttons, and a hairline. In dark mode both are the card color (below).
   */
-  --footer-bg: var(--blush);
+  --footer-bg: var(--ink);
   --band: var(--petal);
 
   /*
@@ -149,9 +158,10 @@
     text on phones, where it keeps long words such as "Unforgettable" whole instead of splitting them.
   */
   --t-display: min(clamp(2.75rem, 1.6rem + 5.2vw, 5.5rem), 11.5vw);
-  --t-large-title: min(clamp(2.125rem, 1.55rem + 2.6vw, 3.5rem), 12vw);
-  --t-title-1: min(clamp(1.75rem, 1.45rem + 1.3vw, 2.5rem), 10vw);
-  --t-title-2: min(clamp(1.375rem, 1.25rem + 0.55vw, 1.75rem), 9vw);
+  /* The reference's scale: 36 to 56px page and home section titles, 30 to 40px section titles, 22 to 26px card titles. */
+  --t-large-title: min(clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem), 12vw);
+  --t-title-1: min(clamp(2rem, 1.25rem + 1.9vw, 3rem), 10vw);
+  --t-title-2: min(clamp(1.375rem, 1.3rem + 0.4vw, 1.625rem), 9vw);
   --t-title-3: min(1.25rem, 7.5vw);
   --t-headline: 1.0625rem;
   --t-body: 1.0625rem;
@@ -159,32 +169,35 @@
   --t-subhead: 0.9375rem;
   --t-footnote: 0.8125rem;
   --t-caption: 0.75rem;
+  /* Nav links, button labels, card meta: the serif at 16px (the reference's interface size). */
+  --t-ui: 1rem;
 
-  /* Radii (concentric). --r-lg is the photo radius. */
+  /* Radii (concentric). --r-card is the photo and card radius (the reference's 12px); --r-lg panels; --r-xl hero caption panels. */
+  --r-card: 12px;
   --r-xs: 8px;
-  --r-sm: 12px;
-  --r-md: 18px;
-  --r-lg: 20px;
-  --r-xl: 32px;
-  --r-2xl: 44px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-2xl: 36px;
   --r-full: 999px;
 
-  /* Layout */
-  --max: 1200px;
+  /* Layout: 1280px of content at 1440 (the reference's measure), 16px gutters on phones. */
+  --max: 1280px;
   --max-text: 42rem;
-  --gutter: clamp(1rem, 4vw, 2.5rem);
-  --section: clamp(4rem, 3rem + 5vw, 8rem);
-  /* 56px at default text size (64px from 46.5rem); grows with larger text so the bar never clips its links. */
-  --nav-h: 3.5rem;
+  --gutter: clamp(1rem, 5.5vw, 5rem);
+  /* 56px on phones to 96px at 1440, above and below every section (the reference's rhythm). */
+  --section: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+  /* The space from a section head to its content. */
+  --section-head: clamp(2rem, 1.5rem + 2vw, 3rem);
+  /* 60px at default text size (72px from 46.5rem); grows with larger text so the bar never clips its links. */
+  --nav-h: 3.75rem;
   /*
-    Size classes (HIG): compact below 46.5rem (744px at default text size) shows the floating
-    tab bar; regular shows the top nav. The chrome queries are in rem so larger text moves
-    the switch too. Media queries cannot read custom properties, so Header.astro and
-    TabBar.astro repeat the value.
-    --tabbar-space is the room the floating tab bar needs at the bottom of the screen
-    (0 when it is not shown). Sticky bars and scroll padding use it.
+    Size classes (HIG): compact below 60rem (960px at default text size) shows the menu button and
+    the full-screen menu; regular shows the top nav. The chrome queries are in rem so larger text moves
+    the switch too. Media queries cannot read custom properties, so Header.astro repeats the value.
+    There is no bottom bar on any page (redesign-spec.md, version 5).
   */
-  --tabbar-space: 0px;
 
   /* Motion (iOS-like springs) */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -196,7 +209,7 @@
 
 @media (min-width: 46.5rem) {
   :root {
-    --nav-h: 4rem;
+    --nav-h: 4.5rem;
   }
 }
 
@@ -221,8 +234,9 @@
     --thumb: var(--berry);
 
     /* The footer and the closing band: the card color, a step lighter than the Night page, never darker. */
-    --footer-bg: #3a1f2b;
+    --footer-bg: #1f0e16;
     --band: #3a1f2b;
+    --scrim-rgb: 31 14 22;
 
     --label: #fbeff2;
     --label-2: #e9c9d3;
@@ -299,15 +313,12 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: calc(var(--nav-h) + 1rem);
-  /* Keep keyboard focus clear of the floating tab bar (WCAG 2.4.11). */
-  scroll-padding-bottom: calc(var(--tabbar-space) + 1rem);
 }
 
-/* Short screens (phones in landscape, 400% zoom): the bars scroll with the page (see Header and TabBar). */
+/* Short screens (phones in landscape, 400% zoom): the bar scrolls with the page (see Header). */
 @media (max-height: 500px) {
   html {
     scroll-padding-top: 1rem;
-    scroll-padding-bottom: 1rem;
   }
 }
 
@@ -351,7 +362,7 @@ video {
 
 h1 {
   font-size: var(--t-large-title);
-  line-height: 1.1;
+  line-height: 1.08;
 }
 
 h2 {
@@ -513,12 +524,23 @@ main:focus {
   letter-spacing: 0;
 }
 
+/* The paragraph under a section title: the reference's serif lead, in Plum. */
 .t-lead {
+  font-family: var(--font-serif);
   font-size: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  color: var(--label-2);
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--label);
   font-weight: 400;
+}
+
+/* Stat labels in a photo hero card and small letterspaced labels on light surfaces. */
+.t-stat-label {
+  font-family: var(--font);
+  font-size: var(--t-caption);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .secondary {
@@ -553,12 +575,34 @@ main:focus {
   padding-block: var(--section);
 }
 
+/* The reference's rhythm: one surface, a full-width hairline between neighbouring sections. */
+.section + .section,
+.section + .band-section {
+  border-top: 1px solid var(--separator);
+}
+
+.section--flush {
+  border-top: 0 !important;
+}
+
 .section--grouped {
   background: var(--bg-grouped);
 }
 
 .section--tight {
   padding-block: calc(var(--section) * 0.6);
+}
+
+/* The reference's hairline between two sections on the same surface. */
+.section--rule {
+  border-top: 1px solid var(--separator);
+}
+
+/* A shelf that runs to the screen's edges on phones and lines up with the container from the gutter. */
+.bleed {
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+  scroll-padding-inline: var(--gutter);
 }
 
 .stack {
@@ -570,7 +614,13 @@ main:focus {
   display: grid;
   gap: 0.75rem;
   max-width: 44rem;
-  margin-bottom: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  margin-bottom: var(--section-head);
+}
+
+/* Section titles are the reference's light 48px serif, tight leading. */
+.section-head h2,
+.section-head h1 {
+  line-height: 1.08;
 }
 
 .section-head--center {
@@ -615,10 +665,10 @@ main:focus {
 
 /* A small letterspaced label above a Caslon heading. Berry on White 7.2:1, on Blush 6.5:1, on Petal 5.7:1. */
 .eyebrow {
-  font-family: var(--font);
+  font-family: var(--font-serif);
   font-size: var(--t-footnote);
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 400;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent-text);
 }
@@ -627,10 +677,26 @@ main:focus {
 .t-statement {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: min(clamp(2rem, 1.4rem + 2.6vw, 3.5rem), 11vw);
-  line-height: 1.12;
+  font-size: min(clamp(2.5rem, 1.5rem + 4.2vw, 4.5rem), 11vw);
+  line-height: 1.1;
   letter-spacing: -0.01em;
   text-wrap: balance;
+}
+
+/* Running copy in a section (tab panels, FAQ answers, event prose): the serif at body size. */
+.t-copy {
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+
+/* A serif label between 18 and 22px: card names, checklist heads, FAQ questions. */
+.t-label {
+  font-family: var(--font-serif);
+  font-size: var(--t-title-3);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .visually-hidden {
@@ -671,14 +737,16 @@ main:focus {
   box-shadow: var(--glass-edge), var(--glass-shadow);
 }
 
+/* Cards are flat with a hairline edge (the reference); shadows are for floating things only. */
 .card {
   background: var(--bg-elevated);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-2);
+  border-radius: var(--r-card);
+  box-shadow: 0 0 0 1px var(--separator);
 }
 
-.section--grouped .card {
-  box-shadow: var(--shadow-1);
+.card--panel {
+  background: var(--panel);
+  box-shadow: none;
 }
 
 .surface {
@@ -686,8 +754,15 @@ main:focus {
   border-radius: var(--r-lg);
 }
 
-/* ---------- Buttons (capsules) ---------- */
+/* ---------- Buttons: one component (redesign-spec.md, Buttons) ---------- */
 
+/*
+  The one button: a capsule with a serif label (Libre Caslon Text at 16px, the reference's pill), 44px tall,
+  52px for .btn--lg. Three looks: filled (Berry, white label), outline (a hairline in the current text color,
+  so it is Plum on the page and white on Plum or a photo scrim) and light (white, Plum label, for scrims).
+  The older names (.btn--tinted, .btn--gray) draw the outline look and .btn--plain the quiet text look, so
+  the booking and admin islands keep one system until their owners rename them.
+*/
 .btn {
   --btn-h: 44px;
   display: inline-flex;
@@ -695,14 +770,14 @@ main:focus {
   justify-content: center;
   gap: 0.45rem;
   min-height: var(--btn-h);
-  padding: 0.4rem 1.25rem;
+  padding: 0.4rem 1.375rem;
   border: 0;
   border-radius: var(--r-full);
-  font: inherit;
-  font-size: var(--t-callout);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
+  font-family: var(--font-serif);
+  font-size: var(--t-ui);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.2;
   /*
     Labels stay on one line whenever they fit. When a label is wider than its line (a 320px
     screen, or text enlarged to 200%), it wraps inside the capsule instead of running off screen.
@@ -715,8 +790,8 @@ main:focus {
   transition:
     background-color var(--dur-1) ease,
     color var(--dur-1) ease,
-    transform var(--dur-2) var(--ease-spring),
-    box-shadow var(--dur-1) ease;
+    box-shadow var(--dur-1) ease,
+    transform var(--dur-2) var(--ease-spring);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -730,14 +805,14 @@ main:focus {
 
 .btn--lg {
   --btn-h: 52px;
-  padding-inline: 1.6rem;
-  font-size: var(--t-headline);
+  padding-inline: 1.75rem;
+  font-size: 1.0625rem;
 }
 
 .btn--sm {
   --btn-h: 36px;
   padding-block: 0.3rem;
-  padding-inline: 0.95rem;
+  padding-inline: 1.1rem;
   font-size: var(--t-subhead);
 }
 
@@ -750,52 +825,40 @@ main:focus {
   background: var(--accent-hover);
 }
 
-.btn--tinted {
-  background: var(--accent-tint);
-  color: var(--accent-text);
+.btn--outline,
+.btn--tinted,
+.btn--gray,
+.btn--outline-light {
+  background: transparent;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 
-.btn--tinted:hover {
-  background: var(--accent-tint-2);
+.btn--outline:hover,
+.btn--tinted:hover,
+.btn--gray:hover,
+.btn--outline-light:hover {
+  background: var(--fill-3);
 }
 
-.btn--gray {
-  background: var(--fill);
-  color: var(--label);
+.btn--light {
+  background: var(--white);
+  color: var(--ink);
 }
 
-.btn--gray:hover {
-  background: var(--fill-2);
+.btn--light:hover {
+  background: var(--blush);
 }
 
+/* A quiet text button: the accent color, no fill. */
 .btn--plain {
   background: transparent;
   color: var(--accent-text);
-  padding-inline: 0.5rem;
+  padding-inline: 0.6rem;
 }
 
 .btn--plain:hover {
   background: var(--fill-3);
-}
-
-/* Secondary action on Plum and photos: a white outline. The primary stays .btn--filled. */
-.btn--outline-light {
-  background: transparent;
-  color: var(--on-dark);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
-}
-
-.btn--outline-light:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.btn--glass {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  color: var(--label);
-  box-shadow: var(--glass-edge), var(--shadow-1);
-  border: 1px solid var(--glass-border);
 }
 
 .btn[disabled],
@@ -810,10 +873,54 @@ main:focus {
   height: 1.1em;
 }
 
+/* Forced colors drop fills and shadows: every button gets a visible border. */
+@media (forced-colors: active) {
+  .btn {
+    border: 1px solid ButtonText;
+  }
+}
+
+/* A round 44px icon button: the carousel's previous and next, the phone and menu buttons on phones. */
+.btn-round {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--separator-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-1) ease,
+    color var(--dur-1) ease,
+    border-color var(--dur-1) ease;
+}
+
+.btn-round:hover {
+  background: var(--fill-3);
+  text-decoration: none;
+}
+
+.btn-round[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn-round .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-round:focus-visible {
+  border-radius: 50%;
+}
+
 .btn-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.75rem 1.25rem;
   align-items: center;
 }
 
@@ -844,13 +951,15 @@ main:focus {
   }
 }
 
-/* Text link with a chevron, like "Learn more >" */
+/* The serif text link with a chevron beside a pill: the reference's "Explore Inspiration >". */
 .link-more {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  color: var(--accent-text);
-  font-weight: 500;
+  gap: 0.25rem;
+  color: var(--label);
+  font-family: var(--font-serif);
+  font-size: var(--t-ui);
+  font-weight: 400;
 }
 
 /* As a standalone link it gets a full-height target; inside a card the whole card is the link. */

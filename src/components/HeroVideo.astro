@@ -1,0 +1,127 @@
+---
+/**
+ * The home page hero (redesign-spec.md, HeroVideo; brand.md, Motion): a full-viewport section over a fixed,
+ * muted, looping clip of white rose petals on a pink ground (public/media/hero-petals.*, credited in
+ * public/media/CREDITS.md), under a Blush overlay that keeps the Plum name legible on the brightest frame.
+ * The page's content slides up over it, as on the reference. The poster is an image beneath the video, so
+ * there is no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the
+ * poster shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
+ * the property. `data-hero` lets the header stay transparent over it and turn solid as it leaves.
+ */
+import { href } from '../lib/paths';
+
+interface Props {
+  /** The id of the heading inside the slot, for aria-labelledby. */
+  labelledby: string;
+  class?: string;
+}
+
+const { labelledby, class: className } = Astro.props;
+const poster = href('/media/hero-petals-poster.jpg');
+---
+<section class:list={['hero', className]} data-hero aria-labelledby={labelledby}>
+  <div class="hero__media" aria-hidden="true">
+    <img class="hero__poster" src={poster} alt="" width="1280" height="720" decoding="async" fetchpriority="high" />
+    <video class="hero__video" muted autoplay loop playsinline preload="auto" poster={poster} tabindex="-1" data-hero-video>
+      <source src={href('/media/hero-petals.webm')} type="video/webm" />
+      <source src={href('/media/hero-petals.mp4')} type="video/mp4" />
+    </video>
+    <div class="hero__overlay"></div>
+  </div>
+  <div class="hero__content container">
+    <slot />
+  </div>
+</section>
+
+<script>
+  // Reduced motion: the still poster, and the clip does not play at all.
+  const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  if (video) {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      if (still.matches) {
+        video.pause();
+        video.removeAttribute('autoplay');
+      } else {
+        video.play().catch(() => {});
+      }
+    };
+    apply();
+    still.addEventListener('change', apply);
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    display: grid;
+    align-items: center;
+    min-height: 100svh;
+    /* The bar is transparent over the hero, so the content is centred in the space beneath it. */
+    padding-block: calc(var(--nav-h) + 1rem) 2rem;
+    margin-top: calc(-1 * var(--nav-h));
+  }
+
+  /*
+    Fixed to the viewport, behind the page: the content that follows the hero sets its own background and
+    slides up over it. The hero makes no stacking context of its own, so the welcome's words can rise above
+    the sticky bar while they morph into it (src/pages/index.astro).
+  */
+  .hero__media {
+    position: fixed;
+    inset: 0;
+    height: 100svh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .hero__poster,
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /*
+    A Blush veil, stronger toward the centre. Measured over every sampled frame of the clip (the darkest pink
+    behind the name): Plum keeps at least 7.0:1 and Berry at least 3.5:1 (large text), before the words' own
+    Blush halo (index.astro).
+  */
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(251, 241, 243, 0.9), rgba(251, 241, 243, 0.62) 70%, rgba(251, 241, 243, 0.45)),
+      linear-gradient(rgba(251, 241, 243, 0.35), rgba(251, 241, 243, 0.35));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .hero__overlay {
+      background:
+        radial-gradient(ellipse 80% 65% at 50% 50%, rgba(42, 21, 31, 0.8), rgba(42, 21, 31, 0.56) 70%, rgba(42, 21, 31, 0.45)),
+        linear-gradient(rgba(42, 21, 31, 0.35), rgba(42, 21, 31, 0.35));
+    }
+  }
+
+  .hero__content {
+    position: relative;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__video {
+      display: none;
+    }
+  }
+
+  /* Short screens (landscape phones): the bar scrolls, and the hero is as tall as the screen. */
+  @media (max-height: 500px) {
+    .hero {
+      margin-top: 0;
+      padding-top: 2rem;
+    }
+  }
+</style>
