@@ -1036,9 +1036,11 @@ button.bk-progress__item:hover .bk-progress__label {
   }
 }
 
+/* The month grid keeps a compact measure when its panel is wide (a tablet with the choices below it). */
 .bk-cal {
   display: grid;
   gap: 0.25rem;
+  max-width: 28rem;
 }
 
 /*

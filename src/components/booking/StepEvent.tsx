@@ -1,4 +1,4 @@
-/** Step 2: the kind of event (serif chips), a visit request, and two things good to know. */
+/** Step 2: the kind of event (serif chips), a visit request, and two inclusions good to know. */
 import { useRef } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { OTHER_EVENT, eventTypes } from '../../data/event-types';
@@ -136,14 +136,14 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
           <li class="bk-fact">
             <Icon name="check" class="bk-fact__check" />
             <span class="bk-fact__text">
-              <span>We confirm every date personally.</span>
-              <span class="bk-fact__hint">Your quote comes with the payment terms for your date.</span>
+              <span>Tables and chairs are included.</span>
+              <span class="bk-fact__hint">They come with the rental, and you may use them if you wish.</span>
             </span>
           </li>
           <li class="bk-fact">
             <Icon name="check" class="bk-fact__check" />
             <span class="bk-fact__text">
-              <span>Tables, chairs, and parking are included.</span>
+              <span>Parking is included.</span>
               <span class="bk-fact__hint">A large paved lot sits beside the building.</span>
             </span>
           </li>
