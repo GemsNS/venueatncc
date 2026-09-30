@@ -178,13 +178,13 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   /*
     One grid for the hero, and a photo that is never cropped into its subject: every frame holds the whole
     gazebo, the copy never covers it, and a frame's bottom edge never runs along a tabletop.
-      Phones (below 46.5rem): the portrait file, full bleed at its own 7:10, so the pines read full height.
-        The copy sits over their canopy on a Navy scrim; the date checker follows the photo.
+      Phones (below 46.5rem): the portrait file, full bleed, from the sky over the pines down to the cut
+        between the benches, with nothing over it. The copy follows on a light panel, then the date checker.
       Tablets (46.5 to 64rem): the landscape file at its own ratio (shorter on short screens), the copy over
         the trunks above the gazebo, the checker after the photo.
       Wide screens (from 64rem): the photo fills the first screen. The title runs across the top, the gazebo
         stands below it, and the checker floats at the bottom right on glass, beside the gazebo.
-    Narrow screens, short screens, and larger text move the copy to a Navy panel under the photo (below).
+    Phones, short screens, and larger text move the copy to a light panel under the photo (below).
 
     The frames are fitted to the two files' framing, measured on the files at 100vw (the files always span
     the full width):
@@ -235,16 +235,18 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   /*
-    Legibility scrim in Navy (--navy-rgb): as tall as the copy, dark enough under the lead for 4.5:1 over the
-    bright sky between the trunks, then a short fade that ends above the gazebo's roof. The only gradients on
-    the site are scrims like this one.
+    Legibility scrim in Navy (--navy-rgb) on tablets and wide screens: as tall as the copy, then a soft fade
+    that ends above the gazebo's roof. It is as light as the brightest sky between the trunks allows: 70% at
+    the top easing to 64% by a third of the way down, which keeps every line of white copy (kicker, title,
+    and lead alike) at 4.7:1 or better at its worst pixel, measured from 768 to 2560 wide in light mode
+    (5.2:1 in dark mode). The only gradients on the site are scrims like this one.
   */
   .hero__scrim {
     grid-column: full;
     grid-row: copy;
     /* Positioned like the photo, so it paints above it. */
     position: relative;
-    background: linear-gradient(to bottom, rgb(var(--navy-rgb) / 0.8), rgb(var(--navy-rgb) / 0.62));
+    background: linear-gradient(to bottom, rgb(var(--navy-rgb) / 0.7), rgb(var(--navy-rgb) / 0.64) 30%);
   }
 
   .hero__scrim::after {
@@ -256,9 +258,10 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     height: 4.5rem;
     background: linear-gradient(
       to bottom,
-      rgb(var(--navy-rgb) / 0.62) 0%,
-      rgb(var(--navy-rgb) / 0.36) 32%,
-      rgb(var(--navy-rgb) / 0.12) 66%,
+      rgb(var(--navy-rgb) / 0.64) 0%,
+      rgb(var(--navy-rgb) / 0.4) 25%,
+      rgb(var(--navy-rgb) / 0.18) 55%,
+      rgb(var(--navy-rgb) / 0.05) 82%,
       rgb(var(--navy-rgb) / 0) 100%
     );
   }
@@ -336,19 +339,11 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     margin-inline: auto;
   }
 
-  /*
-    Phones: the portrait file at its own 7:10, whole, from the sky over the pines to the picnic tables, at
-    every phone height, so the copy always has the canopy to itself.
-  */
+  /* Phones: the portrait file at its own 7:10 (shortened below, where the copy moves to the panel). */
   @media (width < 46.5rem) {
     .hero__media {
       aspect-ratio: 7 / 10;
       max-height: none;
-    }
-
-    .hero__copy {
-      gap: 0.85rem;
-      padding-block: 1.5rem 0.5rem;
     }
 
     .hero__h1 {
@@ -357,11 +352,12 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   }
 
   /*
-    Narrow or short screens, and larger text: the copy would reach the gazebo, so it moves to a Navy panel
-    that continues from the photo, and the checker follows. The photo becomes a band that keeps the file's
-    bottom edge and, at 44vw or more, the gazebo's roof.
+    Phones, short screens, and larger text: the copy moves to a light panel under the photo, and the checker
+    follows. The panel is the hero's own Frost in light mode (Navy title 13.4:1, Deep Blue kicker 8.5:1, Slate
+    lead 6.6:1) and Navy in dark mode, as before (light title, Mist kicker 7.5:1, Ice lead 9.4:1). The photo
+    becomes a band that keeps the file's bottom edge and, at 44vw or more, the gazebo's roof.
   */
-  @media (width < 22rem), (height < 36rem) {
+  @media (width < 46.5rem), (height < 36rem) {
     .hero__media {
       max-height: max(calc(100svh - var(--nav-h) - 5rem), 44vw);
     }
@@ -374,8 +370,14 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       grid-column: full;
       grid-row: 3;
       gap: 1rem;
-      padding: 1.75rem var(--gutter) 2rem;
-      background: var(--navy);
+      padding: 1.75rem var(--gutter) 0.5rem;
+      background: var(--bg-grouped);
+      color: var(--label);
+    }
+
+    .hero__h1,
+    .hero__title {
+      color: var(--label);
     }
 
     .hero__title,
@@ -385,11 +387,15 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     }
 
     .hero__kicker {
-      color: var(--on-navy-accent);
+      color: var(--accent-text);
     }
 
     .hero__lead {
-      color: rgb(255 255 255 / 0.92);
+      color: var(--label-2);
+    }
+
+    .hero :global(:focus-visible) {
+      outline-color: var(--focus-ring);
     }
 
     .hero__checker {
@@ -397,18 +403,35 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     }
   }
 
+  /* Dark mode keeps the Navy panel: a step lighter than the Night page, never darker. */
+  @media (width < 46.5rem) and (prefers-color-scheme: dark), (height < 36rem) and (prefers-color-scheme: dark) {
+    .hero__copy {
+      padding-bottom: 2rem;
+      background: var(--navy);
+    }
+
+    .hero__kicker {
+      color: var(--on-navy-accent);
+    }
+
+    .hero__lead {
+      color: var(--on-navy-2);
+    }
+  }
+
   /*
-    On a phone with the copy on the panel, the photo gives up height first, so the title shows sooner. The
-    band ends on the same cut between the benches as the landscape file, and at 58vw or more it keeps the
-    gazebo's roof.
+    On a phone the photo gives up height first, so the title shows sooner. The band ends on the same cut
+    between the benches as the landscape file (19.6vw above the portrait file's bottom), and at 58vw or more
+    it keeps the gazebo's roof. It is never taller than the file above that cut (122.9vw), so the file always
+    covers the top of the frame.
   */
-  @media (width < 22rem), (width < 46.5rem) and (height < 36rem) {
+  @media (width < 46.5rem) {
     .hero {
       --photo-pos: 50% calc(100% + 19.6vw);
     }
 
     .hero__media {
-      max-height: max(calc(100svh - var(--nav-h) - 16rem), 58vw);
+      max-height: min(122.9vw, max(calc(100svh - var(--nav-h) - 16rem), 58vw));
     }
   }
 
@@ -457,6 +480,33 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
       aspect-ratio: auto;
       height: var(--frame-h);
       max-height: none;
+    }
+
+    /*
+      The copy ends at --copy-end (its column's start plus its width, below). Past it, beside the header's
+      call to action and above the checker, no text sits on the scrim, so the scrim fades to 30% over 14rem
+      and the pines show through. A mask clips to its element's box, so the scrim's gradient moves to a
+      ::before and each half of the scrim carries the mask.
+    */
+    .hero__scrim {
+      --copy-end: calc(
+        max(var(--gutter), 50vw - var(--max) / 2) + min(60rem, min(100vw - 2 * var(--gutter), var(--max)) - var(--checker-w) - 2rem)
+      );
+      --fade-x: linear-gradient(to right, #000 calc(var(--copy-end) + 1rem), rgb(0 0 0 / 0.3) calc(var(--copy-end) + 15rem));
+      background: none;
+    }
+
+    .hero__scrim::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgb(var(--navy-rgb) / 0.7), rgb(var(--navy-rgb) / 0.64) 30%);
+    }
+
+    .hero__scrim::before,
+    .hero__scrim::after {
+      -webkit-mask-image: var(--fade-x);
+      mask-image: var(--fade-x);
     }
 
     .hero__copy {

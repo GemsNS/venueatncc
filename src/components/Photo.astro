@@ -155,7 +155,10 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     }
   }
 
-  /* A small glass pill over the photo; the Navy tint keeps white text legible on any frame. */
+  /*
+    A small glass pill over the photo. Light mode: near-white glass with a Navy label, legible on any frame
+    (at least 10:1 even over black). Dark mode: the Navy tint with a white label.
+  */
   .photo__badge {
     position: absolute;
     top: 0.75rem;
@@ -166,23 +169,36 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
     min-height: 28px;
     padding: 0.25rem 0.75rem;
     border-radius: var(--r-full);
-    background: rgb(var(--navy-rgb) / 0.72);
+    --badge-bg: rgb(255 255 255 / 0.86);
+    --badge-bg-solid: rgb(255 255 255 / 0.96);
+    background: var(--badge-bg);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     backdrop-filter: blur(12px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    border: 1px solid rgb(var(--navy-rgb) / 0.08);
+    box-shadow: 0 1px 3px rgb(var(--navy-rgb) / 0.18);
     /* With very large text on a narrow frame the label wraps inside the pill instead of running off the photo. */
     max-width: calc(100% - 1.5rem);
-    color: var(--on-navy);
+    color: var(--navy);
     font-size: var(--t-footnote);
     font-weight: 600;
     line-height: 1.2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .photo__badge {
+      --badge-bg: rgb(var(--navy-rgb) / 0.72);
+      --badge-bg-solid: rgb(var(--navy-rgb) / 0.92);
+      border-color: rgba(255, 255, 255, 0.28);
+      box-shadow: none;
+      color: var(--on-navy);
+    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     .photo__badge {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
-      background: rgb(var(--navy-rgb) / 0.92);
+      background: var(--badge-bg-solid);
     }
   }
 

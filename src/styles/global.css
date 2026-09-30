@@ -10,8 +10,8 @@
   Color      The client's ten blues, plus three neutrals derived from them: White, Frost, and Slate.
              Nothing else is added. The palette tokens hold the fixed values; components use the role
              tokens under them (--bg, --label, --accent, and so on), which change with the appearance.
-    Navy          #012A4A  text; the footer, the closing band, the hero's phone panel, and every photo
-                           scrim (--navy-rgb). White text on Navy 14.7:1.
+    Navy          #012A4A  text, and every photo scrim (--navy-rgb). White text on Navy 14.7:1. In light
+                           mode Navy is for text, buttons, and small accents, never a large surface.
     Harbor        #013A63  hover and pressed state of the primary button.
     Deep Blue     #01497C  primary fill with white text (9.4:1); links, accent text, and selected states.
     Marine        #014F86  alternative link hover.
@@ -23,12 +23,15 @@
     Ice           #A9D6E5  chips, capacity tags, and selected rows, with Navy text (9.4:1); secondary
                            text on Navy and in dark mode.
     White         #FFFFFF  page and cards.
-    Frost         #EEF6F9  alternate sections and quiet panels.
+    Frost         #EEF6F9  alternate sections, quiet panels, and the footer.
+    Ice tint      #D8ECF3  the closing band (Ice 45 percent over White): Navy 12.0:1, Slate 6.0:1,
+                           Deep Blue 7.7:1. Not for --label-3, which falls to 4.3:1 on it.
     Slate         #3E5A6D  secondary text (7.3:1 on White, 6.6:1 on Frost, 4.6:1 on Ice).
     Never set Sky, Mist, Ice, or Bay as text on White, and never put white text on Sky or lighter.
     Dark mode: page Night #011A2E, grouped #010F1C, cards #022640, text #EAF4F8, secondary Ice,
     primary fill Sky with Navy text, accent text Mist (9.1:1 on Night), focus ring Sky, and chips
-    and selected rows in translucent Mist.
+    and selected rows in translucent Mist. The footer and the closing band stay Navy there, a step
+    lighter than the Night page, with a hairline.
     --accent is a fill. Anything that is text, a link, or a selection border uses --accent-text, and
     focus rings use --focus-ring; both keep 3:1 or better against the page (WCAG 1.4.11).
     No gradients as decoration. The only gradients are legibility scrims over photographs.
@@ -102,8 +105,15 @@
   --accent-tint-2: rgba(1, 73, 124, 0.14);
 
   /*
-    Navy: the footer, the closing band, the hero's phone panel, and photo scrims, in both appearances.
-    White text 14.7:1, Ice 9.4:1, Mist 7.5:1; Bay hairlines.
+    Light bands: the footer on Frost and the closing band on the Ice tint, with Navy text, Slate secondary
+    text, Deep Blue links and buttons, and a hairline. In dark mode both are Navy (below).
+  */
+  --footer-bg: var(--frost);
+  --band: #d8ecf3;
+
+  /*
+    Text over photographs and their Navy scrims (the home hero on wider screens), in both appearances.
+    White text 14.7:1 on Navy, Ice 9.4:1, Mist 7.5:1; Bay hairlines.
   */
   --on-navy: var(--white);
   --on-navy-2: var(--ice);
@@ -207,6 +217,10 @@
     --selected: rgba(137, 194, 217, 0.16);
     /* Raised controls: Deep Blue sits above the fill track (a card color would sink below it). */
     --thumb: var(--deep-blue);
+
+    /* The footer and the closing band: Navy, a step lighter than the Night page, never darker. */
+    --footer-bg: var(--navy);
+    --band: var(--navy);
 
     --label: #eaf4f8;
     --label-2: var(--ice);
