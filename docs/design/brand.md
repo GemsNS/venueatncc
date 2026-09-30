@@ -79,13 +79,34 @@ apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Navy wi
 
 ## Color
 
-The ten palette blues are the brand. The palette has no white and no muted text color, so three neutrals are
-derived from it: white for the page and cards, a pale Frost tint of Ice for alternate sections, and a Slate for
-secondary text. Nothing else is added.
+The ten palette blues are the brand. The palette has no white and no muted text color, so neutrals are
+derived from it: white for the page and cards, a pale Frost tint of Ice for alternate sections and the footer,
+a light Ice tint for the closing band, and a Slate for secondary text. Nothing else is added.
+
+**Light by default.** The owner found the site too dark, so in light mode every large surface is light: White,
+Frost, or the Ice tint. Navy is for text, buttons, and small accents, and for the scrim over the home hero's
+photo on wider screens; it is never a large surface. Specifically:
+
+- **Footer:** Frost with a top hairline (`--separator`), a Navy "Visit and contact" heading, Slate text,
+  Deep Blue links, and the Navy-ink lockup (`Logo` tone `auto`, not the white artwork).
+- **Closing band (CtaBand):** the Ice tint `#D8ECF3` with a top hairline, a Navy heading, a Slate sentence, and
+  the standard Deep Blue Check Availability button with a white label.
+- **Home hero on phones:** the photo stands alone with nothing over it, and the copy follows on a Frost panel
+  (Deep Blue kicker, Navy title, Slate lead) above the date checker. The same panel serves short screens and
+  larger text.
+- **Home hero from tablets up:** the copy stays over the photo on a Navy scrim, as light as the brightest sky
+  allows: 70% at the top easing to 64% a third of the way down, then a soft fade above the gazebo's roof. From
+  64rem the scrim also fades to 30% of that strength past the end of the copy, so the pines show through
+  beside the header's call to action. Measured at the worst pixel under each line of white copy (768 to 2560
+  wide), the kicker, title, and lead all hold 4.7:1 or better in light mode and 5.2:1 in dark mode. Do not
+  lighten the scrim without measuring again.
+- **Alternate sections:** Frost, never a grey-blue.
+- **Styled Concept badge:** near-white glass with a Navy label in light mode; the Navy tint with a white label
+  in dark mode.
 
 | Token | Hex | Role |
 |---|---|---|
-| Navy | `#012A4A` | Primary text; footer, closing band, photo scrims, favicon; text on light-blue chips |
+| Navy | `#012A4A` | Primary text; photo scrims, favicon; text on light-blue chips; footer and closing band in dark mode only |
 | Harbor | `#013A63` | Hover and pressed state of primary buttons |
 | Deep Blue | `#01497C` | Primary button fill (white text), links and accent text on white, selected states |
 | Marine | `#014F86` | Alternative link hover |
@@ -96,16 +117,22 @@ secondary text. Nothing else is added.
 | Mist | `#89C2D9` | Accent text and lockup accent on Navy; badges on dark |
 | Ice | `#A9D6E5` | Chips, capacity tags, selected rows (Navy text) |
 | White (derived) | `#FFFFFF` | Page background and cards |
-| Frost (derived) | `#EEF6F9` | Alternate section background, quiet panels |
+| Frost (derived) | `#EEF6F9` | Alternate section background, quiet panels, the footer, the home hero's phone panel |
+| Ice tint (derived) | `#D8ECF3` | The closing band (Ice at 45% over white) |
 | Slate (derived) | `#3E5A6D` | Secondary text |
 
 Contrast (checked): Navy on white 14.7:1, Slate on white 7.3:1, Slate on Frost about 6.6:1, Deep Blue on white
-9.4:1, white on Deep Blue 9.4:1, white on Navy 14.7:1, Ice on Navy 9.4:1, Mist on Navy 7.5:1, Navy on Ice 9.4:1,
-Navy on Sky 5.4:1. Never set Sky, Mist, Ice, or Bay as text on white, and never put white text on Sky or lighter.
+9.4:1, Deep Blue on Frost 8.5:1, Navy on Frost 13.4:1, white on Deep Blue 9.4:1, white on Navy 14.7:1, Ice on
+Navy 9.4:1, Mist on Navy 7.5:1, Navy on Ice 9.4:1, Navy on the Ice tint 12.0:1, Slate on the Ice tint 6.0:1,
+Deep Blue on the Ice tint 7.7:1, Navy on Sky 5.4:1. Never set Sky, Mist, Ice, or Bay as text on white, and never
+put white text on Sky or lighter. The tertiary label (`--label-3`, `#56707F`) is not used on the Ice tint,
+where it falls to 4.3:1.
 
 Dark mode: page Night `#011A2E`, grouped `#010F1C`, cards `#022640`, text `#EAF4F8`, secondary Ice
 `#A9D6E5`, primary button Sky `#61A5C2` with Navy text, accent text Mist `#89C2D9` (9.1:1 on Night),
-separators `rgba(234,244,248,0.14)`. Map everything onto the existing token names in `global.css`; rename the
+separators `rgba(234,244,248,0.14)`. Dark mode stays dark but no heavier than before: the footer, the closing
+band, and the home hero's phone panel stay Navy, a step lighter than Night, and the footer and band each
+start with a hairline (tokens `--footer-bg` and `--band`). Map everything onto the existing token names in `global.css`; rename the
 version 2 palette tokens (`--olive-deep`, `--caramel`, `--caramel-deep`, `--sage`, `--mist`, `--linen`,
 `--on-deep-accent` and similar) to version 3 names and update every use. Photo scrims use Navy.
 

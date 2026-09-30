@@ -1,11 +1,12 @@
 ---
 /**
- * The closing call to action on a Navy band: a Caslon heading, one sentence, and one Check Availability
- * button. It is the one place that says how booking works (brand.md, "Redundancy rules"), so it carries no
- * second button and no contact line: the header links the other pages and the footer lists the phone.
- * Plain color, no imagery. White text on Navy is 14.7:1 and Ice 9.4:1. Deep Blue would barely separate from
- * Navy, so the button here takes the dark-mode fill: Sky with a Navy label (5.4:1), Mist on hover.
- * The section stays the last child of <main>, which is how the footer knows to meet it with a hairline.
+ * The closing call to action on a light Ice-tinted band (--band; Navy in dark mode): a Caslon heading, one
+ * sentence, and one Check Availability button. It is the one place that says how booking works (brand.md,
+ * "Redundancy rules"), so it carries no second button and no contact line: the header links the other pages
+ * and the footer lists the phone. Plain color, no imagery. On the Ice tint the heading is Navy (12.0:1), the
+ * sentence Slate (6.0:1), and the button the site's Deep Blue fill with a white label (9.4:1); in dark mode
+ * the light text, Ice, and the Sky button on Navy.
+ * The section stays the last child of <main>; the footer's top hairline separates the two.
  */
 import Icon from './Icon.astro';
 import { bookHref as defaultBookHref } from '../data/nav';
@@ -20,7 +21,7 @@ interface Props {
 
 const {
   heading = 'See which dates are open.',
-  body = 'Choose a date and a space, see an instant estimate, and send your request in about two minutes. We confirm every booking personally.',
+  body = 'Choose a date and a space, and send your request in about two minutes. We confirm every booking personally.',
   bookHref = defaultBookHref,
 } = Astro.props;
 ---
@@ -41,18 +42,9 @@ const {
 
 <style>
   .cta {
-    background: var(--navy);
-    color: var(--on-navy);
-    --accent: var(--sky);
-    --accent-hover: var(--mist);
-    --on-accent: var(--navy);
-  }
-
-  /* Dark mode: Navy sits close to the Night page, so a faint Bay hairline marks where the band begins. */
-  @media (prefers-color-scheme: dark) {
-    .cta {
-      border-top: 1px solid var(--on-navy-line);
-    }
+    background: var(--band);
+    color: var(--label);
+    border-top: 1px solid var(--separator);
   }
 
   .cta__inner {
@@ -74,13 +66,13 @@ const {
   }
 
   .cta h2 {
-    color: var(--on-navy);
+    color: var(--label);
     max-width: 18ch;
   }
 
   .cta__body {
     max-width: 38rem;
-    color: var(--on-navy-2);
+    color: var(--label-2);
     font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
     line-height: 1.5;
   }
@@ -103,10 +95,6 @@ const {
     .cta__action {
       justify-self: stretch;
     }
-  }
-
-  .cta :global(:focus-visible) {
-    outline-color: var(--on-navy);
   }
 
   @media (forced-colors: active) {

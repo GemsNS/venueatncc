@@ -1,6 +1,7 @@
 ---
 /**
- * Site footer on Navy: the light lockup, then "Visit and contact", the site's single contact block
+ * Site footer on a light Frost band behind a top hairline (Navy in dark mode, --footer-bg): the lockup in
+ * its own Navy ink (Logo tone auto), then "Visit and contact", the site's single contact block
  * (address with directions, phone, email). On compact screens it adds one link to the FAQ, the only route
  * to /faq/ there, where the tab bar has no FAQ tab and the header nav is hidden; from 46.5rem the header
  * carries FAQ, so the footer does not repeat it, and /faq/ never links to itself. It does not repeat the
@@ -20,7 +21,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
   <div class="container">
     <div class="footer__main">
       <a class="footer__brand" href={href('/')} aria-label={`${site.name}, home`}>
-        <Logo variant="lockup" tone="white" height={40} decorative />
+        <Logo variant="lockup" tone="auto" height={40} decorative />
       </a>
 
       <div class="footer__grid">
@@ -62,37 +63,19 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
 </footer>
 
 <style>
+  /*
+    Slate secondary text on Frost is 6.6:1, Deep Blue links 8.5:1, the Navy heading 13.4:1; in dark mode
+    Ice, Mist, and the light text on Navy. The top hairline sets the footer off from a Frost section or
+    the closing band above it.
+  */
   .footer {
-    background: var(--navy);
-    color: var(--on-navy-2);
+    background: var(--footer-bg);
+    border-top: 1px solid var(--separator);
+    color: var(--label-2);
     font-size: var(--t-footnote);
     line-height: 1.5;
     /* On compact screens the footer's color runs down behind the floating tab bar (--tabbar-space). */
     padding-block: clamp(3rem, 2.5rem + 2vw, 4.5rem) calc(2rem + var(--tabbar-space));
-  }
-
-  .footer :focus-visible {
-    outline-color: var(--on-navy);
-  }
-
-  /*
-    After the Navy closing band the two meet, so the footer drops its top padding and a hairline
-    separates them instead.
-  */
-  :global(main:has(> .cta:last-child)) + .footer {
-    padding-top: 0;
-  }
-
-  :global(main:has(> .cta:last-child)) + .footer .footer__main {
-    padding-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-    border-top: 1px solid var(--on-navy-line);
-  }
-
-  /* Dark mode, on pages without the closing band: a faint Bay hairline sets the footer off from the page. */
-  @media (prefers-color-scheme: dark) {
-    :global(main:not(:has(> .cta:last-child))) + .footer {
-      border-top: 1px solid var(--on-navy-line);
-    }
   }
 
   /* The lockup above the contact block, with space rather than a rule between them. */
@@ -151,14 +134,14 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     }
   }
 
-  /* Interface family: Caslon Display is for titles at 28px and up. Mist on Navy is 7.5:1. */
+  /* Interface family: Caslon Display is for titles at 28px and up. */
   .footer__head {
     margin-bottom: 0.7rem;
     font-family: var(--font);
     font-size: var(--t-footnote);
     font-weight: 600;
     letter-spacing: 0;
-    color: var(--on-navy-accent);
+    color: var(--label);
   }
 
   /* Links get 5px of padding above and below instead of list gaps, so each target is at least 28px tall. */
@@ -191,11 +174,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
   }
 
   .footer a {
-    color: var(--on-navy-2);
-  }
-
-  .footer a:hover {
-    color: var(--on-navy);
+    color: var(--accent-text);
   }
 
   .footer address {
@@ -235,7 +214,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     gap: 0.4rem 1.5rem;
     margin-top: 2.5rem;
     padding-top: 1.1rem;
-    border-top: 1px solid var(--on-navy-line);
+    border-top: 1px solid var(--separator);
     font-size: var(--t-caption);
   }
 
@@ -243,7 +222,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
     margin-top: 0;
   }
 
-  /* Forced colors: the band becomes the system background, and the light lockup follows the text color. */
+  /* Forced colors: the band becomes the system background, and the lockup follows the text color. */
   @media (forced-colors: active) {
     .footer {
       border-top: 1px solid CanvasText;
