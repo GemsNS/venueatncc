@@ -73,18 +73,18 @@ function ContactActions({ d, class: className }: { d: InquiryDetail; class?: str
   return (
     <div class={`adm-contact-actions${className ? ` ${className}` : ''}`}>
       {d.phone && (
-        <a class="btn btn--tinted" href={`tel:${dialable(d.phone)}`} aria-label={`Call ${first}`}>
+        <a class="btn btn--outline" href={`tel:${dialable(d.phone)}`} aria-label={`Call ${first}`}>
           <Icon name="phone" />
           Call
         </a>
       )}
       {d.phone && (
-        <a class="btn btn--tinted" href={`sms:${dialable(d.phone)}`} aria-label={`Text ${first}`}>
+        <a class="btn btn--outline" href={`sms:${dialable(d.phone)}`} aria-label={`Text ${first}`}>
           <Icon name="message" />
           Text
         </a>
       )}
-      <a class="btn btn--tinted" href={`mailto:${d.email}?subject=${encodeURIComponent(mailSubject(d))}`} aria-label={`Email ${first}`}>
+      <a class="btn btn--outline" href={`mailto:${d.email}?subject=${encodeURIComponent(mailSubject(d))}`} aria-label={`Email ${first}`}>
         <Icon name="mail" />
         Email
       </a>
@@ -301,7 +301,7 @@ export function InquiryView({ id }: { id: number }) {
           </div>
           <button
             type="button"
-            class="btn btn--gray adm-btn-44"
+            class="btn btn--outline adm-btn-44"
             aria-disabled={unchanged || statusBusy ? 'true' : undefined}
             aria-busy={statusBusy ? 'true' : undefined}
             onClick={() => {
@@ -322,7 +322,7 @@ export function InquiryView({ id }: { id: number }) {
             Block on Calendar
           </button>
         ) : d.status === 'booked' ? (
-          <a ref={actionRef} class="btn btn--tinted" href={calendarHash(d.date.slice(0, 7), d.date)}>
+          <a ref={actionRef} class="btn btn--outline" href={calendarHash(d.date.slice(0, 7), d.date)}>
             <Icon name="calendar-check" />
             View on Calendar
           </a>
@@ -453,7 +453,7 @@ export function InquiryView({ id }: { id: number }) {
                 </p>
               )}
               <div class="adm-noteform__actions">
-                <button type="submit" class="btn btn--tinted" disabled={noteBusy} aria-busy={noteBusy ? 'true' : undefined}>
+                <button type="submit" class="btn btn--outline" disabled={noteBusy} aria-busy={noteBusy ? 'true' : undefined}>
                   {noteBusy ? `Adding${ELLIPSIS}` : 'Add Note'}
                 </button>
               </div>

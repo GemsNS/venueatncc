@@ -148,7 +148,7 @@ export function SignIn({ notice, onSignedIn }: { notice: string | null; onSigned
                 <dd>{demo.password}</dd>
               </div>
             </dl>
-            <button type="button" class="btn btn--tinted" onClick={fillIn}>
+            <button type="button" class="btn btn--outline" onClick={fillIn}>
               Fill In
             </button>
           </section>

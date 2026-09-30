@@ -145,7 +145,7 @@ function DaySheetContent({
                   <div class="adm-block__confirm" role="group" aria-label="Confirm delete">
                     <p class="adm-block__ask">Delete this block?</p>
                     <div class="adm-block__actions">
-                      <button type="button" class="btn btn--gray btn--sm adm-btn-44" onClick={() => setConfirmId(null)} disabled={deleting}>
+                      <button type="button" class="btn btn--outline btn--sm adm-btn-44" onClick={() => setConfirmId(null)} disabled={deleting}>
                         Cancel
                       </button>
                       <button
@@ -370,7 +370,7 @@ export function CalendarView({ month: routeMonth, day: routeDay }: { month: stri
           </button>
           <button
             type="button"
-            class="btn btn--gray btn--sm adm-btn-44"
+            class="btn btn--outline btn--sm adm-btn-44"
             onClick={() => goMonth(monthOf(today), today)}
           >
             Today
@@ -468,7 +468,7 @@ export function CalendarView({ month: routeMonth, day: routeDay }: { month: stri
                 {nextBlocked && ` The next blocked date is ${formatShort(nextBlocked)}.`}
               </p>
               {nextBlocked && (
-                <button type="button" class="btn btn--tinted btn--sm adm-btn-44" onClick={() => goMonth(monthOf(nextBlocked), nextBlocked)}>
+                <button type="button" class="btn btn--outline btn--sm adm-btn-44" onClick={() => goMonth(monthOf(nextBlocked), nextBlocked)}>
                   Go to {formatMonth(parseKey(nextBlocked).y, parseKey(nextBlocked).m)}
                 </button>
               )}

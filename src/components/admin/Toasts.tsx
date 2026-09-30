@@ -1,4 +1,4 @@
-/** Glass capsule toasts: role="status", explicit close, auto-hide after 6 seconds, paused on hover or focus. */
+/** Capsule toasts on a white card: role="status", explicit close, auto-hide after 6 seconds, paused on hover or focus. */
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import type { ToastTone } from './context';
@@ -62,7 +62,7 @@ function Toast({ item, onClose }: { item: ToastItem; onClose: () => void }) {
 
   const icon = item.tone === 'success' ? 'check-circle' : 'info';
   return (
-    <div ref={ref} class={`adm-toast glass adm-toast--${item.tone}`} role="status">
+    <div ref={ref} class={`adm-toast adm-toast--${item.tone}`} role="status">
       <Icon name={icon} class="adm-toast__icon" />
       <p class="adm-toast__text">{item.message}</p>
       <button type="button" class="adm-iconbtn adm-toast__close" onClick={onClose} aria-label="Close">

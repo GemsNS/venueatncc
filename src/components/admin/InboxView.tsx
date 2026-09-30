@@ -88,7 +88,7 @@ function StatusMenu({ value, onPick }: { value: InboxFilter; onPick: (s: Inquiry
       <button
         ref={button}
         type="button"
-        class={`btn ${active ? 'btn--tinted' : 'btn--gray'} adm-menubtn`}
+        class={`btn btn--outline adm-menubtn${active ? ' is-active' : ''}`}
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
         aria-controls="adm-status-menu"
@@ -109,7 +109,7 @@ function StatusMenu({ value, onPick }: { value: InboxFilter; onPick: (s: Inquiry
         {active && <span class="visually-hidden">, status filter</span>}
       </button>
       {open && (
-        <ul id="adm-status-menu" class={`adm-menu glass${alignEnd ? ' adm-menu--end' : ''}`} role="menu" aria-label="Filter by status" ref={menu} onKeyDown={onMenuKey}>
+        <ul id="adm-status-menu" class={`adm-menu${alignEnd ? ' adm-menu--end' : ''}`} role="menu" aria-label="Filter by status" ref={menu} onKeyDown={onMenuKey}>
           {OTHER.map((s) => (
             <li
               key={s.id}
@@ -229,7 +229,7 @@ export function InboxView({ status, q }: { status: InboxFilter; q: string }) {
   return (
     <div class="adm-screen">
       <PageHeader title="Inbox" subtitle="Booking requests from the website.">
-        <button type="button" class="btn btn--gray" onClick={exportCsv} disabled={exporting} aria-busy={exporting ? 'true' : undefined}>
+        <button type="button" class="btn btn--outline" onClick={exportCsv} disabled={exporting} aria-busy={exporting ? 'true' : undefined}>
           <Icon name="download" />
           {exporting ? `Exporting${ELLIPSIS}` : 'Export CSV'}
         </button>
@@ -300,7 +300,7 @@ export function InboxView({ status, q }: { status: InboxFilter; q: string }) {
                 action={
                   <button
                     type="button"
-                    class="btn btn--gray"
+                    class="btn btn--outline"
                     onClick={() => {
                       setSearch('');
                       navigate(inboxHash(status, ''), true);

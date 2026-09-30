@@ -1,28 +1,32 @@
 /*
-  Staff admin app. Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md),
-  the palette's White, Blush, and Petal surfaces, and the interface family throughout except the brand
-  name beside the monogram.
+  Staff admin app (docs/design/redesign-spec.md, "Admin"). It keeps its own chrome and the interface family
+  (Inter) throughout, restyled to the brand tokens in src/styles/global.css only: the Blush page, white cards
+  with a hairline edge and the 12px card radius, Berry actions, the Plum sidebar on regular screens (the
+  footer's surface), and a solid tab row along the bottom of the screen on phones (this is an application,
+  not the marketing site, so the row is allowed here). No glass anywhere: the sidebar, tab row, sheets, menus,
+  and toasts are solid surfaces; the floating ones (menus, toasts) carry --shadow-2.
   How the palette marks state:
-    Petal surface, Berry label         the current screen in the sidebar and tab bar, and date tiles
-                                       (5.7:1 on Petal; translucent Pink with a Blossom label in dark mode).
-    Petal chip, Plum label             the New badge (11.2:1).
-    Berry fill, white label            the new-request count, the selected calendar day, and the
-                                       filled buttons (7.2:1; Pink Bloom with a Night label in dark mode).
+    Petal surface, Berry label         the current tab in the phone tab row, and date tiles (5.7:1 on Petal;
+                                       translucent Pink with a Blossom label in dark mode).
+    Translucent white, white label     the current screen in the Plum sidebar.
+    Pink chip, Plum label              the new-request count on Plum (11.2:1 on Pink) and in the tab row.
+    Berry fill, white label            the selected calendar day and the filled buttons (7.2:1; Pink Bloom
+                                       with a Night label in dark mode).
     Berry                              accent text, links, and unread dots (Blossom in dark mode).
-    Rose                               focus rings (Pink Bloom in dark mode).
-  Size classes: compact below 744px (floating glass tab bar), regular from 744px (glass sidebar).
-  Glass only on the sidebar, tab bar, sheets, menus, and toasts.
+    Rose                               focus rings (Pink Bloom in dark mode; white inside the Plum sidebar).
+  Size classes: compact below 744px (the tab row), regular from 744px (the sidebar).
 */
 
 :root {
   --adm-sidebar-w: 264px;
   --adm-tabbar-h: 64px;
-  --adm-radius-bar: 32px;
-  --adm-radius-sidebar: 28px;
-  --adm-radius-section: var(--r-lg);
+  --adm-radius-section: var(--r-card);
+  --adm-radius-sheet: var(--r-xl);
 
-  /* Selected navigation and date tiles. */
+  /* Selected tab and date tiles. */
   --adm-selected: var(--selected);
+  /* A card: white with a hairline edge, no shadow at rest (the reference's flat cards). */
+  --adm-card-edge: 0 0 0 1px var(--separator);
 
   /*
     Status colors (the global status tokens) with 4.5:1 text on their tints over Blush and White, in both
@@ -36,7 +40,16 @@
   --adm-red-tint: rgba(255, 59, 48, 0.12);
   --adm-gray: var(--label-2);
   --adm-gray-tint: var(--fill-2);
-  --adm-page: var(--bg-grouped);
+  --adm-page: var(--bg);
+
+  /* The sidebar: the footer's Plum, with the same text roles (Blush, white links, Pink heads). */
+  --adm-side-bg: var(--footer-bg);
+  --adm-side-text: var(--on-dark-2);
+  --adm-side-link: var(--on-dark);
+  --adm-side-accent: var(--on-dark-accent);
+  --adm-side-fill: rgba(255, 255, 255, 0.08);
+  --adm-side-selected: rgba(255, 255, 255, 0.14);
+  --adm-side-rule: rgba(251, 241, 243, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,6 +57,8 @@
     --adm-green-tint: rgba(48, 209, 88, 0.16);
     --adm-orange-tint: rgba(255, 159, 10, 0.16);
     --adm-red-tint: rgba(255, 69, 58, 0.18);
+    --adm-side-fill: rgba(255, 255, 255, 0.06);
+    --adm-side-selected: rgba(233, 169, 187, 0.18);
   }
 }
 
@@ -53,11 +68,17 @@ html:has(.adm-boot) {
   background: var(--adm-page);
 }
 
-/* The site layout's tab bar styles pad the body for the public tab bar; the admin has its own. */
 body.is-bare {
   background: var(--adm-page);
   min-height: 100dvh;
   padding-bottom: 0;
+}
+
+/* The admin is an application: its buttons keep the interface family (redesign-spec.md, Buttons). */
+body.is-bare .btn {
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 /* ---------- Boot ---------- */
@@ -76,7 +97,7 @@ body.is-bare {
   height: 28px;
   border-radius: 50%;
   border: 3px solid var(--fill);
-  border-top-color: var(--label-2);
+  border-top-color: var(--accent-text);
   animation: adm-spin 0.9s linear infinite;
 }
 
@@ -98,7 +119,7 @@ body.is-bare {
   width: 100%;
   max-width: 1180px;
   margin-inline: auto;
-  padding: calc(12px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+  padding: calc(16px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     calc(var(--adm-tabbar-h) + 40px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
@@ -106,27 +127,27 @@ body.is-bare {
   display: none;
 }
 
-/* Phones: keep focused rows and scrolled-to targets clear of the floating tab bar. */
+/* Phones: keep focused rows and scrolled-to targets clear of the tab row. */
 @media (width < 46.5rem) {
   html:has(.adm-tabbar) {
     scroll-padding-bottom: calc(var(--adm-tabbar-h) + 28px + env(safe-area-inset-bottom));
   }
 }
 
+/* The tab row: a solid bar along the bottom edge with a hairline, on the page surface. */
 .adm-tabbar {
   position: fixed;
   z-index: 40;
-  left: max(16px, env(safe-area-inset-left));
-  right: max(16px, env(safe-area-inset-right));
-  bottom: calc(env(safe-area-inset-bottom) + 8px);
-  height: var(--adm-tabbar-h);
-  max-width: 480px;
-  margin-inline: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
-  padding: 4px;
-  border-radius: var(--adm-radius-bar);
+  height: calc(var(--adm-tabbar-h) + env(safe-area-inset-bottom));
+  padding: 4px max(8px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background: var(--bg);
+  border-top: 1px solid var(--separator);
 }
 
 .adm-tab {
@@ -135,10 +156,10 @@ body.is-bare {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   min-height: 44px;
-  border-radius: 28px;
-  color: var(--label);
+  border-radius: var(--r-sm);
+  color: var(--label-2);
   /* Like iOS tab bars, labels stop growing past a point; page zoom still scales them. */
   font-size: min(0.6875rem, 15px);
   font-weight: 600;
@@ -151,11 +172,12 @@ body.is-bare {
 .adm-tab:hover {
   text-decoration: none;
   background: var(--fill-3);
+  color: var(--label);
 }
 
 .adm-tab:focus-visible {
   outline-offset: -3px;
-  border-radius: 28px;
+  border-radius: var(--r-sm);
 }
 
 .adm-tab[aria-current='page'] {
@@ -164,8 +186,7 @@ body.is-bare {
 }
 
 /* The inset focus ring sits on the Petal selection, where Rose is under 3:1, so it takes the accent text color. */
-.adm-tab[aria-current='page']:focus-visible,
-.adm-nav[aria-current='page']:focus-visible {
+.adm-tab[aria-current='page']:focus-visible {
   outline-color: var(--accent-text);
 }
 
@@ -186,6 +207,7 @@ body.is-bare {
   left: 14px;
 }
 
+/* The new-request count: Berry with a white label on light surfaces. */
 .adm-count {
   display: inline-grid;
   place-items: center;
@@ -193,7 +215,6 @@ body.is-bare {
   height: 20px;
   padding: 0 6px;
   border-radius: var(--r-full);
-  /* New requests: the accent fill with its label color (9.4:1 light, 5.4:1 dark). */
   background: var(--accent);
   color: var(--on-accent);
   font-size: 0.75rem;
@@ -206,12 +227,12 @@ body.is-bare {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   padding: 10px 14px;
   border-radius: var(--r-sm);
-  /* Information, not a warning: a Berry tint (Pink in dark mode) with the text color. */
-  background: var(--accent-tint);
-  color: var(--label);
+  /* Information, not a warning: the Petal chip surface with Plum text. */
+  background: var(--chip);
+  color: var(--on-chip);
   font-size: var(--t-footnote);
   font-weight: 600;
 }
@@ -225,7 +246,7 @@ body.is-bare {
 @media (min-width: 46.5rem) {
   .adm-content {
     max-width: none;
-    padding: 20px 32px 48px calc(var(--adm-sidebar-w) + 12px + 32px);
+    padding: 28px 40px 56px calc(var(--adm-sidebar-w) + 40px);
   }
 
   .adm-content > * {
@@ -236,18 +257,25 @@ body.is-bare {
     display: none;
   }
 
+  /* The sidebar: the footer's Plum surface, full height, flush to the left edge. */
   .adm-sidebar {
     position: fixed;
     z-index: 40;
-    top: 12px;
-    bottom: 12px;
-    left: 12px;
+    top: 0;
+    bottom: 0;
+    left: 0;
     width: var(--adm-sidebar-w);
     display: flex;
     flex-direction: column;
-    padding: 12px;
-    border-radius: var(--adm-radius-sidebar);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    background: var(--adm-side-bg);
+    color: var(--adm-side-text);
     overflow-y: auto;
+  }
+
+  /* On dark surfaces Rose falls under 3:1, so focus rings inside the sidebar are white. */
+  .adm-sidebar :focus-visible {
+    outline-color: var(--adm-side-link);
   }
 }
 
@@ -255,42 +283,48 @@ body.is-bare {
 .adm-sidebar__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 8px 18px;
+  gap: 12px;
+  padding: 8px 8px 24px;
 }
 
 .adm-sidebar__mark {
   flex: none;
   width: 40px;
   height: 40px;
-  color: var(--accent-icon);
+  color: var(--adm-side-link);
 }
 
 .adm-sidebar__text {
   display: grid;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
 .adm-sidebar__name {
   font-family: var(--font-serif);
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-weight: 400;
   font-synthesis: none;
   line-height: 1.2;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
+  color: var(--adm-side-link);
 }
 
-/* "at NCC" in italic at a smaller size, as in the lockup. */
+/* "@ NCC" in italic at a smaller size, as in the lockup, in the lockup's Pink accent. */
 .adm-sidebar__at {
   font-style: italic;
-  font-size: 0.8em;
+  font-size: 0.85em;
+  color: var(--adm-side-accent);
 }
 
+/* The role, as the footer sets its column heads: small letterspaced serif, Pink. */
 .adm-sidebar__role {
-  font-size: var(--t-footnote);
-  color: var(--label-2);
-  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: var(--t-caption);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--adm-side-accent);
 }
 
 .adm-sidebar__list {
@@ -309,31 +343,32 @@ body.is-bare {
   min-height: 44px;
   padding: 0 12px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-sm);
   background: transparent;
-  color: var(--label);
+  color: var(--adm-side-text);
   font: inherit;
   font-size: var(--t-callout);
   font-weight: 500;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color var(--dur-1) ease;
+  transition: background-color var(--dur-1) ease, color var(--dur-1) ease;
 }
 
 .adm-nav:hover {
-  background: var(--fill-3);
+  background: var(--adm-side-fill);
+  color: var(--adm-side-link);
   text-decoration: none;
 }
 
 .adm-nav:focus-visible {
   outline-offset: -3px;
-  border-radius: 16px;
+  border-radius: var(--r-sm);
 }
 
 .adm-nav[aria-current='page'] {
-  background: var(--adm-selected);
-  color: var(--accent-text);
+  background: var(--adm-side-selected);
+  color: var(--adm-side-link);
   font-weight: 600;
 }
 
@@ -342,8 +377,18 @@ body.is-bare {
   height: 22px;
 }
 
+.adm-nav[aria-current='page'] .icon {
+  color: var(--adm-side-accent);
+}
+
 .adm-nav__label {
   flex: 1;
+}
+
+/* On Plum the count is a Pink chip with a Plum label (11.2:1); Berry would sink into the surface. */
+.adm-sidebar .adm-count {
+  background: var(--pink);
+  color: var(--ink);
 }
 
 .adm-sidebar__foot {
@@ -351,12 +396,12 @@ body.is-bare {
   display: grid;
   gap: 6px;
   padding-top: 12px;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--adm-side-rule);
 }
 
 .adm-sidebar__user {
   display: grid;
-  gap: 1px;
+  gap: 2px;
   padding: 4px 12px;
   min-width: 0;
 }
@@ -364,11 +409,12 @@ body.is-bare {
 .adm-sidebar__username {
   font-size: var(--t-subhead);
   font-weight: 600;
+  color: var(--adm-side-link);
 }
 
 .adm-sidebar__email {
   font-size: var(--t-footnote);
-  color: var(--label-2);
+  color: var(--adm-side-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -386,7 +432,7 @@ body.is-bare {
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px 20px;
-  margin: 4px 0 20px;
+  margin: 4px 0 24px;
 }
 
 .adm-header__text {
@@ -396,9 +442,9 @@ body.is-bare {
 }
 
 .adm-title {
-  font-size: 2.125rem;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -424,7 +470,7 @@ body.is-bare {
 }
 
 .adm-section {
-  margin-top: 28px;
+  margin-top: 32px;
 }
 
 .adm-section__head {
@@ -434,7 +480,7 @@ body.is-bare {
   justify-content: space-between;
   gap: 12px;
   min-height: 44px;
-  margin: 0 4px 6px;
+  margin: 0 0 8px;
 }
 
 .adm-section__title {
@@ -464,9 +510,11 @@ body.is-bare {
   }
 }
 
+/* Cards and lists: white, a hairline edge, the 12px card radius, no shadow at rest. */
 .adm-list.list-group {
   border-radius: var(--adm-radius-section);
-  box-shadow: var(--shadow-1);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge);
 }
 
 .adm-card {
@@ -475,7 +523,7 @@ body.is-bare {
   padding: 20px;
   background: var(--bg-elevated);
   border-radius: var(--adm-radius-section);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--adm-card-edge);
 }
 
 .adm-muted {
@@ -513,6 +561,12 @@ body.is-bare {
   color: var(--adm-red);
 }
 
+/* The status filter while a menu status is chosen: the outline takes the accent, like a selected chip. */
+.adm-menubtn.is-active {
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+
 .adm-iconbtn {
   display: inline-grid;
   place-items: center;
@@ -533,18 +587,23 @@ body.is-bare {
   color: var(--label);
 }
 
+.adm-iconbtn:focus-visible {
+  border-radius: 50%;
+}
+
 .adm-iconbtn .icon {
   width: 20px;
   height: 20px;
 }
 
+/* The round bordered icon button (previous and next month), like the carousel's. */
 .adm-iconbtn--fill {
-  background: var(--fill-2);
+  border: 1px solid var(--separator-strong);
   color: var(--label);
 }
 
 .adm-iconbtn--fill:hover {
-  background: var(--fill);
+  background: var(--fill-3);
 }
 
 .adm-back.btn {
@@ -582,12 +641,13 @@ body.is-bare {
 }
 
 .adm-banner--info {
-  background: var(--fill-2);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge);
   color: var(--label);
 }
 
 .adm-banner--info .icon {
-  color: var(--label-2);
+  color: var(--accent-icon);
 }
 
 .adm-banner--error {
@@ -728,7 +788,7 @@ body.is-bare {
   flex: none;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--adm-selected);
   line-height: 1;
 }
@@ -781,7 +841,7 @@ body.is-bare {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 36px 20px;
+  padding: 40px 20px;
   text-align: center;
 }
 
@@ -791,8 +851,8 @@ body.is-bare {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--fill-2);
-  color: var(--label-2);
+  background: var(--chip);
+  color: var(--accent-icon);
 }
 
 .adm-empty__icon .icon {
@@ -845,10 +905,10 @@ body.is-bare {
   align-content: start;
   gap: 6px;
   min-height: 116px;
-  padding: 16px;
+  padding: 18px;
   background: var(--bg-elevated);
   border-radius: var(--adm-radius-section);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--adm-card-edge);
 }
 
 .adm-tile__label {
@@ -936,6 +996,7 @@ body.is-bare {
   height: 16px;
 }
 
+/* A floating menu: a white card with a hairline and the floating shadow. */
 .adm-menu {
   position: absolute;
   z-index: 30;
@@ -945,8 +1006,9 @@ body.is-bare {
   margin: 0;
   padding: 6px;
   list-style: none;
-  border-radius: 20px;
-  background-color: var(--glass-bg-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge), var(--shadow-2);
   animation: adm-pop var(--dur-2) var(--ease-spring);
 }
 
@@ -968,7 +1030,7 @@ body.is-bare {
   gap: 8px;
   min-height: 44px;
   padding: 0 12px 0 8px;
-  border-radius: 14px;
+  border-radius: var(--r-sm);
   font-size: var(--t-callout);
   cursor: pointer;
 }
@@ -1015,11 +1077,18 @@ body.is-bare {
   pointer-events: none;
 }
 
+/* The search field is a white capsule with a hairline, like the status select. */
 .adm-search__input.input {
   padding-left: 42px;
   padding-right: 48px;
+  border-radius: var(--r-full);
   background: var(--bg-elevated);
-  box-shadow: var(--shadow-1);
+  border-color: var(--separator);
+}
+
+.adm-search__input.input:hover {
+  background: var(--bg-elevated);
+  border-color: var(--separator-strong);
 }
 
 .adm-search__input::-webkit-search-cancel-button {
@@ -1092,7 +1161,7 @@ body.is-bare {
 
   .adm-table__head {
     display: grid;
-    padding: 0 1.1rem 6px;
+    padding: 0 1.1rem 8px;
     color: var(--label-2);
     font-size: var(--t-footnote);
     font-weight: 600;
@@ -1139,7 +1208,7 @@ body.is-bare {
   padding: 12px 12px 12px 16px;
   background: var(--bg-elevated);
   border-radius: var(--adm-radius-section);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--adm-card-edge);
 }
 
 .adm-statusbar__field {
@@ -1260,6 +1329,7 @@ body.is-bare {
   min-height: 44px;
   padding: 0 40px 0 14px;
   border-radius: var(--r-full);
+  border-color: var(--separator);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -1406,7 +1476,7 @@ body.is-bare {
 .adm-noteform textarea.input {
   min-height: 6rem;
   background: var(--bg-elevated);
-  box-shadow: var(--shadow-1);
+  border-color: var(--separator);
 }
 
 .adm-noteform__actions {
@@ -1438,8 +1508,8 @@ body.is-bare {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--fill-2);
-  color: var(--label-2);
+  background: var(--chip);
+  color: var(--accent-icon);
 }
 
 .adm-timeline__icon .icon {
@@ -1477,8 +1547,10 @@ body.is-bare {
 
 .adm-calbar__month {
   font-size: var(--t-title-2);
+  font-family: var(--font);
   line-height: 1.2;
   font-weight: 700;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
@@ -1508,7 +1580,7 @@ body.is-bare {
 .adm-calwrap {
   background: var(--bg-elevated);
   border-radius: var(--adm-radius-section);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--adm-card-edge);
   padding: 6px;
   transition: opacity var(--dur-2) ease;
 }
@@ -1546,7 +1618,7 @@ body.is-bare {
   min-height: 64px;
   padding: 4px 1px 5px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--label);
   font: inherit;
@@ -1560,7 +1632,7 @@ body.is-bare {
 
 .adm-day:focus-visible {
   outline-offset: -3px;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
 }
 
 .adm-day__num {
@@ -1700,12 +1772,14 @@ body.is-bare {
 
 /* ---------- Sheets and alerts ---------- */
 
+/* Solid white surfaces with a hairline edge and the floating shadow; no glass. */
 .adm-sheet,
 .adm-alert {
   color: var(--label);
   padding: 0;
-  border: 1px solid var(--glass-border);
-  background-color: var(--glass-bg-strong);
+  border: 0;
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge), var(--shadow-3);
 }
 
 .adm-sheet::backdrop,
@@ -1717,14 +1791,15 @@ body.is-bare {
   background: rgba(59, 36, 48, 0.45);
 }
 
+/* Phones: a sheet rising from the bottom edge, its top corners rounded. */
 .adm-sheet {
   position: fixed;
-  inset: auto max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  inset: auto 0 0 0;
   width: auto;
   max-width: none;
   max-height: calc(100dvh - 40px);
   margin: 0;
-  border-radius: var(--adm-radius-bar);
+  border-radius: var(--adm-radius-sheet) var(--adm-radius-sheet) 0 0;
   overflow: hidden;
   overscroll-behavior: contain;
 }
@@ -1746,6 +1821,7 @@ body.is-bare {
     width: min(560px, 100% - 48px);
     max-height: min(820px, 100dvh - 64px);
     margin: auto;
+    border-radius: var(--adm-radius-sheet);
   }
 
   .adm-sheet[open] {
@@ -1819,7 +1895,7 @@ body.is-bare {
   align-content: start;
   gap: 20px;
   min-height: 0;
-  padding: 4px 12px 20px;
+  padding: 4px 16px calc(20px + env(safe-area-inset-bottom));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1830,19 +1906,21 @@ body.is-bare {
 }
 
 .adm-sheet__h3 {
-  margin: 0 8px;
+  margin: 0 4px;
   font-size: var(--t-headline);
   font-weight: 600;
 }
 
 .adm-sheet__empty {
-  margin: 0 8px;
+  margin: 0 4px;
   font-size: var(--t-subhead);
 }
 
+/* Inside a sheet the list keeps its white card and hairline (the status chips keep 4.5:1 on white); the form sits on Petal. */
 .adm-sheet .list-group {
-  border-radius: 20px;
-  box-shadow: none;
+  border-radius: var(--adm-radius-section);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge);
 }
 
 .adm-blocklist .adm-block {
@@ -1900,12 +1978,18 @@ body.is-bare {
 
 .adm-blockform {
   padding: 16px;
-  border-radius: 20px;
-  background: var(--bg-elevated);
+  border-radius: var(--adm-radius-section);
+  background: var(--panel);
 }
 
 .adm-blockform .adm-sheet__h3 {
   margin: 0;
+}
+
+/* Fields inside the Petal panel are white, so they read as fields. */
+.adm-blockform .input {
+  background: var(--bg-elevated);
+  border-color: var(--separator);
 }
 
 .adm-blockform__submit {
@@ -1916,7 +2000,7 @@ body.is-bare {
   width: min(400px, 100% - 32px);
   margin: auto;
   padding: 24px 20px 20px;
-  border-radius: var(--adm-radius-bar);
+  border-radius: var(--adm-radius-sheet);
   text-align: center;
 }
 
@@ -1958,7 +2042,7 @@ body.is-bare {
   z-index: 60;
   left: 16px;
   right: 16px;
-  bottom: calc(env(safe-area-inset-bottom) + 8px + var(--adm-tabbar-h) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + var(--adm-tabbar-h) + 12px);
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -1977,6 +2061,7 @@ body.is-bare {
   bottom: 24px;
 }
 
+/* A white capsule with a hairline and the floating shadow. */
 .adm-toast {
   display: flex;
   align-items: center;
@@ -1985,6 +2070,8 @@ body.is-bare {
   min-height: 52px;
   padding: 4px 4px 4px 16px;
   border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge), var(--shadow-2);
   pointer-events: auto;
   animation: adm-toast-in var(--dur-3) var(--ease-spring);
 }
@@ -2010,7 +2097,7 @@ body.is-bare {
 }
 
 .adm-toast--info .adm-toast__icon {
-  color: var(--label-2);
+  color: var(--accent-icon);
 }
 
 .adm-toast__text {
@@ -2032,12 +2119,13 @@ body.is-bare {
   background: var(--adm-page);
 }
 
+/* A white card with a hairline (the .card utility), the panel radius. */
 .adm-signin__card {
   display: grid;
   gap: 16px;
   width: min(420px, 100%);
   padding: 32px 24px 24px;
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
 }
 
 @media (min-width: 46.5rem) {
@@ -2056,6 +2144,7 @@ body.is-bare {
 .adm-signin__title {
   font-size: var(--t-title-1);
   line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
 .adm-signin__title:focus {
@@ -2101,12 +2190,13 @@ body.is-bare {
   transform: translateY(-50%) scale(0.97);
 }
 
+/* The demo credentials: a Petal panel inside the white card. */
 .adm-demo-creds {
   display: grid;
   gap: 10px;
   padding: 16px;
-  border-radius: 20px;
-  background: var(--adm-page);
+  border-radius: var(--adm-radius-section);
+  background: var(--panel);
 }
 
 .adm-demo-creds__title {
@@ -2193,9 +2283,19 @@ body.is-bare {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
+
+  .adm-sidebar,
+  .adm-tabbar,
+  .adm-card,
+  .adm-list.list-group,
+  .adm-tile,
+  .adm-statusbar,
+  .adm-calwrap,
+  .adm-toast,
+  .adm-menu {
+    border: 1px solid CanvasText;
+  }
 }
-
-
 
 /* Meta segments (a date, a guest count) never break inside. */
 .adm-nowrap {

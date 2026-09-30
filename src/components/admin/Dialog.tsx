@@ -67,7 +67,7 @@ export function Sheet({
   const ref = useModal(open, onClose);
   const ids = useRef({ title: nextId('sheet-title'), sub: nextId('sheet-sub') }).current;
   return (
-    <dialog ref={ref} class="adm-sheet glass" aria-labelledby={ids.title} aria-describedby={subtitle ? ids.sub : undefined}>
+    <dialog ref={ref} class="adm-sheet" aria-labelledby={ids.title} aria-describedby={subtitle ? ids.sub : undefined}>
       <div class="adm-sheet__grabber" aria-hidden="true" />
       <header class="adm-sheet__head">
         <div>
@@ -116,7 +116,7 @@ export function ConfirmDialog({
   const ref = useModal(open, onClose);
   const ids = useRef({ title: nextId('alert-title'), body: nextId('alert-body') }).current;
   return (
-    <dialog ref={ref} class="adm-alert glass" role="alertdialog" aria-labelledby={ids.title} aria-describedby={ids.body}>
+    <dialog ref={ref} class="adm-alert" role="alertdialog" aria-labelledby={ids.title} aria-describedby={ids.body}>
       <h2 id={ids.title} class="adm-alert__title">
         {title}
       </h2>
@@ -129,7 +129,7 @@ export function ConfirmDialog({
         </p>
       )}
       <div class="adm-alert__actions">
-        <button type="button" class="btn btn--gray" onClick={() => ref.current?.close()} disabled={busy}>
+        <button type="button" class="btn btn--outline" onClick={() => ref.current?.close()} disabled={busy}>
           Cancel
         </button>
         <button

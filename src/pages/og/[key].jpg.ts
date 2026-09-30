@@ -1,9 +1,11 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
- * 1200 x 630 JPEG: a real photo of the property, a Plum scrim for legibility, the light lockup, the page
- * title in Libre Caslon Display in white, and one short line in Inter in Petal (docs/design/brand.md, Share
- * images). What each card shows lives in _cards.ts. JPEG keeps each card between 62 and 184 KB: some
- * messengers skip link previews for images much over 300 KB, which a lossless PNG of a photo always is.
+ * 1200 x 630 JPEG in the shape of the site's inner-page hero (redesign-spec.md, "Emails and share images"):
+ * a real photo of the property, full bleed, under a soft Plum bottom scrim; a Blush caption panel bottom-left
+ * (the hero's caption box, on the page surface) holding the Plum lockup, the page title in Libre Caslon
+ * Display in Plum, and one short line in Libre Caslon Text in Mauve (12.8:1 and 6.9:1 on Blush). What each
+ * card shows lives in _cards.ts. JPEG keeps each card well under 300 KB: some messengers skip link previews
+ * for images much over that, which a lossless PNG of a photo always is.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -18,17 +20,21 @@ export const getStaticPaths = (() =>
 
 const W = 1200;
 const H = 630;
-const PAD = 64;
-/** The lockup's height on the card. Its viewBox is 534 by 100. */
-const LOCKUP_H = 60;
+/** The card's margin, the panel's padding, and the panel's radius (the hero caption panel's 20px, scaled). */
+const PAD = 56;
+const PANEL_PAD = 40;
+const PANEL_RADIUS = 24;
+const PANEL_MAX_W = 780;
+/** The lockup's height inside the panel. Its viewBox is 534 by 100. */
+const LOCKUP_H = 40;
 const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-/** Plum (#3B2430 in brand.md), as RGB for the scrim's stops. */
-const NAVY = '59, 36, 48';
-const navy = (alpha: number) => `rgba(${NAVY}, ${alpha})`;
-/** White for the title (14.2:1 on Plum) and Petal for the line under it (11.2:1). */
-const WHITE = '#FFFFFF';
-const ICE = '#F6DFE5';
+/** The palette (brand.md, Color). Plum as channels for the scrim's stops. */
+const PLUM_RGB = '59, 36, 48';
+const plum = (alpha: number) => `rgba(${PLUM_RGB}, ${alpha})`;
+const PLUM = '#3B2430';
+const MAUVE = '#6A4B57';
+const BLUSH = '#FBF1F3';
 
 const root = process.cwd();
 const fromRoot = (...p: string[]) => path.join(root, ...p);
@@ -36,24 +42,22 @@ const fontFile = (p: string) => fs.readFile(fromRoot('node_modules', p));
 const dataUri = (type: string, b: Buffer | Uint8Array) => `data:${type};base64,${Buffer.from(b).toString('base64')}`;
 
 interface Shared {
-  caslon: Buffer;
-  inter: Buffer;
-  interMedium: Buffer;
+  caslonDisplay: Buffer;
+  caslonText: Buffer;
   lockup: string;
 }
 let shared: Promise<Shared> | undefined;
 function loadShared(): Promise<Shared> {
   shared ??= (async () => {
     // satori reads woff and ttf, not woff2.
-    const [caslon, inter, interMedium, lockupSvg] = await Promise.all([
+    const [caslonDisplay, caslonText, lockupSvg] = await Promise.all([
       fontFile('@fontsource/libre-caslon-display/files/libre-caslon-display-latin-400-normal.woff'),
-      fontFile('@fontsource/inter/files/inter-latin-400-normal.woff'),
-      fontFile('@fontsource/inter/files/inter-latin-500-normal.woff'),
-      fs.readFile(fromRoot('src/assets/brand/venue-lockup-white.svg'), 'utf8'),
+      fontFile('@fontsource/libre-caslon-text/files/libre-caslon-text-latin-400-normal.woff'),
+      fs.readFile(fromRoot('src/assets/brand/venue-lockup.svg'), 'utf8'),
     ]);
     // The lockup is outlined paths, so resvg draws it without fonts. Rendered at twice its size for a crisp edge.
     const lockupPng = new Resvg(lockupSvg, { fitTo: { mode: 'height', value: LOCKUP_H * 2 } }).render().asPng();
-    return { caslon, inter, interMedium, lockup: dataUri('image/png', lockupPng) };
+    return { caslonDisplay, caslonText, lockup: dataUri('image/png', lockupPng) };
   })();
   return shared;
 }
@@ -91,34 +95,45 @@ const h = (type: string, style: Record<string, unknown>, children?: unknown, ext
 });
 const layer = { position: 'absolute', top: 0, left: 0, width: W, height: H } as const;
 
-/** The width inside the padding. */
-const CONTENT_W = W - PAD * 2;
+/** The width inside the panel's padding, where the title wraps. */
+const TITLE_W = PANEL_MAX_W - PANEL_PAD * 2;
 
 /**
- * The title's size: 84px, smaller so a longer title still fits on one line, and never below 60px
- * (a title longer than that wraps). Libre Caslon Display averages about 0.42em a character; 0.44 leaves room.
+ * The title's size: 64px when it fits on one line, else 56px so that a page title of up to about 50
+ * characters takes two lines. Libre Caslon Display averages about 0.42em a character; 0.44 leaves room.
  */
 function titleSize(title: string): number {
-  return Math.max(60, Math.min(84, Math.floor(CONTENT_W / (title.length * 0.44))));
+  return title.length * 0.44 * 64 <= TITLE_W ? 64 : 56;
 }
 
 export const GET: APIRoute = async ({ props }) => {
   const { card } = props as { card: ShareCard };
   const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo)]);
   const size = titleSize(card.title);
-  const scrim = (alpha: number) => navy(Math.min(0.94, alpha));
 
-  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: `rgb(${NAVY})`, fontFamily: 'Inter', color: WHITE }, [
+  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: PLUM, fontFamily: 'Libre Caslon Text', color: PLUM }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
-    // Legibility scrims only: deepest behind the text at the lower left, a light veil under the lockup.
-    h('div', { ...layer, backgroundImage: `linear-gradient(90deg, ${scrim(0.78)} 0%, ${scrim(0.5)} 38%, ${scrim(0.1)} 72%, ${navy(0)} 100%)` }),
-    h('div', { ...layer, backgroundImage: `linear-gradient(0deg, ${scrim(0.8)} 0%, ${scrim(0.32)} 40%, ${navy(0)} 62%, ${navy(0)} 76%, ${navy(0.3)} 100%)` }),
-    h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: PAD }, [
-      h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
-      h('div', { display: 'flex', flexDirection: 'column', gap: 20, width: CONTENT_W }, [
-        h('div', { fontFamily: 'Libre Caslon Display', fontSize: size, lineHeight: 1.08, letterSpacing: -0.01 * size }, card.title),
-        h('div', { fontSize: 28, fontWeight: 500, lineHeight: 1.3, color: ICE }, card.line),
-      ]),
+    // The hero's bottom scrim: the panel sits on it, and the photo's lower edge settles under the type.
+    h('div', { ...layer, backgroundImage: `linear-gradient(180deg, ${plum(0)} 0%, ${plum(0)} 42%, ${plum(0.22)} 70%, ${plum(0.5)} 100%)` }),
+    h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-start', padding: PAD }, [
+      h(
+        'div',
+        {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 18,
+          maxWidth: PANEL_MAX_W,
+          padding: PANEL_PAD,
+          borderRadius: PANEL_RADIUS,
+          backgroundColor: BLUSH,
+        },
+        [
+          h('img', { width: LOCKUP_W, height: LOCKUP_H, marginBottom: 6 }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
+          h('div', { fontFamily: 'Libre Caslon Display', fontSize: size, lineHeight: 1.08, letterSpacing: -0.01 * size, color: PLUM }, card.title),
+          h('div', { fontSize: 24, lineHeight: 1.35, color: MAUVE }, card.line),
+        ],
+      ),
     ]),
   ]);
 
@@ -126,13 +141,12 @@ export const GET: APIRoute = async ({ props }) => {
     width: W,
     height: H,
     fonts: [
-      { name: 'Libre Caslon Display', data: a.caslon, weight: 400, style: 'normal' },
-      { name: 'Inter', data: a.inter, weight: 400, style: 'normal' },
-      { name: 'Inter', data: a.interMedium, weight: 500, style: 'normal' },
+      { name: 'Libre Caslon Display', data: a.caslonDisplay, weight: 400, style: 'normal' },
+      { name: 'Libre Caslon Text', data: a.caslonText, weight: 400, style: 'normal' },
     ],
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
-  // Full-resolution color (4:4:4) keeps the white title and the Petal line crisp against the Plum scrim.
+  // Full-resolution color (4:4:4) keeps the serif edges crisp on the Blush panel.
   const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
   return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
 };
