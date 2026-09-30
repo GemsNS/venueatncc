@@ -7,7 +7,7 @@
  * screens hand navigation to the floating tab bar (TabBar.astro) and keep the centred lockup and a round
  * phone button. The breakpoints are in rem so that larger text switches to the compact layout sooner.
  * The brand is always the full lockup (brand.md): 36px tall, or 32px (the minimum) where the links need
- * the room (46.5rem to 64rem), where the demo pill also steps aside.
+ * the room (46.5rem to 70rem), where the demo pill also steps aside.
  *
  * Check Availability is the bar's one action (hig-web-spec.md, Glass nav bar). It is the filled primary
  * on every page but home, whose photo band already holds the page's primary button, the date checker's
@@ -204,6 +204,7 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
     color: var(--label);
     font-size: var(--t-subhead);
     font-weight: 500;
+    white-space: nowrap;
     opacity: 0.86;
     transition:
       opacity var(--dur-1) ease,
@@ -283,10 +284,11 @@ const ctaTone = path === '/' ? 'btn--tinted' : 'btn--filled';
   }
 
   /*
-    Regular but narrow (744px to 1023px at default text size): the lockup at its 32px minimum, tighter
-    links, the phone as an icon, and no demo pill, so the name, the four links, and the call to action fit.
+    Regular but narrow (744px to 1119px at default text size, a 1024px tablet included): the lockup at its
+    32px minimum, tighter links, the phone as an icon, and no demo pill, so the name, the four links, and
+    the call to action fit on one row.
   */
-  @media (46.5rem <= width < 64rem) {
+  @media (46.5rem <= width < 70rem) {
     .nav__inner {
       gap: 0.5rem;
     }
