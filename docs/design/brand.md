@@ -154,10 +154,10 @@ photo scrims, Berry for buttons and accents; neither is a large surface. Specifi
   has scrolled past; inner pages start with the solid bar. Links left, lockup centred, phone and Check
   Availability right; on phones a menu button opens the full-screen menu and the phone becomes a round icon
   button.
-- **Welcome surface (home):** Blush with petals; Plum name, Berry "@ NCC", Mauve serif "Welcome to", a Berry
-  eyebrow line.
-- **Footer:** Blush with a top hairline, the Plum statement in Caslon, the Plum-ink lockup, Mauve text, and
-  Berry links.
+- **Welcome surface (home, version 5):** the petals video under a Blush veil; Plum name, Berry "@ NCC", Mauve
+  serif "Welcome to", a Berry serif line, a filled Check Availability.
+- **Footer (version 5):** Plum, the one dark surface: Blush text, Pink column heads, white links, the white
+  lockup, a white Check Availability pill, and the large centred white statement in Caslon.
 - **Closing band (CtaBand) and the home rates band:** Petal with a top hairline, a Plum heading, a Mauve
   sentence, and the Berry button with a white label.
 - **Alternate sections:** Blush. **Quiet panels** (rental policies, checklists, the visit request): Petal.

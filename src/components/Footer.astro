@@ -1,10 +1,13 @@
 ---
 /**
  * The footer (redesign-spec.md, Footer): the site's one dark surface, Plum, in the shape of the reference's
- * footer. Row one: a two-line statement with Check Availability on the left and three link columns on the
- * right (Explore, Plan, Visit: the address with directions, the phone, the email, and the contact person,
- * the site's contact block). Row two: the very large centred serif statement (the brand line). Row three:
- * the white lockup and the legal line. Blush text on Plum is 12.8:1, Pink 7.3:1, white 14.2:1.
+ * footer. Row one: a one-line statement with Check Availability on the left and three link columns on the
+ * right (Explore: the main navigation; Plan: a visit and an inquiry, the two requests with no header link;
+ * Visit: the address with
+ * directions, the phone, the email, and the contact person, the site's contact block). Row two: the very
+ * large centred serif statement (the brand line). Row three: the white lockup and the legal line. The
+ * statement names the spaces only; what a booking includes is said on the home page and The Space
+ * (brand.md, "Redundancy rules"). Blush text on Plum is 12.8:1, Pink 7.3:1, white 14.2:1.
  */
 import Logo from './Logo.astro';
 import { site, cityState } from '../data/site';
@@ -27,9 +30,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
   <div class="container">
     <div class="footer__top">
       <div class="footer__intro">
-        <p class="footer__blurb">
-          Three spaces on one property in {cityState}: {hall}, The Main Hall, and {grove}, with tables, chairs, and parking included.
-        </p>
+        <p class="footer__blurb">Indoor and outdoor event rentals in {cityState}: {hall}, The Main Hall, and {grove}, on one property.</p>
         <a class="btn btn--light" href={href(book)}>Check Availability</a>
       </div>
 
@@ -44,7 +45,6 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
         <section class="footer__col" aria-labelledby="f-plan">
           <h2 id="f-plan" class="footer__head">Plan</h2>
           <ul>
-            <li><a href={href(book)}>Check availability</a></li>
             <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
             <li><a href={href(pricingHref)}>Send an inquiry</a></li>
           </ul>

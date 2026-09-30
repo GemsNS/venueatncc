@@ -123,7 +123,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         >
           <Fragment slot="actions">
             <a class="btn btn--filled" href={href('/the-space/')}>Explore The Space</a>
-            <a class="link-more" href={href(bookHref)}>Check Availability <Icon name="chevron-right" /></a>
+            <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
           </Fragment>
         </SectionHeading>
         <Carousel cols={3} label="The spaces">
@@ -165,7 +165,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       <div class="container">
         <SectionHeading id="events-heading" eyebrow="Occasions" heading="Events we host" lead={eventsWithPhotos ? EVENTS_STYLED_NOTE : undefined}>
           <Fragment slot="actions">
-            <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+            <a class="btn btn--outline" href={href('/events/')}>See All Events</a>
           </Fragment>
         </SectionHeading>
         {

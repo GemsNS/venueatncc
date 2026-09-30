@@ -71,8 +71,15 @@ const { items, label = 'Sections', class: className } = Astro.props;
 <style>
   .vtabs {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 2rem 4rem;
     align-items: start;
+  }
+
+  /* Neither column grows past its track: the phone row scrolls inside the gutter instead of widening the page. */
+  .vtabs__nav,
+  .vtabs__panels {
+    min-width: 0;
   }
 
   @media (min-width: 60rem) {
