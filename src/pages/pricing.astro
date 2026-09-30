@@ -43,7 +43,7 @@ const formPhoto: VenuePhoto | null = gazebo?.tall ? { ...gazebo, src: gazebo.tal
 const panels: { title: string; items: string[] }[] = [
   { title: 'What the rental includes', items: [...site.included] },
   { title: 'Holding your date', items: [site.depositPolicy] },
-  { title: 'Hours of operation', items: [site.access.days, site.access.hours, 'Closed on Sundays'] },
+  { title: 'Hours of operation', items: [site.access.days, site.access.hours] },
 ];
 ---
 <BaseLayout title={title} description={description} og="pricing" pageType="ContactPage">
