@@ -22,7 +22,7 @@
  *   Request a Visit action. Parking may appear as a checklist task.
  * - Each event states its own booking lead time once, in its section prose or in one FAQ.
  * - The one exception to both (redesign-spec.md, the event page hero): the hero's caption panel carries
- *   the event's spaces, the largest capacity among them, and the lead time as short facts, the way the
+ *   the event's spaces, the first space's capacity, and the lead time as short facts, the way the
  *   reference's venue page sums a venue up. `spaces` and `leadTime` below are layout data for that panel
  *   and the event cards; `leadTime` restates the lead time the event's own prose or FAQ gives, in the
  *   same words, and `spaces` lists the spaces its first section names, the most suitable first.
@@ -62,7 +62,7 @@ export interface EventType {
   related: string[];
   /**
    * The spaces the event's first section names, the most suitable first. The hero lists them as its
-   * descriptors and the event's largest capacity among them as a fact (layout data, see above).
+   * descriptors and the first one's capacity as a fact (layout data, see above).
    */
   spaces: SpaceId[];
   /** The booking lead time in the words the event's prose or FAQ uses, e.g. "Nine to twelve months". */

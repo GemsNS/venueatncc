@@ -64,11 +64,11 @@ const PHONE = site.contact.phone;
 const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
-/* The hero's caption: the spaces the event uses as descriptors, the largest capacity among them, the lead time. */
+/* The hero's caption: the spaces the event uses as descriptors, the first (most suitable) space's capacity, the lead time. */
 const spaces = event.spaces.map((id) => site.spaces.find((s) => s.id === id)).filter((s) => s !== undefined);
-const capacity = Math.max(...spaces.map((s) => s.capacity));
+const capacity = spaces[0]?.capacity;
 const facts = [
-  { label: 'Capacity', value: `Up to ${capacity} guests` },
+  ...(capacity ? [{ label: 'Capacity', value: `Up to ${capacity} guests` }] : []),
   { label: 'Booking lead time', value: event.leadTime },
 ];
 
