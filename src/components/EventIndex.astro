@@ -75,7 +75,7 @@ const keepAmp = (name: string) => name.replace(/ & /g, ' & ');
               aria-labelledby={nameId}
               aria-describedby={`${nameId}-summary`}
             >
-              {photo && <Photo photo={photo} rounded={false} sizes={sizes} caption={false} class="event-card__photo" />}
+              {photo && <Photo photo={photo} rounded={false} sizes={sizes} caption={false} zoom={false} class="event-card__photo" />}
               <div class="event-card__body">
                 <Heading id={nameId} class="event-card__name t-title-3">
                   {keepAmp(e.name)}

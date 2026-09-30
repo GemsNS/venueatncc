@@ -65,6 +65,7 @@ const schema = [
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
 const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
+const drivewayPetals = photoByName('styled-driveway-petals');
 ---
 <BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
   <section class="ev-hero">
@@ -107,6 +108,7 @@ const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
           event.slug === 'weddings' && indoorCeremony && (
             <figure class="ev-indoor">
               <Photo photo={indoorCeremony} ratio="3 / 2" caption="An indoor ceremony in The Main Hall. Styled concept; décor is not included." sizes="(min-width: 64rem) 640px, 92vw" />
+              {drivewayPetals && <Photo photo={drivewayPetals} ratio="3 / 2" caption="Arrival on your wedding day. Styled concept; décor is not included." sizes="(min-width: 64rem) 640px, 92vw" />}
             </figure>
           )
         }
@@ -214,6 +216,8 @@ const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
   }
 
   .ev-indoor {
+    display: grid;
+    gap: 1.75rem;
     margin: 2.25rem 0 0;
   }
 

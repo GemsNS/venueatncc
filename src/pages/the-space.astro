@@ -59,7 +59,6 @@ const photosNamed = (...names: string[]) => names.map((n) => photoByName(n)).fil
  * entry beside the full view of the lot. Both grounds photos look up the drive, so the building shows small
  * in each, as the end of the drive.
  */
-const PAIR_CROPS: Record<string, string> = { 'approach-dusk': '0% 50%' };
 
 interface Row {
   label: string;
@@ -185,7 +184,7 @@ const gallerySchema =
                   ratio="3 / 2"
                   caption={h.caption}
                   class="sp-hero__photo"
-                  sizes={i === 0 ? '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 94vw' : '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 47vw'}
+                  sizes={i === 0 ? '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 94vw' : '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 94vw'}
                 />
               </li>
             ))}
@@ -214,8 +213,9 @@ const gallerySchema =
                     const pair = s.photos.length === 2;
                     const lead = !pair && i === 0;
                     const sizes = lead ? LEAD_SIZES : SMALL_SIZES;
-                    const ratio = pair ? '4 / 5' : '3 / 2';
-                    const crop = pair ? PAIR_CROPS[p.name] : undefined;
+                    // Every photo keeps its own 3:2 shape, so nothing is cropped away.
+                    const ratio = '3 / 2';
+                    const crop = undefined;
                     return (
                       <li class:list={['sp-gallery__item', { 'sp-gallery__lead': lead }]}>
                         <Photo photo={p} caption ratio={ratio} crop={crop} sizes={sizes} />
@@ -327,22 +327,11 @@ const gallerySchema =
     list-style: none;
   }
 
-  /*
-    Phones: three 3:2 frames side by side would be slivers, so the first space runs full width and the
-    other two sit below it as a pair of portraits.
-  */
+  /* Phones: the three spaces stack full width, each at its own 3:2 shape, so no photo is cropped. */
   @media (width < 36rem) {
     .sp-hero__set {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.25rem 0.75rem;
-    }
-
-    .sp-hero__first {
-      grid-column: 1 / -1;
-    }
-
-    .sp-hero li:not(.sp-hero__first) :global(.sp-hero__photo .photo__frame) {
-      aspect-ratio: 4 / 5;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
     }
   }
 

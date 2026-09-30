@@ -31,6 +31,8 @@ interface Props {
   badge?: string;
   /** CSS object-position for this frame, e.g. '85% 50%'. Overrides the photo's own crop. */
   crop?: string;
+  /** Tap or click to see the whole photo, uncropped, in a full-screen viewer. Off inside links and the hero. */
+  zoom?: boolean;
 }
 
 const {
@@ -44,6 +46,7 @@ const {
   caption,
   badge,
   crop = photo.crop,
+  zoom = ratio !== 'fill',
 } = Astro.props;
 
 const isStyled = photo.styledOf !== undefined;
@@ -75,6 +78,8 @@ const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
 // The portrait file fills the frame on phones, so it is as wide as the screen there.
 const tallSizes = '100vw';
 const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: ${crop}` : ''].filter(Boolean).join('; ');
+// The viewer shows the whole landscape file, uncropped, at up to 2400px wide.
+const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.width, 2400), format: 'webp' }) : null;
 ---
 <figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
   <div class="photo__frame">
@@ -102,10 +107,214 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
       />
     </picture>
     {badgeText && <span class="photo__badge">{badgeText}</span>}
+    {
+      full && (
+        <button
+          type="button"
+          class="photo__zoom"
+          data-zoom-src={full.src}
+          data-zoom-alt={photo.alt}
+          data-zoom-caption={captionText ?? (badgeText ? `${badgeText}. Décor is not included.` : '')}
+          aria-label={`Enlarge photo: ${photo.alt}`}
+        >
+          <svg class="photo__zoom-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" /></svg>
+        </button>
+      )
+    }
     <slot />
   </div>
   {captionText && <figcaption class="photo__caption">{captionText}</figcaption>}
 </figure>
+
+<script>
+  // One full-screen viewer for every enlargeable photo on the page: the whole photo, uncropped.
+  const buttons = () => [...document.querySelectorAll<HTMLButtonElement>('.photo__zoom')];
+  let dialog: HTMLDialogElement | null = null;
+  let index = 0;
+  let opener: HTMLElement | null = null;
+
+  function build(): HTMLDialogElement {
+    const d = document.createElement('dialog');
+    d.className = 'lightbox';
+    d.setAttribute('aria-label', 'Photo viewer');
+    d.innerHTML = `
+      <figure class="lightbox__figure">
+        <img class="lightbox__img" alt="" />
+        <figcaption class="lightbox__caption"></figcaption>
+      </figure>
+      <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__next" aria-label="Next photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>`;
+    document.body.append(d);
+    d.querySelector('.lightbox__close')!.addEventListener('click', () => d.close());
+    d.querySelector('.lightbox__prev')!.addEventListener('click', () => show(index - 1));
+    d.querySelector('.lightbox__next')!.addEventListener('click', () => show(index + 1));
+    // A tap on the dark backdrop (outside the photo) closes the viewer.
+    d.addEventListener('click', (e) => {
+      if (e.target === d) d.close();
+    });
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      if (e.key === 'ArrowRight') show(index + 1);
+    });
+    d.addEventListener('close', () => {
+      document.documentElement.classList.remove('lightbox-open');
+      opener?.focus();
+    });
+    // Swipe left or right on phones.
+    let x0: number | null = null;
+    d.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
+    d.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+    return d;
+  }
+
+  function show(i: number) {
+    const list = buttons();
+    if (!dialog || list.length === 0) return;
+    index = (i + list.length) % list.length;
+    const b = list[index];
+    const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
+    img.src = b.dataset.zoomSrc ?? '';
+    img.alt = b.dataset.zoomAlt ?? '';
+    const cap = dialog.querySelector<HTMLElement>('.lightbox__caption')!;
+    cap.textContent = b.dataset.zoomCaption ?? '';
+    cap.hidden = !cap.textContent;
+    const many = list.length > 1;
+    dialog.querySelectorAll<HTMLElement>('.lightbox__prev, .lightbox__next').forEach((el) => (el.hidden = !many));
+  }
+
+  document.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.photo__zoom');
+    if (!b) return;
+    e.preventDefault();
+    dialog ??= build();
+    opener = b;
+    show(buttons().indexOf(b));
+    document.documentElement.classList.add('lightbox-open');
+    dialog.showModal();
+    dialog.querySelector<HTMLElement>('.lightbox__close')!.focus();
+  });
+</script>
+
+<style is:global>
+  .lightbox {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    border: 0;
+    background: rgb(1 26 46 / 0.94);
+    color: #fff;
+  }
+
+  .lightbox::backdrop {
+    background: rgb(1 26 46 / 0.6);
+  }
+
+  html.lightbox-open {
+    overflow: hidden;
+  }
+
+  .lightbox__figure {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.75rem;
+    height: 100%;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  /* The whole photo, never cropped: it fits inside the screen at its own shape. */
+  .lightbox__img {
+    display: block;
+    max-width: min(100%, 1600px);
+    max-height: calc(100dvh - 7rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    pointer-events: auto;
+  }
+
+  .lightbox__caption {
+    max-width: 44rem;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    color: rgb(255 255 255 / 0.9);
+  }
+
+  .lightbox__btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.16);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .lightbox__btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .lightbox__btn:hover {
+    background: rgb(255 255 255 / 0.28);
+  }
+
+  .lightbox__btn:focus-visible {
+    outline: 3px solid #89c2d9;
+    outline-offset: 2px;
+  }
+
+  .lightbox__close {
+    top: max(1rem, env(safe-area-inset-top));
+    right: 1rem;
+  }
+
+  .lightbox__prev,
+  .lightbox__next {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .lightbox__prev {
+    left: 1rem;
+  }
+
+  .lightbox__next {
+    right: 1rem;
+  }
+
+  /* Phones: arrows sit at the bottom so they never cover the photo. */
+  @media (width < 46.5rem) {
+    .lightbox__prev,
+    .lightbox__next {
+      top: auto;
+      bottom: max(1rem, env(safe-area-inset-bottom));
+      transform: none;
+    }
+  }
+</style>
 
 <style>
   .photo {
@@ -200,6 +409,44 @@ const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: $
       backdrop-filter: none;
       background: var(--badge-bg-solid);
     }
+  }
+
+  /* The whole frame is the tap target; a small glass button in the corner says it can be enlarged. */
+  .photo__zoom {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 0.75rem;
+    border: 0;
+    background: transparent;
+    cursor: zoom-in;
+  }
+
+  .photo__zoom-icon {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    border-radius: var(--r-full);
+    background: rgb(255 255 255 / 0.86);
+    color: var(--navy);
+    box-shadow: 0 1px 3px rgb(var(--navy-rgb) / 0.2);
+    opacity: 0.9;
+    transition: opacity var(--dur-1, 0.15s) ease, transform var(--dur-1, 0.15s) ease;
+  }
+
+  .photo__zoom:hover .photo__zoom-icon,
+  .photo__zoom:focus-visible .photo__zoom-icon {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  .photo__zoom:focus-visible {
+    outline: 3px solid var(--focus-ring, var(--accent));
+    outline-offset: -3px;
+    border-radius: inherit;
   }
 
   .photo__caption {

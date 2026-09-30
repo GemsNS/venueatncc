@@ -151,56 +151,62 @@ export const photoDetails: Record<string, PhotoDetail> = {
   // until all eight are in src/assets/venue/, none is shown (eventsStaged). styledOf is also the real photo
   // each event page hero shows meanwhile.
   'styled-event-weddings.jpg': {
-    alt: 'Styled concept: ceremony seating on the lawn facing the timber gazebo in The Grove, with an ivory aisle runner and ivory, peach, and eucalyptus florals',
+    alt: 'Styled concept: white chairs on the lawn facing the timber gazebo in The Grove, with a white aisle runner edged in pink and white rose petals and pink and white rose garlands and white drapes on the gazebo',
     styledOf: 'gazebo.jpg',
     event: 'weddings',
     space: 'grove',
   },
   'styled-event-receptions-banquets.jpg': {
-    alt: 'Styled concept: The Hall set for a banquet, with round tables in ivory linens, natural wood chairs, low ivory and peach centerpieces, and a head table under the arched windows',
+    alt: 'Styled concept: The Hall set for a reception, with round tables in white linens, clear chairs, tall pink and white rose centerpieces, and a white aisle lined with pink roses leading to a sweetheart table under the arched windows',
     styledOf: 'hall-windows.jpg',
     event: 'receptions-banquets',
     space: 'hall',
   },
   'styled-event-baby-bridal-showers.jpg': {
-    alt: 'Styled concept: The Hall set for a shower, with brunch tables and a dessert table by the fireplace wall',
+    alt: 'Styled concept: The Hall set for a shower, with round tables in white linens, tall pink and white floral centerpieces, and a dessert table with a pink tiered cake under a floral garland on the fireplace mantel',
     styledOf: 'hall-fireplace.jpg',
     event: 'baby-bridal-showers',
     space: 'hall',
   },
   'styled-event-birthday-parties.jpg': {
-    alt: 'Styled concept: The Hall set for a milestone dinner, with a long table lit with candles by the fireplace wall',
+    alt: 'Styled concept: The Hall set for a milestone dinner, with a long table in white linen, a runner of pink and white roses and peonies, taper candles, and a pink tiered cake by the fireplace wall',
     styledOf: 'hall-windows.jpg',
     event: 'birthday-parties',
     space: 'hall',
   },
   'styled-event-repasts-memorials.jpg': {
-    alt: 'Styled concept: The Hall set for a repast, with quiet round tables and a guest book table by the arched windows',
+    alt: 'Styled concept: The Hall set for a repast, with round tables in white linens, soft pink and white rose centerpieces with candles, and a guest book table by the double doors',
     styledOf: 'hall-doors.jpg',
     event: 'repasts-memorials',
     space: 'hall',
   },
   'styled-event-meetings-trainings.jpg': {
-    alt: 'Styled concept: The Hall set for a training, with classroom seating facing the wall-mounted screen',
+    alt: 'Styled concept: The Hall set for a workshop, with rows of tables in white linens in the middle of the room facing the wall-mounted screen, and pink and white rose centerpieces',
     styledOf: 'hall-doors.jpg',
     event: 'meetings-trainings',
     space: 'hall',
   },
   'styled-event-graduations-reunions.jpg': {
-    alt: 'Styled concept: the picnic tables in The Grove dressed in cream linens, with lanterns and string lights above the patio',
+    alt: 'Styled concept: the picnic tables in The Grove dressed in white with bright pink runners, lanterns, and jars of pink and white roses, with rose garlands on the gazebo and string lights above',
     styledOf: 'grove-tables.jpg',
     event: 'graduations-reunions',
     space: 'grove',
   },
   'styled-event-community-events.jpg': {
-    alt: 'Styled concept: round tables and a welcome table on the lawn near the path to the gazebo in The Grove',
+    alt: 'Styled concept: a community gathering in The Grove, with picnic tables in white and pink, rows of white chairs on the lawn, a welcome table with pink and white roses, and rose garlands on the gazebo',
     styledOf: 'grove-path.jpg',
     event: 'community-events',
   },
   // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white
   // runner): The Main Hall, staged.
+  // Arrival styled for a wedding day, shown on the weddings page.
+  'styled-driveway-petals.jpg': {
+    alt: 'Styled concept: the drive to the venue lined on both edges with bright pink and white rose petals and clusters of roses, leading to the building among tall pines',
+    styledOf: 'driveway.jpg',
+    space: 'grounds',
+  },
   'styled-wedding-indoor-ceremony.jpg': {
-    alt: 'Styled concept: a wedding ceremony in The Main Hall, with a white aisle runner between the rows of red chairs, pink roses on the row ends, and a white and pink floral wall and arch on the stage',
+    alt: 'Styled concept: a wedding ceremony in The Main Hall, with a white aisle runner between the rows of red chairs, pink and white roses on every row end, and a pink and white floral backdrop and arch on the stage',
     styledOf: 'main-hall.jpg',
     space: 'main',
   },
