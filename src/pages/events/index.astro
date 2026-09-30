@@ -1,18 +1,30 @@
 ---
 /**
- * The events index: the heading and one lead, then every event as a tile. The tiles are the page's
- * imagery, so the hero has no photo, and the venue's facts (capacities, parking, rates) are left to the
- * space cards, The Space, and the pricing page. While the event photos are staged (eventsStaged), one
- * line under the lead says what they show (docs/design/brand.md, "Photography").
+ * The events index (redesign-spec.md, "/events/"; the reference's venues index): a photo hero, then every
+ * event as a photo card in a grid, then the closing band.
+ *
+ * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
+ * staged set is complete (eventsStaged) the hero is the styled indoor ceremony (a wedding scene that is not
+ * any event's own tile, so all eight events can be cards without an image appearing twice on the page), with
+ * its Styled Concept badge and the styled note as its descriptor line, and each card is its event's staged
+ * photo with the badge. Without the staged set the hero shows the real photo the ceremony image is made from,
+ * with no badge or note, and the events are a list of links: eight events cannot map to eight distinct real
+ * photos.
+ *
+ * The venue's facts (capacities, parking, rates) are left to The Space and Rates; each card's line is the
+ * event's own one-line summary.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import EventIndex from '../../components/EventIndex.astro';
+import EventHero from './_EventHero.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import PhotoCard from '../../components/PhotoCard.astro';
 import CtaBand from '../../components/CtaBand.astro';
+import Icon from '../../components/Icon.astro';
 import { events } from '../../data/events';
-import { EVENTS_STYLED_NOTE, eventsStaged } from '../../data/photos';
+import { EVENTS_STYLED_NOTE, eventPhoto, eventsStaged, photoByName, realPhoto } from '../../data/photos';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
+import { href } from '../../lib/paths';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const mainHall = site.spaces.find((s) => s.id === 'main');
@@ -34,49 +46,117 @@ const itemList = {
     url: abs(`/events/${e.slug}/`),
   })),
 };
+
+/** The hero: the styled indoor ceremony while the set is staged, otherwise the real room it is made from. */
+const HERO_NAME = 'styled-wedding-indoor-ceremony';
+const styledHero = photoByName(HERO_NAME);
+const heroPhoto = eventsStaged ? styledHero : (realPhoto(styledHero) ?? eventPhoto(events[0].slug));
+
+/** The cards: every event with its staged photo; without the staged set, links only. */
+const cards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
+const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== undefined && c.photo.name !== heroPhoto?.name);
 ---
 <BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[breadcrumbs(crumbs), itemList]}>
-  <section class="page-hero">
+  {
+    heroPhoto && (
+      <EventHero
+        photo={heroPhoto}
+        id="events-title"
+        eyebrow="Events"
+        title="Weddings, celebrations, and gatherings in Suffolk"
+        descriptors={eventsStaged ? [EVENTS_STYLED_NOTE] : []}
+      />
+    )
+  }
+
+  <section class="section" aria-labelledby="occasions-heading">
     <div class="container">
-      <Breadcrumbs items={crumbs} />
-      <div class="page-hero__copy">
-        <h1 class="t-large-title">Weddings, celebrations, and gatherings in Suffolk</h1>
-        <p class="t-lead">Choose an occasion for a planning guide, the space that suits it, and a practical checklist.</p>
-        {eventsStaged && <p class="page-hero__note">{EVENTS_STYLED_NOTE}</p>}
-      </div>
+      <SectionHeading
+        id="occasions-heading"
+        eyebrow="Occasions"
+        heading="Every occasion we host"
+        lead="Each one has its own planning guide, the space that suits it, and a practical checklist."
+      />
+      {
+        withPhotos ? (
+          <ul class="ev-grid" aria-label="Events we host">
+            {cards.map(
+              (c) =>
+                c.photo && (
+                  <li>
+                    <PhotoCard
+                      photo={c.photo}
+                      label={c.event.name}
+                      meta={c.event.summary}
+                      href={`/events/${c.event.slug}/`}
+                      sizes="(min-width: 75rem) 410px, (min-width: 56rem) 31vw, (min-width: 36rem) 46vw, 100vw"
+                    />
+                  </li>
+                ),
+            )}
+          </ul>
+        ) : (
+          <ul class="ev-links" aria-label="Events we host">
+            {cards.map((c) => (
+              <li>
+                <a class="link-more" href={href(`/events/${c.event.slug}/`)}>
+                  {c.event.name} <Icon name="chevron-right" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
     </div>
   </section>
 
-  <section class="section section--grouped" aria-label="Events we host">
-    <div class="container">
-      <EventIndex headingLevel="h2" />
-    </div>
-  </section>
-
-  <CtaBand
-    heading="Planning something else?"
-    body="Describe it in your request, and we will confirm which space suits it."
-  />
+  <CtaBand heading="Planning something else?" body="Describe it in your request, and we will confirm which space suits it." />
 </BaseLayout>
 
 <style>
-  .page-hero {
-    padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4.5rem);
-  }
-
-  .page-hero__copy {
+  /*
+    The reference's venues grid: one card across on phones, two from 36rem, three from 56rem. Three is the
+    most that keeps a card about 400px wide at 1440, so a two-line name and its summary sit low in the frame
+    instead of covering the photo.
+  */
+  .ev-grid {
     display: grid;
-    gap: 1.25rem;
-    max-width: 48rem;
-    margin-top: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  /* Set like a photo caption: it describes the tiles below. */
-  .page-hero__note {
-    color: var(--label-2);
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.4;
+  .ev-grid li {
+    min-width: 0;
+  }
+
+  @media (min-width: 36rem) {
+    .ev-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .ev-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Without the staged set: the events as serif links in two columns. */
+  .ev-links {
+    display: grid;
+    gap: 0.25rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 36rem) {
+    .ev-links {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 </style>
