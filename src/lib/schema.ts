@@ -1,18 +1,17 @@
 /**
- * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts and
- * src/shared/pricing.ts, so a fact changed there changes the search-engine markup too.
+ * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts, so a fact changed
+ * there changes the search-engine markup too.
  * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall and The Grove. Structured
  * data never mentions alcohol or catering, and the venue is a stand-alone business with no parent
- * organization.
+ * organization. The venue does not publish prices, so no node carries priceRange, a price, or an
+ * OfferCatalog of rates.
  */
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
-import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 import type { SpaceChoice } from '../shared/types';
 
 const venueId = `${site.url}/#venue`;
 const websiteId = `${site.url}/#website`;
-const ratesId = `${site.url}/pricing/#rates`;
 
 /**
  * Share images that stand for the venue as a whole: the building at blue hour and The Hall.
@@ -34,8 +33,8 @@ export function offBrandPhrase(text: string): string | null {
 }
 
 /**
- * Catering is neutral copy, but brand.md allows it only in the pricing page's rental terms and the one FAQ
- * entry on /faq/. Structured data and llms.txt leave that entry out quietly; it is on-brand, not an error.
+ * Catering is neutral copy, but brand.md allows it only in the one FAQ entry on /faq/. Structured data and
+ * llms.txt leave that entry out quietly; it is on-brand, not an error.
  */
 export function mentionsCatering(text: string): boolean {
   return /\bcater/i.test(text);
@@ -88,7 +87,6 @@ const feature = (name: string, value: boolean | string = true) => ({
  * imageUrls are absolute URLs of real photos of the property; the venue's share images follow them.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {
-  const { fromHourly } = priceSummary();
   const data: Record<string, unknown> = {
     '@type': ['EventVenue', 'LocalBusiness'],
     '@id': venueId,
@@ -111,8 +109,6 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,
     maximumAttendeeCapacity: site.maxCapacity,
-    priceRange: `From ${formatUSD(fromHourly)} per hour`,
-    currenciesAccepted: pricing.currency,
     amenityFeature: [
       feature('On-site parking', site.policies.parkingIncluded),
       ...site.spaces.map((s) => feature(`${s.name}, up to ${s.capacity} guests`)),
@@ -187,9 +183,8 @@ export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
   };
 }
 
-/** An event type offered at the venue, modelled as a Service with a price hint. */
+/** An event type offered at the venue, modelled as a Service. It names no price: rates are quoted personally. */
 export function eventService(opts: { name: string; description: string; path: string; serviceType: string }) {
-  const { fromHourly } = priceSummary();
   const phrase = offBrandPhrase(opts.description);
   if (phrase) warnOnce(`[schema] The description of "${opts.name}" says "${phrase}", so its Service markup uses the venue description. Rewrite it to follow docs/design/brand.md.`);
   return {
@@ -201,74 +196,7 @@ export function eventService(opts: { name: string; description: string; path: st
     url: abs(opts.path),
     provider: { '@id': venueId },
     areaServed: areaServed(),
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: pricing.currency,
-      priceSpecification: {
-        '@type': 'UnitPriceSpecification',
-        price: fromHourly,
-        priceCurrency: pricing.currency,
-        unitText: 'hour',
-        description: `Venue rental from ${formatUSD(fromHourly)} per hour`,
-      },
-      url: abs('/book/'),
-    },
   };
-}
-
-/**
- * The rate card as an OfferCatalog, for the pricing page: hourly rates, packages, and the cleaning fee.
- * Pair it with venueRates() so the venue node points at the catalog.
- */
-export function rateCatalog() {
-  const offeredBy = { '@id': venueId };
-  const hourly = (Object.keys(pricing.hourly) as (keyof typeof pricing.hourly)[]).flatMap((space) =>
-    (Object.keys(pricing.hourly[space]) as (keyof (typeof pricing.hourly)['indoor'])[]).map((day) => ({
-      '@type': 'Offer',
-      name: `${spaceName(space)}, ${pricing.dayTypes[day].label}`,
-      priceCurrency: pricing.currency,
-      offeredBy,
-      priceSpecification: {
-        '@type': 'UnitPriceSpecification',
-        price: pricing.hourly[space][day],
-        priceCurrency: pricing.currency,
-        unitText: 'hour',
-      },
-    })),
-  );
-  const packages = pricing.packages.map((p) => ({
-    '@type': 'Offer',
-    name: p.name,
-    description: p.description ?? `${p.hours} hours in ${spaceName(p.space)}${p.dayType === 'any' ? '' : ` (${pricing.dayTypes[p.dayType].label})`}.`,
-    price: p.price,
-    priceCurrency: pricing.currency,
-    offeredBy,
-    eligibleDuration: { '@type': 'QuantitativeValue', value: p.hours, unitCode: 'HUR' },
-  }));
-  const fees =
-    pricing.fees.cleaning > 0
-      ? [
-          {
-            '@type': 'Offer',
-            name: 'Cleaning fee',
-            description: 'Per event, added to every booking.',
-            price: pricing.fees.cleaning,
-            priceCurrency: pricing.currency,
-            offeredBy,
-          },
-        ]
-      : [];
-  return {
-    '@type': 'OfferCatalog',
-    '@id': ratesId,
-    name: `${site.name} rental rates`,
-    itemListElement: [...hourly, ...packages, ...fees],
-  };
-}
-
-/** Links the venue node (emitted by the layout) to the rate catalog on the pricing page. Merged by @id. */
-export function venueRates() {
-  return { '@id': venueId, hasOfferCatalog: { '@id': ratesId } };
 }
 
 /** Wrap several nodes in one @graph document. */

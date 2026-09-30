@@ -1,8 +1,11 @@
 /**
  * Email templates: table-based HTML with inline styles (renders in Gmail, Outlook, Apple Mail),
- * plus a plain-text version of each. Facts come from src/data/site.ts; prices from the stored
- * estimate, read as estimate() wrote them: bookingDeposit is due to reserve the date and the
- * rest (total minus bookingDeposit) is the balance.
+ * plus a plain-text version of each. Facts come from src/data/site.ts.
+ *
+ * The venue does not publish prices: the guest email carries no amounts, only that we confirm
+ * availability and send the quote personally. The team email alone lists the stored rate-card
+ * figure, labelled "Internal rate-card guide", read as estimate() wrote it: bookingDeposit is due to
+ * reserve the date and the rest (total minus bookingDeposit) is the balance.
  *
  * Brand (docs/design/brand.md): the email lockup as a PNG header on white (many clients do not
  * render SVG), a thin Steel rule, Georgia for headings in place of Caslon, the system sans
@@ -95,8 +98,9 @@ export function dialable(phone: string): string {
 }
 
 /**
- * The money rows under an estimate. estimate() already sets bookingDeposit to the whole total
- * when the event is inside the balance window, so these rows only read it, never recompute it.
+ * The money rows under the team email's internal rate-card guide. estimate() already sets
+ * bookingDeposit to the whole total when the event is inside the balance window, so these rows only
+ * read it, never recompute it. Never used in the guest email.
  */
 export function paymentRows(est: Estimate): [string, string][] {
   const balance = Math.max(0, est.total - est.bookingDeposit);
@@ -106,13 +110,8 @@ export function paymentRows(est: Estimate): [string, string][] {
   return rows;
 }
 
-/** The last step in the guest email, in the site's wording: we confirm availability, then the deposit reserves the date. */
-export function reserveStep(est: Estimate): string {
-  const full = est.total > 0 && est.bookingDeposit >= est.total;
-  return full
-    ? `We confirm availability, then your payment of ${formatUSD(est.bookingDeposit)}, the full amount, reserves the date.`
-    : `We confirm availability, then your booking deposit of ${formatUSD(est.bookingDeposit)} reserves the date.`;
-}
+/** The last step in the guest email, in the site's wording. It names no amount. */
+export const RESERVE_STEP = 'We confirm availability and send your quote personally. Your booking deposit then reserves the date.';
 
 // ---------------------------------------------------------------- HTML building blocks
 
@@ -282,7 +281,8 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     detailTable(contactHtml),
     i.message ? sectionTitle('Message') : '',
     i.message ? paragraph(multiline(i.message)) : '',
-    sectionTitle('Estimate shown to the guest'),
+    sectionTitle('Internal rate-card guide'),
+    paragraph(`<span style="color:${SLATE};font-size:14px;">For the team only. The guest was not shown an amount.</span>`),
     estimateTable(est),
     bulletList(est.notes),
     button(`${ctx.origin}/admin/`, 'Open Admin'),
@@ -302,7 +302,8 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     // The guest's own words, indented so no line can pass for one of ours.
     ...(i.message ? ['', textHeading('Message'), `    ${continued(i.message)}`] : []),
     '',
-    textHeading('Estimate shown to the guest'),
+    textHeading('Internal rate-card guide'),
+    'For the team only. The guest was not shown an amount.',
     estimateText(est),
     ...est.notes.map((n) => `* ${n}`),
     '',
@@ -319,17 +320,18 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
 }
 
 /**
- * To the guest: reference, summary, estimate, deposit, and what happens next. The form sends
- * this to whatever address was typed in, so it repeats nothing the sender wrote: no name, and
- * the event type only as named in our own list.
+ * To the guest: reference, summary, and what happens next. It names no price, deposit amount, or
+ * discount: we confirm availability and send the quote personally. The form sends this to whatever
+ * address was typed in, so it repeats nothing the sender wrote: no name, and the event type only as
+ * named in our own list. The estimate argument is accepted for the caller's convenience and not shown.
  */
-export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailContext): RenderedEmail {
+export function guestConfirmationEmail(i: Inquiry, _est: Estimate, ctx: EmailContext): RenderedEmail {
   const subject = `Your request to ${site.name} (${i.reference})`;
   const how = CONTACT_HOW[i.contactPreference];
   const steps = [
     `${site.contact.contactName} from our team will contact you by ${how} about your date and details.`,
     ...(i.wantsVisit ? ['We will find a time for your visit to see the space.'] : []),
-    reserveStep(est),
+    RESERVE_STEP,
   ];
   // The steps below say who confirms and how, so the intro does not.
   const intro = `We received your request for ${formatLong(i.date)}. Your date is not reserved yet.`;
@@ -342,9 +344,6 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     paragraph(`<span style="color:${SLATE};font-size:14px;">Mention this reference when you call or write to us.</span>`),
     sectionTitle('Your request'),
     detailTable(eventRows(i, 'guest').map(([k, v]) => [k, escapeHtml(v)])),
-    sectionTitle('Your estimate'),
-    estimateTable(est),
-    bulletList(est.notes),
     sectionTitle('What happens next'),
     `<tr><td style="padding:0 0 8px 0;font-size:16px;line-height:24px;color:${NAVY};"><ol style="margin:0;padding:0 0 0 22px;">${steps
       .map((s) => `<li style="margin:0 0 8px 0;">${escapeHtml(s)}</li>`)
@@ -365,10 +364,6 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     textHeading('Your request'),
     textRows(eventRows(i, 'guest')),
     '',
-    textHeading('Your estimate'),
-    estimateText(est),
-    ...est.notes.map((n) => `* ${n}`),
-    '',
     textHeading('What happens next'),
     ...steps.map((s, n) => `${n + 1}. ${s}`),
     '',
@@ -380,7 +375,7 @@ export function guestConfirmationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
 
   return {
     subject,
-    html: layout({ preheader: `Reference ${i.reference}. Here is your estimate and what happens next.`, body, origin: ctx.origin }),
+    html: layout({ preheader: `Reference ${i.reference}. Here is your request and what happens next.`, body, origin: ctx.origin }),
     text,
   };
 }

@@ -6,7 +6,8 @@
  * the photos show (docs/design/brand.md, Photography).
  *
  * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, parking in
- * the grounds Parking row, the visit request in the visit panel. Booking is the header CTA and the closing
+ * the grounds Parking row, the visit request in the visit panel. The venue does not publish prices, so each
+ * space's Rates row links to /pricing/ (Ask about rates) instead of naming an amount. Booking is the header CTA and the closing
  * band, the page's one filled button; the address and phone are in the footer.
  */
 import { getImage } from 'astro:assets';
@@ -17,8 +18,7 @@ import Icon from '../components/Icon.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
 import { photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { bookHref } from '../data/nav';
-import { pricing, formatUSD } from '../shared/pricing';
+import { bookHref, pricingHref } from '../data/nav';
 import { breadcrumbs, abs } from '../lib/schema';
 import { href, withoutBase } from '../lib/paths';
 
@@ -53,13 +53,15 @@ const photosNamed = (...names: string[]) => names.map((n) => photoByName(n)).fil
  */
 const PAIR_CROPS: Record<string, string> = { 'approach-dusk': '0% 50%' };
 
-/** The lowest hourly rate for a space, from the rate card. */
-const fromRate = (id: 'indoor' | 'outdoor') => formatUSD(Math.min(...Object.values(pricing.hourly[id])));
-
 interface Row {
   label: string;
   value: string;
+  /** A base-relative path: the value is shown as a link to it. */
+  href?: string;
 }
+
+/** Rates are quoted personally, so the row links to the inquiry page instead of naming an amount. */
+const ratesRow: Row = { label: 'Rates', value: 'Ask about rates', href: pricingHref };
 
 interface Section {
   id: string;
@@ -82,7 +84,7 @@ const sections: Section[] = [
     rows: [
       { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
       { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
-      { label: 'Rates', value: `From ${fromRate('indoor')} an hour` },
+      ratesRow,
     ],
     photos: photosNamed('hall-doors'),
     flip: false,
@@ -95,7 +97,7 @@ const sections: Section[] = [
     rows: [
       { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
       { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a patio, open lawn, and paths' },
-      { label: 'Rates', value: `From ${fromRate('outdoor')} an hour` },
+      ratesRow,
     ],
     photos: photosNamed('gazebo', 'grove-path'),
     flip: true,
@@ -196,7 +198,7 @@ const gallerySchema =
                 {s.rows.map((r) => (
                   <div>
                     <dt>{r.label}</dt>
-                    <dd>{r.value}</dd>
+                    <dd>{r.href ? <a class="sp-spec__link" href={href(r.href)}>{r.value}</a> : r.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -230,7 +232,7 @@ const gallerySchema =
     </div>
   </section>
 
-  <CtaBand />
+  <CtaBand body="Choose a date and a space and send your request in about two minutes. We confirm availability and send your quote personally." />
 </BaseLayout>
 
 <style>
@@ -366,6 +368,16 @@ const gallerySchema =
   .sp-spec dd {
     margin: 0;
     color: var(--label);
+  }
+
+  /* A 44px target that keeps the row the height of its neighbours. */
+  .sp-spec__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -10px;
+    color: var(--accent-text);
+    font-weight: 500;
   }
 
   .sp-view {

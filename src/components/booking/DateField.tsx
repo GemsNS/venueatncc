@@ -1,5 +1,5 @@
 /**
- * A date field for the home page date checker and the price estimator (HIG pickers: a compact
+ * A date field for the home page date checker and other booking forms (HIG pickers: a compact
  * control that shows the date and opens a calendar in a popover).
  *
  * The field is a button styled like a text field. It reads "Choose a date" until a date is chosen,

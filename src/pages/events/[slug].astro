@@ -9,8 +9,9 @@
  * event's real photo, with no badge and no caption. No image appears twice on a page: the related tiles
  * show other events' staged photos, or no photos at all while the set is incomplete.
  *
- * Facts that are the same for every event (rates, packages, deposits, fees, payments, parking, visits)
- * live on the pricing page and /faq/. This page links to them in one line instead of repeating them.
+ * Facts that are the same for every event (rates, deposits, payments, parking, visits) live on /pricing/
+ * (rates by inquiry, since the venue does not publish prices) and /faq/. This page links to them in one
+ * line instead of repeating them.
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -110,8 +111,8 @@ const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
           )
         }
         <p class="ev-shared">
-          Every event books from one rate card: the <a href={href(pricingHref)}>pricing page</a> gives an instant estimate for your
-          date, and the <a href={href('/faq/')}>FAQ</a> covers payments, parking, and visits.
+          Rates vary with the season, holidays, and the day of the week, so we quote each event personally:
+          <a href={href(pricingHref)}>ask about rates</a>. The <a href={href('/faq/')}>FAQ</a> covers payments, parking, and visits.
         </p>
       </article>
 
@@ -160,7 +161,7 @@ const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
     )
   }
 
-  <CtaBand body="Choose a date and a space, see an instant estimate, and send your request in about two minutes." bookHref={eventBookPath} />
+  <CtaBand body="Choose a date and a space and send your request in about two minutes. We confirm availability and send your quote personally." bookHref={eventBookPath} />
 </BaseLayout>
 
 <style>

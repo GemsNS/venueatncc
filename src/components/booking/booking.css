@@ -1,5 +1,5 @@
 /*
-  Booking islands: wizard, date checker, price estimator.
+  Booking islands: the wizard and the date checker.
   Built on the brand tokens and utilities in src/styles/global.css (docs/design/brand.md) and the
   interaction rules of the HIG web spec (docs/design/hig-web-spec.md).
 
@@ -13,8 +13,8 @@
                                  text keeps 4.6:1 on it. Dark mode uses translucent Mist.
     Ice chip, Navy label         a finished step in the progress list (9.4:1).
   Status uses green and orange with an icon or text. Glass appears only on the phone action bar
-  (a control layer). Headings and controls use the interface family; large prices use Libre Caslon
-  Text and the confirmation title Libre Caslon Display.
+  (a control layer). Headings and controls use the interface family; the confirmation title uses
+  Libre Caslon Display.
   Radii are concentric: inner radius = outer radius - inset.
 */
 
@@ -119,18 +119,6 @@
 @media (pointer: coarse) {
   .bk-seg .segmented__item {
     min-height: 44px;
-  }
-}
-
-@media (max-width: 479.98px) {
-  .bk-seg--days {
-    grid-auto-columns: auto;
-  }
-
-  .bk-seg--days .segmented__item {
-    padding: 0 0.45rem;
-    font-size: var(--t-footnote);
-    white-space: nowrap;
   }
 }
 
@@ -558,133 +546,6 @@
   gap: 6px;
 }
 
-/* ---------- Estimate breakdown ---------- */
-
-.bk-est {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-}
-
-.bk-est__lines {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--t-subhead);
-}
-
-/*
-  A label and its amount share a row. When even the label's longest word and the amount cannot fit side
-  by side (200% text on a phone), the amount drops under the label, still at the right edge.
-*/
-.bk-est__line,
-.bk-est__total,
-.bk-est__payrow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 2px 16px;
-}
-
-.bk-est__line > :first-child,
-.bk-est__total > :first-child,
-.bk-est__payrow > :first-child {
-  flex: 1 1 0;
-}
-
-.bk-est__line > :last-child,
-.bk-est__total > :last-child,
-.bk-est__payrow > :last-child {
-  margin-left: auto;
-}
-
-.bk-est__label {
-  color: var(--label-2);
-}
-
-.bk-est__amt {
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* The minus sign already says it is a discount, so the amount stays in the text color. */
-.bk-est__line[data-kind='discount'] .bk-est__amt {
-  color: var(--label);
-}
-
-.bk-est__total {
-  padding-top: 12px;
-  border-top: 1px solid var(--separator);
-  font-weight: 600;
-}
-
-/* Large prices are set in Libre Caslon Text, regular weight (brand.md). */
-.bk-est__total-amt {
-  font-family: var(--font-serif);
-  font-size: var(--t-title-2);
-  font-weight: 400;
-  font-synthesis: none;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  white-space: nowrap;
-}
-
-.bk-est__rule {
-  margin: 0;
-  border: 0;
-  border-top: 1px solid var(--separator);
-}
-
-.bk-est__pay {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: var(--r-sm);
-  background: var(--fill-3);
-  font-size: var(--t-subhead);
-}
-
-.bk-est__pay dt {
-  color: var(--label-2);
-}
-
-.bk-est__pay dd {
-  margin: 0;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* The refundable deposit: its own quiet box under the payment rows, outlined rather than filled. */
-.bk-est__pay--aside {
-  margin-top: 8px;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--separator);
-}
-
-.bk-est__pay--aside dd {
-  font-weight: 500;
-  color: var(--label-2);
-}
-
-.bk-est__sub {
-  display: block;
-  font-size: var(--t-footnote);
-  color: var(--label-3);
-}
-
-.bk-est__notes {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding-left: 1.1rem;
-  font-size: var(--t-footnote);
-  color: var(--label-2);
-}
-
 /* ---------- Wizard layout ---------- */
 
 .bk-app {
@@ -771,9 +632,9 @@ body:not(:has(.tabbar)) .bk-actions {
   color: var(--label-2);
 }
 
-.bk-actions__amt {
+.bk-actions__val {
   font-size: var(--t-headline);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bk-actions__none {
@@ -1630,7 +1491,7 @@ button.bk-progress__item:hover {
   text-align: right;
 }
 
-.bk-summary__empty {
+.bk-summary__note {
   font-size: var(--t-subhead);
   color: var(--label-2);
 }
@@ -1727,29 +1588,6 @@ button.bk-progress__item:hover {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
-}
-
-.bk-details {
-  margin-top: 4px;
-}
-
-.bk-details summary {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: var(--r-sm);
-  color: var(--accent-text);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.bk-details[open] summary {
-  margin-bottom: 8px;
-}
-
-.bk-details .bk-est {
-  padding: 0 16px;
 }
 
 .bk-next {
@@ -2065,8 +1903,7 @@ html:not(.js) .bk-skel {
   cursor: pointer;
 }
 
-.bk-dc__cta,
-.bk-pe__cta {
+.bk-dc__cta {
   width: 100%;
 }
 
@@ -2077,7 +1914,6 @@ html:not(.js) .bk-skel {
 */
 @media (width < 20rem) {
   .bk-dc__cta .icon,
-  .bk-pe__cta .icon,
   .bk-datefield__icon {
     display: none;
   }
@@ -2205,102 +2041,6 @@ html:not(.js) .bk-skel {
   }
 }
 
-/* ---------- Price estimator ---------- */
-
-.bk-pe {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-}
-
-.bk-pe__controls,
-.bk-pe__result {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  gap: 22px;
-  padding: 20px;
-  border-radius: var(--r-xl);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-2), var(--bk-card-edge);
-}
-
-.bk-pe__result {
-  gap: 16px;
-}
-
-/* Placed inside a page card, controls and result are that card's content, split by a hairline. */
-.card .bk-pe__controls,
-.card .bk-pe__result {
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.card .bk-pe__result {
-  padding-top: 24px;
-  border-top: 1px solid var(--separator);
-}
-
-.bk-pe__headline {
-  display: grid;
-  gap: 2px;
-}
-
-.bk-pe__title {
-  font-size: var(--t-headline);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.bk-pe__meta {
-  font-size: var(--t-subhead);
-  color: var(--label-2);
-}
-
-.bk-pe__big {
-  margin-top: 6px;
-  font-family: var(--font-serif);
-  font-size: var(--t-large-title);
-  font-weight: 400;
-  font-synthesis: none;
-  letter-spacing: -0.015em;
-  line-height: 1.05;
-}
-
-/* The label sits over the field, so the field keeps one width whether it is empty or holds a date. */
-.bk-pe__date {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.bk-pe .field {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-@media (min-width: 900px) {
-  .bk-pe {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-    align-items: start;
-    gap: clamp(28px, 3vw, 48px);
-  }
-
-  .bk-pe__result {
-    position: sticky;
-    top: calc(var(--nav-h) + 24px);
-  }
-
-  .card .bk-pe__result {
-    padding-top: 0;
-    padding-left: clamp(28px, 3vw, 48px);
-    border-top: 0;
-    border-left: 1px solid var(--separator);
-  }
-}
-
 /* ---------- Windows High Contrast and other forced colors ---------- */
 
 @media (forced-colors: active) {
@@ -2340,19 +2080,6 @@ html:not(.js) .bk-skel {
 /* ---------- Narrow screens and large text ----------
    rem-based queries trigger sooner as text grows, so these also cover 200% text on phones. */
 
-@media (width < 22.5rem) {
-  .bk-seg--days {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-radius: var(--r-md);
-  }
-
-  .bk-seg--days .segmented__item {
-    border-radius: var(--r-sm);
-    white-space: normal;
-  }
-}
-
 @media (width < 22rem) {
   .bk-dc__spaces {
     grid-template-columns: minmax(0, 1fr);
@@ -2360,8 +2087,7 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__space-name,
-.bk-dc__space-status,
-.bk-pe__controls label {
+.bk-dc__space-status {
   overflow-wrap: anywhere;
 }
 
@@ -2372,7 +2098,7 @@ html:not(.js) .bk-skel {
   }
 }
 
-/* 200% text on phones: Back and the estimate share a row, and Next spans the row below. */
+/* 200% text on phones: Back and the chosen date share a row, and Next spans the row below. */
 @media (width < 20rem) {
   .bk-actions__inner {
     border-radius: var(--r-xl);
@@ -2385,26 +2111,6 @@ html:not(.js) .bk-skel {
 
   .bk-actions__back {
     padding-inline: 0.6rem;
-  }
-}
-
-@media (width < 24rem) {
-  .bk-pe .segmented:not(.bk-seg--days) {
-    display: grid;
-    width: 100%;
-    grid-auto-flow: row;
-    border-radius: var(--r-md);
-  }
-
-  .bk-pe .segmented:not(.bk-seg--days) .segmented__item {
-    border-radius: var(--r-sm);
-  }
-}
-
-/* 200% text on phones: day choices take one column so long names never push the page sideways. */
-@media (width < 20rem) {
-  .bk-seg--days {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

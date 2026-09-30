@@ -7,32 +7,29 @@
  *   second person for guidance. No exclamation marks, no em or en dashes, no parentheses where a
  *   sentence works. Headings in sentence case.
  * - Never mention alcohol or drinks of any kind, and never mention catering, menus, kitchens, or
- *   bringing your own anything. Catering appears only on the pricing page and in one FAQ entry.
+ *   bringing your own anything. Catering appears only in one FAQ entry on /faq/.
  * - The venue is a stand-alone business (brand.md, "Separation"): no copy connects it to a church. A
- *   client's own congregation or clergy may be mentioned, and a rate that names churches as customers
- *   is fine.
+ *   client's own congregation or clergy may be mentioned.
  * - Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark
  *   wood-look floors, recessed lighting, double doors. The Grove: a timber gazebo, open lawn, picnic
  *   tables on a patio, tall pines, paths. The grounds: a long paved drive and a paved lot.
  *   Never claim or ask about a kitchen, sound, screens, a stage, tables and chairs, or setup times.
  * - State each fact once per page. Capacities appear only in the event's first section, which
- *   describes the spaces. Rates, packages, deposits, fees, parking, and visits are not written here:
- *   the event page adds one line that links to the pricing page and the FAQ, and its checklist
- *   carries the Request a Visit action. Parking may appear as a checklist task.
+ *   describes the spaces. Rates, deposits, parking, and visits are not written here: the event page
+ *   adds one line that links to /pricing/ (Ask about rates) and the FAQ, and its checklist carries the
+ *   Request a Visit action. Parking may appear as a checklist task.
  * - Each event states its own booking lead time once, in its section prose or in one FAQ.
  * - FAQs answer only what the page body and /faq/ do not already answer.
  * - Venue facts (space names, capacities, phone) come from site.ts through the constants below, so a
  *   change there flows into every page. Never type them in by hand. The phone appears at most once in
  *   an event's copy, and the street address never does (the footer carries it).
- * - Never type a price or a percentage. Rates live in src/shared/pricing.ts; build the sentence from
- *   `pricing` as the special-rate sentences below do.
+ * - The venue does not publish prices: never write a price, a percentage, a discount, a special rate,
+ *   or an estimate. Rates are given by phone; the event page's shared line points to /pricing/.
  * - Checklists hold practical venue steps only: date, space, guest count, budget, visit, timeline.
- * - The instant estimate is named once by the page's shared line and once by the closing band, and the
- *   visit is carried by the checklist item and the Request a Visit button, so neither is written into the
- *   intro or section prose. Intros open with something true of the occasion, not a promise about booking.
+ * - The visit is carried by the checklist item and the Request a Visit button, so it is not written into
+ *   the intro or section prose. Intros open with something true of the occasion, not a promise about booking.
  */
 import { site, type SpaceId } from './site';
-import { pricing } from '../shared/pricing';
 
 export interface EventSection {
   heading: string;
@@ -71,24 +68,6 @@ const GROVE = spaceOf('outdoor').name;
 const INDOOR = spaceOf('indoor').capacity;
 const OUTDOOR = spaceOf('outdoor').capacity;
 const PHONE = site.contact.phone;
-
-/** Special-rate sentences, built from the rate card so the percentages never drift. */
-const repastRate = pricing.discounts.find((d) => d.id === 'repast' && d.percent > 0);
-const nonprofitRate = pricing.discounts.find((d) => d.id === 'nonprofit' && d.percent > 0);
-const howApplied = (d: { appliesTo: string }) =>
-  d.appliesTo === 'manual' ? 'Mention it in your request.' : 'It is applied automatically in your estimate.';
-
-const REPAST_RATE = repastRate
-  ? ` Repasts and celebrations of life receive ${repastRate.percent}% off the rental. ${howApplied(repastRate)}`
-  : '';
-/** e.g. "Nonprofits and churches receive 15% off the rental for events Sunday to Thursday. Mention it in your request." */
-const NONPROFIT_RATE = nonprofitRate
-  ? ` ${nonprofitRate.who ?? nonprofitRate.label} receive ${nonprofitRate.percent}% off the rental${nonprofitRate.when ? ` for events ${nonprofitRate.when}` : ''}. ${howApplied(nonprofitRate)}`
-  : '';
-
-/** The special rates appear only as these FAQ entries; the rest of the rate card lives on the pricing page. */
-const repastRateFaq = repastRate ? [{ q: 'Is there a special rate for repasts?', a: `Yes.${REPAST_RATE}` }] : [];
-const nonprofitRateFaq = (q: string) => (nonprofitRate ? [{ q, a: `Yes.${NONPROFIT_RATE}` }] : []);
 
 export const events: EventType[] = [
   {
@@ -250,7 +229,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'How long does a baby shower or bridal shower usually last?',
-        a: 'Most showers run about two to three hours. Some days have a minimum number of hours, which the pricing page lists by day.',
+        a: 'Most showers run about two to three hours. Some days have a minimum number of hours, which the booking calendar shows when you choose a date.',
       },
     ],
     related: ['weddings', 'birthday-parties', 'receptions-banquets'],
@@ -363,7 +342,6 @@ export const events: EventType[] = [
         q: 'What is a repast?',
         a: 'A repast is a gathering after a funeral or memorial service, usually with family, friends, and members of their faith community. It gives people time to rest, visit, and share memories together.',
       },
-      ...repastRateFaq,
       {
         q: 'How far ahead should we plan a celebration of life?',
         a: 'Repasts are often arranged within a few days of a funeral. Celebrations of life are sometimes held weeks or months later, which gives relatives from across Hampton Roads and farther away time to travel.',
@@ -383,7 +361,7 @@ export const events: EventType[] = [
     name: 'Meetings & workshops',
     summary: 'Board meetings, trainings, workshops, and nonprofit gatherings.',
     metaTitle: 'Meeting space in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, with on-site parking and instant estimates.`,
+    metaDescription: `Rent meeting space in Suffolk, VA for board meetings, trainings, and workshops. ${HALL} holds up to ${INDOOR} people, and on-site parking is included.`,
     h1: 'Meeting and training space in Suffolk',
     intro: [
       `Board meetings, staff trainings, and planning days often go better away from the office. ${HALL} gives your group a wooded setting on Godwin Boulevard in north Suffolk.`,
@@ -422,7 +400,6 @@ export const events: EventType[] = [
         q: 'Can we book recurring dates?',
         a: 'Ask in your request. Tell us the schedule you have in mind, and we will confirm which dates are available.',
       },
-      ...nonprofitRateFaq('Is there a rate for nonprofits?'),
     ],
     related: ['community-events', 'receptions-banquets', 'graduations-reunions'],
     keywords: [
@@ -538,7 +515,6 @@ export const events: EventType[] = [
       ],
     },
     faqs: [
-      ...nonprofitRateFaq('Is there a rate for churches and nonprofits?'),
       {
         q: 'Should we require registration for a conference?',
         a: 'Registration helps with name tags, materials, and headcounts for a conference, and a simple online form is usually enough. For a neighborhood gathering, an RSVP or a parent sign-up may be all you need.',
@@ -549,7 +525,7 @@ export const events: EventType[] = [
       'community event space Suffolk VA',
       'nonprofit event venue Suffolk VA',
       'conference venue Suffolk VA',
-      'civic event space Suffolk VA',
+      'civic event space Suffolk VA',
     ],
   },
 ];

@@ -60,7 +60,7 @@ export const shareCards: Record<string, ShareCard> = {
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
   faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
-  book: { title: 'Check availability', line: 'Choose a date, see an instant estimate, and send a request', photo: byName('approach-dusk') },
+  book: { title: 'Check availability', line: 'Choose a date and a space, and send your request', photo: byName('approach-dusk') },
 };
 // Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
 for (const e of events) {

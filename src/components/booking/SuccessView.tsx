@@ -1,14 +1,12 @@
-/** Confirmation after a request is sent. */
+/** Confirmation after a request is sent. It shows no amounts: we confirm availability and send each quote personally. */
 import type { Ref } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { eventTypeName } from '../../data/event-types';
 import { isDemo } from '../../lib/env';
 import { href } from '../../lib/paths';
-import { formatUSD, pricing } from '../../shared/pricing';
 import type { InquiryCreated } from '../../shared/types';
 import { formatLongKept, guestsLabel, spaceLabel } from './lib';
-import { EstimateView, payment } from './ui';
 import type { Draft } from './wizard';
 
 const REACH = { email: 'by email', phone: 'by phone', text: 'by text message' } as const;
@@ -23,7 +21,6 @@ export function SuccessView(props: {
   const { created, d } = props;
   const [copied, setCopied] = useState(false);
   const firstName = d.name.trim().split(/\s+/)[0] ?? '';
-  const pay = payment(created.estimate);
 
   const copy = async () => {
     try {
@@ -34,13 +31,11 @@ export function SuccessView(props: {
     }
   };
 
-  const rows: [string, string, boolean][] = [
-    ['Date', d.date ? formatLongKept(d.date) : '', false],
-    ['Space', spaceLabel(d.space), false],
-    ['Guests', guestsLabel(d.guests), false],
-    ['Event', eventTypeName(d.eventType, d.eventTypeOther.trim()), false],
-    ['Estimated total', formatUSD(created.estimate.total), true],
-    ['Due to reserve', formatUSD(pay.reserve), true],
+  const rows: [string, string][] = [
+    ['Date', d.date ? formatLongKept(d.date) : ''],
+    ['Space', spaceLabel(d.space)],
+    ['Guests', guestsLabel(d.guests)],
+    ['Event', eventTypeName(d.eventType, d.eventTypeOther.trim())],
   ];
 
   return (
@@ -84,17 +79,13 @@ export function SuccessView(props: {
             Your request
           </h3>
           <dl class="list-group bk-list bk-dl">
-            {rows.map(([k, v, money]) => (
+            {rows.map(([k, v]) => (
               <div class="bk-dl__row" key={k}>
                 <dt>{k}</dt>
-                <dd class={money ? 'num' : undefined}>{v}</dd>
+                <dd>{v}</dd>
               </div>
             ))}
           </dl>
-          <details class="bk-details">
-            <summary>See Estimate</summary>
-            <EstimateView est={created.estimate} />
-          </details>
         </section>
 
         <section class="bk-group" aria-labelledby="bk-next-title">
@@ -115,7 +106,7 @@ export function SuccessView(props: {
                 2
               </span>
               <span>
-                <strong>We follow up.</strong> We contact you {REACH[d.contactPreference]} to confirm the details and your quote.
+                <strong>We send your quote personally.</strong> We contact you {REACH[d.contactPreference]} with your quote and to confirm the details.
               </span>
             </li>
             <li>
@@ -124,8 +115,6 @@ export function SuccessView(props: {
               </span>
               <span>
                 <strong>Your booking deposit reserves the date.</strong>
-                {pay.full &&
-                  ` Your event is within ${pricing.bookingDeposit.balanceDueDaysBefore} days, so the full ${formatUSD(pay.reserve)} reserves the date.`}
               </span>
             </li>
           </ol>
