@@ -1,0 +1,147 @@
+/*
+  The inquiry form on /pricing/ (InquiryForm.tsx). Built on booking.css (fields, choice list, stepper,
+  date field, error summary, send error, reference) and the brand tokens in global.css.
+
+  One white card on the page's Frost section (a raised card color in dark mode). Two groups, each under a
+  small Caslon legend. Fields pair up side by side only when the card is wide enough for both at the
+  reader's text size (the threshold is in rem), and stack otherwise.
+*/
+
+.bk-iq {
+  container-type: inline-size;
+  max-width: 48rem;
+}
+
+.bk-iq__form,
+.bk-iq__done {
+  display: grid;
+  gap: 28px;
+  padding: clamp(1.25rem, 0.9rem + 1.6vw, 2.25rem);
+  border-radius: var(--r-xl);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-1), var(--bk-card-edge);
+}
+
+.bk-iq__group {
+  display: grid;
+  gap: 22px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.bk-iq__group + .bk-iq__group {
+  padding-top: 28px;
+  border-top: 1px solid var(--separator);
+}
+
+/* A legend between 18 and 28px: Libre Caslon Text, not the display cut (brand.md, Type). */
+.bk-iq__legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--label);
+}
+
+/* The float keeps the legend inside the grid; clear it so the first field starts below it. */
+.bk-iq__legend + * {
+  clear: both;
+}
+
+.bk-iq__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px 16px;
+  align-items: start;
+}
+
+@container (min-width: 34rem) {
+  .bk-iq__pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The date field fills its column, like the other inputs. */
+.bk-iq .bk-datefield {
+  width: 100%;
+}
+
+/* The guest count field and the hours stepper fill their column on phones. */
+.bk-iq .bk-stepper--field {
+  width: 100%;
+}
+
+.bk-iq__time {
+  margin-top: -10px;
+}
+
+.bk-iq__send {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.bk-iq__fine {
+  font-size: var(--t-footnote);
+  color: var(--label-2);
+}
+
+/* On a phone the primary button spans the card, so it is easy to reach with a thumb. */
+@container (max-width: 30rem) {
+  .bk-iq__send {
+    justify-items: stretch;
+  }
+
+  .bk-iq__submit {
+    width: 100%;
+  }
+}
+
+.bk-iq__submit[aria-disabled='true'] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* ---------- Sent ---------- */
+
+.bk-iq__done-head {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.bk-iq__done-title {
+  font-family: var(--font-display);
+  font-size: var(--t-large-title);
+  line-height: 1.1;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+}
+
+/* Focus lands here by script after sending, as on the wizard's confirmation; the heading is not a control. */
+.bk-iq__done-title:focus {
+  outline: none;
+}
+
+.bk-iq__done-lead {
+  max-width: 34rem;
+  color: var(--label-2);
+}
+
+.bk-iq__rows {
+  background: var(--panel);
+  border-radius: var(--r-md);
+}
+
+.bk-iq__done-actions {
+  justify-content: center;
+}

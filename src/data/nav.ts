@@ -4,7 +4,7 @@ import type { IconName } from '../shared/icons';
 export const mainNav = [
   { label: 'Events', href: '/events/' },
   { label: 'The Space', href: '/the-space/' },
-  { label: 'Pricing', href: '/pricing/' },
+  { label: 'Rates', href: '/pricing/' },
   { label: 'FAQ', href: '/faq/' },
 ];
 
@@ -13,7 +13,7 @@ export const tabNav: { label: string; href: string; icon: IconName }[] = [
   { label: 'Home', href: '/', icon: 'home' },
   { label: 'Events', href: '/events/', icon: 'party-popper' },
   { label: 'Space', href: '/the-space/', icon: 'building' },
-  { label: 'Pricing', href: '/pricing/', icon: 'tag' },
+  { label: 'Rates', href: '/pricing/', icon: 'tag' },
   { label: 'Book', href: '/book/', icon: 'calendar-check' },
 ];
 

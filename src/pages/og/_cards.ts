@@ -10,7 +10,6 @@
 import { site } from '../../data/site';
 import { events } from '../../data/events';
 import { photoByName, eventPhoto, heroPhoto, realPhoto, type VenuePhoto } from '../../data/photos';
-import { priceSummary, formatUSD } from '../../shared/pricing';
 import { offBrandPhrase } from '../../lib/schema';
 
 export interface ShareCard {
@@ -38,8 +37,6 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
 const bothSpaces = `${hall} up to ${capacity('indoor')} guests, ${grove} up to ${capacity('outdoor')}`;
 const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
-const { fromHourly } = priceSummary();
-
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
 // event's name. Keep them in step when a heading changes.
 export const shareCards: Record<string, ShareCard> = {
@@ -52,8 +49,8 @@ export const shareCards: Record<string, ShareCard> = {
   },
   'the-space': { title: 'Two spaces, indoors and out', line: bothSpaces, photo: byName('hall-windows') },
   pricing: {
-    title: 'Transparent rates for every event',
-    line: `From ${formatUSD(fromHourly)} an hour, with an instant estimate for your date`,
+    title: 'Rates and inquiries',
+    line: 'Rates vary with the season and the day of the week. Call or send an inquiry for pricing',
     photo: byName('hall-fireplace'),
   },
   // The events index leads with the photo of the first event on the list.
