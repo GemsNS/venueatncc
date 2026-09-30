@@ -46,6 +46,8 @@ export interface PhotoDetail {
   styledOf?: string;
   /** For a staged photo only: the event it shows, e.g. 'weddings'. */
   event?: string;
+  /** For a staged photo made from a photo that is not published on the site (kept in design-archive/). */
+  baseOffSite?: boolean;
 }
 
 export interface VenuePhoto {
@@ -97,7 +99,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     space: 'hall',
   },
   'grove-tables.jpg': {
-    alt: 'The Grove: rows of wooden picnic tables on a paved patio in front of a timber gazebo, under tall pines',
+    alt: 'The Grove: rows of wooden picnic tables on a patio in front of a timber gazebo, under tall pines',
     caption: 'Picnic tables and the gazebo',
     tags: ['outdoor', 'space'],
     space: 'grove',
@@ -109,7 +111,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     space: 'grove',
   },
   'grove-path.jpg': {
-    alt: 'A paved path through the trees in The Grove, leading past lawn and picnic tables to the timber gazebo',
+    alt: 'A path through the trees in The Grove, leading past lawn and picnic tables to the timber gazebo',
     caption: 'The path to the gazebo',
     tags: ['outdoor'],
     space: 'grove',
@@ -129,7 +131,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   // The home hero, and so the venue's photo in structured data (heroPhoto). It is another crop of the
   // grove-path original, so it has no `space`: photosFor('grove') would put it beside grove-path in The Space.
   'grove-pines.jpg': {
-    alt: 'Tall pines rising above the timber gazebo in The Grove, with picnic tables on a paved patio and a paved path across the lawn',
+    alt: 'Tall pines rising above the timber gazebo in The Grove, with picnic tables on a patio and a path across the lawn',
     caption: 'The gazebo under the pines',
     tags: ['hero', 'outdoor'],
   },
@@ -183,6 +185,12 @@ export const photoDetails: Record<string, PhotoDetail> = {
     alt: 'Styled concept: round tables and a welcome table on the lawn near the path to the gazebo in The Grove',
     styledOf: 'grove-path.jpg',
     event: 'community-events',
+  },
+  // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white runner).
+  'styled-wedding-indoor-ceremony.jpg': {
+    alt: 'Styled concept: an indoor wedding ceremony with a white aisle runner, pink roses on the row ends, and a white and pink floral wall and arch at the front',
+    styledOf: 'indoor-ceremony-room.jpg',
+    baseOffSite: true,
     space: 'grove',
   },
 };
@@ -269,7 +277,7 @@ export const photos: VenuePhoto[] = all.filter((p) => !staged.includes(p)).sort(
 for (const s of staged) {
   if (!s.styledOf) {
     console.warn(`[photos] ${s.file} looks like a staged photo but has no styledOf in photoDetails, so it is not shown. Add styledOf: '<base>.jpg'.`);
-  } else if (!photos.some((p) => p.file === s.styledOf)) {
+  } else if (!photoDetails[s.file]?.baseOffSite && !photos.some((p) => p.file === s.styledOf)) {
     console.warn(`[photos] ${s.file} is a staged photo of ${s.styledOf}, but that photo is not in src/assets/venue/.`);
   }
 }

@@ -91,7 +91,7 @@ export const site = {
       id: 'outdoor',
       name: 'The Grove',
       short: 'Grove',
-      description: 'Our outdoor space among tall pines, with a timber gazebo and picnic tables on a paved patio.',
+      description: 'Our outdoor space among tall pines, with a timber gazebo and picnic tables on a patio.',
       capacity: 150,
     },
   ] as Space[],

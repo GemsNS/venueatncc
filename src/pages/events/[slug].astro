@@ -22,7 +22,7 @@ import Icon from '../../components/Icon.astro';
 import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
 import { site } from '../../data/site';
-import { eventPhoto, eventsStaged, STYLED_CAPTION } from '../../data/photos';
+import { eventPhoto, eventsStaged, photoByName, STYLED_CAPTION } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
@@ -63,6 +63,7 @@ const schema = [
   eventService({ name: `${event.name} at ${site.name}`, description: event.metaDescription, path, serviceType: event.name }),
   ...(event.faqs.length > 0 ? [faqPage(event.faqs)] : []),
 ];
+const indoorCeremony = photoByName('styled-wedding-indoor-ceremony');
 ---
 <BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
   <section class="ev-hero">
@@ -100,6 +101,13 @@ const schema = [
               {s.body.map((p) => <p>{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>)}
             </section>
           ))
+        }
+        {
+          event.slug === 'weddings' && indoorCeremony && (
+            <figure class="ev-indoor">
+              <Photo photo={indoorCeremony} ratio="3 / 2" caption="An indoor ceremony. Styled concept; décor is not included." sizes="(min-width: 64rem) 640px, 92vw" />
+            </figure>
+          )
         }
         <p class="ev-shared">
           Every event books from one rate card: the <a href={href(pricingHref)}>pricing page</a> gives an instant estimate for your
@@ -202,6 +210,10 @@ const schema = [
       grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
       gap: clamp(3rem, 6vw, 6rem);
     }
+  }
+
+  .ev-indoor {
+    margin: 2.25rem 0 0;
   }
 
   .ev-article {

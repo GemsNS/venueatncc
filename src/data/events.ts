@@ -13,7 +13,7 @@
  *   is fine.
  * - Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark
  *   wood-look floors, recessed lighting, double doors. The Grove: a timber gazebo, open lawn, picnic
- *   tables on a paved patio, tall pines, paved paths. The grounds: a long paved drive and a paved lot.
+ *   tables on a patio, tall pines, paths. The grounds: a long paved drive and a paved lot.
  *   Never claim or ask about a kitchen, sound, screens, a stage, tables and chairs, or setup times.
  * - State each fact once per page. Capacities appear only in the event's first section, which
  *   describes the spaces. Rates, packages, deposits, fees, parking, and visits are not written here:
@@ -94,18 +94,18 @@ export const events: EventType[] = [
   {
     slug: 'weddings',
     name: 'Weddings & receptions',
-    summary: `Ceremonies at the gazebo in ${GROVE}, receptions in ${HALL}, and the whole day on one property.`,
+    summary: `Ceremonies at the gazebo in ${GROVE}, your choice of an indoor or outdoor reception, and the whole day on one property.`,
     metaTitle: 'Wedding venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: a ceremony at the gazebo in ${GROVE}, a reception in ${HALL} for up to ${INDOOR}, and on-site parking.`,
+    metaDescription: `Plan your wedding at The Venue at NCC in Suffolk, VA: a ceremony at the gazebo in ${GROVE}, your choice of an indoor or outdoor reception, and on-site parking.`,
     h1: 'A Suffolk wedding venue among the pines',
     intro: [
-      `Say your vows at the timber gazebo in ${GROVE}, then welcome guests into ${HALL} for the reception, all on one wooded property in Suffolk.`,
+      `Say your vows at the timber gazebo in ${GROVE}, then celebrate with your choice of an indoor or outdoor reception, all on one wooded property in Suffolk.`,
     ],
     sections: [
       {
-        heading: 'Ceremony outdoors, reception indoors',
+        heading: 'Your choice of an indoor or outdoor reception',
         body: [
-          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a paved patio, and tall pines around it. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
+          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a patio, and tall pines around it. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
           `${HALL} is our indoor space, with arched windows, a fireplace feature wall, and dark wood-look floors. It holds up to ${INDOOR} guests for the reception. Reserve both for the same day and guests move from the ceremony to the reception without returning to their cars.`,
         ],
       },
@@ -164,7 +164,7 @@ export const events: EventType[] = [
         heading: 'The Hall for a formal evening',
         body: [
           `${HALL} holds up to ${INDOOR} guests. Arched windows, a fireplace feature wall, and recessed lighting give a banquet a finished look, and the double doors make a clear entrance for guests of honor.`,
-          `For a larger gathering or a summer evening outdoors, ${GROVE} holds up to ${OUTDOOR} guests among tall pines, with a timber gazebo and picnic tables on a paved patio.`,
+          `For a larger gathering or a summer evening outdoors, ${GROVE} holds up to ${OUTDOOR} guests among tall pines, with a timber gazebo and picnic tables on a patio.`,
         ],
       },
       {
@@ -224,7 +224,7 @@ export const events: EventType[] = [
         heading: 'The Hall for a shower',
         body: [
           `Most showers fit comfortably in ${HALL}, which holds up to ${INDOOR} guests. The fireplace feature wall makes a natural backdrop for gifts and photos, and the arched windows bring in daylight for an afternoon shower.`,
-          `For a spring or summer shower outdoors, ${GROVE} holds up to ${OUTDOOR} guests, with picnic tables on a paved patio beside the timber gazebo.`,
+          `For a spring or summer shower outdoors, ${GROVE} holds up to ${OUTDOOR} guests, with picnic tables on a patio beside the timber gazebo.`,
         ],
       },
       {
@@ -277,7 +277,7 @@ export const events: EventType[] = [
         heading: 'Choosing the space for your party',
         body: [
           `${HALL} suits most milestone parties: an open room for up to ${INDOOR} guests, with arched windows, a fireplace feature wall, and double doors that make a fine entrance for the guest of honor.`,
-          `A large open-house party or a summer celebration can move outdoors to ${GROVE}, which holds up to ${OUTDOOR} guests, with open lawn, a timber gazebo, and picnic tables on a paved patio.`,
+          `A large open-house party or a summer celebration can move outdoors to ${GROVE}, which holds up to ${OUTDOOR} guests, with open lawn, a timber gazebo, and picnic tables on a patio.`,
         ],
       },
       {
@@ -394,7 +394,7 @@ export const events: EventType[] = [
         heading: 'The Hall for meetings and trainings',
         body: [
           `${HALL} holds up to ${INDOOR} people in one open room with arched windows and recessed lighting. It suits a board meeting, a training session, or a workshop that breaks into small groups.`,
-          `For a staff picnic or an outdoor team day, ${GROVE} holds up to ${OUTDOOR} among tall pines, with picnic tables on a paved patio.`,
+          `For a staff picnic or an outdoor team day, ${GROVE} holds up to ${OUTDOOR} among tall pines, with picnic tables on a patio.`,
         ],
       },
       {
@@ -442,13 +442,13 @@ export const events: EventType[] = [
     metaDescription: `Host a graduation party or family reunion at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests among the pines, with on-site parking.`,
     h1: 'Graduation parties and reunions in Suffolk',
     intro: [
-      `Graduations and reunions bring together people who rarely share a room. ${GROVE} gives a large group space to spread out, with open lawn, a timber gazebo, and picnic tables on a paved patio.`,
+      `Graduations and reunions bring together people who rarely share a room. ${GROVE} gives a large group space to spread out, with open lawn, a timber gazebo, and picnic tables on a patio.`,
     ],
     sections: [
       {
         heading: 'The Grove for a large gathering',
         body: [
-          `${GROVE} holds up to ${OUTDOOR} guests. Families gather at the picnic tables on the paved patio, children have the open lawn, and the timber gazebo makes a natural spot for a group photograph.`,
+          `${GROVE} holds up to ${OUTDOOR} guests. Families gather at the picnic tables on the patio, children have the open lawn, and the timber gazebo makes a natural spot for a group photograph.`,
           `For a smaller or cooler-weather gathering, ${HALL} holds up to ${INDOOR} guests indoors. Reserve both and the day can move between them.`,
         ],
       },
@@ -500,20 +500,20 @@ export const events: EventType[] = [
   {
     slug: 'community-events',
     name: 'Community events',
-    summary: 'Conferences, youth nights, and community days for local groups.',
+    summary: 'Conferences, civic meetings, and community days for local groups.',
     metaTitle: 'Community event venue in Suffolk, VA | The Venue at NCC',
-    metaDescription: `Host a conference, civic meeting, youth night, or neighborhood day at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
+    metaDescription: `Host a conference, civic meeting, or neighborhood day at The Venue at NCC in Suffolk, VA. ${GROVE} holds up to ${OUTDOOR} guests and ${HALL} up to ${INDOOR}.`,
     h1: 'Community events in Suffolk',
     intro: [
-      'A conference, a youth night, a civic forum, or a neighborhood day brings people together around a shared purpose. We give your organization the room to host it, indoors or among the pines.',
+      'A conference, a civic forum, or a neighborhood day brings people together around a shared purpose. We give your organization the room to host it, indoors or among the pines.',
       'Nonprofits, civic groups, schools, faith groups, and neighborhood associations are welcome to book.',
     ],
     sections: [
       {
         heading: 'Choosing the space',
         body: [
-          `${HALL} suits sessions, youth nights, and community meetings: one open room for up to ${INDOOR} guests, with arched windows and recessed lighting.`,
-          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering, with room for up to ${OUTDOOR} guests on the lawn and the paved patio under tall pines. Reserve both for a program that moves between them.`,
+          `${HALL} suits sessions, workshops, and community meetings: one open room for up to ${INDOOR} guests, with arched windows and recessed lighting.`,
+          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering, with room for up to ${OUTDOOR} guests on the lawn and the patio under tall pines. Reserve both for a program that moves between them.`,
         ],
       },
       {
@@ -541,11 +541,7 @@ export const events: EventType[] = [
       ...nonprofitRateFaq('Is there a rate for churches and nonprofits?'),
       {
         q: 'Should we require registration for a conference?',
-        a: 'Registration helps with name tags, materials, and headcounts for a conference, and a simple online form is usually enough. For a youth night or a neighborhood gathering, an RSVP or a parent sign-up may be all you need.',
-      },
-      {
-        q: 'What should a youth night plan include?',
-        a: 'A youth night runs best with a simple schedule, enough adult volunteers, and contact information for every parent. Collect any permission forms before the night so check-in moves quickly.',
+        a: 'Registration helps with name tags, materials, and headcounts for a conference, and a simple online form is usually enough. For a neighborhood gathering, an RSVP or a parent sign-up may be all you need.',
       },
     ],
     related: ['meetings-trainings', 'receptions-banquets', 'graduations-reunions'],
@@ -553,8 +549,7 @@ export const events: EventType[] = [
       'community event space Suffolk VA',
       'nonprofit event venue Suffolk VA',
       'conference venue Suffolk VA',
-      'civic event space Suffolk VA',
-      'youth event venue Suffolk VA',
+      'civic event space Suffolk VA',
     ],
   },
 ];

@@ -5,7 +5,7 @@
  * a rates teaser, the arrival band, and the closing band.
  *
  * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
- * parking and the address in the arrival band, prices in the rates teaser, and how booking works in the
+ * parking and the address in the arrival band, a call to phone for rates in the rates section, and how booking works in the
  * closing band. The hero's one primary button is the date checker's Continue to Booking; the header CTA
  * and the closing band carry Check Availability.
  * Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces, and event tiles that
@@ -19,8 +19,7 @@ import LocationBand from '../components/LocationBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site } from '../data/site';
 import { EVENTS_STYLED_NOTE, eventsStaged, heroPhoto, photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { bookHref, pricingHref } from '../data/nav';
-import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
+import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 
 /*
@@ -65,7 +64,7 @@ const spaceCards: SpaceCard[] = [
     id: 'grove',
     name: groveName,
     capacity: grove?.capacity,
-    sentence: 'A timber gazebo and picnic tables on a paved patio under tall pines.',
+    sentence: 'A timber gazebo and picnic tables on a patio under tall pines.',
     photo: photosFor('grove')[0],
     href: '/the-space/#grove',
   },
@@ -76,19 +75,6 @@ const spaceCards: SpaceCard[] = [
   at dusk itself, so it is named here.
 */
 const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
-
-/* Rates teaser: the lowest hourly rate for each space, straight from the rate card. */
-const spaceNames = { indoor: hallName, outdoor: groveName, both: 'Both spaces' } as const;
-const rates = (['indoor', 'outdoor', 'both'] as const).map((id) => {
-  const [day, rate] = (Object.entries(pricing.hourly[id]) as [DayType, number][]).reduce((low, cur) => (cur[1] < low[1] ? cur : low));
-  return { id, name: spaceNames[id], rate, days: pricing.dayTypes[day].label };
-});
-const rateDays = [...new Set(rates.map((r) => r.days))];
-const { lowestPackage } = priceSummary();
-const ratesLead = lowestPackage
-  ? `Hourly rates by day and space, and packages from ${formatUSD(lowestPackage)}.`
-  : 'Hourly rates by day and space.';
-const ratesNote = rateDays.length === 1 ? `Starting rates apply ${rateDays[0]}.` : 'Rates vary by day.';
 
 const title = 'Event venue in Suffolk, VA | The Venue at NCC';
 const description = `An event venue among the pines in Suffolk, Virginia: ${hallName} for up to ${hall?.capacity} guests, ${groveName} for up to ${grove?.capacity}, and on-site parking. Check your date online.`;
@@ -167,29 +153,17 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   <section class="section" aria-labelledby="rates-heading">
     <div class="container rates">
       <div class="rates__copy">
-        <h2 id="rates-heading">Clear rates, published up front</h2>
-        <p class="t-lead">{ratesLead}</p>
+        <h2 id="rates-heading">Our special rates</h2>
+        <p class="t-lead">
+          Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
+          please call us and we will be happy to help you.
+        </p>
       </div>
       <div class="rates__panel">
-        <dl class="list-group rates__list">
-          {
-            rates.map((r) => (
-              <div class="rates__row">
-                <dt class="rates__name">{r.name}</dt>
-                <dd class="rates__price">
-                  <span class="rates__from">from</span>
-                  <span class="rates__num num">{formatUSD(r.rate)}</span>
-                  <span class="rates__unit">an hour</span>
-                </dd>
-              </div>
-            ))
-          }
-        </dl>
-        <p class="rates__note">{ratesNote}</p>
         <div class="btn-row rates__action">
-          <a class="btn btn--tinted" href={href(pricingHref)}>
-            <Icon name="tag" />
-            See Pricing
+          <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+            <Icon name="phone" />
+            Call {site.contact.phone}
           </a>
         </div>
       </div>
@@ -647,7 +621,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
 
   .rates__action {
     margin-top: 0.5rem;
-    padding-inline: 1.25rem;
+    padding-inline: 0;
   }
 
   .rates__panel {
