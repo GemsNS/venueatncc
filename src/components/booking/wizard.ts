@@ -103,8 +103,8 @@ export function minHoursFor(date: DateKey | ''): number {
 }
 
 /**
- * Raises the hours to the chosen day's minimum (a Saturday bills at least 5), so the stepper, the time
- * range, and the estimate always show the same length.
+ * Raises the hours to the chosen day's minimum (a Saturday books at least 5), so the stepper, the time
+ * range, and the summary always show the same length.
  */
 export function withMinimumHours(d: Draft): Draft {
   const min = minHoursFor(d.date);

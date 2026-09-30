@@ -1,23 +1,17 @@
 /**
  * Small helpers shared by the booking islands. Keep this free of zod and the API client so the
- * lighter islands (date checker, price estimator) stay lean.
+ * lighter islands (the date checker) stay lean.
  */
 import { href } from '../../lib/paths';
 import { CAPACITY } from '../../shared/capacity';
-import { addDays, dayOfWeek, formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
-import { formatUSD, pricing, type DayType } from '../../shared/pricing';
+import { formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
+import { pricing, type DayType } from '../../shared/pricing';
 import { SPACE_NAMES, type DateKey, type SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
 
 export const ELLIPSIS = String.fromCharCode(8230);
 export const MIDDOT = String.fromCharCode(183);
 export const NBSP = String.fromCharCode(160);
-export const MINUS = String.fromCharCode(8722);
-
-/** Dollars with a true minus sign for discounts ("-$160" reads as a hyphen). */
-export function formatMoney(n: number): string {
-  return n < 0 ? `${MINUS}${formatUSD(Math.abs(n))}` : formatUSD(n);
-}
 
 /** "Wednesday, September 30, 2026" that only wraps after the weekday. */
 export function formatLongKept(key: DateKey): string {
@@ -61,7 +55,7 @@ export function unavailableMessage(date: DateKey, status: CalStatus): string {
 export const SPACES: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
 export const SINGLE_SPACES: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
 
-/** Short segment labels (nouns, equal width) for the price estimator. */
+/** Short segment labels (nouns, equal width) for a space control. */
 export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: SPACE_NAMES.indoor, outdoor: SPACE_NAMES.outdoor, both: 'Both' };
 
 /** The public name: The Hall, The Grove, or The Hall and The Grove. */
@@ -118,24 +112,10 @@ export const DAY_SHORT: Record<DayType, string> = {
   sunday: 'Sunday',
 };
 
-/** A plain sentence about the minimum booking length for a day type, from the rate card. */
+/** A plain sentence about the minimum booking length for a day type (the one booking rule the site states). */
 export function minimumHoursNote(dayType: DayType): string {
   const min = pricing.minimumHours[dayType];
   return `${pricing.dayTypes[dayType].label} bookings have a ${min}-hour minimum.`;
-}
-
-/**
- * A date with the given day type far enough ahead that the estimate's payment notes do not
- * depend on how soon the event is. Used when someone prices a day type without a date.
- */
-export function representativeDate(dayType: DayType, today: DateKey): DateKey {
-  const days = pricing.dayTypes[dayType].days;
-  let d = addDays(today, pricing.bookingDeposit.balanceDueDaysBefore + 7);
-  for (let i = 0; i < 7; i++) {
-    if (days.includes(dayOfWeek(d))) return d;
-    d = addDays(d, 1);
-  }
-  return d;
 }
 
 export function hoursLabel(n: number): string {

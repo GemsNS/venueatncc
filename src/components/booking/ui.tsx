@@ -1,15 +1,13 @@
 /**
  * Controls shared by the booking islands, built to the HIG web spec (docs/design/hig-web-spec.md):
  * segmented control and choice list (radiogroups with arrow keys), stepper, guest count field,
- * list-row switch, spinner, per-space status, and the estimate breakdown.
+ * list-row switch, spinner, per-space status, and notes.
  */
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import type { IconName } from '../../shared/icons';
-import { formatUSD } from '../../shared/pricing';
-import type { Estimate } from '../../shared/types';
-import { clamp, formatMoney } from './lib';
+import { clamp } from './lib';
 
 /* ---------- Radio group keys ---------- */
 
@@ -385,91 +383,6 @@ export function Note(props: { tone?: 'info' | 'warn'; id?: string; children: Com
     <div class={`bk-note bk-note--${props.tone ?? 'info'}`} id={props.id}>
       <Icon name={props.icon ?? 'info'} />
       <div class="bk-note__body">{props.children}</div>
-    </div>
-  );
-}
-
-/* ---------- Estimate breakdown ---------- */
-
-/**
- * What the estimate says is due. estimate() already folds the balance window in: close to the
- * event, bookingDeposit equals the total. Never recompute it from dates here.
- */
-export function payment(est: Estimate): { reserve: number; balance: number; full: boolean } {
-  const balance = Math.max(0, est.total - est.bookingDeposit);
-  return { reserve: est.bookingDeposit, balance, full: est.total > 0 && balance === 0 };
-}
-
-/**
- * Estimate notes that the page around an on-page estimate already states in its own place, so the
- * estimate leaves them out: parking belongs to the pricing page's Included card and the wizard's
- * Good to know (docs/design/brand.md, "Redundancy rules"). The emails and the admin still list
- * every note, because there nothing else says it.
- */
-const SAID_ELSEWHERE_ON_PAGE = /parking/i;
-
-export function EstimateView(props: { est: Estimate; notes?: boolean; live?: boolean; showTotal?: boolean; omitNotes?: RegExp }) {
-  const { est } = props;
-  const { reserve, balance, full } = payment(est);
-  const notes = est.notes.filter((n) => !SAID_ELSEWHERE_ON_PAGE.test(n) && !(props.omitNotes && props.omitNotes.test(n)));
-  return (
-    <div class="bk-est">
-      <ul class="bk-est__lines">
-        {est.lines.map((l) => (
-          <li class="bk-est__line" data-kind={l.kind} key={l.label}>
-            <span class="bk-est__label">{l.label}</span>
-            <span class="bk-est__amt num">{formatMoney(l.amount)}</span>
-          </li>
-        ))}
-      </ul>
-      {props.showTotal !== false ? (
-        <div class="bk-est__total" aria-live={props.live ? 'polite' : undefined} aria-atomic={props.live ? 'true' : undefined}>
-          <span>Estimated total</span>
-          <span class="bk-est__total-amt num">{formatUSD(est.total)}</span>
-        </div>
-      ) : (
-        <hr class="bk-est__rule" />
-      )}
-      <dl class="bk-est__pay">
-        {full ? (
-          <div class="bk-est__payrow">
-            <dt>Due to reserve</dt>
-            <dd class="num">{formatUSD(reserve)}</dd>
-          </div>
-        ) : (
-          <>
-            <div class="bk-est__payrow">
-              <dt>Due to reserve</dt>
-              <dd class="num">{formatUSD(reserve)}</dd>
-            </div>
-            {balance > 0 && (
-              <div class="bk-est__payrow">
-                <dt>Balance</dt>
-                <dd class="num">{formatUSD(balance)}</dd>
-              </div>
-            )}
-          </>
-        )}
-      </dl>
-      {/* Set apart from the payment rows: it is returned, and it is not part of the total. */}
-      {est.refundableDeposit > 0 && (
-        <dl class="bk-est__pay bk-est__pay--aside">
-          <div class="bk-est__payrow">
-            <dt>
-              Refundable damage deposit
-              <span class="bk-est__sub">Refundable, not part of the total</span>
-            </dt>
-            <dd class="num">{formatUSD(est.refundableDeposit)}</dd>
-          </div>
-        </dl>
-      )}
-      {props.notes !== false && notes.length > 0 && (
-        <ul class="bk-est__notes">
-          {notes.map((n) => (
-            <li key={n}>{n}</li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

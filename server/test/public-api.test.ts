@@ -225,7 +225,7 @@ describe('public API', () => {
       assert.equal((await submitInquiry(h, { eventType: 'other', eventTypeOther: 'Retirement party' })).status, 201);
     });
 
-    test('the guest email says what is due to reserve, and never repeats the typed name', async () => {
+    test('the guest email names no amount, says we send the quote personally, and never repeats the typed name', async () => {
       const res = await submitInquiry(h, { name: 'https://evil.example/login Customer', email: 'victim@example.com' });
       assert.equal(res.status, 201);
       const { reference, estimate: est } = (await res.json()) as InquiryCreated;
@@ -234,8 +234,13 @@ describe('public API', () => {
       const guestHtml = fs.readFileSync(path.join(h.config.outboxDir, files.find((f) => f.includes('-guest-') && f.endsWith('.html'))!), 'utf8');
       assert.ok(!guestHtml.includes('evil.example'));
       assert.ok(guestHtml.includes('Thank you for your request.'));
-      assert.ok(guestHtml.includes('Due to reserve the date'));
-      assert.ok(guestHtml.includes(`$${est.bookingDeposit.toLocaleString('en-US')}`));
+      assert.ok(guestHtml.includes('We confirm availability and send your quote personally.'));
+      assert.ok(!guestHtml.includes('Due to reserve the date'));
+      assert.ok(!/\$[0-9]/.test(guestHtml), 'no dollar amount in the guest email');
+      // The team still sees the internal rate-card guide.
+      const venueHtml = fs.readFileSync(path.join(h.config.outboxDir, files.find((f) => f.includes('-venue-') && f.endsWith('.html'))!), 'utf8');
+      assert.ok(venueHtml.includes('Internal rate-card guide'));
+      assert.ok(venueHtml.includes(`$${est.bookingDeposit.toLocaleString('en-US')}`));
     });
 
     test(`after ${GUEST_CONFIRMATIONS_PER_HOUR} guest confirmations in an hour, the next guest gets none but the venue is still told`, async () => {

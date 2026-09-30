@@ -9,11 +9,12 @@
 import type { APIRoute } from 'astro';
 import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
-import { publishedFaqs } from '../data/faq';
+import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
-import { pricing, priceSummary, formatUSD, type DayType } from '../shared/pricing';
-import { todayKey } from '../shared/dates';
-import type { SpaceChoice } from '../shared/types';
+import { pricing, type DayType } from '../shared/pricing';
+
+/** Minimum hours are a booking rule, not a price, so they are stated. The venue publishes no prices. */
+const DAY_TYPES = Object.keys(pricing.dayTypes) as DayType[];
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -49,20 +50,6 @@ const andList = (items: string[]) =>
 
 export const GET: APIRoute = () => {
   const u = (path: string) => new URL(path, site.url).href;
-  const { fromHourly } = priceSummary();
-  const offer = pricing.introOffer && pricing.introOffer.percent > 0 && todayKey() <= pricing.introOffer.validUntil ? pricing.introOffer : null;
-  const days = Object.keys(pricing.dayTypes) as DayType[];
-  const spaces = Object.keys(pricing.hourly) as SpaceChoice[];
-  const balanceDays = pricing.bookingDeposit.balanceDueDaysBefore;
-  const deposit =
-    pricing.bookingDeposit.type === 'percent' ? `${pricing.bookingDeposit.value}% of the total` : formatUSD(pricing.bookingDeposit.value);
-  // The introductory offer is applied in the estimate like any other discount, so it is listed with them.
-  const specialRates = [
-    ...(offer ? [`- ${offer.name}: ${offer.percent}% off the rental ${offer.terms}, applied automatically`] : []),
-    ...pricing.discounts
-      .filter((d) => d.percent > 0)
-      .map((d) => `- ${d.label}: ${d.percent}% off the rental, ${d.appliesTo === 'manual' ? 'mention it in your request' : 'applied automatically'}`),
-  ];
   const eventList = onBrand(events, (e) => `${e.name} ${e.summary}`, (e) => e.name);
   const faqs = onBrand(publishedFaqs, (f) => `${f.q} ${f.a}`, (f) => f.q).filter(
     (f) => !mentionsCatering(`${f.q} ${f.a}`) && !COVERED_QUESTIONS.has(f.q),
@@ -83,36 +70,15 @@ export const GET: APIRoute = () => {
     '',
     '## Rates',
     '',
-    `- From ${formatUSD(fromHourly)} per hour. Full rate card and an instant estimate: ${u('/pricing/')}`,
-    ...spaces.map(
-      (s) => `- ${spaceName(s)}: ${days.map((d) => `${pricing.dayTypes[d].label} ${formatUSD(pricing.hourly[s][d])}`).join(', ')} per hour`,
-    ),
-    `- Minimum hours: ${days.map((d) => `${pricing.dayTypes[d].label} ${pricing.minimumHours[d]}`).join(', ')}`,
-    ...(pricing.fees.cleaning > 0 ? [`- Cleaning fee: ${formatUSD(pricing.fees.cleaning)} per event, added to every booking`] : []),
-    ...(pricing.fees.damageDepositRefundable > 0
-      ? [`- Refundable damage deposit: ${formatUSD(pricing.fees.damageDepositRefundable)}, returned after the event if there is no damage`]
-      : []),
+    `- ${RATES_WORDING}`,
+    `- Ask about rates for your date: ${u('/pricing/')}`,
+    `- Minimum hours: ${DAY_TYPES.map((d) => `${pricing.dayTypes[d].label} ${pricing.minimumHours[d]}`).join(', ')}`,
     '',
-    ...(pricing.packages.length > 0
-      ? ['## Packages', '', ...pricing.packages.map((p) => `- ${p.name}: ${formatUSD(p.price)} for ${p.hours} hours`), '']
-      : []),
-    ...(specialRates.length > 0
-      ? [
-          '## Special rates',
-          '',
-          ...specialRates,
-          ...(specialRates.length > 1 ? ['- Discounts do not combine; the estimate uses the best one that applies.'] : []),
-          '',
-        ]
-      : []),
     '## Booking',
     '',
     '- Booking is open to the public.',
-    `- How it works: choose a date and a space, send a request, and we confirm availability. The booking deposit of ${deposit} then reserves the date.`,
-    ...(balanceDays > 0
-      ? [`- Balance: due ${balanceDays} days before the event. For an event within ${balanceDays} days, the full amount is due when you reserve.`]
-      : []),
-    `- Visits: ask for a visit when you send your request, or call ${site.contact.phone}.`,
+    '- How it works: choose a date and a space and send a request. We confirm availability and send your quote personally, and a booking deposit then reserves the date.',
+    '- Visits: ask for a visit when you send your request, or call us.',
     `- Check availability and request a date: ${u('/book/')}`,
     '',
     '## Contact and location',

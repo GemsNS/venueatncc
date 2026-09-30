@@ -46,8 +46,8 @@ export function TodayView() {
     ? [
         { label: 'New this week', value: String(stats.newThisWeek), note: 'Requests received this week' },
         { label: 'Open requests', value: String(openCount), note: 'New, contacted, visit, or quoted' },
-        { label: 'Pipeline value', value: formatUSD(stats.pipelineValue), note: 'Estimates on open requests' },
-        { label: 'Booked value', value: formatUSD(stats.bookedValue), note: 'Estimates on booked requests' },
+        { label: 'Pipeline value', value: formatUSD(stats.pipelineValue), note: 'Rate-card guide on open requests' },
+        { label: 'Booked value', value: formatUSD(stats.bookedValue), note: 'Rate-card guide on booked requests' },
       ]
     : null;
 

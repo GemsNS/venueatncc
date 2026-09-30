@@ -1,11 +1,17 @@
 /**
- * The venue's rate card and the estimate calculator.
+ * The venue's internal rate card and the estimate calculator. INTERNAL USE ONLY.
  *
- * One model drives everything: the rates page, the booking wizard's instant estimate,
- * the server's stored estimate for each inquiry, and `priceRange` in structured data.
+ * The venue does not publish prices. Nothing here may reach a public page, a booking step, a guest
+ * email, structured data, llms.txt, or a share card: the public wording is "Our affordable rates vary
+ * with peak season, holidays, and the day of the week. For pricing and special offers, please call us
+ * and we will be happy to help you." (RATES_WORDING in src/data/faq.ts).
+ *
+ * What still reads it: the server's stored estimate for each inquiry, shown to the team as the
+ * "Internal rate-card guide" in the team email and the admin; and, as booking rules rather than prices,
+ * the day types and minimum hours the booking wizard enforces.
  *
  * STATUS: recommended rates from the Hampton Roads comparables analysis. The venue team
- * should confirm them before launch. Change a number here and every page follows.
+ * should confirm them before relying on the internal guide.
  */
 import { SPACE_NAME } from './capacity';
 import { dayOfWeek, daysBetween, todayKey } from './dates';
@@ -242,7 +248,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
   };
 }
 
-/** Lowest and highest typical prices, for structured data priceRange and "from $X" copy. */
+/** Internal: the lowest hourly rate and package price. Never publish them; remove once nothing imports it. */
 export function priceSummary(model: PricingModel = pricing): { fromHourly: number; lowestPackage: number | null } {
   const allHourly = Object.values(model.hourly).flatMap((byDay) => Object.values(byDay));
   const lowestPackage = model.packages.length > 0 ? Math.min(...model.packages.map((p) => p.price)) : null;

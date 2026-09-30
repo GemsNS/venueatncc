@@ -378,38 +378,50 @@ describe('email templates', () => {
   const NL = String.fromCharCode(10);
   const CRLF = String.fromCharCode(13, 10);
 
-  test('more than 30 days out: the deposit is due to reserve, with the balance and the notes in both emails', () => {
+  test('more than 30 days out: the team email carries the internal rate-card guide with the deposit, balance, and notes', () => {
     assert.ok(est.bookingDeposit < est.total);
     const venue = venueNotificationEmail(inquiry, est, { origin: 'https://venueatncc.org' });
-    const guest = guestConfirmationEmail(inquiry, est, { origin: 'https://venueatncc.org' });
     const deposit = `$${est.bookingDeposit.toLocaleString('en-US')}`;
     const balance = `$${(est.total - est.bookingDeposit).toLocaleString('en-US')}`;
-    for (const mail of [venue, guest]) {
-      assert.ok(mail.text.includes(`Due to reserve the date: ${deposit}`), mail.text);
-      assert.ok(mail.text.includes(`Balance: ${balance}`));
-      assert.ok(mail.text.includes('Refundable damage deposit, returned if there is no damage: $250'));
-      assert.ok(!mail.text.includes('returned after the event'));
-      for (const note of est.notes) assert.ok(mail.text.includes(`* ${note}`), `note in text: ${note}`);
-      assert.ok(mail.html.includes('Due to reserve the date'));
-      assert.ok(mail.html.includes('Balance'));
-    }
-    assert.ok(guest.text.includes(`We confirm availability, then your booking deposit of ${deposit} reserves the date.`));
+    assert.ok(venue.text.includes('Internal rate-card guide'));
+    assert.ok(venue.html.includes('Internal rate-card guide'));
+    assert.ok(!venue.text.includes('Estimate shown to the guest'));
+    assert.ok(venue.text.includes(`Due to reserve the date: ${deposit}`), venue.text);
+    assert.ok(venue.text.includes(`Balance: ${balance}`));
+    assert.ok(venue.text.includes('Refundable damage deposit, returned if there is no damage: $250'));
+    assert.ok(!venue.text.includes('returned after the event'));
+    for (const note of est.notes) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
+    assert.ok(venue.html.includes('Due to reserve the date'));
+    assert.ok(venue.html.includes('Balance'));
   });
 
-  test('within 30 days: the full amount is due to reserve and there is no balance', () => {
+  test('within 30 days: the team guide shows the full amount due to reserve and no balance', () => {
     const soon = estimate({ date: '2026-10-10', space: 'indoor', hours: 6, eventType: 'weddings' }, undefined, '2026-09-28');
     assert.equal(soon.bookingDeposit, soon.total);
     const soonInquiry = { ...inquiry, date: '2026-10-10', space: 'indoor' as const, guests: 80 };
-    const guest = guestConfirmationEmail(soonInquiry, soon, { origin: 'https://venueatncc.org' });
     const venue = venueNotificationEmail(soonInquiry, soon, { origin: 'https://venueatncc.org' });
     const total = `$${soon.total.toLocaleString('en-US')}`;
-    for (const mail of [guest, venue]) {
-      assert.ok(mail.text.includes(`Due to reserve the date: ${total}`));
-      assert.ok(!mail.text.includes('Balance:'));
-      assert.ok(mail.text.includes('the full amount is due when you reserve'));
+    assert.ok(venue.text.includes(`Due to reserve the date: ${total}`));
+    assert.ok(!venue.text.includes('Balance:'));
+    assert.ok(venue.text.includes('the full amount is due when you reserve'));
+  });
+
+  test('the guest email names no price, deposit amount, or discount, and says we send the quote personally', () => {
+    const soon = estimate({ date: '2026-10-10', space: 'indoor', hours: 6, eventType: 'repasts-memorials' }, undefined, '2026-09-28');
+    const soonInquiry = { ...inquiry, date: '2026-10-10', space: 'indoor' as const, guests: 80 };
+    for (const guest of [
+      guestConfirmationEmail(inquiry, est, { origin: 'https://venueatncc.org' }),
+      guestConfirmationEmail(soonInquiry, soon, { origin: 'https://venueatncc.org' }),
+    ]) {
+      for (const part of [guest.subject, guest.html, guest.text]) {
+        assert.ok(!/\$\s?[0-9]/.test(part), 'no dollar amount');
+        // Layout tables use width="100%", so percentages are checked in the words only.
+        if (part !== guest.html) assert.ok(!/[0-9]\s?%/.test(part), 'no percentage');
+        assert.ok(!/estimat/i.test(part), 'no estimate');
+        assert.ok(!/Due to reserve|Balance|Refundable damage deposit/.test(part), 'no payment rows');
+      }
+      assert.ok(guest.text.includes('We confirm availability and send your quote personally. Your booking deposit then reserves the date.'));
     }
-    assert.ok(guest.text.includes(`We confirm availability, then your payment of ${total}, the full amount, reserves the date.`));
-    assert.ok(!guest.text.includes('booking deposit of'));
   });
 
   test('the guest email repeats nothing the sender typed: no name, and only listed event names', () => {

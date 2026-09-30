@@ -8,15 +8,14 @@
  * Catering is mentioned in exactly one entry, "Is catering provided?". It is shown on /faq/ only:
  * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
- * Each answer says a fact once. Parking lives in "What is included in the rental?". The 'pricing' group is
- * the question form of /pricing/, which states rates, deposits, the balance, and fees in full (Rental terms
- * and Fees) and does not repeat these questions; the deposit answer gives the headline and points there
- * instead of copying the paragraph (brand.md, Redundancy rules). How booking works is said by the closing
- * band on each page, so the availability answer only points to the calendar. The phone is in the visit
- * answer and the footer.
+ * The venue does not publish prices: no answer names an amount, a percentage, a deposit figure, or a
+ * discount. The rates answer uses the owner's approved wording with the phone number, and it is the one
+ * answer that carries the number (the visit answer says "call us"; the footer has the number too).
+ *
+ * Each answer says a fact once. Parking lives in "What is included in the rental?". How booking works is
+ * said by the closing band on each page, so the availability answer only points to the calendar.
  */
 import { site, fullAddress } from './site';
-import { pricing, priceSummary, formatUSD } from '../shared/pricing';
 
 export interface Faq {
   q: string;
@@ -26,21 +25,11 @@ export interface Faq {
 }
 
 const phone = site.contact.phone;
-const { fromHourly } = priceSummary();
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
-const deposit =
-  pricing.bookingDeposit.type === 'percent'
-    ? `A ${pricing.bookingDeposit.value}% booking deposit`
-    : `A booking deposit of ${formatUSD(pricing.bookingDeposit.value)}`;
-/** What the pricing page adds to the deposit answer, named only when the rate card has it. */
-const pricingDetails = [
-  pricing.bookingDeposit.balanceDueDaysBefore > 0 ? 'the balance terms' : null,
-  pricing.fees.damageDepositRefundable > 0 ? 'the refundable damage deposit' : null,
-  'every fee',
-].filter((d): d is string => d !== null);
-const andList = (items: string[]) =>
-  items.length <= 2 ? items.join(' and ') : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+
+/** The owner's approved wording for rates, with the number to call. */
+export const RATES_WORDING = `Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us at ${phone} and we will be happy to help you.`;
 
 export const faqs: Faq[] = [
   {
@@ -56,7 +45,7 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'Can I see the venue before I book?',
-    a: `Yes. Ask for a visit when you send your request, or call ${phone}, and we will arrange a time to walk through the space with you.`,
+    a: 'Yes. Ask for a visit when you send your request, or call us, and we will arrange a time to walk through the space with you.',
   },
   {
     topic: 'space',
@@ -81,12 +70,12 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How much does it cost to rent the venue?',
-    a: `Rates start at ${formatUSD(fromHourly)} an hour and depend on the space, the day, and the length of your event. Packages for set blocks of time are also available. The pricing page lists every rate and fee and gives an instant estimate for your date.`,
+    a: RATES_WORDING,
   },
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
-    a: `${deposit} reserves your date once we confirm availability. The pricing page lists ${andList(pricingDetails)}.`,
+    a: 'We confirm availability and send your quote personally, with the deposit and payment terms for your date. A booking deposit then reserves your date.',
   },
   {
     topic: 'pricing',

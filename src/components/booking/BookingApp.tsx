@@ -1,19 +1,19 @@
 /**
  * The booking wizard (mounted client:load on /book/).
  *
- * Four steps: date and space, your event, contact, review. On wide screens a sticky summary with the
- * live estimate sits beside the steps; on phones the steps come one at a time with Back and Next in a
- * bottom action bar. Progress is kept in sessionStorage so a refresh keeps it.
+ * Four steps: date and space, your event, contact, review. On wide screens a sticky summary of the
+ * request sits beside the steps; on phones the steps come one at a time with Back and Next in a
+ * bottom action bar. The venue does not publish prices, so no step shows an amount: we confirm
+ * availability and send each quote personally. Progress is kept in sessionStorage so a refresh keeps it.
  * Prefill: ?date=YYYY-MM-DD&space=indoor|outdoor|both&guests=N&event=<slug>&hours=N
  */
 import './booking.css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { api, isError } from '../../lib/api';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
 import { formatShort, parseKey, todayKey } from '../../shared/dates';
-import { estimate, formatUSD } from '../../shared/pricing';
 import type { ApiError, DateKey, InquiryCreated, SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
 import { ELLIPSIS, focusField, guestsLabel, session, spaceLabel, unavailableMessage } from './lib';
@@ -492,11 +492,6 @@ export default function BookingApp() {
     after.current = 'heading';
   };
 
-  const est = useMemo(
-    () => (d.date && today ? estimate({ date: d.date, space: d.space, hours: d.hours, eventType: d.eventType || undefined }, undefined, today) : null),
-    [d.date, d.space, d.hours, d.eventType, today],
-  );
-
   if (!mounted) return <Skeleton />;
 
   if (done) {
@@ -598,7 +593,7 @@ export default function BookingApp() {
         </div>
 
         <aside class="bk-aside" aria-labelledby="bk-summary-title">
-          <SummaryCard d={d} est={est} />
+          <SummaryCard d={d} />
         </aside>
 
         <div class="bk-actions">
@@ -612,8 +607,8 @@ export default function BookingApp() {
               <span class="bk-actions__spacer" />
             )}
             <div class="bk-actions__total" aria-hidden="true">
-              <span class="bk-actions__cap">Estimate</span>
-              {est ? <span class="bk-actions__amt num">{formatUSD(est.total)}</span> : <span class="bk-actions__none">Pick a date</span>}
+              <span class="bk-actions__cap">Your date</span>
+              {d.date ? <span class="bk-actions__val">{formatShort(d.date)}</span> : <span class="bk-actions__none">Pick a date</span>}
             </div>
             {d.step < 4 ? (
               <button type="submit" class="btn btn--filled bk-actions__next">

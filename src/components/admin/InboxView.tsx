@@ -328,7 +328,7 @@ export function InboxView({ status, q }: { status: InboxFilter; q: string }) {
             <span>Event date</span>
             <span>Guests</span>
             <span>Space</span>
-            <span class="adm-num">Estimate</span>
+            <span class="adm-num">Rate-card guide</span>
             <span>Status</span>
             <span />
           </div>

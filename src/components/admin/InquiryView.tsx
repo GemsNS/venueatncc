@@ -373,7 +373,7 @@ export function InquiryView({ id }: { id: number }) {
             </dl>
           </Section>
 
-          <Section id="adm-sec-estimate" title="Estimate">
+          <Section id="adm-sec-estimate" title="Internal rate-card guide">
             <dl class="list-group adm-list adm-money">
               {est.lines.map((l, i) => (
                 <Row key={i} label={l.label}>
@@ -403,7 +403,7 @@ export function InquiryView({ id }: { id: number }) {
               {est.total > 0 && est.bookingDeposit >= est.total
                 ? `Requested within ${pricing.bookingDeposit.balanceDueDaysBefore} days of the event, so the full amount is due to reserve. `
                 : ''}
-              Estimate saved when the request came in.
+              Rate-card figure saved when the request came in. The guest was not shown an amount; quote personally.
             </p>
           </Section>
 
