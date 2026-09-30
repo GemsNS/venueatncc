@@ -13,7 +13,9 @@
  * answer that carries the number (the visit answer says "call us"; the footer has the number too).
  *
  * Each answer says a fact once. Parking lives in "What is included in the rental?". How booking works is
- * said by the closing band on each page, so the availability answer only points to the calendar.
+ * said by the closing band on each page, so the availability answer only points to the calendar. The two
+ * rental policies each have one answer here (the deposit, the building hours) and are otherwise stated
+ * only on /pricing/ (Rates).
  */
 import { site, fullAddress } from './site';
 
@@ -26,6 +28,7 @@ export interface Faq {
 
 const phone = site.contact.phone;
 const hall = site.spaces.find((s) => s.id === 'indoor');
+const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 
 /** The owner's approved wording for rates, with the number to call. */
@@ -35,7 +38,7 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'How do I check if my date is available?',
-    a: `Use the availability calendar on our booking page to see open dates for ${hall?.name} and ${grove?.name}.`,
+    a: `Use the availability calendar on our booking page to see open dates for ${hall?.name}, ${mainHall?.name}, and ${grove?.name}.`,
   },
   {
     topic: 'booking',
@@ -45,17 +48,22 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'Can I see the venue before I book?',
-    a: 'Yes. Ask for a visit when you send your request, or call us, and we will arrange a time to walk through the space with you.',
+    a: 'Yes. We would be glad to give you a personal tour. Ask for a visit when you send your request, or call us, and we will arrange a time to walk through the space with you.',
+  },
+  {
+    topic: 'booking',
+    q: 'What days and hours can I book?',
+    a: `Building access for events is ${site.access.days}, ${site.access.hours}, so your event, with setup and cleanup, ends by midnight. We are closed on Sundays.`,
   },
   {
     topic: 'space',
     q: 'How many guests can the venue hold?',
-    a: `${hall?.name}, our indoor space, holds up to ${hall?.capacity} guests. ${grove?.name}, our outdoor space, holds up to ${grove?.capacity} guests.`,
+    a: `Indoors, ${hall?.name} and ${mainHall?.name} each hold up to ${hall?.capacity} guests. Outdoors, ${grove?.name} holds up to ${grove?.capacity} guests.`,
   },
   {
     topic: 'space',
     q: `Can I book ${hall?.name} and ${grove?.name} together?`,
-    a: 'Yes. Choose both spaces when you request a date, and we confirm availability for each when we follow up.',
+    a: `Yes. Choose ${hall?.name} and ${grove?.name} when you request a date, and we confirm availability for each when we follow up. To add ${mainHall?.name} on the same day, mention it in your message.`,
   },
   {
     topic: 'space',
@@ -65,7 +73,7 @@ export const faqs: Faq[] = [
   {
     topic: 'space',
     q: 'Is catering provided?',
-    a: 'No. You arrange food service separately.',
+    a: 'Catering is not included in the rental. You arrange food service separately, and banquet arrangements include kitchen access.',
   },
   {
     topic: 'pricing',
@@ -75,7 +83,7 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
-    a: 'We confirm availability and send your quote personally, with the deposit and payment terms for your date. A booking deposit then reserves your date.',
+    a: `${site.depositPolicy} We confirm availability and send your quote personally, with the payment terms for your date.`,
   },
   {
     topic: 'pricing',
@@ -90,14 +98,13 @@ export const faqs: Faq[] = [
   {
     topic: 'about',
     q: 'What kinds of events can I host?',
-    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, meetings and workshops, graduations and reunions, and community events. For another kind of event, describe it in your request, and we will confirm which space suits it.',
+    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, conferences, meetings and workshops, graduations and reunions, and community events. For another kind of event, describe it in your request, and we will confirm which space suits it.',
   },
   // To answer, then publish:
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },
   { topic: 'space', q: 'Is the venue wheelchair accessible?', a: null },
   { topic: 'booking', q: 'What is the cancellation policy?', a: null },
   { topic: 'booking', q: 'Do I need event insurance?', a: null },
-  { topic: 'booking', q: 'What time does my event need to end?', a: null },
 ];
 
 export const publishedFaqs = faqs.filter((f): f is Faq & { a: string } => Boolean(f.a));

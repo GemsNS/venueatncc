@@ -4,7 +4,7 @@ import { addDays, todayKey } from '../../src/shared/dates';
 import { SPACE_NAMES, type AdminStats, type AvailabilityResponse, type CalendarBlock, type Inquiry, type InquiryCreated, type InquiryDetail } from '../../src/shared/types';
 import { LOGIN_ATTEMPTS_PER_ADDRESS } from '../app';
 import { hashPassword, useFastPasswordHashingForTests } from '../security';
-import { ADMIN_EMAIL, ADMIN_PASSWORD, createHarness, freshIp, login, sessionCookie, submitInquiry, type Harness } from './helpers';
+import { ADMIN_EMAIL, ADMIN_PASSWORD, createHarness, openDay, freshIp, login, sessionCookie, submitInquiry, type Harness } from './helpers';
 
 async function createInquiry(h: Harness, overrides: Parameters<typeof submitInquiry>[1] = {}): Promise<{ id: number; reference: string }> {
   const res = await submitInquiry(h, overrides);
@@ -181,7 +181,7 @@ describe('admin API', () => {
       const cookie = await login(h);
       const noXrw = await h.request('/api/admin/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD }, xrw: false, ip: freshIp() });
       assert.equal(noXrw.status, 403);
-      const block = { date: addDays(today(), 200), space: 'indoor', kind: 'closed', label: 'Maintenance' };
+      const block = { date: openDay(addDays(today(), 200)), space: 'indoor', kind: 'closed', label: 'Maintenance' };
       assert.equal((await h.request('/api/admin/blocks', { body: block, cookie, origin: null })).status, 403);
       assert.equal((await h.request('/api/admin/blocks', { body: block, cookie, origin: 'https://evil.example' })).status, 403);
       assert.equal((await h.request('/api/admin/blocks', { body: block, cookie, xrw: false })).status, 403);
@@ -235,7 +235,7 @@ describe('admin API', () => {
 
     test('setting status to booked records an event and blocks the date on the calendar', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 60);
+      const date = openDay(addDays(today(), 60));
       const { id } = await createInquiry(h, { date, space: 'indoor', name: 'Casey Booker', eventType: 'birthday-parties' });
 
       const res = await h.request(`/api/admin/inquiries/${id}`, { method: 'PATCH', body: { status: 'booked' }, cookie });
@@ -270,7 +270,7 @@ describe('admin API', () => {
 
     test('booking a date that is already blocked is refused with 409, and nothing changes', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 61);
+      const date = openDay(addDays(today(), 61));
       await h.request('/api/admin/blocks', { body: { date, space: 'both', kind: 'closed', label: 'Staff retreat' }, cookie });
       const { id } = await createInquiry(h, { date, space: 'outdoor' });
       const res = await patchStatus(id, 'booked', cookie);
@@ -289,21 +289,21 @@ describe('admin API', () => {
 
     test('partial overlap: a block on one space of a both-spaces request is a clash (no double booking)', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 100);
+      const date = openDay(addDays(today(), 100));
       await h.request('/api/admin/blocks', { body: { date, space: 'indoor', kind: 'held', label: 'Smith family hold' }, cookie });
       const { id } = await createInquiry(h, { date, space: 'both', guests: 140 });
       const res = await patchStatus(id, 'booked', cookie);
       assert.equal(res.status, 409);
       assert.ok(((await res.json()).error as string).includes(`held block for ${SPACE_NAMES.indoor} (Smith family hold)`));
       assert.equal((await blocksOn(date, cookie)).length, 1);
-      assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', outdoor: 'free' });
+      assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', main: 'free', outdoor: 'free' });
       const detail = (await (await h.request(`/api/admin/inquiries/${id}`, { cookie })).json()) as InquiryDetail;
       assert.equal(detail.status, 'new');
     });
 
     test('partial overlap: a linked hold on one space is upgraded and the rest of the request is added', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 101);
+      const date = openDay(addDays(today(), 104));
       const { id } = await createInquiry(h, { date, space: 'both', guests: 140, name: 'Pat Partial' });
       const hold = await h.request('/api/admin/blocks', { body: { date, space: 'indoor', kind: 'held', label: 'Pat hold', inquiryId: id }, cookie });
       assert.equal(hold.status, 201);
@@ -316,7 +316,7 @@ describe('admin API', () => {
         ['indoor', 'booked', id],
         ['outdoor', 'booked', id],
       ]);
-      assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', outdoor: 'taken' }, 'every requested space is taken');
+      assert.deepEqual((await dayOf(date)).spaces, { indoor: 'taken', main: 'free', outdoor: 'taken' }, 'every requested space is taken');
       assert.ok(detail.events.some((e) => e.detail.includes('The hold on')));
       assert.ok(detail.events.some((e) => e.detail.includes(`(${SPACE_NAMES.outdoor})`)));
       assert.equal(detail.blocks.length, 2, 'the detail lists the linked blocks');
@@ -324,7 +324,7 @@ describe('admin API', () => {
 
     test('moving a booked request to another status takes its future booked block off the calendar', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 70);
+      const date = openDay(addDays(today(), 70));
       const { id } = await createInquiry(h, { date, space: 'indoor' });
       assert.equal((await patchStatus(id, 'booked', cookie)).status, 200);
       assert.equal((await dayOf(date)).spaces.indoor, 'taken');
@@ -344,7 +344,7 @@ describe('admin API', () => {
 
     test('archiving a booked event that already happened leaves its calendar history alone', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 3);
+      const date = openDay(addDays(today(), 3));
       const { id } = await createInquiry(h, { date, space: 'outdoor', guests: 60 });
       assert.equal((await patchStatus(id, 'booked', cookie)).status, 200);
       h.clock.advance(5 * 24 * 60 * 60 * 1000);
@@ -358,7 +358,7 @@ describe('admin API', () => {
 
     test('a booked request whose block was deleted is re-blocked by marking it booked again', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 72);
+      const date = openDay(addDays(today(), 72));
       const { id } = await createInquiry(h, { date, space: 'indoor' });
       await patchStatus(id, 'booked', cookie);
       const [block] = await blocksOn(date, cookie);
@@ -408,7 +408,7 @@ describe('admin API', () => {
   describe('calendar blocks', () => {
     test('create, conflict 409, overlap rules, delete', async () => {
       const cookie = await login(h);
-      const date = addDays(today(), 90);
+      const date = openDay(addDays(today(), 90));
       const created = await h.request('/api/admin/blocks', { body: { date, space: 'indoor', kind: 'held', label: 'Tentative' }, cookie });
       assert.equal(created.status, 201);
       const block = (await created.json()) as CalendarBlock;

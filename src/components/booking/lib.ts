@@ -5,8 +5,10 @@
 import { href } from '../../lib/paths';
 import { CAPACITY } from '../../shared/capacity';
 import { formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
-import { dayTypes, minimumHours, type DayType } from '../../shared/booking-rules';
-import { SPACE_NAMES, type DateKey, type SpaceChoice } from '../../shared/types';
+import { CLOSED_DAY_MESSAGE, CLOSES_HOUR, OPENS_HOUR, dayTypes, maxHoursFrom, minimumHours, type DayType } from '../../shared/booking-rules';
+import { SINGLE_SPACE_IDS, SPACE_CHOICES, SPACE_NAMES, isSpaceChoice, spaceParts, type DateKey, type SingleSpace, type SpaceChoice } from '../../shared/types';
+
+export { spaceParts };
 import type { CalStatus } from './Calendar';
 
 export const ELLIPSIS = String.fromCharCode(8230);
@@ -49,36 +51,58 @@ export const TOO_LATE_MESSAGE = 'Choose a date within the next two years.';
 export function unavailableMessage(date: DateKey, status: CalStatus): string {
   if (status === 'past') return 'That date has passed. Choose another date.';
   if (status === 'later') return TOO_LATE_MESSAGE;
+  if (status === 'closed') return CLOSED_DAY_MESSAGE;
   return `${formatShort(date)} is booked. Choose another date.`;
 }
 
-export const SPACES: SpaceChoice[] = ['indoor', 'outdoor', 'both'];
-export const SINGLE_SPACES: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
+export const SPACES: SpaceChoice[] = [...SPACE_CHOICES];
+export const SINGLE_SPACES: SingleSpace[] = SINGLE_SPACE_IDS;
 
-/** Short segment labels (nouns, equal width) for a space control. */
-export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: SPACE_NAMES.indoor, outdoor: SPACE_NAMES.outdoor, both: 'Both' };
-
-/** The public name: The Hall, The Grove, or The Hall and The Grove. */
+/** The public name: The Hall, The Main Hall, The Grove, or The Hall and The Grove. */
 export function spaceLabel(space: SpaceChoice): string {
   return SPACE_NAMES[space];
+}
+
+/** Names joined for a sentence: "The Hall", "The Hall and The Grove", "The Hall, The Main Hall, and The Grove". */
+export function listSpaces(spaces: SpaceChoice[]): string {
+  const names = spaces.map(spaceLabel);
+  if (names.length <= 2) return names.join(' and ');
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
+
+/**
+ * One sentence on which single spaces are open on a day where some are booked, e.g. "The Hall is booked
+ * on Sat, Oct 17. The Main Hall and The Grove are open." Empty when all are open or all are booked.
+ */
+export function partlyBookedNote(taken: SingleSpace[], dateLabel: string): string {
+  const open = SINGLE_SPACES.filter((s) => !taken.includes(s));
+  if (taken.length === 0 || open.length === 0) return '';
+  const verb = (n: number, one: string, many: string) => (n === 1 ? one : many);
+  return `${listSpaces(taken)} ${verb(taken.length, 'is', 'are')} booked on ${dateLabel}. ${listSpaces(open)} ${verb(open.length, 'is', 'are')} open.`;
 }
 
 /** The title of each space choice in the booking form. */
 export const SPACE_CHOICE_TITLE: Record<SpaceChoice, string> = {
   indoor: SPACE_NAMES.indoor,
+  main: SPACE_NAMES.main,
   outdoor: SPACE_NAMES.outdoor,
-  both: 'Both spaces',
+  both: SPACE_NAMES.both,
 };
 
-/** One line under each space choice: indoor or outdoor, and how many guests it holds. */
+/** One line under each space choice: what it is, and how many guests it holds. */
 export const SPACE_HINT: Record<SpaceChoice, string> = {
   indoor: `Indoor, up to ${CAPACITY.indoor} guests`,
+  main: `Indoor auditorium, up to ${CAPACITY.main} guests`,
   outdoor: `Outdoor, up to ${CAPACITY.outdoor} guests`,
   both: `${SPACE_NAMES.indoor} up to ${CAPACITY.indoor}, ${SPACE_NAMES.outdoor} up to ${CAPACITY.outdoor}`,
 };
 
 export const HOURS_MIN = 1;
-export const HOURS_MAX = 16;
+/** The longest event: 9:00 AM to 12:00 midnight. */
+export const HOURS_MAX = CLOSES_HOUR - OPENS_HOUR;
+
+/** The most hours a start time allows before 12:00 midnight, within HOURS_MAX. */
+export const hoursMaxFor = (startTime: string) => Math.max(HOURS_MIN, Math.min(HOURS_MAX, maxHoursFrom(startTime)));
 
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -95,22 +119,25 @@ export function bookUrl(bookHref: string | undefined, params: Record<string, str
   return base.includes('?') ? `${base}&${str}` : `${base}?${str}`;
 }
 
-/** Start times in 30-minute steps across the whole day (venue hours are not published). */
-export const TIME_OPTIONS: { value: string; label: string }[] = Array.from({ length: 48 }, (_, i) => {
-  const h = String(Math.floor(i / 2)).padStart(2, '0');
+/**
+ * Start times in 30-minute steps within building hours: from 9:00 AM to 11:00 PM, the last start that
+ * leaves an hour before 12:00 midnight.
+ */
+export const TIME_OPTIONS: { value: string; label: string }[] = Array.from({ length: (CLOSES_HOUR - 1 - OPENS_HOUR) * 2 + 1 }, (_, i) => {
+  const h = String(OPENS_HOUR + Math.floor(i / 2)).padStart(2, '0');
   const m = i % 2 === 0 ? '00' : '30';
   const value = `${h}:${m}`;
   return { value, label: formatTime(value) };
 });
 
-export const DAY_TYPES: DayType[] = ['weekday', 'friday', 'saturday', 'sunday'];
+/** The start times that leave room for at least minHours before 12:00 midnight. */
+export const timeOptionsFor = (minHours: number) => TIME_OPTIONS.filter((t) => maxHoursFrom(t.value) >= minHours);
 
-export const DAY_SHORT: Record<DayType, string> = {
-  weekday: 'Mon to Thu',
-  friday: 'Friday',
-  saturday: 'Saturday',
-  sunday: 'Sunday',
-};
+/** The latest start time that leaves room for this many hours, for moving a start that no longer fits. */
+export function latestStartFor(hours: number): string {
+  const fits = TIME_OPTIONS.filter((t) => maxHoursFrom(t.value) >= hours);
+  return (fits[fits.length - 1] ?? TIME_OPTIONS[0]).value;
+}
 
 /** A plain sentence about the minimum booking length for a day type (the one booking rule the site states). */
 export function minimumHoursNote(dayType: DayType): string {
@@ -127,7 +154,7 @@ export function guestsLabel(n: number): string {
 }
 
 export function parseSpace(v: string | null | undefined): SpaceChoice | null {
-  return v === 'indoor' || v === 'outdoor' || v === 'both' ? v : null;
+  return isSpaceChoice(v) ? v : null;
 }
 
 export function parseDate(v: string | null | undefined): DateKey | null {

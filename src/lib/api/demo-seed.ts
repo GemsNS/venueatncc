@@ -28,10 +28,11 @@ import { DEMO_ADMIN_NAME } from './demo-credentials';
 
 /**
  * Bumped whenever stored demo data must not survive: version 2 retired an inquiry field, and
- * version 3 renamed an event type to community-events and rewrote the calendar labels, so a
+ * version 3 renamed an event type to community-events and rewrote the calendar labels, and
+ * version 4 added The Main Hall and moved everything off Sundays (the venue is closed), so a
  * browser holding an older copy gets a fresh seed.
  */
-export const DEMO_DB_VERSION = 3;
+export const DEMO_DB_VERSION = 4;
 
 /** Everything the demo backend stores, as one JSON document. */
 export interface DemoDb {
@@ -127,13 +128,33 @@ export function buildSeed(now: Date = new Date()): DemoDb {
   const today = todayKey(now);
   const sat = (n: number) => nextWeekday(today, 6, n);
   const fri = (n: number) => addDays(sat(n), -1);
-  const sun = (n: number) => addDays(sat(n), 1);
   const tue = (n: number) => nextWeekday(today, 2, n);
+  const thu = (n: number) => nextWeekday(today, 4, n);
   const nowMs = now.getTime();
   const latest = nowMs - 10 * 60 * 1000;
   const at = (ms: number) => new Date(Math.min(ms, latest)).toISOString();
 
   const seeds: SeedInquiry[] = [
+    {
+      reference: 'NCC-C2MHV',
+      ageHours: 8,
+      fields: {
+        eventType: 'meetings-trainings',
+        date: thu(3),
+        startTime: '09:00',
+        hours: 8,
+        space: 'main',
+        guests: 95,
+        name: 'Andre Collins',
+        email: 'andre.collins@example.com',
+        phone: '(757) 555-0163',
+        contactPreference: 'email',
+        message: 'Annual leadership conference for our nonprofit network. We need seating in rows facing the stage for the morning sessions.',
+        wantsVisit: true,
+        visitNotes: 'Any weekday morning.',
+      },
+      steps: [],
+    },
     {
       reference: 'NCC-7K3QX',
       ageHours: 3,
@@ -159,9 +180,9 @@ export function buildSeed(now: Date = new Date()): DemoDb {
       ageHours: 29,
       fields: {
         eventType: 'baby-bridal-showers',
-        date: sun(2),
+        date: fri(2),
         startTime: '14:00',
-        hours: 3,
+        hours: 4,
         space: 'indoor',
         guests: 35,
         name: 'Keisha Barnes',
@@ -427,7 +448,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
   blocks.push(
     {
       id: nextBlockId++,
-      date: sun(3),
+      date: fri(3),
       space: 'both',
       kind: 'booked',
       label: 'Private family day',
@@ -442,6 +463,15 @@ export function buildSeed(now: Date = new Date()): DemoDb {
       label: 'Private event (booked by phone)',
       inquiryId: null,
       createdAt: at(nowMs - 4 * 24 * HOUR),
+    },
+    {
+      id: nextBlockId++,
+      date: sat(7),
+      space: 'main',
+      kind: 'booked',
+      label: 'Awards banquet (booked by phone)',
+      inquiryId: null,
+      createdAt: at(nowMs - 6 * 24 * HOUR),
     },
   );
   blocks.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id));

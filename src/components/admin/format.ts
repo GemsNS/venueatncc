@@ -33,7 +33,7 @@ export function spaceLabel(space: SpaceChoice): string {
 }
 
 /** Short space names for calendar chips. */
-export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Hall', outdoor: 'Grove', both: 'Both' };
+export const SPACE_SHORT: Record<SpaceChoice, string> = { indoor: 'Hall', main: 'Main Hall', outdoor: 'Grove', both: 'Hall and Grove' };
 
 export const KIND_LABEL: Record<BlockKind, string> = { booked: 'Booked', held: 'Held', closed: 'Closed' };
 

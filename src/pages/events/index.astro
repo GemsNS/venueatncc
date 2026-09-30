@@ -15,10 +15,11 @@ import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
+const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 
 const title = 'Events at The Venue @ NCC in Suffolk, VA';
-const description = `Weddings, showers, birthdays, repasts, meetings, and community events in Suffolk, VA. ${hall?.name} holds up to ${hall?.capacity} and ${grove?.name} up to ${grove?.capacity}, with on-site parking.`;
+const description = `Weddings, showers, birthdays, repasts, conferences, and community events in Suffolk, VA. ${hall?.name} and ${mainHall?.name} hold up to ${hall?.capacity} each and ${grove?.name} up to ${grove?.capacity}.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Events', path: '/events/' },

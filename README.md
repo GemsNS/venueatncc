@@ -67,11 +67,11 @@ confirmation emails, and the structured data all update.
 ### Facts that are still assumptions
 
 - The email is assumed to be `faith@venueatncc.org`.
-- Catering is not included. The site says so only in the pricing page's rental terms and one FAQ entry.
-- "Request a visit" and "both spaces" are offered as requests that the team confirms.
+- Catering is not included. The site says so only in one FAQ entry.
+- "Request a visit" and "The Hall and The Grove" together are offered as requests that the team confirms.
 - Rates are **recommended** from a study of 59 Hampton Roads venues. Confirm them before launch.
-- Unanswered in `faq.ts`: tables and chairs, kitchen, decorating and setup times, accessibility,
-  cancellation, insurance, end time.
+- Unanswered in `faq.ts`: tables and chairs, decorating and setup times, accessibility, cancellation,
+  insurance.
 
 ## Photos
 

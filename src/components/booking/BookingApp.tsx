@@ -5,7 +5,7 @@
  * request sits beside the steps; on phones the steps come one at a time with Back and Next in a
  * bottom action bar. The venue does not publish prices, so no step shows an amount: we confirm
  * availability and send each quote personally. Progress is kept in sessionStorage so a refresh keeps it.
- * Prefill: ?date=YYYY-MM-DD&space=indoor|outdoor|both&guests=N&event=<slug>&hours=N
+ * Prefill: ?date=YYYY-MM-DD&space=indoor|main|outdoor|both&guests=N&event=<slug>&hours=N
  */
 import './booking.css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
@@ -16,7 +16,7 @@ import { capacityError, suggestSpace } from '../../shared/capacity';
 import { formatShort, parseKey, todayKey } from '../../shared/dates';
 import type { ApiError, DateKey, InquiryCreated, SpaceChoice } from '../../shared/types';
 import type { CalStatus } from './Calendar';
-import { ELLIPSIS, focusField, guestsLabel, session, spaceLabel, unavailableMessage } from './lib';
+import { ELLIPSIS, focusField, guestsLabel, listSpaces, session, spaceLabel, spaceParts, unavailableMessage } from './lib';
 import { Spinner } from './ui';
 import { StepContact } from './StepContact';
 import { StepDate } from './StepDate';
@@ -246,22 +246,23 @@ export default function BookingApp() {
 
   // If the chosen space is taken on the chosen date, move to one that is free.
   useEffect(() => {
-    if (!d.date || !day || day.status === 'past' || day.status === 'booked') return;
+    if (!d.date || !day || day.status === 'past' || day.status === 'booked' || day.status === 'closed') return;
     if (spaceIsFree(day, d.space)) return;
-    const singles: SpaceChoice[] = ['indoor', 'outdoor'];
+    // The Hall and The Grove first; The Main Hall, a room for seating in rows, only when neither is free.
+    const singles: SpaceChoice[] = ['indoor', 'outdoor', 'main'];
     const free = singles.filter((s) => spaceIsFree(day, s));
     const alt = free.find((s) => !capacityError(s, d.guests)) ?? free[0];
     if (!alt) return;
-    const taken = singles.filter((s) => !spaceIsFree(day, s));
-    const takenLabel = taken.length === 1 ? spaceLabel(taken[0]) : spaceLabel(d.space);
+    const taken = spaceParts(d.space).filter((s) => !spaceIsFree(day, s));
+    const takenLabel = taken.length > 0 ? listSpaces(taken) : spaceLabel(d.space);
     setD((p) => ({ ...p, space: alt }));
-    say(`${takenLabel} is booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
+    say(`${takenLabel} ${taken.length > 1 ? 'are' : 'is'} booked on ${formatShort(d.date)}, so we switched to ${spaceLabel(alt)}.`);
   }, [d.date, day]);
 
   // A date that arrived booked (a link, an old tab, or a refresh that found it taken): let it go and say why.
   useEffect(() => {
     if (d.step !== 1 || !d.date || !day) return;
-    if (day.status !== 'booked' && day.status !== 'past') return;
+    if (day.status !== 'booked' && day.status !== 'past' && day.status !== 'closed') return;
     const date = d.date;
     update({ date: '' });
     onUnavailable(date, day.status);

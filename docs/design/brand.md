@@ -36,6 +36,28 @@ Later owner decisions, also binding:
    one the booking wizard uses, so every inquiry lands in the admin CRM. The demo build posts to the in-browser
    demo backend. No third-party form services.
 7. **Lighter tones.** The site felt too dark. In light mode no large surface is Navy; see Color.
+8. **The owner's official copy (September 30, 2026).** Source of truth for facts and tone, adapted to each
+   place rather than pasted as one block, with the church sentences left out:
+   - **Three spaces.** The Main Hall joins The Hall and The Grove: a high-capacity, multi-purpose auditorium
+     with stage seating, up to 100 guests (the same as the indoor limit). It is booked on its own; "The Hall
+     and The Grove" stays the one combined choice. No combined capacity is published.
+   - **Welcome.** Versatile indoor and outdoor event rentals in Suffolk, tailored for any occasion, with
+     elegant backdrops, flexible layouts, and full-day access; fully renovated grounds (never "campus") for
+     weddings, receptions, conferences, banquets, memorials, and community gatherings, with bright natural
+     light and a dedicated stage area. The home hero lead and the spaces intro carry it.
+   - **Amenities**, stated once, as a short list on The Space and in structured data (`site.amenities`):
+     Ballroom seating, Hospitality areas, and Flexible layouts (customizable banquet arrangements with
+     kitchen access, and outdoor grounds). The owner titled the third "Flexible layouts and catering"; the
+     site calls it Flexible layouts so catering stays in its one FAQ entry.
+   - **Rental policies**, stated on Rates (`/pricing/`) and in one FAQ each, nowhere else: a reservation and
+     a non-refundable deposit are required to hold a date (no amount); building access is Monday to
+     Saturday, 9:00 AM to 12:00 midnight. The booking wizard, the inquiry form, the date checker, the
+     calendar, and the server all refuse Sundays and times outside those hours
+     (`src/shared/booking-rules.ts`).
+   - **Contact person:** Faith VanDyke, named in the footer contact block, on the Rates contact line, and in
+     the guest email.
+   - **Schedule a visit:** the visit request on The Space uses the owner's wording (a walk-through or more
+     information, and a personal tour to see how the space fits your vision).
 
 Still binding from version 1: no decorative placeholder art; a professional business voice; never mention
 alcohol; catering only in the one neutral FAQ entry named under Voice.
@@ -58,8 +80,9 @@ mode), never as text on white.
 |---|---|---|
 | The business | The Venue @ NCC | Stand-alone business. Never "NCC Spaces" or "NCC Venues". |
 | Indoor space | The Hall | Up to 100 guests. Data slug stays `indoor`. |
+| Auditorium | The Main Hall | Up to 100 guests, stage seating. Data slug `main`. Booked on its own. |
 | Outdoor space | The Grove | Up to 150 guests. Data slug stays `outdoor`. |
-| Both | The Hall and The Grove | Data slug stays `both`. |
+| Both | The Hall and The Grove | Data slug stays `both`. Never includes The Main Hall. |
 | The land around them | The grounds | Replaces "campus", which reads as a church campus. |
 
 ## Separation from New Community Church
@@ -187,6 +210,8 @@ serif leads and italic captions; the system interface stack for body, forms, but
 | `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
 | `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall gallery |
 | `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | The Hall gallery |
+| `main-hall` | The Main Hall down its aisle: red upholstered chairs in rows, the vaulted ceiling, the raised stage (owner's IMG_4937, leveled 1.4 degrees) | Home Main Hall card; The Space hero |
+| `main-hall-stage` | The raised stage up close, with the screen and the front rows (owner's IMG_4940) | The Main Hall gallery |
 | `grove-tables` | The Grove: gazebo and picnic tables on the patio | The Grove primary |
 | `gazebo` | The timber gazebo on open lawn | The Grove gallery |
 | `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
@@ -203,8 +228,11 @@ original would, under the all-or-nothing rule, turn every event tile into text. 
 show the gazebo, so it appears four times on the home page (hero, the Grove card, the Weddings and Community
 events tiles); the Grove card keeps `grove-tables`, the widest vantage and the least like the hero.
 
-Describe only what the photos show. Do not claim a kitchen, sound system, stage, bridal suite, rentable tables
-or chairs, Wi-Fi, or AV unless phrased as "ask us". The sanctuary is not part of the rental and is not shown.
+Describe only what the photos and the owner's copy confirm. The owner confirmed The Main Hall's stage and
+stage seating, kitchen access with banquet arrangements, and private hospitality rooms; state each once, in
+its place (The Space). Do not claim a sound system, bridal suite, rentable tables or chairs, Wi-Fi, or AV
+unless phrased as "ask us". The Main Hall photos show equipment on the stage; describe the room, not the
+equipment.
 
 ### Staged event photos
 
@@ -225,10 +253,13 @@ windows, doors, floors, fixtures, the gazebo, and trees stay exactly as photogra
 | `graduations-reunions` | grove-tables | Picnic tables dressed, lanterns, string lights |
 | `community-events` | grove-path | An outdoor community gathering on the lawn |
 
+One more staged photo sits outside the event set: `styled-wedding-indoor-ceremony.jpg`, a ceremony in The Main
+Hall (`styledOf: 'main-hall.jpg'`), shown on the weddings page under its own caption.
+
 ## Redundancy rules
 
 - State each fact once per page, in the place it does the most work. Capacities belong to the space cards and
-  The Space; the hero names the two spaces without repeating numbers already shown a scroll later.
+  The Space; the hero lead says indoor and outdoor without repeating numbers already shown a scroll later.
 - One primary call to action per viewport. The header CTA plus one in-page CTA near the end of the page is
   enough; do not stack Check Availability buttons in hero, steps, band, and footer.
 - A block that repeats across many pages (planning timelines, rates and payment paragraphs, "how booking
@@ -269,12 +300,17 @@ Crop rule: a frame's bottom edge never runs along a tabletop or a bench; it cuts
 scrim runs from 70% to 64% Navy, with a horizontal fade past the copy from 64rem (see Color); white copy
 measures 4.7:1 or better at its worst pixel, so do not lighten it without measuring again.
 
-Then the two spaces as real-photo cards, events as staged tiles with the one-line note, a rates section
+The date checker lists the three spaces as one row each (name, what it is, the day's status, a radio), so the
+full names never wrap. Then the three spaces as real-photo cards, events as staged tiles with the one-line note, a rates section
 ("Our special rates": the approved wording, a Call button, and an "Or send an inquiry" link to /pricing/),
 the arrival band, and one closing band. Cut anything the audit finds repeated.
 
-**The Space.** Real photos only. The Hall, The Grove, and The grounds (formerly Campus), what the rental
-includes, and a visit request.
+**The Space.** Real photos only. A hero of the three spaces, then The Hall, The Main Hall, The Grove, the
+Premium amenities list, and The grounds (formerly Campus), what the rental includes, and the Schedule a visit
+request.
+
+**Rates.** The approved wording, the Call button, the contact line naming Faith VanDyke, the Rental
+information and policies panel (deposit and hours of operation), and the inquiry form.
 
 **Events.** Staged hero per event with badge and caption, the event's unique copy, and links to shared
 information instead of repeated blocks.

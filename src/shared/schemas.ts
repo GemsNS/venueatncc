@@ -8,12 +8,14 @@ import { z } from 'zod';
 z.config({ jitless: true });
 import { eventTypes, OTHER_EVENT } from '../data/event-types';
 import { isDateKey, parseKey, toKey } from './dates';
-import { INQUIRY_STATUSES } from './types';
+import { CLOSED_DAY_MESSAGE, ENDS_TOO_LATE_MESSAGE, START_TOO_EARLY_MESSAGE, endsInHours, isClosedDay, startsInHours } from './booking-rules';
+import { INQUIRY_STATUSES, SPACE_CHOICES } from './types';
 import type { DateKey } from './types';
 
 const dateKey = z.string().refine(isDateKey, 'Choose a valid date.');
 const hhmm = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, 'Choose a start time.');
 const trimmed = (max: number) => z.string().trim().max(max);
+const spaceChoice = (error?: string) => z.enum(SPACE_CHOICES, error ? { error } : undefined);
 
 /** The latest bookable date: the same calendar day two years from today. */
 export function latestBookableDate(today: DateKey): DateKey {
@@ -59,7 +61,7 @@ export const inquiryInputSchema = z.object({
   altDate: dateKey.optional().or(z.literal('').transform(() => undefined)),
   startTime: hhmm,
   hours: z.coerce.number().int('Choose whole hours.').min(1, 'Choose at least 1 hour.').max(16, 'For more than 16 hours, call us.'),
-  space: z.enum(['indoor', 'outdoor', 'both'], { error: 'Choose a space.' }),
+  space: spaceChoice('Choose a space.'),
   guests: z.coerce.number().int('Enter a whole number.').min(1, 'Enter your guest count.').max(1000, 'Enter a guest count of 1,000 or fewer.'),
   name: singleLine(120).min(2, 'Enter your name.'),
   email: z.email('Enter a valid email address.').max(200),
@@ -79,6 +81,18 @@ export const inquiryInputSchema = z.object({
   if (v.eventType === 'other' && !v.eventTypeOther) {
     ctx.addIssue({ code: 'custom', path: ['eventTypeOther'], message: 'Tell us what kind of event you are planning.' });
   }
+  // Building access: Monday to Saturday, 9:00 AM to 12:00 midnight (src/shared/booking-rules.ts).
+  if (isDateKey(v.date) && isClosedDay(v.date)) {
+    ctx.addIssue({ code: 'custom', path: ['date'], message: CLOSED_DAY_MESSAGE });
+  }
+  if (v.altDate && isDateKey(v.altDate) && isClosedDay(v.altDate)) {
+    ctx.addIssue({ code: 'custom', path: ['altDate'], message: CLOSED_DAY_MESSAGE });
+  }
+  if (!startsInHours(v.startTime)) {
+    ctx.addIssue({ code: 'custom', path: ['startTime'], message: START_TOO_EARLY_MESSAGE });
+  } else if (!endsInHours(v.startTime, v.hours)) {
+    ctx.addIssue({ code: 'custom', path: ['hours'], message: ENDS_TOO_LATE_MESSAGE });
+  }
 });
 
 export type InquiryInputParsed = z.infer<typeof inquiryInputSchema>;
@@ -93,7 +107,7 @@ export const noteInputSchema = z.object({
 
 export const blockInputSchema = z.object({
   date: dateKey,
-  space: z.enum(['indoor', 'outdoor', 'both']),
+  space: spaceChoice(),
   kind: z.enum(['booked', 'held', 'closed']),
   label: z.string().trim().max(120).default(''),
   inquiryId: z.coerce.number().int().positive().nullable().optional(),

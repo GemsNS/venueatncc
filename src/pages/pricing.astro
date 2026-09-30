@@ -12,9 +12,16 @@ import { breadcrumbs } from '../lib/schema';
   through the site's own API (the same call and schema as the booking wizard), so every inquiry lands in the
   admin CRM. No amounts, packages, fees, or estimates appear here, and no price in structured data.
   The URL stays /pricing/ so existing links keep working.
+
+  This is the one page with the rental policies (the deposit and the building hours); the FAQ answers each
+  once, and nothing else repeats them.
 */
 const title = 'Rates and inquiries | The Venue @ NCC, Suffolk, VA';
-const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call us or send an inquiry about The Hall, The Grove, or both.`;
+const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call us or send an inquiry about The Hall, The Main Hall, or The Grove.`;
+const policies = [
+  { label: 'Deposits', value: site.depositPolicy },
+  { label: 'Hours of operation', value: `Building access ${site.access.days}, ${site.access.hours}.` },
+];
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'Rates', path: '/pricing/' },
@@ -24,18 +31,37 @@ const crumbs = [
   <section class="rates-hero">
     <div class="container">
       <Breadcrumbs items={crumbs} />
-      <div class="rates-hero__copy">
-        <h1 class="t-large-title">Rates and inquiries</h1>
-        <p class="t-lead">
-          Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
-          please call us and we will be happy to help you.
-        </p>
-        <div class="btn-row">
-          <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
-            <Icon name="phone" />
-            Call {site.contact.phone}
-          </a>
+      <div class="rates-hero__layout">
+        <div class="rates-hero__copy">
+          <h1 class="t-large-title">Rates and inquiries</h1>
+          <p class="t-lead">
+            Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers,
+            please call us and we will be happy to help you.
+          </p>
+          <div class="btn-row">
+            <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
+              <Icon name="phone" />
+              Call {site.contact.phone}
+            </a>
+          </div>
+          <p class="rates-hero__contact secondary">
+            Ask for {site.contact.contactName}, or email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+          </p>
         </div>
+
+        <section class="rates-policies" aria-labelledby="policies-heading">
+          <h2 id="policies-heading" class="t-title-3">Rental information and policies</h2>
+          <dl class="rates-policies__list">
+            {
+              policies.map((p) => (
+                <div>
+                  <dt>{p.label}</dt>
+                  <dd>{p.value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
       </div>
     </div>
   </section>
@@ -64,15 +90,68 @@ const crumbs = [
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(2.5rem, 2rem + 3vw, 4rem);
   }
 
+  .rates-hero__layout {
+    display: grid;
+    gap: 2rem 4rem;
+    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
+  @media (min-width: 60rem) {
+    .rates-hero__layout {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      align-items: end;
+    }
+  }
+
   .rates-hero__copy {
     display: grid;
     gap: 1.25rem;
     max-width: 42rem;
-    margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
   }
 
   .rates-hero__copy .btn-row {
     margin-top: 0.25rem;
+  }
+
+  .rates-hero__contact a {
+    font-weight: 500;
+  }
+
+  /* The two policies: a quiet Frost panel beside the rates copy on wide screens, under it on phones. */
+  .rates-policies {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    padding: max(20px, min(4vw, 2rem));
+    border-radius: var(--r-xl);
+    background: var(--panel);
+  }
+
+  .rates-policies__list {
+    margin: 0;
+  }
+
+  .rates-policies__list > div {
+    display: grid;
+    gap: 0.25rem;
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .rates-policies__list dt {
+    color: var(--label);
+    font-weight: 600;
+  }
+
+  .rates-policies__list dd {
+    margin: 0;
+    color: var(--label-2);
+  }
+
+  @media (forced-colors: active) {
+    .rates-policies {
+      border: 1px solid CanvasText;
+    }
   }
 
   .inquiry .section-head {

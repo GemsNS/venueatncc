@@ -25,13 +25,13 @@
  * a short caption, tags, and the part of the property it shows. The build warns about files with no entry,
  * real photos listed with no file, and files smaller than 1600px on the long edge.
  *
- * Helpers: photoByName('hall-windows'), photosFor('hall'), heroPhoto(), eventPhoto('weddings'), realPhoto(p).
+ * Helpers: photoByName('hall-windows'), photosFor('hall'), photosFor('main'), heroPhoto(), eventPhoto('weddings'), realPhoto(p).
  */
 import type { ImageMetadata } from 'astro';
 import { eventTypes } from './event-types';
 
-/** Which part of the property a photo shows. */
-export type PhotoSpace = 'hall' | 'grove' | 'grounds';
+/** Which part of the property a photo shows: The Hall, The Main Hall, The Grove, or the grounds. */
+export type PhotoSpace = 'hall' | 'main' | 'grove' | 'grounds';
 
 export interface PhotoDetail {
   /** What the photo shows, for someone who cannot see it. Only what is visible; no claimed features. */
@@ -46,8 +46,6 @@ export interface PhotoDetail {
   styledOf?: string;
   /** For a staged photo only: the event it shows, e.g. 'weddings'. */
   event?: string;
-  /** For a staged photo made from a photo that is not published on the site (kept in design-archive/). */
-  baseOffSite?: boolean;
 }
 
 export interface VenuePhoto {
@@ -97,6 +95,19 @@ export const photoDetails: Record<string, PhotoDetail> = {
     caption: 'The double doors and arched windows',
     tags: ['indoor'],
     space: 'hall',
+  },
+  // The Main Hall, from the owner's photos (IMG_4937 and IMG_4940), leveled and lightly graded.
+  'main-hall.jpg': {
+    alt: 'The Main Hall: rows of red upholstered chairs on a wood-look floor, facing a raised stage under a vaulted ceiling with recessed lights',
+    caption: 'The Main Hall, with stage seating',
+    tags: ['indoor', 'space', 'stage'],
+    space: 'main',
+  },
+  'main-hall-stage.jpg': {
+    alt: 'The raised stage at the front of The Main Hall, with steps up from the floor, a large wall-mounted screen, and rows of red upholstered chairs in front',
+    caption: 'The raised stage',
+    tags: ['indoor', 'stage'],
+    space: 'main',
   },
   'grove-tables.jpg': {
     alt: 'The Grove: rows of wooden picnic tables on a patio in front of a timber gazebo, under tall pines',
@@ -186,12 +197,12 @@ export const photoDetails: Record<string, PhotoDetail> = {
     styledOf: 'grove-path.jpg',
     event: 'community-events',
   },
-  // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white runner).
+  // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white
+  // runner): The Main Hall, staged.
   'styled-wedding-indoor-ceremony.jpg': {
-    alt: 'Styled concept: an indoor wedding ceremony with a white aisle runner, pink roses on the row ends, and a white and pink floral wall and arch at the front',
-    styledOf: 'indoor-ceremony-room.jpg',
-    baseOffSite: true,
-    space: 'grove',
+    alt: 'Styled concept: a wedding ceremony in The Main Hall, with a white aisle runner between the rows of red chairs, pink roses on the row ends, and a white and pink floral wall and arch on the stage',
+    styledOf: 'main-hall.jpg',
+    space: 'main',
   },
 };
 
@@ -277,7 +288,7 @@ export const photos: VenuePhoto[] = all.filter((p) => !staged.includes(p)).sort(
 for (const s of staged) {
   if (!s.styledOf) {
     console.warn(`[photos] ${s.file} looks like a staged photo but has no styledOf in photoDetails, so it is not shown. Add styledOf: '<base>.jpg'.`);
-  } else if (!photoDetails[s.file]?.baseOffSite && !photos.some((p) => p.file === s.styledOf)) {
+  } else if (!photos.some((p) => p.file === s.styledOf)) {
     console.warn(`[photos] ${s.file} is a staged photo of ${s.styledOf}, but that photo is not in src/assets/venue/.`);
   }
 }

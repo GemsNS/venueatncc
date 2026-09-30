@@ -93,9 +93,11 @@ test('availability has one day per date with per-space state', async () => {
   assert.equal(res.days[0].date, from);
   assert.equal(res.days[60].date, to);
   for (const day of res.days) {
-    assert.ok(['open', 'partial', 'booked', 'past'].includes(day.status));
+    assert.ok(['open', 'partial', 'booked', 'past', 'closed'].includes(day.status));
     assert.ok(['free', 'taken'].includes(day.spaces.indoor));
+    assert.ok(['free', 'taken'].includes(day.spaces.main));
     assert.ok(['free', 'taken'].includes(day.spaces.outdoor));
+    assert.equal(day.status === 'closed', dayOfWeek(day.date) === 0, 'Sundays, and only Sundays, are closed');
   }
   assert.ok(res.days.some((d) => d.status === 'partial'), 'seed has a partly taken day');
   assert.ok(res.days.some((d) => d.status === 'booked'), 'seed has a fully taken day');
@@ -169,10 +171,10 @@ test('admin calls need a session; login fails generically and then succeeds', as
 test('seed data covers every status, event type, and space, within capacity', async () => {
   const all = ok(await api.admin.listInquiries({ status: 'all' }));
   const seeded = all.filter((i) => i.email !== 'test.person@example.com');
-  assert.ok(seeded.length >= 8 && seeded.length <= 10, `8 to 10 seeded inquiries, got ${seeded.length}`);
+  assert.ok(seeded.length >= 8 && seeded.length <= 11, `8 to 11 seeded inquiries, got ${seeded.length}`);
   for (const s of INQUIRY_STATUSES) assert.ok(seeded.some((i) => i.status === s.id), `status ${s.id}`);
   for (const e of eventTypes) assert.ok(seeded.some((i) => i.eventType === e.slug), `event type ${e.slug}`);
-  for (const space of ['indoor', 'outdoor', 'both'] as SpaceChoice[]) assert.ok(seeded.some((i) => i.space === space), `space ${space}`);
+  for (const space of ['indoor', 'main', 'outdoor', 'both'] as SpaceChoice[]) assert.ok(seeded.some((i) => i.space === space), `space ${space}`);
   for (const i of seeded) {
     assert.match(i.reference, referencePattern);
     assert.match(i.email, /@example\.com$/);
@@ -185,11 +187,11 @@ test('seed data covers every status, event type, and space, within capacity', as
   assert.ok(seeded.some((i) => i.createdAt > new Date(Date.now() - 7 * 86400000).toISOString()));
 
   const blocks = ok(await api.admin.listBlocks(today, future(120)));
-  assert.ok(blocks.length >= 5 && blocks.length <= 7, `5 to 7 upcoming blocks, got ${blocks.length}`);
+  assert.ok(blocks.length >= 5 && blocks.length <= 8, `5 to 8 upcoming blocks, got ${blocks.length}`);
   assert.ok(blocks.some((b) => b.kind === 'booked'));
   assert.ok(blocks.some((b) => b.kind === 'held'));
   for (const b of blocks) {
-    assert.ok([0, 5, 6].includes(dayOfWeek(b.date)), `${b.date} is on a weekend`);
+    assert.ok([5, 6].includes(dayOfWeek(b.date)), `${b.date} is a Friday or Saturday`);
     if (b.inquiryId) {
       const linked = all.find((i) => i.id === b.inquiryId);
       assert.ok(linked);
@@ -235,11 +237,14 @@ test('submitInquiry applies the same rules as the server: event types, phone dig
   assert.ok(isError(crlf));
   assert.equal(crlf.fields?.name, 'Remove line breaks and special characters.');
 
-  const far = await api.submitInquiry(await validInput({ date: addDays(latestBookableDate(today), 1) }));
+  // The day after the last bookable date, moved past a Sunday so only the two-year rule applies.
+  const dayAfter = addDays(latestBookableDate(today), 1);
+  const far = await api.submitInquiry(await validInput({ date: dayOfWeek(dayAfter) === 0 ? addDays(dayAfter, 1) : dayAfter }));
   assert.ok(isError(far));
   assert.equal(far.fields?.date, DATE_TOO_FAR);
   assert.equal(demoMessages.tooFar, DATE_TOO_FAR);
-  ok(await api.submitInquiry(await validInput({ date: latestBookableDate(today), name: 'Last Day' })));
+  const last = latestBookableDate(today);
+  ok(await api.submitInquiry(await validInput({ date: dayOfWeek(last) === 0 ? addDays(last, -1) : last, name: 'Last Day' })));
 });
 
 test('a retried request with the same token returns the first reference', async () => {
@@ -314,12 +319,16 @@ test('createBlock rejects a date whose space is already blocked', async () => {
   const sameSpace = await api.admin.createBlock({ date: quietWednesday, space: 'outdoor', kind: 'held', label: '' });
   assert.ok(isError(sameSpace));
   const otherSpace = ok(await api.admin.createBlock({ date: quietWednesday, space: 'indoor', kind: 'held', label: '' }));
+  assert.equal(ok(await api.availability(quietWednesday, quietWednesday)).days[0].status, 'partial', 'The Main Hall is still open');
+  // The Main Hall is its own space: The Hall and The Grove do not block it, and it does not block them.
+  const mainHall = ok(await api.admin.createBlock({ date: quietWednesday, space: 'main', kind: 'held', label: '' }));
 
   const day = ok(await api.availability(quietWednesday, quietWednesday)).days[0];
   assert.equal(day.status, 'booked');
 
   ok(await api.admin.deleteBlock(created.id));
   ok(await api.admin.deleteBlock(otherSpace.id));
+  ok(await api.admin.deleteBlock(mainHall.id));
   assert.ok(isError(await api.admin.deleteBlock(created.id)));
   const freed = ok(await api.availability(quietWednesday, quietWednesday)).days[0];
   assert.equal(freed.status, 'open');
@@ -351,7 +360,7 @@ test('Mark Booked with another block on part of the request is refused, and noth
   const detail = ok(await api.admin.getInquiry(mine.id));
   assert.equal(detail.status, 'new');
   assert.equal(ok(await api.admin.listBlocks(date, date)).length, 1);
-  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', outdoor: 'free' });
+  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', main: 'free', outdoor: 'free' });
 });
 
 test('Mark Booked with a linked hold on one space upgrades it and adds the rest; unbooking reopens the date', async () => {
@@ -366,7 +375,7 @@ test('Mark Booked with a linked hold on one space upgrades it and adds the rest;
     ['indoor', 'booked'],
     ['outdoor', 'booked'],
   ]);
-  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', outdoor: 'taken' });
+  assert.deepEqual(ok(await api.availability(date, date)).days[0].spaces, { indoor: 'taken', main: 'free', outdoor: 'taken' });
 
   const declined = ok(await api.admin.setStatus(mine.id, 'declined')) as DemoInquiryDetail;
   assert.equal(declined.status, 'declined');
@@ -408,7 +417,7 @@ test('resetDemoData restores the seed and keeps the session', async () => {
   await resetDemoData();
   const all = ok(await api.admin.listInquiries({ status: 'all' }));
   assert.ok(!all.some((i) => i.email === 'test.person@example.com'));
-  assert.ok(all.length >= 8 && all.length <= 10);
+  assert.ok(all.length >= 8 && all.length <= 11);
   assert.ok(await api.admin.session());
 });
 

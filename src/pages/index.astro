@@ -1,7 +1,7 @@
 ---
 /**
  * Home, per docs/design/brand.md "Page direction: Home", in this order:
- * the hero on the pines of The Grove with the date checker, the two spaces as real-photo cards, the events,
+ * the hero on the pines of The Grove with the date checker, the three spaces as real-photo cards, the events,
  * the rates section (the approved wording, a Call button, and a link to the inquiry form), the arrival band, and the closing band.
  *
  * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards,
@@ -33,18 +33,19 @@ import { href } from '../lib/paths';
 const hero = photoByName('grove-pines') ?? heroPhoto();
 const heroSize = hero ? `--hero-w: ${hero.src.width}; --hero-h: ${hero.src.height}` : undefined;
 const hall = site.spaces.find((s) => s.id === 'indoor');
+const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const hallName = hall?.name ?? 'The Hall';
+const mainHallName = mainHall?.name ?? 'The Main Hall';
 const groveName = grove?.name ?? 'The Grove';
 
 /*
-  The two spaces: the teaser for The Space, which carries the full description. Each card shows its space's
-  primary real photo, its capacity (the only capacity on this page), one sentence on what the space is (the
-  hero lead already says which is indoors and which is outdoors, and the event tiles below say what each
-  hosts), and a link.
+  The three spaces: the teaser for The Space, which carries the full description and the amenities. Each card
+  shows its space's primary real photo, its capacity (the only capacity on this page), one sentence on what
+  the space is, and a link.
 */
 interface SpaceCard {
-  id: 'hall' | 'grove';
+  id: 'hall' | 'main-hall' | 'grove';
   name: string;
   capacity: number | undefined;
   sentence: string;
@@ -59,6 +60,14 @@ const spaceCards: SpaceCard[] = [
     sentence: 'Arched windows, a fireplace feature wall, and dark wood-look floors.',
     photo: photosFor('hall')[0],
     href: '/the-space/#hall',
+  },
+  {
+    id: 'main-hall',
+    name: mainHallName,
+    capacity: mainHall?.capacity,
+    sentence: 'A multi-purpose auditorium with stage seating under a vaulted ceiling.',
+    photo: photosFor('main')[0],
+    href: '/the-space/#main-hall',
   },
   {
     id: 'grove',
@@ -77,7 +86,7 @@ const spaceCards: SpaceCard[] = [
 const pagePhotos = [hero?.name, ...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n));
 
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
-const description = `An event venue among the pines in Suffolk, Virginia: ${hallName} for up to ${hall?.capacity} guests, ${groveName} for up to ${grove?.capacity}, and on-site parking. Check your date online.`;
+const description = `Indoor and outdoor event rentals in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
 ---
 <BaseLayout title={title} description={description} og="home" venueDetails>
   <section class="hero" aria-labelledby="hero-title" style={heroSize}>
@@ -95,8 +104,8 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
         <span class="hero__title t-display"><span class="hero__line">Celebrate</span> <span class="hero__line">among the pines.</span></span>
       </h1>
       <p class="hero__lead">
-        <span class="hero__clause">Host your event indoors in {hallName}</span>
-        <span class="hero__clause">or outdoors in {groveName}.</span>
+        <span class="hero__clause">Versatile indoor and outdoor event rentals,</span>
+        <span class="hero__clause">tailored for any occasion.</span>
       </p>
     </div>
     <div class="hero__checker">
@@ -107,7 +116,11 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
   <section class="section" aria-labelledby="spaces-heading">
     <div class="container">
       <div class="section-head">
-        <h2 id="spaces-heading">The Hall and The Grove</h2>
+        <h2 id="spaces-heading">Spaces for every occasion</h2>
+        <p class="t-lead">
+          Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and
+          community gatherings, with elegant backdrops, flexible layouts, and full-day access.
+        </p>
       </div>
       <div class="spaces">
         {
@@ -115,7 +128,7 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
             return (
               <article class="space card" aria-labelledby={`space-${card.id}`}>
                 {card.photo && (
-                  <Photo photo={card.photo} caption={false} sizes="(min-width: 75rem) 570px, (min-width: 56rem) 46vw, 92vw" />
+                  <Photo photo={card.photo} caption={false} sizes="(min-width: 75rem) 370px, (min-width: 56rem) 30vw, 92vw" />
                 )}
                 <div class="space__body">
                   <h3 id={`space-${card.id}`} class="space__name t-title-1">
@@ -603,16 +616,16 @@ const description = `An event venue among the pines in Suffolk, Virginia: ${hall
     }
   }
 
-  /* ---------- The two spaces ---------- */
+  /* ---------- The three spaces ---------- */
 
   .spaces {
     display: grid;
-    gap: clamp(1.25rem, 3vw, 2rem);
+    gap: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
   @media (min-width: 56rem) {
     .spaces {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 

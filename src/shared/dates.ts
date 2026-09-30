@@ -83,10 +83,10 @@ export function formatTime(hhmm: string): string {
   return `${h12}:${String(min).padStart(2, '0')} ${suffix}`;
 }
 
-/** When an event ends, for display: "10:00 PM", or "midnight" when it ends exactly at 12:00 AM. */
+/** When an event ends, for display: "10:00 PM", or "12:00 midnight" when it ends exactly at 12:00 AM. */
 export function formatEndTime(startTime: string, hours: number): string {
   const end = addHours(startTime, hours);
-  return end === '00:00' ? 'midnight' : formatTime(end);
+  return end === '00:00' ? '12:00 midnight' : formatTime(end);
 }
 
 /** End time "HH:MM" after adding hours (may pass midnight; returns the wall-clock time). */

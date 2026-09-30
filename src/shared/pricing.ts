@@ -88,6 +88,7 @@ export const pricing: PricingModel = {
   // booking app, the admin, the emails, and the CSV export use.
   spaces: {
     indoor: { label: SPACE_NAME.indoor, capacity: 100 },
+    main: { label: SPACE_NAME.main, capacity: 100 },
     outdoor: { label: SPACE_NAME.outdoor, capacity: 150 },
     // 150 for 'both' is an internal validation ceiling (the larger space), NOT a published combined
     // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
@@ -97,6 +98,8 @@ export const pricing: PricingModel = {
   dayTypes,
   hourly: {
     indoor: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
+    // The Main Hall: the same guide as The Hall until the venue team sets its own rates.
+    main: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
     outdoor: { weekday: 85, friday: 115, saturday: 140, sunday: 100 },
     both: { weekday: 140, friday: 180, saturday: 220, sunday: 165 },
   },

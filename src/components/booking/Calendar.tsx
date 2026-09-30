@@ -5,6 +5,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
+import { isClosedDay } from '../../shared/booking-rules';
 import { addDays, dayOfWeek, formatLong, monthGrid, parseKey, toKey } from '../../shared/dates';
 import type { DateKey, DayStatus } from '../../shared/types';
 import { Spinner } from './ui';
@@ -28,8 +29,12 @@ const STATUS_WORD: Record<CalStatus, string> = {
   partial: 'partly booked',
   booked: 'booked',
   past: 'past',
+  closed: 'closed on Sundays',
   later: 'not open for requests yet',
 };
+
+/** Days that cannot be chosen. */
+const UNAVAILABLE: CalStatus[] = ['past', 'booked', 'later', 'closed'];
 
 const monthTitle = (ym: YM) =>
   new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(ym.y, ym.m - 1, 1)));
@@ -71,7 +76,7 @@ export interface CalendarProps {
 export function Calendar(props: CalendarProps) {
   const { view, min, max, today, selected } = props;
   const statusOf = (k: DateKey): CalStatus | undefined =>
-    k < today ? 'past' : props.lastDate && k > props.lastDate ? 'later' : props.statusOf(k);
+    k < today ? 'past' : props.lastDate && k > props.lastDate ? 'later' : isClosedDay(k) ? 'closed' : props.statusOf(k);
   const gridRef = useRef<HTMLTableElement>(null);
   const wantFocus = useRef(false);
 
@@ -146,7 +151,7 @@ export function Calendar(props: CalendarProps) {
   const choose = (k: DateKey) => {
     setFocus(k);
     const st = statusOf(k);
-    if (st === 'past' || st === 'booked' || st === 'later') {
+    if (st && UNAVAILABLE.includes(st)) {
       props.onUnavailable?.(k, st);
       return;
     }
@@ -227,7 +232,7 @@ export function Calendar(props: CalendarProps) {
                 const st = statusOf(k);
                 const isSel = k === selected;
                 const isToday = k === today;
-                const disabled = st === 'past' || st === 'booked' || st === 'later';
+                const disabled = Boolean(st && UNAVAILABLE.includes(st));
                 const label = [formatLong(k), st ? STATUS_WORD[st] : '', isSel ? 'selected' : ''].filter(Boolean).join(', ');
                 // The cell (a gridcell under role="grid") carries the selected state; the label says it too.
                 return (
@@ -276,6 +281,7 @@ export function Calendar(props: CalendarProps) {
           </span>
           <span class="bk-legend__booked">Booked</span>
         </li>
+        <li>Closed Sundays</li>
       </ul>
     </div>
   );

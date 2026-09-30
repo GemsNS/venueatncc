@@ -7,18 +7,20 @@ import { dayTypeOf } from '../../shared/booking-rules';
 import type { AvailabilityDay, DateKey } from '../../shared/types';
 import { Calendar, type CalStatus } from './Calendar';
 import {
-  HOURS_MAX,
   SINGLE_SPACES,
   SPACE_CHOICE_TITLE,
   SPACE_HINT,
   SPACES,
-  TIME_OPTIONS,
   guestsLabel,
   hoursLabel,
+  hoursMaxFor,
   latestBookableDate,
   minimumHoursNote,
+  partlyBookedNote,
   spaceLabel,
+  spaceParts,
   telHref,
+  timeOptionsFor,
 } from './lib';
 import { ChoiceList, CountField, Note, Stepper, type ChoiceOption } from './ui';
 import { ymOf, type YM } from './useAvailability';
@@ -57,13 +59,13 @@ export function StepDate(props: StepDateProps) {
     value: s,
     title: SPACE_CHOICE_TITLE[s],
     hint: SPACE_HINT[s],
-    disabled: day ? day.status !== 'past' && !spaceIsFree(day, s) : false,
-    disabledNote: s === 'both' && taken.length < 2 ? 'Partly booked' : 'Booked',
+    disabled: day ? day.status !== 'past' && day.status !== 'closed' && !spaceIsFree(day, s) : false,
+    disabledNote: spaceParts(s).length > 1 && spaceParts(s).some((p) => !taken.includes(p)) ? 'Partly booked' : 'Booked',
   }));
 
-  // One space taken on the chosen day: say which, so the Booked label is not the only clue.
-  const bookedNote =
-    d.date && taken.length === 1 ? `${spaceLabel(taken[0])} is booked on ${formatShort(d.date)}. ${spaceLabel(SINGLE_SPACES.find((s) => s !== taken[0]) ?? 'indoor')} is open.` : '';
+  // Some spaces taken on the chosen day: say which, so the Booked label is not the only clue.
+  const bookedNote = d.date ? partlyBookedNote(taken, formatShort(d.date)) : '';
+  const startOptions = timeOptionsFor(minHoursFor(d.date));
 
   const capId = 'bk-guests-cap';
   const spaceHintId = 'bk-space-hint';
@@ -178,7 +180,7 @@ export function StepDate(props: StepDateProps) {
               aria-describedby={errors.startTime ? errorId('startTime') : undefined}
               onChange={(e) => update({ startTime: e.currentTarget.value })}
             >
-              {TIME_OPTIONS.map((t) => (
+              {startOptions.map((t) => (
                 <option value={t.value} key={t.value}>
                   {t.label}
                 </option>
@@ -196,7 +198,7 @@ export function StepDate(props: StepDateProps) {
               labelId="bk-hours-label"
               value={d.hours}
               min={minHoursFor(d.date)}
-              max={HOURS_MAX}
+              max={hoursMaxFor(d.startTime)}
               onChange={(hours) => update({ hours })}
               format={hoursLabel}
               decLabel="Fewer hours"
@@ -210,7 +212,7 @@ export function StepDate(props: StepDateProps) {
           <span class="num">
             {formatTime(d.startTime)} to {formatEndTime(d.startTime, d.hours)}
           </span>
-          . Ask us about time to set up and clean up.
+          . Ask us about time to set up and clean up. Events end by 12:00 midnight.
           {dayType ? ` ${minimumHoursNote(dayType)}` : ''}
         </p>
       </div>

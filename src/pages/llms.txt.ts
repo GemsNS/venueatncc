@@ -11,10 +11,13 @@ import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
-import { dayTypes, minimumHours, type DayType } from '../shared/booking-rules';
+import { OPEN_DAY_TYPES, dayTypes, minimumHours } from '../shared/booking-rules';
 
-/** Minimum hours are a booking rule, not a price, so they are stated. The venue publishes no prices. */
-const DAY_TYPES = Object.keys(dayTypes) as DayType[];
+/**
+ * Minimum hours are a booking rule, not a price, so they are stated, for the days the building is open
+ * (never Sunday). The venue publishes no prices.
+ */
+const DAY_TYPES = OPEN_DAY_TYPES;
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -40,6 +43,7 @@ const COVERED_QUESTIONS = new Set([
   'What is included in the rental?', // The spaces and Rates
   'How much does it cost to rent the venue?', // Rates
   'How do deposits and payments work?', // Rates and Booking
+  'What days and hours can I book?', // Booking
   `Where is ${site.name}?`, // Contact and location
   'What kinds of events can I host?', // Events we host
 ]);
@@ -60,7 +64,7 @@ export const GET: APIRoute = () => {
     '',
     `> ${site.description}`,
     '',
-    `We rent two distinct spaces by the hour in a wooded setting on Godwin Boulevard in north ${site.address.city}, and we confirm every booking personally.`,
+    `We rent three distinct spaces by the hour on fully renovated grounds on Godwin Boulevard in north ${site.address.city}, for weddings, receptions, conferences, banquets, memorials, and community gatherings, and we confirm every booking personally.`,
     '',
     '## The spaces',
     '',
@@ -68,21 +72,28 @@ export const GET: APIRoute = () => {
     `- ${spaceName('both')}: request both for one event, and we confirm availability for each.`,
     `- Every rental includes ${andList(site.included.map(lowerFirst))}.`,
     '',
+    '## Amenities',
+    '',
+    ...site.amenities.map((a) => `- ${a.name}: ${a.detail}`),
+    '',
     '## Rates',
     '',
     `- ${RATES_WORDING}`,
+    `- Deposits: ${site.depositPolicy}`,
     `- Ask about rates for your date: ${u('/pricing/')}`,
     `- Minimum hours: ${DAY_TYPES.map((d) => `${dayTypes[d].label} ${minimumHours[d]}`).join(', ')}`,
     '',
     '## Booking',
     '',
     '- Booking is open to the public.',
+    `- Hours of operation: building access ${site.access.days}, ${site.access.hours}. Closed on Sundays.`,
     '- How it works: choose a date and a space and send a request. We confirm availability and send your quote personally, with the payment terms for your date.',
-    '- Visits: ask for a visit when you send your request, or call us.',
+    '- Visits: ask for a personal tour when you send your request, or call us.',
     `- Check availability and request a date: ${u('/book/')}`,
     '',
     '## Contact and location',
     '',
+    `- Contact: ${site.contact.contactName}`,
     `- Address: ${fullAddress}`,
     `- Directions: ${site.address.directionsUrl}`,
     `- Phone: ${site.contact.phone}`,

@@ -9,7 +9,7 @@ import { MAX_RANGE_DAYS } from '../../src/shared/availability';
 import { inquiriesToCsv } from '../../src/shared/csv';
 import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
 import { availabilityQuerySchema, blockInputSchema, fieldErrors, loginSchema, noteInputSchema, passwordChangeSchema, statusUpdateSchema } from '../../src/shared/schemas';
-import { INQUIRY_STATUSES } from '../../src/shared/types';
+import { INQUIRY_STATUSES, spaceFromParts, spaceParts } from '../../src/shared/types';
 import type { AdminUser, BlockKind, CalendarBlock, DateKey, Inquiry, InquiryListQuery, InquiryStatus, SpaceChoice } from '../../src/shared/types';
 import { apiError, clientIp, ipBucket, iso, MUTATING_METHODS, readBody, type AppContextT, type AppEnv, type ServerContext } from '../context';
 import { spaceLabel } from '../email/templates';
@@ -40,9 +40,8 @@ export function blockLabelFor(i: Pick<Inquiry, 'name' | 'eventType' | 'eventType
 
 // ---------------------------------------------------------------- booked requests and the calendar
 
-type Part = 'indoor' | 'outdoor';
-const partsOf = (space: SpaceChoice): Part[] => (space === 'both' ? ['indoor', 'outdoor'] : [space]);
-const spaceOf = (parts: Part[]): SpaceChoice | null => (parts.length === 2 ? 'both' : (parts[0] ?? null));
+const partsOf = spaceParts;
+const spaceOf = spaceFromParts;
 
 export type BookingPlan =
   | { ok: true; /** Linked holds to turn into booked blocks. */ upgrade: CalendarBlock[]; /** The part of the request no linked block covers yet. */ add: SpaceChoice | null }

@@ -4,30 +4,73 @@
  * Change a shape here and TypeScript will point at every place that must follow.
  */
 
-export type SpaceChoice = 'indoor' | 'outdoor' | 'both';
+/**
+ * The bookable spaces: three single spaces, plus one combined choice.
+ *   indoor  The Hall (indoor, up to 100 guests)
+ *   main    The Main Hall (the indoor auditorium with stage seating, up to 100 guests)
+ *   outdoor The Grove (outdoor, up to 150 guests)
+ *   both    The Hall and The Grove together (the slug predates The Main Hall and is kept)
+ * The Main Hall is booked on its own; it is not part of 'both'.
+ */
+export type SpaceChoice = 'indoor' | 'main' | 'outdoor' | 'both';
+
+/** A single space: one room or area on the calendar. */
+export type SingleSpace = 'indoor' | 'main' | 'outdoor';
+
+/** The single spaces in the order the site lists them. */
+export const SINGLE_SPACE_IDS: SingleSpace[] = ['indoor', 'main', 'outdoor'];
+
+/** Every space choice in the order the booking forms offer them. */
+export const SPACE_CHOICES = ['indoor', 'main', 'outdoor', 'both'] as const satisfies readonly SpaceChoice[];
+
+export const isSpaceChoice = (v: unknown): v is SpaceChoice => typeof v === 'string' && (SPACE_CHOICES as readonly string[]).includes(v);
 
 /**
  * The public names of the spaces (docs/design/brand.md). The data slugs stay indoor, outdoor,
- * and both. Every label the booking app, the admin, the emails, and the CSV export show for a
- * space comes from here, so the names read the same everywhere.
+ * and both; The Main Hall is main. Every label the booking app, the admin, the emails, and the
+ * CSV export show for a space comes from here, so the names read the same everywhere.
  */
 export const SPACE_NAMES: Record<SpaceChoice, string> = {
   indoor: 'The Hall',
+  main: 'The Main Hall',
   outdoor: 'The Grove',
   both: 'The Hall and The Grove',
 };
+
+/** The single spaces a choice occupies: 'both' is The Hall and The Grove. */
+export function spaceParts(space: SpaceChoice): SingleSpace[] {
+  return space === 'both' ? ['indoor', 'outdoor'] : [space];
+}
+
+/**
+ * The choice that occupies exactly these single spaces, or null when none does (The Main Hall with
+ * another space is not one choice; the admin books those as separate blocks).
+ */
+export function spaceFromParts(parts: SingleSpace[]): SpaceChoice | null {
+  const set = new Set(parts);
+  if (set.size === 1) return [...set][0];
+  if (set.size === 2 && set.has('indoor') && set.has('outdoor')) return 'both';
+  return null;
+}
+
+/** Whether two space choices share any ground. */
+export function spacesOverlap(a: SpaceChoice, b: SpaceChoice): boolean {
+  const pb = spaceParts(b);
+  return spaceParts(a).some((p) => pb.includes(p));
+}
 
 /** YYYY-MM-DD in the venue's local time (America/New_York). */
 export type DateKey = string;
 
 /** Public availability for one date. */
-export type DayStatus = 'open' | 'partial' | 'booked' | 'past';
+/** 'closed': the building is not open for events that day (Sundays; see src/shared/booking-rules.ts). */
+export type DayStatus = 'open' | 'partial' | 'booked' | 'past' | 'closed';
 
 export interface AvailabilityDay {
   date: DateKey;
   status: DayStatus;
   /** Per-space state. 'taken' means booked, held, or closed by the team. */
-  spaces: { indoor: 'free' | 'taken'; outdoor: 'free' | 'taken' };
+  spaces: Record<SingleSpace, 'free' | 'taken'>;
 }
 
 export interface AvailabilityResponse {

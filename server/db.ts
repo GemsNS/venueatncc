@@ -1,6 +1,10 @@
 /**
  * SQLite database: one file, WAL mode, foreign keys on, versioned migrations via PRAGMA user_version.
  * Add a migration by appending to MIGRATIONS; never edit one that has shipped.
+ *
+ * A migration that rebuilds a table (SQLite cannot change a CHECK constraint in place) is a
+ * { rebuild } entry: it runs with foreign keys off, so dropping the old table does not cascade to
+ * the rows that point at it, and it fails and rolls back if any foreign key is left dangling.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,9 +13,14 @@ import Database from 'better-sqlite3';
 export type Db = Database.Database;
 
 const STATUS_CHECK = `CHECK (status IN ('new','contacted','visit','quoted','booked','declined','archived'))`;
+/** The space constraint as migration 1 shipped it. Migration 4 widened it for The Main Hall. */
 const SPACE_CHECK = `CHECK (space IN ('indoor','outdoor','both'))`;
+/** The Hall ('indoor'), The Main Hall ('main'), The Grove ('outdoor'), and The Hall and The Grove ('both'). */
+const SPACE_CHECK_V4 = `CHECK (space IN ('indoor','main','outdoor','both'))`;
 
-export const MIGRATIONS: string[] = [
+export type Migration = string | { rebuild: string };
+
+export const MIGRATIONS: Migration[] = [
   // 1: initial schema
   `
   CREATE TABLE admins (
@@ -130,6 +139,67 @@ export const MIGRATIONS: string[] = [
   `
   UPDATE inquiries SET event_type = 'community-events' WHERE event_type = 'church-community-events';
   `,
+  // 4: The Main Hall ('main') is a third bookable space. Rebuild inquiries and blocks with the wider
+  // space constraint; every row, note, event, email log entry, and link is kept.
+  {
+    rebuild: `
+  CREATE TABLE inquiries_v4 (
+    id INTEGER PRIMARY KEY,
+    reference TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'new' ${STATUS_CHECK},
+    event_type TEXT NOT NULL,
+    event_type_other TEXT,
+    date TEXT NOT NULL,
+    alt_date TEXT,
+    start_time TEXT NOT NULL,
+    hours INTEGER NOT NULL,
+    space TEXT NOT NULL ${SPACE_CHECK_V4},
+    guests INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    contact_preference TEXT NOT NULL CHECK (contact_preference IN ('email','phone','text')),
+    message TEXT,
+    wants_visit INTEGER NOT NULL DEFAULT 0,
+    visit_notes TEXT,
+    estimate_json TEXT NOT NULL,
+    estimate_total INTEGER NOT NULL,
+    ip_hash TEXT,
+    user_agent TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  INSERT INTO inquiries_v4 (id, reference, status, event_type, event_type_other, date, alt_date, start_time, hours, space, guests,
+    name, email, phone, contact_preference, message, wants_visit, visit_notes, estimate_json, estimate_total, ip_hash, user_agent,
+    created_at, updated_at)
+  SELECT id, reference, status, event_type, event_type_other, date, alt_date, start_time, hours, space, guests,
+    name, email, phone, contact_preference, message, wants_visit, visit_notes, estimate_json, estimate_total, ip_hash, user_agent,
+    created_at, updated_at FROM inquiries;
+  DROP TABLE inquiries;
+  ALTER TABLE inquiries_v4 RENAME TO inquiries;
+  CREATE INDEX inquiries_status ON inquiries(status);
+  CREATE INDEX inquiries_date ON inquiries(date);
+  CREATE INDEX inquiries_created ON inquiries(created_at);
+  CREATE INDEX inquiries_ip ON inquiries(ip_hash, created_at);
+
+  CREATE TABLE blocks_v4 (
+    id INTEGER PRIMARY KEY,
+    date TEXT NOT NULL,
+    space TEXT NOT NULL ${SPACE_CHECK_V4},
+    kind TEXT NOT NULL CHECK (kind IN ('booked','held','closed')),
+    label TEXT NOT NULL DEFAULT '',
+    inquiry_id INTEGER REFERENCES inquiries(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL,
+    created_by INTEGER REFERENCES admins(id) ON DELETE SET NULL
+  );
+  INSERT INTO blocks_v4 (id, date, space, kind, label, inquiry_id, created_at, created_by)
+  SELECT id, date, space, kind, label, inquiry_id, created_at, created_by FROM blocks;
+  DROP TABLE blocks;
+  ALTER TABLE blocks_v4 RENAME TO blocks;
+  CREATE INDEX blocks_date ON blocks(date);
+  CREATE INDEX blocks_inquiry ON blocks(inquiry_id);
+  `,
+  },
 ];
 
 export function migrate(db: Db): number {
@@ -138,10 +208,28 @@ export function migrate(db: Db): number {
     throw new Error(`Database schema version ${current} is newer than this server (${MIGRATIONS.length}). Upgrade the server.`);
   }
   for (let v = current; v < MIGRATIONS.length; v++) {
-    db.transaction(() => {
-      db.exec(MIGRATIONS[v]);
-      db.pragma(`user_version = ${v + 1}`);
-    })();
+    const m = MIGRATIONS[v];
+    if (typeof m === 'string') {
+      db.transaction(() => {
+        db.exec(m);
+        db.pragma(`user_version = ${v + 1}`);
+      })();
+      continue;
+    }
+    // A table rebuild (https://www.sqlite.org/lang_altertable.html#otheralter): foreign keys off outside
+    // the transaction, so DROP TABLE does not cascade, then a foreign key check before committing.
+    const fkOn = db.pragma('foreign_keys', { simple: true }) === 1;
+    db.pragma('foreign_keys = OFF');
+    try {
+      db.transaction(() => {
+        db.exec(m.rebuild);
+        const dangling = db.pragma('foreign_key_check') as unknown[];
+        if (dangling.length > 0) throw new Error(`Migration ${v + 1} left ${dangling.length} broken foreign key references. Nothing was changed.`);
+        db.pragma(`user_version = ${v + 1}`);
+      })();
+    } finally {
+      if (fkOn) db.pragma('foreign_keys = ON');
+    }
   }
   return MIGRATIONS.length;
 }

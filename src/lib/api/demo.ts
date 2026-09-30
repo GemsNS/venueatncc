@@ -18,7 +18,7 @@ import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
 import { makeReference } from '../../shared/reference';
-import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
+import { INQUIRY_STATUSES, SPACE_NAMES, spaceFromParts, spaceParts, spacesOverlap } from '../../shared/types';
 import type {
   AdminStats,
   AdminUser,
@@ -237,8 +237,8 @@ const adminUser = (): AdminUser => ({ id: 1, email: DEMO_ADMIN_EMAIL, name: DEMO
 
 const blank = (value: string | undefined): string | undefined => (value && value.trim() !== '' ? value : undefined);
 
-/** Whether two space choices overlap: 'both' overlaps everything. */
-const overlaps = (a: SpaceChoice, b: SpaceChoice) => a === 'both' || b === 'both' || a === b;
+/** Whether two space choices share any ground ('both' is The Hall and The Grove, not The Main Hall). */
+const overlaps = spacesOverlap;
 
 /** The part of the venue two overlapping choices share. */
 const sharedSpace = (existing: SpaceChoice, requested: SpaceChoice): SpaceChoice =>
@@ -281,9 +281,8 @@ function randomHex(bytes: number): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-type Part = 'indoor' | 'outdoor';
-const partsOf = (space: SpaceChoice): Part[] => (space === 'both' ? ['indoor', 'outdoor'] : [space]);
-const spaceOf = (parts: Part[]): SpaceChoice | null => (parts.length === 2 ? 'both' : (parts[0] ?? null));
+const partsOf = spaceParts;
+const spaceOf = spaceFromParts;
 
 type BookingPlan = { ok: true; upgrade: CalendarBlock[]; add: SpaceChoice | null } | { ok: false; clash: CalendarBlock };
 

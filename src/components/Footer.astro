@@ -2,7 +2,7 @@
 /**
  * Site footer on a light Frost band behind a top hairline (Navy in dark mode, --footer-bg): the lockup in
  * its own Navy ink (Logo tone auto), then "Visit and contact", the site's single contact block
- * (address with directions, phone, email). On compact screens it adds one link to the FAQ, the only route
+ * (the contact person, address with directions, phone, email). On compact screens it adds one link to the FAQ, the only route
  * to /faq/ there, where the tab bar has no FAQ tab and the header nav is hidden; from 46.5rem the header
  * carries FAQ, so the footer does not repeat it, and /faq/ never links to itself. It does not repeat the
  * header navigation, the event list, or the booking call to action (brand.md, "Redundancy rules").
@@ -28,6 +28,7 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
         <section class="footer__col" aria-labelledby="f-visit">
           <h2 id="f-visit" class="footer__head">Visit and contact</h2>
           <address>
+            <span class="footer__person">{site.contact.contactName}</span>
             <a href={site.address.directionsUrl} rel="noopener" target="_blank">
               {site.address.street}<br />{site.address.city}, {site.address.region} {site.address.postalCode}
               <span class="visually-hidden">, directions open in a new tab</span>
@@ -175,6 +176,13 @@ const onFaq = withoutBase(Astro.url.pathname).startsWith('/faq/');
 
   .footer a {
     color: var(--accent-text);
+  }
+
+  /* The contact person, named once, above the address, phone, and email. */
+  .footer__person {
+    padding-block: 5px;
+    color: var(--label);
+    font-weight: 600;
   }
 
   .footer address {

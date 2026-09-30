@@ -1,12 +1,14 @@
 ---
 /**
- * The Space: a hero pair of The Hall and The Grove to match the title, then The Hall, The Grove, and The
- * grounds, each as a short spec sheet beside its real photos, then a visit request and the closing band.
+ * The Space: a hero of the three spaces to match the title, then The Hall, The Main Hall, and The Grove,
+ * each as a short spec sheet beside its real photos, the amenities, the grounds, then a visit request and
+ * the closing band.
  * Real photos only, with no toggles, no photo shown twice, and no two photos of the same view; only facts
  * the photos show (docs/design/brand.md, Photography).
  *
  * Each fact lives here once (brand.md, Redundancy rules): the capacities in the Capacity rows, parking in
- * the grounds Parking row, the visit request in the visit panel. The venue does not publish prices, so each
+ * the grounds Parking row, the amenities in their own list (this is their one page), the visit request in
+ * the visit panel. The venue does not publish prices, so each
  * space's Rates row links to /pricing/ (Ask about rates) instead of naming an amount. Booking is the header CTA and the closing
  * band, the page's one filled button; the address and phone are in the footer.
  */
@@ -23,26 +25,32 @@ import { breadcrumbs, abs } from '../lib/schema';
 import { href, withoutBase } from '../lib/paths';
 
 const hall = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
-const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[1];
+const mainHall = site.spaces.find((s) => s.id === 'main') ?? site.spaces[1];
+const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
 
-const title = 'The Hall and The Grove in Suffolk, VA | The Venue @ NCC';
-const description = `The Hall for up to ${hall.capacity} guests and The Grove for up to ${grove.capacity} at The Venue @ NCC in Suffolk, VA. See both spaces, the grounds, and on-site parking.`;
+const title = 'Event spaces in Suffolk, VA | The Venue @ NCC';
+const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See the spaces, amenities, and grounds.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'The Space', path: '/the-space/' },
 ];
 
-/** The hero pair: each space's primary photo, since the page title names both spaces. */
+/** The hero: each space's primary photo, since the page title names the three spaces. */
 const heroPhotos = [
   { photo: photoByName('hall-windows') ?? photosFor('hall')[0] ?? null, caption: hall.name },
+  { photo: photoByName('main-hall') ?? photosFor('main')[0] ?? null, caption: mainHall.name },
   { photo: photoByName('grove-tables') ?? photosFor('grove')[0] ?? null, caption: grove.name },
 ].filter((h): h is { photo: VenuePhoto; caption: string } => h.photo !== null);
+
+/** The owner's amenities (site.amenities), each with an icon. */
+const AMENITY_ICONS = ['users', 'home', 'sparkles'] as const;
 
 /**
  * Each section's photos, by name, so every photo on the page is a different view. The hero looks down The
  * Hall to its arched windows, so The Hall's own photo faces the other way, to the double doors and the
  * screen; hall-fireplace, the same view as the hero from a step further back, is not on this page. The
- * hero shows The Grove's picnic tables, so its section has the gazebo up close and the path to it.
+ * hero looks down the aisle of The Main Hall, so its section has the stage up close. The hero shows The
+ * Grove's picnic tables, so its section has the gazebo up close and the path to it.
  */
 const photosNamed = (...names: string[]) => names.map((n) => photoByName(n)).filter((p): p is VenuePhoto => p !== null);
 
@@ -80,7 +88,7 @@ const sections: Section[] = [
   {
     id: 'hall',
     heading: hall.name,
-    lead: 'Our indoor space: a bright, open room for receptions, dinners, showers, and meetings.',
+    lead: 'A bright, open room for receptions, dinners, showers, and meetings.',
     rows: [
       { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
       { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, and double doors' },
@@ -91,17 +99,30 @@ const sections: Section[] = [
     grouped: true,
   },
   {
+    id: 'main-hall',
+    heading: mainHall.name,
+    lead: 'A high-capacity, multi-purpose auditorium with stage seating, fully equipped for weddings, corporate events, bridal showers, conferences, and large celebrations.',
+    rows: [
+      { label: 'Capacity', value: `Up to ${mainHall.capacity} guests` },
+      { label: 'Features', value: 'A raised stage, rows of upholstered chairs, a vaulted ceiling with recessed lighting, and a wall-mounted screen' },
+      ratesRow,
+    ],
+    photos: photosNamed('main-hall-stage'),
+    flip: true,
+    grouped: false,
+  },
+  {
     id: 'grove',
     heading: grove.name,
-    lead: 'Our outdoor space: a wooded setting among tall pines for ceremonies, reunions, and gatherings in the open air.',
+    lead: 'A wooded setting among tall pines for ceremonies, reunions, and gatherings in the open air.',
     rows: [
       { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
       { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a patio, open lawn, and paths' },
       ratesRow,
     ],
     photos: photosNamed('gazebo', 'grove-path'),
-    flip: true,
-    grouped: false,
+    flip: false,
+    grouped: true,
   },
   {
     id: 'grounds',
@@ -110,10 +131,13 @@ const sections: Section[] = [
     rows: [{ label: 'Parking', value: 'On site, included with every booking' }],
     link: { label: 'Get Directions', href: site.address.directionsUrl },
     photos: photosNamed('approach-dusk', 'driveway'),
-    flip: false,
+    flip: true,
     grouped: true,
   },
 ];
+
+/** The amenities list sits between the three spaces and the grounds. */
+const AMENITIES_AFTER = 'grove';
 
 const LEAD_SIZES = '(min-width: 81.25rem) 680px, (min-width: 60rem) 56vw, 94vw';
 const SMALL_SIZES = '(min-width: 81.25rem) 335px, (min-width: 60rem) 28vw, (min-width: 36rem) 46vw, 94vw';
@@ -144,17 +168,25 @@ const gallerySchema =
     <div class="container">
       <Breadcrumbs items={crumbs} />
       <div class="sp-hero__head">
-        <h1 id="space-title" class="t-large-title">Two spaces, indoors and out</h1>
+        <h1 id="space-title" class="t-large-title">Three spaces, indoors and out</h1>
         <p class="t-lead sp-hero__lead">
-          {hall.name} and {grove.name} share one address in Suffolk. Book either space, or both together.
+          Well-maintained indoor and outdoor spaces surrounded by nature, with bright natural light and a dedicated stage
+          area. Book one space, or {hall.name} and {grove.name} together.
         </p>
       </div>
       {
         heroPhotos.length > 0 && (
-          <ul class="sp-hero__pair">
-            {heroPhotos.map((h) => (
-              <li>
-                <Photo photo={h.photo} priority ratio="3 / 2" caption={h.caption} class="sp-hero__photo" sizes="(min-width: 81.25rem) 590px, 47vw" />
+          <ul class="sp-hero__set">
+            {heroPhotos.map((h, i) => (
+              <li class:list={{ 'sp-hero__first': i === 0 }}>
+                <Photo
+                  photo={h.photo}
+                  priority
+                  ratio="3 / 2"
+                  caption={h.caption}
+                  class="sp-hero__photo"
+                  sizes={i === 0 ? '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 94vw' : '(min-width: 81.25rem) 390px, (min-width: 36rem) 31vw, 47vw'}
+                />
               </li>
             ))}
           </ul>
@@ -166,6 +198,7 @@ const gallerySchema =
   {
     sections.map((s) => {
       return (
+        <>
         <section id={s.id} class:list={['section', { 'section--grouped': s.grouped }]} aria-labelledby={`${s.id}-heading`}>
           <div class:list={['container', 'sp-space', { 'sp-space--flip': s.flip }]}>
             <div class="sp-space__head">
@@ -212,6 +245,27 @@ const gallerySchema =
             </div>
           </div>
         </section>
+        {s.id === AMENITIES_AFTER && site.amenities.length > 0 && (
+          <section id="amenities" class="section" aria-labelledby="amenities-heading">
+            <div class="container sp-amenities">
+              <h2 id="amenities-heading" class="t-large-title">Premium amenities</h2>
+              <ul class="sp-amenities__list">
+                {site.amenities.map((a, i) => (
+                  <li class="sp-amenity">
+                    <span class="sp-amenity__icon" aria-hidden="true">
+                      <Icon name={AMENITY_ICONS[i % AMENITY_ICONS.length]} />
+                    </span>
+                    <div class="sp-amenity__text">
+                      <h3 class="sp-amenity__name t-headline">{a.name}</h3>
+                      <p class="sp-amenity__detail secondary">{a.detail}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+        </>
       );
     })
   }
@@ -220,9 +274,10 @@ const gallerySchema =
     <div class="container">
       <div class="sp-visit">
         <div class="sp-visit__copy">
-          <h2 id="visit-heading" class="t-title-1">Visit before you book</h2>
+          <h2 id="visit-heading" class="t-title-1">Schedule a visit</h2>
           <p class="secondary">
-            See {hall.name} and {grove.name} in person. Send a visit request and we will arrange a time with you.
+            If you are interested in a walk-through or would like more information, please reach out. We would love to
+            schedule a personal tour so you can see how the space fits your vision.
           </p>
         </div>
         <div class="btn-row btn-row--stack sp-visit__actions">
@@ -236,7 +291,7 @@ const gallerySchema =
 </BaseLayout>
 
 <style>
-  /* Hero: the title beside a short lead, then The Hall and The Grove side by side. */
+  /* Hero: the title beside a short lead, then the three spaces side by side. */
   .sp-hero {
     padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
   }
@@ -263,24 +318,94 @@ const gallerySchema =
     max-width: 36rem;
   }
 
-  .sp-hero__pair {
+  .sp-hero__set {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* Portrait frames on phones, where two 3:2 frames side by side would be slivers. */
+  /*
+    Phones: three 3:2 frames side by side would be slivers, so the first space runs full width and the
+    other two sit below it as a pair of portraits.
+  */
   @media (width < 36rem) {
-    .sp-hero__pair {
-      gap: 0.75rem;
+    .sp-hero__set {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 0.75rem;
     }
 
-    .sp-hero :global(.sp-hero__photo .photo__frame) {
+    .sp-hero__first {
+      grid-column: 1 / -1;
+    }
+
+    .sp-hero li:not(.sp-hero__first) :global(.sp-hero__photo .photo__frame) {
       aspect-ratio: 4 / 5;
     }
+  }
+
+  /* The amenities: three short items with an icon each, never a wall of text. */
+  .sp-amenities {
+    display: grid;
+    gap: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  }
+
+  .sp-amenities__list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .sp-amenities__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2rem;
+    }
+  }
+
+  .sp-amenity {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .sp-amenity__text {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .sp-amenity__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--panel);
+    color: var(--accent-text);
+  }
+
+  .sp-amenity__icon :global(.icon) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sp-amenity__name {
+    margin: 0;
+    padding-top: 0.55rem;
+  }
+
+  .sp-amenity__detail {
+    margin: 0;
+    max-width: 30rem;
   }
 
   /*
@@ -423,7 +548,7 @@ const gallerySchema =
 
   /* Small tiles keep their captions short enough to sit under a half-width photo. */
   .sp-gallery__item:not(.sp-gallery__lead) :global(.photo__caption),
-  .sp-hero__pair :global(.photo__caption) {
+  .sp-hero__set :global(.photo__caption) {
     font-size: 0.9375rem;
   }
 

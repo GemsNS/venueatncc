@@ -17,15 +17,13 @@ import type {
   InquiryStatus,
   SpaceChoice,
 } from '../src/shared/types';
-import { INQUIRY_STATUSES } from '../src/shared/types';
+import { INQUIRY_STATUSES, spacesOverlap } from '../src/shared/types';
 
 /** Open statuses: still in the pipeline. */
 export const OPEN_STATUSES: InquiryStatus[] = ['new', 'contacted', 'visit', 'quoted'];
 
-/** Whether two space choices share any ground. 'both' overlaps everything. */
-export function spacesOverlap(a: SpaceChoice, b: SpaceChoice): boolean {
-  return a === 'both' || b === 'both' || a === b;
-}
+/** Whether two space choices share any ground ('both' is The Hall and The Grove, not The Main Hall). */
+export { spacesOverlap };
 
 // ---------------------------------------------------------------- rows
 

@@ -31,10 +31,11 @@ function pick(photo: VenuePhoto | null): ShareCard['photo'] {
 }
 
 const byName = (name: string) => pick(photoByName(name));
-const capacity = (id: 'indoor' | 'outdoor') => site.spaces.find((s) => s.id === id)?.capacity;
+const capacity = (id: 'indoor' | 'main' | 'outdoor') => site.spaces.find((s) => s.id === id)?.capacity;
 const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Hall';
+const mainHall = site.spaces.find((s) => s.id === 'main')?.name ?? 'The Main Hall';
 const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
-const bothSpaces = `${hall} up to ${capacity('indoor')} guests, ${grove} up to ${capacity('outdoor')}`;
+const spacesLine = `${hall} and ${mainHall} up to ${capacity('indoor')} guests each, ${grove} up to ${capacity('outdoor')}`;
 const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
@@ -47,7 +48,7 @@ export const shareCards: Record<string, ShareCard> = {
     line: `Event venue in ${site.address.city}, ${site.address.regionName}`,
     photo: { ...byName('exterior-dusk'), region: { left: 0, top: 0, width: 0.8, height: 1 } },
   },
-  'the-space': { title: 'Two spaces, indoors and out', line: bothSpaces, photo: byName('hall-windows') },
+  'the-space': { title: 'Three spaces, indoors and out', line: spacesLine, photo: byName('hall-windows') },
   pricing: {
     title: 'Rates and inquiries',
     line: 'Rates vary with the season and the day of the week. Call or send an inquiry for pricing',
@@ -64,7 +65,7 @@ export const shareCards: Record<string, ShareCard> = {
 };
 // Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
 for (const e of events) {
-  const line = offBrandPhrase(e.summary) ? bothSpaces : withoutPeriod(e.summary);
+  const line = offBrandPhrase(e.summary) ? spacesLine : withoutPeriod(e.summary);
   shareCards[e.slug] = { title: e.name, line, photo: pick(eventPhoto(e.slug)) };
 }
 

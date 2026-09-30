@@ -38,6 +38,7 @@ The eight staged files and the real photo each is made from:
 | `styled-event-meetings-trainings.jpg` | `hall-doors.jpg` |
 | `styled-event-graduations-reunions.jpg` | `grove-tables.jpg` |
 | `styled-event-community-events.jpg` | `grove-path.jpg` |
+| `styled-wedding-indoor-ceremony.jpg` | `main-hall.jpg` (outside the event set: the weddings page's indoor ceremony) |
 
 Use originals at least 1600px on the long edge. The build prints a warning for smaller files, for files with
 no `photoDetails` entry, and for real photos listed with no file.
@@ -79,6 +80,8 @@ source width, crops with CSS to the frame's ratio, and swaps in the tall file on
 | `hall-windows` | hall | Arched windows, fireplace feature wall, wood-look floor |
 | `hall-fireplace` | hall | Toward the windows and the fireplace wall |
 | `hall-doors` | hall | Double doors, wall-mounted screen, arched windows |
+| `main-hall` | main | The Main Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
+| `main-hall-stage` | main | The raised stage up close, the screen, the front rows (owner's IMG_4940) |
 | `grove-tables` | grove | Gazebo and picnic tables on a paved patio under pines |
 | `gazebo` | grove | Timber gazebo with a metal roof |
 | `grove-path` | grove | Paved path to the gazebo through the trees |

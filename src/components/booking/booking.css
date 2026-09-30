@@ -1114,6 +1114,7 @@ button.bk-progress__item:hover {
 }
 
 .bk-day[data-status='past'],
+.bk-day[data-status='closed'],
 .bk-day[data-status='later'] {
   color: var(--label-3);
   opacity: 0.6;
@@ -1753,18 +1754,20 @@ html:not(.js) .bk-skel {
   justify-self: start;
 }
 
+/* The three spaces as one row each: the name and what it is, its status on the chosen day, and the radio. */
 .bk-dc__spaces {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
 }
 
 .bk-dc__space {
-  display: grid;
-  justify-items: start;
-  gap: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--separator);
   border-radius: var(--r-sm);
   background: var(--bg-elevated);
@@ -1798,17 +1801,19 @@ html:not(.js) .bk-skel {
   text-decoration: line-through;
 }
 
-.bk-dc__space-top {
+.bk-dc__space-main {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  min-width: 0;
 }
 
 .bk-dc__space-name {
   font-size: var(--t-subhead);
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .bk-dc__radio {
@@ -1835,8 +1840,7 @@ html:not(.js) .bk-skel {
 }
 
 .bk-dc__space-status {
-  min-height: 1.5em;
-  margin-top: 2px;
+  flex: none;
 }
 
 .bk-dc__sats-label {

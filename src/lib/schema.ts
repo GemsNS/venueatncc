@@ -1,14 +1,15 @@
 /**
  * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts, so a fact changed
  * there changes the search-engine markup too.
- * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall and The Grove. Structured
+ * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall, The Main Hall, and The
+ * Grove. Structured
  * data never mentions alcohol or catering, and the venue is a stand-alone business with no parent
  * organization. The venue does not publish prices, so no node carries priceRange, a price, or an
  * OfferCatalog of rates.
  */
 import { site } from '../data/site';
 import { publishedFaqs } from '../data/faq';
-import type { SpaceChoice } from '../shared/types';
+import { SPACE_NAMES, type SpaceChoice } from '../shared/types';
 
 const venueId = `${site.url}/#venue`;
 const websiteId = `${site.url}/#website`;
@@ -47,10 +48,9 @@ function warnOnce(message: string) {
   console.warn(message);
 }
 
-/** The public name of a space choice: The Hall, The Grove, or The Hall and The Grove. */
+/** The public name of a space choice: The Hall, The Main Hall, The Grove, or The Hall and The Grove. */
 export function spaceName(choice: SpaceChoice): string {
-  const name = (id: 'indoor' | 'outdoor') => site.spaces.find((s) => s.id === id)?.name ?? (id === 'indoor' ? 'The Hall' : 'The Grove');
-  return choice === 'both' ? `${name('indoor')} and ${name('outdoor')}` : name(choice);
+  return SPACE_NAMES[choice];
 }
 
 /** The places the venue serves, typed for schema.org. Shared by the venue and every event Service. */
@@ -109,9 +109,17 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,
     maximumAttendeeCapacity: site.maxCapacity,
+    // Building access for events (site.access): Monday to Saturday, 9:00 AM to 12:00 midnight.
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      opens: '09:00',
+      closes: '24:00',
+    },
     amenityFeature: [
       feature('On-site parking', site.policies.parkingIncluded),
       ...site.spaces.map((s) => feature(`${s.name}, up to ${s.capacity} guests`)),
+      ...site.amenities.map((a) => feature(a.name)),
     ],
   };
   if (opts.details) {

@@ -6,7 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadConfig } from '../config';
 import { ipBucket } from '../context';
-import { MIGRATIONS, openDatabase } from '../db';
+import Database from 'better-sqlite3';
+import { MIGRATIONS, migrate, openDatabase } from '../db';
 import { pruneOutbox } from '../email/mailer';
 import { dialable, guestConfirmationEmail, venueNotificationEmail } from '../email/templates';
 import { buildCsp, originAllowed } from '../middleware';
@@ -31,6 +32,8 @@ import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
 import { estimate } from '../../src/shared/pricing';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
+import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
+import { capacityError } from '../../src/shared/capacity';
 import { SPACE_NAMES, type CalendarBlock, type Inquiry } from '../../src/shared/types';
 import { silentLog } from './helpers';
 
@@ -237,6 +240,87 @@ describe('database', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  test('migration 4 (The Main Hall) keeps every inquiry, note, event, block, and link, and accepts the new space', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    // A database as it stood before The Main Hall: migrations 1 to 3.
+    db.transaction(() => {
+      for (const m of MIGRATIONS.slice(0, 3)) db.exec(m as string);
+      db.pragma('user_version = 3');
+    })();
+    const now = '2026-10-01T00:00:00.000Z';
+    db.prepare(`INSERT INTO admins (id, email, name, password_hash, created_at, updated_at) VALUES (1, 'a@example.com', 'A', 'x', ?, ?)`).run(now, now);
+    db.prepare(
+      `INSERT INTO inquiries (id, reference, status, event_type, date, start_time, hours, space, guests, name, email, contact_preference,
+        estimate_json, estimate_total, created_at, updated_at)
+       VALUES (7, 'NCC-ABCDE', 'quoted', 'weddings', '2026-11-14', '17:00', 5, 'both', 120, 'Jordan', 'j@example.com', 'email', '{}', 900, ?, ?)`,
+    ).run(now, now);
+    db.prepare(`INSERT INTO inquiry_notes (inquiry_id, admin_id, author, body, created_at) VALUES (7, 1, 'A', 'Called back', ?)`).run(now);
+    db.prepare(`INSERT INTO inquiry_events (inquiry_id, kind, detail, created_at) VALUES (7, 'note', 'Note added by A.', ?)`).run(now);
+    db.prepare(`INSERT INTO blocks (date, space, kind, label, inquiry_id, created_at, created_by) VALUES ('2026-11-14', 'indoor', 'held', 'Jordan', 7, ?, 1)`).run(now);
+    db.prepare(`INSERT INTO email_log (inquiry_id, kind, to_address, subject, status, transport, created_at) VALUES (7, 'guest', 'j@example.com', 'S', 'sent', 'smtp', ?)`).run(now);
+    db.prepare(`INSERT INTO form_token_uses (nonce, inquiry_id, body_hash, used_at) VALUES ('n1', 7, 'h', ?)`).run(now);
+
+    assert.equal(migrate(db), MIGRATIONS.length);
+    assert.equal(db.pragma('user_version', { simple: true }), MIGRATIONS.length);
+    assert.equal(db.pragma('foreign_keys', { simple: true }), 1, 'foreign keys are back on');
+    const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+    assert.equal(count('inquiries'), 1);
+    assert.equal(count('inquiry_notes'), 1);
+    assert.equal(count('inquiry_events'), 1);
+    assert.equal(count('form_token_uses'), 1);
+    assert.deepEqual(db.prepare('SELECT space, inquiry_id FROM blocks').get(), { space: 'indoor', inquiry_id: 7 });
+    assert.deepEqual(db.prepare('SELECT inquiry_id FROM email_log').get(), { inquiry_id: 7 });
+    assert.deepEqual(db.pragma('foreign_key_check'), []);
+    const indexes = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'inquiries_%' OR name LIKE 'blocks_%' ORDER BY name").all() as { name: string }[]).map((i) => i.name);
+    assert.deepEqual(indexes, ['blocks_date', 'blocks_inquiry', 'inquiries_created', 'inquiries_date', 'inquiries_ip', 'inquiries_status']);
+
+    // The Main Hall is accepted now; anything else is still refused.
+    db.prepare(`INSERT INTO blocks (date, space, kind, label, created_at) VALUES ('2026-11-14', 'main', 'booked', '', ?)`).run(now);
+    assert.throws(() => db.prepare(`INSERT INTO blocks (date, space, kind, label, created_at) VALUES ('2026-11-14', 'annex', 'booked', '', ?)`).run(now), /CHECK/);
+    // Deleting the inquiry still cascades to its notes, as before.
+    db.prepare('DELETE FROM inquiries WHERE id = 7').run();
+    assert.equal(count('inquiry_notes'), 0);
+    db.close();
+  });
+});
+
+describe('spaces: The Hall, The Main Hall, The Grove, and The Hall and The Grove', () => {
+  test('The Main Hall is its own space: it never overlaps The Hall, The Grove, or the pair', () => {
+    assert.equal(spacesOverlap('main', 'main'), true);
+    for (const other of ['indoor', 'outdoor', 'both'] as const) {
+      assert.equal(spacesOverlap('main', other), false, other);
+      assert.equal(spacesOverlap(other, 'main'), false, other);
+    }
+    assert.equal(spacesOverlap('both', 'indoor'), true);
+    assert.equal(spacesOverlap('outdoor', 'both'), true);
+    assert.equal(spacesOverlap('indoor', 'outdoor'), false);
+  });
+
+  test('availability: a day is booked only when all three spaces are taken, and Sundays are closed', () => {
+    const [partial] = availabilityFor('2026-11-14', '2026-11-14', [{ date: '2026-11-14', space: 'both' }], '2026-10-01');
+    assert.equal(partial.status, 'partial');
+    assert.deepEqual(partial.spaces, { indoor: 'taken', main: 'free', outdoor: 'taken' });
+    assert.equal(spaceIsFree(partial, 'main'), true);
+    assert.equal(spaceIsFree(partial, 'indoor'), false);
+    const [full] = availabilityFor('2026-11-14', '2026-11-14', [{ date: '2026-11-14', space: 'both' }, { date: '2026-11-14', space: 'main' }], '2026-10-01');
+    assert.equal(full.status, 'booked');
+    const [sunday] = availabilityFor('2026-11-15', '2026-11-15', [], '2026-10-01');
+    assert.equal(sunday.status, 'closed');
+    assert.equal(spaceIsFree(sunday, 'indoor'), false);
+  });
+
+  test('The Main Hall holds up to 100 guests, the same as The Hall', () => {
+    assert.equal(capacityError('main', 100), null);
+    assert.equal(capacityError('main', 101), 'The Main Hall holds up to 100 guests. The Grove holds up to 150.');
+    assert.equal(SPACE_NAMES.main, 'The Main Hall');
+  });
+
+  test('planBooking books The Main Hall on its own', () => {
+    const hallBlock: CalendarBlock = { id: 1, date: '2027-01-09', space: 'both', kind: 'booked', label: '', inquiryId: null, createdAt: '2026-10-01T00:00:00.000Z' };
+    assert.deepEqual(planBooking({ date: '2027-01-09', space: 'main' }, [], [hallBlock]), { ok: true, upgrade: [], add: 'main' });
   });
 });
 
@@ -531,6 +615,18 @@ describe('inquiry schema', () => {
     const r = inquiryInputSchema.safeParse({ ...base, ...overrides });
     return r.success ? {} : Object.fromEntries(r.error.issues.map((i) => [i.path.join('.'), i.message]));
   };
+
+  test('building hours: Monday to Saturday, from 9:00 AM, ending by 12:00 midnight', () => {
+    assert.equal(errorsFor({ date: '2026-11-15' }).date, 'We are closed on Sundays. Choose a date from Monday to Saturday.');
+    assert.equal(errorsFor({ altDate: '2026-11-15' }).altDate, 'We are closed on Sundays. Choose a date from Monday to Saturday.');
+    assert.equal(errorsFor({ startTime: '08:30' }).startTime, 'Choose a start time from 9:00 AM on.');
+    assert.deepEqual(errorsFor({ startTime: '09:00', hours: 15 }), {}, '9:00 AM to 12:00 midnight is allowed');
+    assert.deepEqual(errorsFor({ startTime: '23:00', hours: 1 }), {});
+    assert.equal(errorsFor({ startTime: '20:00', hours: 5 }).hours, 'Events end by 12:00 midnight. Choose an earlier start time or fewer hours.');
+    assert.equal(errorsFor({ startTime: '23:30', hours: 1 }).hours, 'Events end by 12:00 midnight. Choose an earlier start time or fewer hours.');
+    assert.deepEqual(errorsFor({ space: 'main' }), {});
+    assert.equal(errorsFor({ space: 'annex' }).space, 'Choose a space.');
+  });
 
   test('event type must be a listed slug or "other"', () => {
     assert.deepEqual(errorsFor({}), {});

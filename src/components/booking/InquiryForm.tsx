@@ -26,7 +26,6 @@ import { DateField } from './DateField';
 import { FieldError, describe } from './fields';
 import {
   ELLIPSIS,
-  HOURS_MAX,
   HOURS_MIN,
   SINGLE_SPACES,
   SPACES,
@@ -37,13 +36,16 @@ import {
   formatLongKept,
   guestsLabel,
   hoursLabel,
+  hoursMaxFor,
   latestBookableDate,
+  partlyBookedNote,
   spaceLabel,
+  spaceParts,
   telHref,
 } from './lib';
 import { ChoiceList, CountField, Note, Segmented, Spinner, Stepper, type ChoiceOption } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
-import { DEFAULT_DRAFT, GUESTS_MAX, GUESTS_MIN, buildInput, emailError, errorId, fieldId, validate, type Draft } from './wizard';
+import { DEFAULT_DRAFT, GUESTS_MAX, GUESTS_MIN, buildInput, emailError, errorId, fieldId, fitHours, validate, type Draft } from './wizard';
 
 const EVENT_OPTIONS = [...eventTypes, OTHER_EVENT];
 
@@ -158,7 +160,8 @@ export default function InquiryForm() {
   const day = d.date ? days[d.date] : undefined;
 
   const update = useCallback((patch: Partial<Draft>) => {
-    setD((prev) => ({ ...prev, ...patch }));
+    // Keep the start time and hours within building hours (9:00 AM to 12:00 midnight).
+    setD((prev) => fitHours({ ...prev, ...patch }, HOURS_MIN));
     const keys = Object.keys(patch).flatMap((k) => [k, ...(RELATED[k] ?? [])]);
     setErrors((prev) => {
       if (!keys.some((k) => k in prev)) return prev;
@@ -358,13 +361,10 @@ export default function InquiryForm() {
     value: s,
     title: SPACE_CHOICE_TITLE[s],
     hint: SPACE_HINT[s],
-    disabled: day ? day.status !== 'past' && !spaceIsFree(day, s) : false,
-    disabledNote: s === 'both' && taken.length < 2 ? 'Partly booked' : 'Booked',
+    disabled: day ? day.status !== 'past' && day.status !== 'closed' && !spaceIsFree(day, s) : false,
+    disabledNote: spaceParts(s).length > 1 && spaceParts(s).some((p) => !taken.includes(p)) ? 'Partly booked' : 'Booked',
   }));
-  const bookedNote =
-    d.date && taken.length === 1
-      ? `${spaceLabel(taken[0])} is booked on ${formatShort(d.date)}. ${spaceLabel(SINGLE_SPACES.find((s) => s !== taken[0]) ?? 'indoor')} is open.`
-      : '';
+  const bookedNote = d.date ? partlyBookedNote(taken, formatShort(d.date)) : '';
   const capErr = capacityError(d.space, d.guests);
   const phoneNeeded = d.contactPreference !== 'email';
   const summaryItems = (summary ?? []).filter((f) => errors[f]);
@@ -499,7 +499,7 @@ export default function InquiryForm() {
                 describedBy={describe(dateHintId, errors.date ? errorId('date') : '')}
               />
               <p class="field__hint" id={dateHintId}>
-                Booked dates cannot be chosen.
+                Booked dates and Sundays cannot be chosen.
               </p>
               <FieldError errors={errors} field="date" />
             </div>
@@ -560,7 +560,7 @@ export default function InquiryForm() {
                 labelId="bk-iq-hours-label"
                 value={d.hours}
                 min={HOURS_MIN}
-                max={HOURS_MAX}
+                max={hoursMaxFor(d.startTime)}
                 onChange={(hours) => update({ hours })}
                 format={hoursLabel}
                 decLabel="Fewer hours"
@@ -574,7 +574,7 @@ export default function InquiryForm() {
             <span class="num">
               {formatTime(d.startTime)} to {formatEndTime(d.startTime, d.hours)}
             </span>
-            . Include time to set up and clean up.
+            . Include time to set up and clean up. Events end by 12:00 midnight.
           </p>
         </fieldset>
 

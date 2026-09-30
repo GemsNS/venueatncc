@@ -6,10 +6,34 @@ import { eventTypes } from '../../data/event-types';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { formatShort } from '../../shared/dates';
-import { dayTypeOf, minimumHours } from '../../shared/booking-rules';
+import {
+  CLOSED_DAY_MESSAGE,
+  ENDS_TOO_LATE_MESSAGE,
+  OPENS_AT,
+  START_TOO_EARLY_MESSAGE,
+  dayTypeOf,
+  endsInHours,
+  isClosedDay,
+  maxHoursFrom,
+  minimumHours,
+  startsInHours,
+} from '../../shared/booking-rules';
 import { fieldErrors, inquiryInputSchema } from '../../shared/schemas';
 import type { AvailabilityDay, ContactPreference, DateKey, InquiryInput, SpaceChoice } from '../../shared/types';
-import { HOURS_MAX, HOURS_MIN, TOO_LATE_MESSAGE, latestBookableDate, parseDate, parseIntIn, parseSpace, spaceLabel } from './lib';
+import {
+  HOURS_MAX,
+  HOURS_MIN,
+  TIME_OPTIONS,
+  TOO_LATE_MESSAGE,
+  clamp,
+  hoursMaxFor,
+  latestBookableDate,
+  latestStartFor,
+  parseDate,
+  parseIntIn,
+  parseSpace,
+  spaceLabel,
+} from './lib';
 
 export type Step = 1 | 2 | 3 | 4;
 
@@ -90,7 +114,8 @@ export function restoreDraft(saved: unknown): Draft | null {
   if (!isStep(out.step)) out.step = 1;
   if (!isStep(out.reached)) out.reached = out.step;
   if (!parseSpace(out.space)) out.space = 'indoor';
-  if (out.date && !parseDate(out.date)) out.date = '';
+  if (out.date && (!parseDate(out.date) || isClosedDay(out.date))) out.date = '';
+  if (!TIME_OPTIONS.some((t) => t.value === out.startTime)) out.startTime = DEFAULT_DRAFT.startTime;
   // A saved event type that is no longer on the list (a slug was renamed) is dropped, so the person picks again.
   if (out.eventType && !isEventSlug(out.eventType)) out.eventType = '';
   return out;
@@ -103,18 +128,29 @@ export function minHoursFor(date: DateKey | ''): number {
 }
 
 /**
- * Raises the hours to the chosen day's minimum (a Saturday books at least 5), so the stepper, the time
- * range, and the summary always show the same length.
+ * Keeps the start time and hours inside building hours (9:00 AM to 12:00 midnight) with at least `min`
+ * hours: a start before 9:00 AM moves to 9:00 AM, a start too late for the minimum moves earlier, and the
+ * hours stay between the minimum and what fits before midnight.
+ */
+export function fitHours<T extends { startTime: string; hours: number }>(d: T, min: number): T {
+  let startTime = startsInHours(d.startTime) ? d.startTime : OPENS_AT;
+  if (maxHoursFrom(startTime) < min) startTime = latestStartFor(min);
+  const hours = clamp(d.hours, min, Math.max(min, hoursMaxFor(startTime)));
+  return startTime === d.startTime && hours === d.hours ? d : { ...d, startTime, hours };
+}
+
+/**
+ * Raises the hours to the chosen day's minimum (a Saturday books at least 5) and keeps the event within
+ * building hours, so the stepper, the time range, and the summary always show the same length.
  */
 export function withMinimumHours(d: Draft): Draft {
-  const min = minHoursFor(d.date);
-  return d.hours < min ? { ...d, hours: min } : d;
+  return fitHours(d, minHoursFor(d.date));
 }
 
 export function applySearch(draft: Draft, params: URLSearchParams, today: DateKey): Draft {
   const next = { ...draft };
   const date = parseDate(params.get('date'));
-  if (date && date >= today && date <= latestBookableDate(today)) next.date = date;
+  if (date && date >= today && date <= latestBookableDate(today) && !isClosedDay(date)) next.date = date;
   const space = parseSpace(params.get('space'));
   if (space) {
     next.space = space;
@@ -213,9 +249,14 @@ export function validate(d: Draft, steps: Step[], ctx: ValidationContext): Recor
     if (!d.date) out.date = 'Choose a date.';
     else if (d.date < ctx.today) out.date = 'Choose a date from today on.';
     else if (d.date > latestBookableDate(ctx.today)) out.date = TOO_LATE_MESSAGE;
+    else if (isClosedDay(d.date)) out.date = CLOSED_DAY_MESSAGE;
     else if (ctx.day?.status === 'booked') out.date = 'That date is booked. Choose another date.';
   }
-  if (want('space') && d.date && ctx.day && ctx.day.status !== 'booked' && !spaceIsFree(ctx.day, d.space)) {
+  // Building hours, stated here as well as in the schema: the schema's cross-field rules only run once
+  // every field has a valid shape.
+  if (want('startTime') && !out.startTime && !startsInHours(d.startTime)) out.startTime = START_TOO_EARLY_MESSAGE;
+  else if (want('hours') && !out.hours && !endsInHours(d.startTime, d.hours)) out.hours = ENDS_TOO_LATE_MESSAGE;
+  if (want('space') && d.date && ctx.day && ctx.day.status !== 'booked' && ctx.day.status !== 'closed' && !spaceIsFree(ctx.day, d.space)) {
     out.space = `${spaceLabel(d.space)} is booked on ${formatShort(d.date)}. Choose another space.`;
   }
   if (want('guests') && !out.guests) {

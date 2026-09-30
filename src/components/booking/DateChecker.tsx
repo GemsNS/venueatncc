@@ -7,13 +7,14 @@ import './booking.css';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
-import type { DateKey } from '../../shared/types';
+import { CLOSED_DAY_MESSAGE } from '../../shared/booking-rules';
+import type { DateKey, SingleSpace } from '../../shared/types';
 import { DateField } from './DateField';
-import { ELLIPSIS, SINGLE_SPACES, bookUrl, latestBookableDate, spaceLabel } from './lib';
+import { ELLIPSIS, SINGLE_SPACES, bookUrl, latestBookableDate, listSpaces, spaceLabel } from './lib';
 import { SpaceStatus, Spinner } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
 
-type Single = 'indoor' | 'outdoor';
+type Single = SingleSpace;
 
 const WINDOW_DAYS = 120;
 
@@ -26,6 +27,7 @@ const SPEAK_AFTER_MS = 500;
  */
 const SPACE_META: Record<Single, string> = {
   indoor: 'Indoor',
+  main: 'Auditorium',
   outdoor: 'Outdoor',
 };
 
@@ -59,7 +61,7 @@ export default function DateChecker(props: { bookHref?: string }) {
   });
 
   const day = date ? days[date] : undefined;
-  const isFree = (s: Single) => (day ? day.spaces[s] === 'free' && day.status !== 'past' : true);
+  const isFree = (s: Single) => (day ? day.spaces[s] === 'free' && day.status !== 'past' && day.status !== 'closed' : true);
 
   // The person's pick when it is free on this date; otherwise the first free space once the date is known.
   const chosen: Single | '' = space && isFree(space) ? space : day ? (SINGLE_SPACES.find((s) => isFree(s)) ?? '') : '';
@@ -72,9 +74,9 @@ export default function DateChecker(props: { bookHref?: string }) {
     }
   }
 
-  const bothTaken = day ? !isFree('indoor') && !isFree('outdoor') : false;
+  const allTaken = day ? SINGLE_SPACES.every((s) => !isFree(s)) : false;
   const cta = bookUrl(props.bookHref, {
-    date: date && !bothTaken ? date : undefined,
+    date: date && !allTaken ? date : undefined,
     space: date && day && chosen ? chosen : undefined,
   });
 
@@ -87,9 +89,16 @@ export default function DateChecker(props: { bookHref?: string }) {
   const onSpaceKey = (e: KeyboardEvent, i: number) => {
     if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
     e.preventDefault();
-    const j = i === 0 ? 1 : 0;
-    const s = SINGLE_SPACES[j];
-    if (isFree(s)) pickSpace(s, true, j);
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1;
+    const n = SINGLE_SPACES.length;
+    // Move to the next free space in that direction, wrapping around, as native radios do.
+    for (let k = 1; k < n; k++) {
+      const j = (i + step * k + n) % n;
+      if (isFree(SINGLE_SPACES[j])) {
+        pickSpace(SINGLE_SPACES[j], true, j);
+        return;
+      }
+    }
   };
 
   const checkedIdx = SINGLE_SPACES.findIndex((s) => s === chosen);
@@ -101,11 +110,12 @@ export default function DateChecker(props: { bookHref?: string }) {
   let dayNews = '';
   if (date && day) {
     const free = SINGLE_SPACES.filter((s) => isFree(s));
-    if (free.length === 2) dayNews = 'Both spaces are open.';
-    else if (free.length === 1) {
-      const other = SINGLE_SPACES.find((s) => s !== free[0]) ?? 'indoor';
-      dayNews = `${spaceLabel(free[0])} is open. ${spaceLabel(other)} is booked.`;
-    } else dayNews = 'Both spaces are booked. Try one of the open Saturdays below.';
+    const taken = SINGLE_SPACES.filter((s) => !isFree(s));
+    if (day.status === 'closed') dayNews = CLOSED_DAY_MESSAGE;
+    else if (free.length === SINGLE_SPACES.length) dayNews = 'All three spaces are open.';
+    else if (free.length > 0) {
+      dayNews = `${listSpaces(free)} ${free.length === 1 ? 'is' : 'are'} open. ${listSpaces(taken)} ${taken.length === 1 ? 'is' : 'are'} booked.`;
+    } else dayNews = 'All three spaces are booked. Try one of the open Saturdays below.';
   }
 
   // The field shows the date, so the line under it says only what the day means. The announcement
@@ -181,17 +191,17 @@ export default function DateChecker(props: { bookHref?: string }) {
               onClick={() => pickSpace(s)}
               onKeyDown={(e) => onSpaceKey(e, i)}
             >
-              <span class="bk-dc__space-top">
+              <span class="bk-dc__space-main">
                 <span class="bk-dc__space-name">{spaceLabel(s)}</span>
-                <span class="bk-dc__radio" aria-hidden="true" />
+                <span class="bk-dc__space-cap">{SPACE_META[s]}</span>
               </span>
-              <span class="bk-dc__space-cap">{SPACE_META[s]}</span>
-              {/* Before a date is chosen the hint above says what to do, so the cards stay quiet. */}
+              {/* Before a date is chosen the hint above says what to do, so the rows stay quiet. */}
               {(day || statusPending) && (
                 <span class="bk-dc__space-status">
                   {day ? <SpaceStatus free={free} /> : <span class="bk-status bk-status--none">Checking</span>}
                 </span>
               )}
+              <span class="bk-dc__radio" aria-hidden="true" />
             </button>
           );
         })}

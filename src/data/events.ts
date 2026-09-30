@@ -10,10 +10,12 @@
  *   bringing your own anything. Catering appears only in one FAQ entry on /faq/.
  * - The venue is a stand-alone business (brand.md, "Separation"): no copy connects it to a church. A
  *   client's own congregation or clergy may be mentioned.
- * - Describe only what the photos show. The Hall: arched windows, a fireplace feature wall, dark
- *   wood-look floors, recessed lighting, double doors. The Grove: a timber gazebo, open lawn, picnic
+ * - Describe only what the photos and the owner's copy confirm. The Hall: arched windows, a fireplace
+ *   feature wall, dark wood-look floors, recessed lighting, double doors. The Main Hall: an auditorium with
+ *   stage seating in rows, a raised stage, a vaulted ceiling. The Grove: a timber gazebo, open lawn, picnic
  *   tables on a patio, tall pines, paths. The grounds: a long paved drive and a paved lot.
- *   Never claim or ask about a kitchen, sound, screens, a stage, tables and chairs, or setup times.
+ *   Kitchen access and the other amenities are stated once, on The Space; do not repeat them here.
+ *   Never claim or ask about sound, tables and chairs, or setup times.
  * - State each fact once per page. Capacities appear only in the event's first section, which
  *   describes the spaces. Rates, deposits, parking, and visits are not written here: the event page
  *   adds one line that links to /pricing/ (Ask about rates) and the FAQ, and its checklist carries the
@@ -64,8 +66,10 @@ function spaceOf(id: SpaceId) {
 }
 
 const HALL = spaceOf('indoor').name;
+const MAIN = spaceOf('main').name;
 const GROVE = spaceOf('outdoor').name;
 const INDOOR = spaceOf('indoor').capacity;
+const MAIN_CAP = spaceOf('main').capacity;
 const OUTDOOR = spaceOf('outdoor').capacity;
 const PHONE = site.contact.phone;
 
@@ -84,8 +88,9 @@ export const events: EventType[] = [
       {
         heading: 'Your choice of an indoor or outdoor reception',
         body: [
-          `${GROVE} is our outdoor space: a timber gazebo with a metal roof, open lawn, a patio, and tall pines around it. It holds up to ${OUTDOOR} guests and gives your vows a natural setting.`,
-          `${HALL} is our indoor space, with arched windows, a fireplace feature wall, and dark wood-look floors. It holds up to ${INDOOR} guests for the reception. Reserve both for the same day and guests move from the ceremony to the reception without returning to their cars.`,
+          `${GROVE} sets your vows outdoors: a timber gazebo with a metal roof, open lawn, a patio, and tall pines around it. It holds up to ${OUTDOOR} guests.`,
+          `${HALL}, with arched windows, a fireplace feature wall, and dark wood-look floors, holds up to ${INDOOR} guests for the reception. Reserve ${HALL} and ${GROVE} for the same day and guests move from the ceremony to the reception without returning to their cars.`,
+          `For a ceremony indoors, ${MAIN} seats up to ${MAIN_CAP} guests in rows facing a raised stage.`,
         ],
       },
       {
@@ -111,7 +116,7 @@ export const events: EventType[] = [
     faqs: [
       {
         q: 'What happens if it rains on our wedding day?',
-        a: `When you reserve both spaces, ${HALL} is ready for your guests if the weather turns. If your guest list is larger than ${HALL} holds, talk through a weather plan with us before you book.`,
+        a: `When you reserve ${HALL} and ${GROVE} together, ${HALL} is ready for your guests if the weather turns. If your guest list is larger than ${HALL} holds, talk through a weather plan with us before you book.`,
       },
       {
         q: 'How far in advance should we book a wedding venue?',
@@ -372,6 +377,7 @@ export const events: EventType[] = [
         heading: 'The Hall for meetings and trainings',
         body: [
           `${HALL} holds up to ${INDOOR} people in one open room with arched windows and recessed lighting. It suits a board meeting, a training session, or a workshop that breaks into small groups.`,
+          `For a presentation or a corporate event, ${MAIN} seats up to ${MAIN_CAP} in rows facing a raised stage.`,
           `For a staff picnic or an outdoor team day, ${GROVE} holds up to ${OUTDOOR} among tall pines, with picnic tables on a patio.`,
         ],
       },
@@ -489,8 +495,9 @@ export const events: EventType[] = [
       {
         heading: 'Choosing the space',
         body: [
+          `${MAIN} suits a conference or a civic forum: a multi-purpose auditorium that seats up to ${MAIN_CAP} in rows facing a raised stage.`,
           `${HALL} suits sessions, workshops, and community meetings: one open room for up to ${INDOOR} guests, with arched windows and recessed lighting.`,
-          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering, with room for up to ${OUTDOOR} guests on the lawn and the patio under tall pines. Reserve both for a program that moves between them.`,
+          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering, with room for up to ${OUTDOOR} guests on the lawn and the patio under tall pines. Reserve ${HALL} and ${GROVE} together for a program that moves between them.`,
         ],
       },
       {
@@ -507,7 +514,7 @@ export const events: EventType[] = [
       items: [
         'Write one sentence that explains the purpose of the event and who it is for.',
         'Set a date, a headcount, and a budget.',
-        `Choose ${HALL}, ${GROVE}, or both for your headcount.`,
+        `Choose ${MAIN}, ${HALL}, or ${GROVE} for your program and headcount.`,
         'Visit the spaces with your planning team.',
         'Draft a run of show with start times, breaks, and a firm end time.',
         'Recruit volunteers for check-in and greeting, and name one point person for the day.',

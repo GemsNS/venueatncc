@@ -9,7 +9,7 @@ import { capacityError } from '../../src/shared/capacity';
 import type { AvailabilityResponse, Estimate, InquiryCreated } from '../../src/shared/types';
 import { createHash } from 'node:crypto';
 import { GUEST_CONFIRMATIONS_PER_HOUR } from '../routes/public';
-import { createHarness, formToken, freshIp, HOME_INLINE_SCRIPT, inquiryBody, ORIGIN, submitInquiry, type Harness } from './helpers';
+import { createHarness, openDay, formToken, freshIp, HOME_INLINE_SCRIPT, inquiryBody, ORIGIN, submitInquiry, type Harness } from './helpers';
 
 const EM_DASH = String.fromCharCode(8212);
 const EN_DASH = String.fromCharCode(8211);
@@ -34,7 +34,7 @@ describe('public API', () => {
     test('returns every day in the range, with blocks applied', async () => {
       const from = today();
       const to = addDays(from, 13);
-      const blocked = addDays(from, 3);
+      const blocked = openDay(addDays(from, 3));
       h.ctx.repo.insertBlock({ date: blocked, space: 'indoor', kind: 'held', label: 'Hold', inquiryId: null, createdBy: null }, new Date(h.clock.now).toISOString());
       const res = await h.request(`/api/availability?from=${from}&to=${to}`);
       assert.equal(res.status, 200);
@@ -45,7 +45,7 @@ describe('public API', () => {
       assert.equal(body.days.length, 14);
       const day = body.days.find((d) => d.date === blocked)!;
       assert.equal(day.status, 'partial');
-      assert.deepEqual(day.spaces, { indoor: 'taken', outdoor: 'free' });
+      assert.deepEqual(day.spaces, { indoor: 'taken', main: 'free', outdoor: 'free' });
       assert.equal(body.days[0].status, 'open');
     });
 
@@ -314,8 +314,38 @@ describe('public API', () => {
       assert.equal((await submitInquiry(h, { space: 'both', guests: 151 })).status, 400);
     });
 
+    test('The Main Hall is bookable on its own, up to 100 guests, and a Hall and Grove block does not conflict with it', async () => {
+      const date = openDay(addDays(today(), 47));
+      h.ctx.repo.insertBlock({ date, space: 'both', kind: 'booked', label: 'Other party', inquiryId: null, createdBy: null }, new Date(h.clock.now).toISOString());
+      const res = await submitInquiry(h, { date, space: 'main', guests: 100 });
+      assert.equal(res.status, 201);
+      const { reference } = (await res.json()) as InquiryCreated;
+      const row = h.db.prepare('SELECT id, space FROM inquiries WHERE reference = ?').get(reference) as { id: number; space: string };
+      assert.equal(row.space, 'main');
+      const conflicts = h.db.prepare("SELECT COUNT(*) AS n FROM inquiry_events WHERE inquiry_id = ? AND kind = 'block'").get(row.id) as { n: number };
+      assert.equal(conflicts.n, 0);
+      const over = await submitInquiry(h, { space: 'main', guests: 101 });
+      assert.equal(over.status, 400);
+      assert.equal((await over.json()).fields.guests, capacityError('main', 101));
+    });
+
+    test('building hours: no Sundays, a start from 9:00 AM, and an end by 12:00 midnight', async () => {
+      let sunday = addDays(today(), 10);
+      while (new Date(`${sunday}T12:00:00Z`).getUTCDay() !== 0) sunday = addDays(sunday, 1);
+      const closed = await submitInquiry(h, { date: sunday });
+      assert.equal(closed.status, 400);
+      assert.equal((await closed.json()).fields.date, 'We are closed on Sundays. Choose a date from Monday to Saturday.');
+      const early = await submitInquiry(h, { startTime: '07:00' });
+      assert.equal(early.status, 400);
+      assert.equal((await early.json()).fields.startTime, 'Choose a start time from 9:00 AM on.');
+      const late = await submitInquiry(h, { startTime: '21:00', hours: 4 });
+      assert.equal(late.status, 400);
+      assert.equal((await late.json()).fields.hours, 'Events end by 12:00 midnight. Choose an earlier start time or fewer hours.');
+      assert.equal((await submitInquiry(h, { startTime: '19:00', hours: 5 })).status, 201);
+    });
+
     test('a request for a taken space is still accepted, with a conflict event', async () => {
-      const date = addDays(today(), 45);
+      const date = openDay(addDays(today(), 45));
       h.ctx.repo.insertBlock({ date, space: 'both', kind: 'booked', label: 'Smith wedding', inquiryId: null, createdBy: null }, new Date(h.clock.now).toISOString());
       const res = await submitInquiry(h, { date, space: 'outdoor', guests: 50 });
       assert.equal(res.status, 201);

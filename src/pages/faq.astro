@@ -8,9 +8,10 @@ import { publishedFaqs, type Faq } from '../data/faq';
 import { breadcrumbs, faqPage } from '../lib/schema';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
+const mainHall = site.spaces.find((s) => s.id === 'main');
 const grove = site.spaces.find((s) => s.id === 'outdoor');
 const title = 'FAQ | Booking The Venue @ NCC in Suffolk, VA';
-const description = `Answers about capacity, rates, payments, parking, and booking at The Venue @ NCC in Suffolk, VA, with ${hall?.name} for ${hall?.capacity} guests and ${grove?.name} for ${grove?.capacity}.`;
+const description = `Answers about capacity, hours, rates, deposits, and booking at The Venue @ NCC in Suffolk, VA: ${hall?.name} and ${mainHall?.name} for ${hall?.capacity} guests each, ${grove?.name} for ${grove?.capacity}.`;
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'FAQ', path: '/faq/' },

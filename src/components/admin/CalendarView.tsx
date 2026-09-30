@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import { addDays, dayOfWeek, formatLong, formatShort, monthGrid, parseKey, toKey, todayKey } from '../../shared/dates';
-import { SPACE_NAMES, type BlockKind, type CalendarBlock, type DateKey, type SpaceChoice } from '../../shared/types';
+import { type BlockKind, type CalendarBlock, type DateKey, type SpaceChoice } from '../../shared/types';
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
 import { Sheet } from './Dialog';
@@ -20,9 +20,10 @@ const WEEKDAYS = [
 ];
 
 const SPACE_OPTIONS: { id: SpaceChoice; label: string }[] = [
-  { id: 'indoor', label: SPACE_NAMES.indoor },
-  { id: 'outdoor', label: SPACE_NAMES.outdoor },
-  { id: 'both', label: 'Both' },
+  { id: 'indoor', label: SPACE_SHORT.indoor },
+  { id: 'main', label: SPACE_SHORT.main },
+  { id: 'outdoor', label: SPACE_SHORT.outdoor },
+  { id: 'both', label: SPACE_SHORT.both },
 ];
 
 const KIND_OPTIONS: { id: BlockKind; label: string }[] = [
@@ -31,7 +32,7 @@ const KIND_OPTIONS: { id: BlockKind; label: string }[] = [
   { id: 'closed', label: 'Closed' },
 ];
 
-const SPACE_ORDER: Record<SpaceChoice, number> = { both: 0, indoor: 1, outdoor: 2 };
+const SPACE_ORDER: Record<SpaceChoice, number> = { both: 0, indoor: 1, main: 2, outdoor: 3 };
 
 function monthOf(key: DateKey): string {
   return key.slice(0, 7);
@@ -125,7 +126,7 @@ function DaySheetContent({
           On this day
         </h3>
         {blocks.length === 0 ? (
-          <p class="adm-muted adm-sheet__empty">Nothing blocked. Both spaces are open.</p>
+          <p class="adm-muted adm-sheet__empty">Nothing blocked. All three spaces are open.</p>
         ) : (
           <ul class="list-group adm-list adm-blocklist">
             {blocks.map((b) => (
