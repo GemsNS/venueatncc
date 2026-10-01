@@ -125,7 +125,7 @@
     Frosted caption panels over photographs (PageHero): White at --frost-alpha over the photo, blurred,
     with a white hairline. The alpha is tuned per photo so every line keeps its contrast (PageHero).
   */
-  --frost-blur: blur(12px) saturate(1.2);
+  --frost-blur: blur(10px) brightness(1.3) saturate(1.1);
   --frost-border: rgba(255, 255, 255, 0.7);
 
   /* Status */

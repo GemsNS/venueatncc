@@ -40,20 +40,22 @@ type Frost = { phone: number; wide: number };
  * under the photo there. A photo not listed gets 0.65, which passes over every hero photo measured.
  * brand.md, "Caption panels over photos", lists the measured ratios.
  */
+// 2026-10-01: the client found the panels still opaque, so every panel is now White at 0.3 over a brightened
+// blur, and each line carries a White glow (below) for legibility where the photo behind it is dark.
 const FROST: Record<string, Frost> = {
-  'main-hall': { phone: 0.65, wide: 0.65 },
-  'styled-wedding-indoor-ceremony': { phone: 0.6, wide: 0.6 },
-  'styled-event-weddings': { phone: 0.62, wide: 0.62 },
-  'styled-event-receptions-banquets': { phone: 0.55, wide: 0.55 },
-  'styled-event-baby-bridal-showers': { phone: 0.55, wide: 0.55 },
-  'styled-event-birthday-parties': { phone: 0.5, wide: 0.5 },
-  'styled-event-repasts-memorials': { phone: 0.45, wide: 0.45 },
-  'styled-event-meetings-trainings': { phone: 0.55, wide: 0.55 },
-  'styled-event-graduations-reunions': { phone: 0.65, wide: 0.65 },
-  'styled-event-community-events': { phone: 0.65, wide: 0.65 },
-  gazebo: { phone: 0.65, wide: 0.65 },
+  'main-hall': { phone: 0.3, wide: 0.3 },
+  'styled-wedding-indoor-ceremony': { phone: 0.3, wide: 0.3 },
+  'styled-event-weddings': { phone: 0.3, wide: 0.3 },
+  'styled-event-receptions-banquets': { phone: 0.3, wide: 0.3 },
+  'styled-event-baby-bridal-showers': { phone: 0.3, wide: 0.3 },
+  'styled-event-birthday-parties': { phone: 0.3, wide: 0.3 },
+  'styled-event-repasts-memorials': { phone: 0.3, wide: 0.3 },
+  'styled-event-meetings-trainings': { phone: 0.3, wide: 0.3 },
+  'styled-event-graduations-reunions': { phone: 0.3, wide: 0.3 },
+  'styled-event-community-events': { phone: 0.3, wide: 0.3 },
+  gazebo: { phone: 0.3, wide: 0.3 },
 };
-const FROST_DEFAULT: Frost = { phone: 0.65, wide: 0.65 };
+const FROST_DEFAULT: Frost = { phone: 0.3, wide: 0.3 };
 
 interface Props {
   photo: VenuePhoto;
@@ -189,6 +191,14 @@ const PHONE_SIZES = '(max-aspect-ratio: 16/25) and (min-height: 37.5rem) 64vh, (
     -webkit-backdrop-filter: var(--frost-blur);
     backdrop-filter: var(--frost-blur);
     box-shadow: 0 8px 32px rgb(var(--ink-rgb) / 0.08);
+  }
+
+  /*
+    The panel is mostly clear, so each line carries its own soft White glow: the photo shows through the panel,
+    and the glow keeps Plum text at 4.5:1 or better where the photo behind it is dark.
+  */
+  .phero__panel > :global(*) {
+    text-shadow: 0 0 2px rgb(255 255 255), 0 0 8px rgb(255 255 255 / 0.95), 0 0 18px rgb(255 255 255 / 0.8);
   }
 
   /* No backdrop-filter: the photo is not blurred, so the panel is near-solid White to keep the text legible. */

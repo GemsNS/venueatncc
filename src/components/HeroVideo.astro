@@ -106,8 +106,7 @@ const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(255, 255, 255, 0.96), rgba(255, 246, 249, 0.84) 70%, rgba(255, 244, 247, 0.74)),
-      linear-gradient(rgba(255, 240, 245, 0.4), rgba(255, 240, 245, 0.4));
+      radial-gradient(ellipse 75% 60% at 50% 50%, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.22) 100%);
   }
 
   /*
@@ -125,14 +124,15 @@ const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
       display: block;
       position: absolute;
       inset: 0;
-      background: #f9c6d7;
-      opacity: 0.3;
+      background: #f48fb1;
+      /* Colour, not multiply: the white petals and their grey shadows take on pink at their own lightness. */
+      mix-blend-mode: color;
+      opacity: 0.55;
     }
 
     .hero__overlay {
       background:
-        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 80%),
-        linear-gradient(rgba(255, 248, 250, 0.82), rgba(255, 248, 250, 0.82));
+        radial-gradient(ellipse 95% 40% at 50% 50%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3) 100%);
     }
   }
 

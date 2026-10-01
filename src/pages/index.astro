@@ -538,7 +538,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     font-style: italic;
     font-size: clamp(1.375rem, 1.1rem + 1.2vw, 2rem);
     line-height: 1.2;
-    color: var(--label-2);
+    color: var(--label);
   }
 
   /*
@@ -586,17 +586,8 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     font-size: var(--t-subhead);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--accent-text);
-  }
-
-  /*
-    Phones and portrait tablets: over the pinkest video frames, and the Rose tint the portrait crop adds
-    (HeroVideo), the Cerise line can dip below 4.5:1, so it is set in the text color there.
-  */
-  @media (width < 46.5rem), (orientation: portrait) {
-    .welcome__line {
-      color: var(--label);
-    }
+    /* The text color at every size: over the clip's grey petal shadows Cerise drops below 4.5:1. */
+    color: var(--label);
   }
 
   .welcome__actions {

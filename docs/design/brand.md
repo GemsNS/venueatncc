@@ -233,6 +233,11 @@ put white text on Pink or lighter.
 
 ### Caption panels over photos (version 6)
 
+**Amended 2026-10-01:** the client said the panels still looked opaque. Every panel is now White at 0.3 over
+`blur(10px) brightness(1.3) saturate(1.1)`, so the photo clearly shows through, and each line of text carries a
+White glow (`text-shadow`) that keeps Plum legible over dark parts of a photo. The per-photo opacities below are
+superseded. The home hero veil is also lighter, so the petals clip shows, and the location line is Plum at every size.
+
 The client asked that "the cards that cover the hero images describing the space" be "more transparent so
 they're not blocking the image", and that all such cards be transparent. `PageHero`'s caption panel (The
 Space, events, every event page, 404) is frosted glass: White at a per-photo opacity, `backdrop-filter:
