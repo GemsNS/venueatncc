@@ -44,10 +44,16 @@ const {
   phone = 'overlay',
   class: className,
 } = Astro.props;
+
+/*
+  Phones: the 4:5 file covers a band at least max(30rem, 80svh) tall (the phone rule below), so it is drawn
+  0.8 times that height wide, wider than the screen on most phones.
+*/
+const PHONE_SIZES = 'max(100vw, 64vh, 24rem)';
 ---
 <section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`} data-phone={phone}>
   <div class="phero__media">
-    <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" caption={false} class="phero__photo" />
+    <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" tallSizes={PHONE_SIZES} caption={false} class="phero__photo" />
     <div class="phero__scrim" aria-hidden="true"></div>
   </div>
   <div class="container phero__inner">

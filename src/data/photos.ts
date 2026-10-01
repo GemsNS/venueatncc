@@ -11,11 +11,11 @@
  *   real photos, and no image may appear twice on a page. There are no toggles between the two.
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)
- *   <name>.jpg                   3:2 landscape, 2400px wide. One entry in `photos`. The home hero,
- *                                grove-pines.jpg, is the exception: nearly the original's full width (3500px after
+ *   <name>.jpg                   3:2 landscape, up to 3840px wide where the camera original allows. One entry in
+ *                                `photos`. The home hero, grove-pines.jpg, is the exception: nearly the original's full width (3500px after
  *                                leveling the original by 2.5 degrees, for full-bleed screens) at its own ratio,
  *                                which the hero's frames are fitted to.
- *   <name>-tall.jpg              4:5 portrait, 1600px wide (grove-pines-tall.jpg is 7:10). Attached to
+ *   <name>-tall.jpg              4:5 portrait, 2000px wide (grove-pines-tall.jpg is 1600px at 7:10). Attached to
  *                                <name>.jpg as `tall` for art direction on phones. Never listed on its own.
  *   styled-event-<slug>.jpg      The staged photo of one event (virtual staging: furniture, linens, florals,
  *                                and lighting added; architecture, fixtures, and trees unchanged). Its

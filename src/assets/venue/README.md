@@ -24,8 +24,8 @@ of the property belong here, plus the staged event photos made from them and the
 
 | Pattern | What it is | How the site uses it |
 |---|---|---|
-| `name.jpg` | 3:2 landscape, 2400px wide | One photo in `photos` (src/data/photos.ts). |
-| `name-tall.jpg` | 4:5 portrait, 1600px wide | Attached to `name.jpg` as `tall`. Shown instead of the landscape file on phones (below 46.5rem) wherever a page asks for the tall crop. Never listed on its own. |
+| `name.jpg` | 3:2 landscape, as wide as the camera original allows up to 3840px (3840 for most; `grove-path` 3600, `gazebo` 3000, `exterior-dusk` 2880) | One photo in `photos` (src/data/photos.ts). |
+| `name-tall.jpg` | 4:5 portrait, 2000px wide (a phone hero draws it about 1800px wide at 3x) | Attached to `name.jpg` as `tall`. Shown instead of the landscape file on phones (below 46.5rem) wherever a page asks for the tall crop. Never listed on its own. |
 | `grove-pines.jpg`, `grove-pines-tall.jpg` | The home hero, the one exception: both are cut from the original after leveling it by 2.5 degrees (the camera was slightly rotated); the landscape file is nearly its full width (3500 x 2532) for full-bleed screens, and the portrait file is 7:10 | The hero's frames in src/pages/index.astro are fitted to these two framings (the roof, the gazebo, and the cut through the front table's legs). Re-measure them there if either file changes. |
 | `styled-event-<slug>.jpg` | The staged photo of one event: furniture, linens, florals, and lighting added; architecture, fixtures, and trees unchanged | Its `photoDetails` entry (already registered) names the real photo it was made from (`styledOf`) and the event (`event`). Shown only through `eventPhoto()`, with the badge, and on the event page with the caption "Styled concept. Décor is not included." |
 | `share-<name>.jpg` | A still life for a share card, not a photo of the property. Today only `share-rose-bouquet.jpg`: Gemini's 1024 x 572 output (variant 4 of 4, all kept in `design-archive/generated-scenes/share-bouquet/`) upscaled to 1920 wide | Read from disk by `src/pages/og/[key].jpg.ts` for the home card. Skipped by `src/data/photos.ts`. |
@@ -46,6 +46,28 @@ The eight staged files and the real photo each is made from:
 
 Use originals at least 1600px on the long edge. The build prints a warning for smaller files, for files with
 no `photoDetails` entry, and for real photos listed with no file.
+
+## Resolution (re-exported 2026-10-01)
+
+The client found the photos soft. Every real photo except `grove-pines` (already at the original's width) is
+re-cut from its camera original at the original's own resolution, with the same framing, leveling and grade
+as before: the HEIC files in `C:\NoOnedrive\venue\Venue` (IMG_4899, 4906, 4908, 4922, 4932, 4933, 4946,
+5154, 5159) and, for The Main Hall, the full-size JPEG copies of IMG_4937 and IMG_4940 its earlier files
+were cut from (IMG_4940 has no HEIC in that folder). Each framing was matched to the earlier
+file by image registration (scale, rotation and position), the earlier grade reapplied, and the result
+checked against the earlier file: below 1.2 levels of mean difference once fine detail is blurred out.
+
+The staged photos have no larger source (Gemini returned 1024 x 682). They are upscaled with Real-ESRGAN
+x4plus (the official xinntao release) and mixed half and half with a Lanczos resize with a gentle unsharp
+mask: pure Real-ESRGAN turned dense flowers into smooth, waxy blobs. They are 2880 x 1920 (1440 wide at
+2x). The ESRGAN outputs are kept in `C:\NoOnedrive\venue\Generated scenes\upscaled-esrgan-x4`.
+
+The files they replace are kept in `design-archive/photos-before-upscale/`. `share-rose-bouquet.jpg` is
+unchanged: it only feeds a 1200 wide share card.
+
+`Photo.astro` serves widths up to 3840 and encodes AVIF at quality 60 and WebP at 82 (sharp's defaults, 50
+and 80, smeared texture). Pages weigh about 1.4 to 1.5 times what they did, more where a hero now gets the
+larger file it needs.
 
 ## Describing a photo
 

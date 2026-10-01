@@ -16,6 +16,11 @@ interface Props {
   photo: VenuePhoto;
   /** Rendered width at each breakpoint, e.g. "(min-width: 64rem) 40vw, 100vw". */
   sizes?: string;
+  /**
+   * Rendered width of the portrait file on phones. Default "100vw". A frame taller than 4:5 (a phone hero)
+   * crops the sides off, so the file is drawn wider than the screen; say how wide, or phones get a soft file.
+   */
+  tallSizes?: string;
   /** The page's main image: loads eagerly with high fetch priority. */
   priority?: boolean;
   /** Frame ratio "width / height", or "fill" to fill a parent that sets the height. */
@@ -38,6 +43,7 @@ interface Props {
 const {
   photo,
   sizes = '(min-width: 75rem) 1200px, 100vw',
+  tallSizes = '100vw',
   priority = false,
   ratio = '3 / 2',
   tall = false,
@@ -55,7 +61,19 @@ const badgeText = badge ?? (isStyled ? 'Styled Concept' : undefined);
 const fill = ratio === 'fill';
 const useTall = tall && photo.tall !== undefined;
 
-const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400];
+/*
+  Up to 3840 so a full-bleed photo stays sharp at 1920 on a 2x screen (2880 covers 1440 at 2x). The larger
+  widths exist only where the source is that wide, and a browser fetches one only when its screen needs it.
+*/
+const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400, 2880, 3840];
+
+/*
+  Encoder quality. Sharp's defaults (AVIF 50, WebP 80) smear wall texture, foliage and petals into flat
+  patches on a large screen; these keep that detail for about 1.4 to 1.5 times the bytes
+  (src/assets/venue/README.md).
+*/
+const AVIF_QUALITY = 60;
+const WEBP_QUALITY = 82;
 
 /** Widths up to the source width, always including the source width itself. */
 function widthsFor(img: ImageMetadata): number[] {
@@ -67,19 +85,18 @@ async function sources(img: ImageMetadata) {
   const widths = widthsFor(img);
   const fallbackWidth = widths.find((w) => w >= 1280) ?? img.width;
   const [avif, webp] = await Promise.all([
-    getImage({ src: img, widths, width: fallbackWidth, format: 'avif' }),
-    getImage({ src: img, widths, width: fallbackWidth, format: 'webp' }),
+    getImage({ src: img, widths, width: fallbackWidth, format: 'avif', quality: AVIF_QUALITY }),
+    getImage({ src: img, widths, width: fallbackWidth, format: 'webp', quality: WEBP_QUALITY }),
   ]);
   return { avif: avif.srcSet.attribute, webp: webp.srcSet.attribute, src: webp.src, width: img.width, height: img.height };
 }
 
 const main = await sources(photo.src);
 const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
-// The portrait file fills the frame on phones, so it is as wide as the screen there.
-const tallSizes = '100vw';
 const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: ${crop}` : ''].filter(Boolean).join('; ');
-// The viewer shows the whole landscape file, uncropped, at up to 2400px wide.
-const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.width, 2400), format: 'webp' }) : null;
+// The viewer shows the whole landscape file, uncropped, up to 1600 CSS px wide: 3200px covers that at 2x.
+// It loads only when a visitor opens the viewer.
+const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.width, 3200), format: 'webp', quality: WEBP_QUALITY }) : null;
 ---
 <figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
   <div class="photo__frame">
