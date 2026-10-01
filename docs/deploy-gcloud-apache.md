@@ -138,7 +138,7 @@ sudo apachectl configtest 2>&1 | tee ~/venueatncc-deploy/configtest-before.txt  
 # pm2 (as the owner, with the documented PATH)
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls' | tee ~/venueatncc-deploy/pm2-before.txt
 # expect: ncc-backend (id 0) and vandyke-home-loan (id 1), both online
-ps -eo user,args | grep '[P]M2 v' | tee ~/venueatncc-deploy/pm2-daemons-before.txt
+ps -eo user:20,args | grep '[P]M2 v' | tee ~/venueatncc-deploy/pm2-daemons-before.txt
 # expect exactly one line, user mvandykeanthony (the one pm2 daemon on this server)
 
 # Node versions that must not change
@@ -280,6 +280,7 @@ rsync -az --delete --exclude /node_modules --exclude /dist --exclude /dist-demo 
 sudo install -d -o mvandykeanthony -g www-data -m 2775 /var/www/venueatncc.org/app
 sudo cp -R ~/venueatncc-src/. /var/www/venueatncc.org/app/
 sudo chown -R mvandykeanthony:www-data /var/www/venueatncc.org/app     # recursive only inside the new site
+sudo find /var/www/venueatncc.org/app -type d -exec chmod 2775 {} + -o -type f -exec chmod g+w {} +   # 775/664 like the git path; keeps exec bits
 rm -rf ~/venueatncc-src
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && git log -1 --oneline && ls src/data/site.ts package-lock.json'
 sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse HEAD' | tee ~/venueatncc-deploy/deployed-commit.txt
@@ -328,8 +329,9 @@ to Path B if memory is short, the build fails on a native module (sharp, resvg),
 `npm ci` downloads cannot load on this server, and every `npm ci` below copies the rebuilt file over
 it in the same command.
 
-Every `npm ci` here passes `--cache /var/www/venueatncc.org/.npm-cache`, so npm's download cache
-stays inside the new site's folder instead of the owner's shared `/home/mvandykeanthony/.npm`.
+Every `npm ci` here passes `--cache /var/www/venueatncc.org/.npm-cache`, and the install and build
+wrappers also export `npm_config_cache` with that path (so `npm run` and `npx` logs go there too),
+so npm's writes stay inside the new site's folder instead of the owner's shared `/home/mvandykeanthony/.npm`.
 (The other native binaries the build uses, from sharp and libvips, rolldown, lightningcss, the
 Astro compiler, and resvg, were checked against the lockfile versions: they need glibc 2.28 or
 older and `GLIBCXX_3.4.22` or older, which this server has, so Path A is expected to work. Only
@@ -351,7 +353,7 @@ Install everything, including devDependencies (Astro, esbuild, sharp, tsx), whic
 and put the rebuilt better-sqlite3 binary in place in the same command:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
 Check the native add-on now, before spending time on the build ([5.4](#54-the-native-add-on-better-sqlite3)).
@@ -365,7 +367,7 @@ sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versi
 Build at low priority so the other sites keep their CPU, with the Node heap capped:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npm run build'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npm run build'
 ```
 
 `npm run build` runs `astro build` (static site into `dist/`) and then esbuild (the server into
@@ -375,7 +377,7 @@ Then bundle the two command-line tools, exactly as the Dockerfile does (`Dockerf
 the admin tool and the nightly backup run with plain `node` and never need `tsx` or `npx`:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs'
 ```
 
 Check the output:
@@ -412,7 +414,7 @@ in by the same command:
 chmod 644 /tmp/venueatncc-build.tgz
 sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && rm -rf dist server-dist && tar xzf /tmp/venueatncc-build.tgz'
 rm -f /tmp/venueatncc-build.tgz
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
 Then run the better-sqlite3 check from [5.4](#54-the-native-add-on-better-sqlite3). With Path B,
@@ -454,9 +456,9 @@ docker run --rm -v "$PWD/out:/out" rockylinux:8 bash -c '
   export PATH=/opt/node-v24.16.0-linux-x64/bin:$PATH PYTHON=python3.11 &&
   mkdir /b && cd /b && npm init -y >/dev/null &&
   npm install better-sqlite3@12.11.1 --build-from-source &&
-  cp node_modules/better-sqlite3/build/Release/better_sqlite3.node /out/'
-grep -ao 'GLIBC_2\.[0-9]*' out/better_sqlite3.node | sort -uV | tail -1
-# expect GLIBC_2.28 or lower; GLIBC_2.29 or higher means the build is not usable here
+  cp node_modules/better-sqlite3/build/Release/better_sqlite3.node /out/ &&
+  grep -ao "GLIBC_2\.[0-9]*" /out/better_sqlite3.node | sort -uV | tail -1'
+# the last line printed must be GLIBC_2.28 or lower; GLIBC_2.29 or higher means the build is not usable here
 scp out/better_sqlite3.node <SSH_USER>@34.30.208.144:/tmp/
 ```
 
@@ -815,7 +817,7 @@ Confirm which ACME server the existing setup uses. certbot 0.27 is old; its buil
 still be the retired ACME v1 endpoint, so pass the v2 server explicitly:
 
 ```sh
-sudo grep -h '^server' /etc/letsencrypt/renewal/*.conf | sort | uniq -c
+sudo sh -c "grep -h '^server' /etc/letsencrypt/renewal/*.conf" | sort | uniq -c
 sudo ls /etc/letsencrypt/accounts/
 # expect acme-v02.api.letsencrypt.org in both
 ```
@@ -931,8 +933,8 @@ its `pre_hook`, `post_hook`, and the scripts in `renewal-hooks/`. If another cer
 run would take every site down. Inspect first and save the output:
 
 ```sh
-sudo grep -HE '^(authenticator|installer|pre_hook|post_hook|renew_hook|deploy_hook)' /etc/letsencrypt/renewal/*.conf 2>&1 | tee ~/venueatncc-deploy/renewal-hooks-check.txt
-sudo ls -la /etc/letsencrypt/renewal-hooks/*/ 2>&1 | tee -a ~/venueatncc-deploy/renewal-hooks-check.txt
+sudo sh -c "grep -HE '^(authenticator|installer|pre_hook|post_hook|renew_hook|deploy_hook)' /etc/letsencrypt/renewal/*.conf" 2>&1 | tee ~/venueatncc-deploy/renewal-hooks-check.txt
+sudo sh -c 'ls -la /etc/letsencrypt/renewal-hooks/*/' 2>&1 | tee -a ~/venueatncc-deploy/renewal-hooks-check.txt
 # expect for every file: authenticator = apache and installer = apache, no *_hook lines,
 # and the pre/, post/, deploy/ folders empty
 ```
@@ -1342,8 +1344,8 @@ curl -sI http://127.0.0.1:3010/ | head -1              # 200
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls' | tee pm2-after.txt
 # ncc-backend (0), vandyke-home-loan (1), venueatncc: all "online". Compare ids, names, and restart counts of 0 and 1 with pm2-before.txt.
 # Then (only now): pm2 save, as in section 7.4 (the gated command), if not done yet.
-ps -eo user,args | grep '[P]M2 v'                       # exactly ONE line, user mvandykeanthony (no second daemon from sudo/npx pm2)
-diff pm2-daemons-before.txt <(ps -eo user,args | grep '[P]M2 v')   # no output
+ps -eo user:20,args | grep '[P]M2 v'                       # exactly ONE line, user mvandykeanthony (no second daemon from sudo/npx pm2)
+diff pm2-daemons-before.txt <(ps -eo user:20,args | grep '[P]M2 v')   # no output
 
 # 9. Node untouched
 sudo -H -u mvandykeanthony bash -c 'cat /home/mvandykeanthony/.nvm/alias/default; /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node -v' | tee node-after.txt
@@ -1395,7 +1397,7 @@ sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse
 # 3. Install and build (Path A). npm ci, the copy of the rebuilt better-sqlite3 binary, and its check are
 #    one chain, so the check never sees the unusable downloaded binary. The site is built into
 #    .tmp/dist-next so the live dist/ keeps serving until the swap.
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs && echo "STEP 3 OK"'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs && echo "STEP 3 OK"'
 
 # 4. Only if step 3 printed "STEP 3 OK": swap the site in and restart this app only (migrations run automatically at start, db.ts:244)
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/dist-next/index.html && rm -rf .tmp/dist-prev && mv dist .tmp/dist-prev && mv .tmp/dist-next dist'
@@ -1421,7 +1423,7 @@ up to `max_restarts` (10), taking the site down.
 ```sh
 # 3B. Unpack into .tmp/next (not over the live files), install runtime packages, copy and check the add-on
 chmod 644 /tmp/venueatncc-build.tgz
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && rm -rf .tmp/next && mkdir -p .tmp/next && tar xzf /tmp/venueatncc-build.tgz -C .tmp/next && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && echo "STEP 3 OK"'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && rm -rf .tmp/next && mkdir -p .tmp/next && tar xzf /tmp/venueatncc-build.tgz -C .tmp/next && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && echo "STEP 3 OK"'
 rm -f /tmp/venueatncc-build.tgz
 # 4B. Only after "STEP 3 OK": swap dist/ and server-dist/, then restart this app only
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/next/dist/index.html && test -f .tmp/next/server-dist/index.mjs && rm -rf .tmp/dist-prev .tmp/server-dist-prev && mv dist .tmp/dist-prev && mv server-dist .tmp/server-dist-prev && mv .tmp/next/dist dist && mv .tmp/next/server-dist server-dist'
