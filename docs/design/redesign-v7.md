@@ -319,7 +319,10 @@ alone) and keep stating facts.
 A Q&A page restates facts by nature, so: an answer whose fact lives elsewhere is one sentence plus a link
 to the home. Only questions with no other home carry a full answer: who can book, catering (the one neutral
 mention), room setup help, the rain plan and other event-page questions, what a repast is, recurring dates,
-and so on. The FAQ page shows all four groups on one page with no topic bar.
+and so on. The FAQ page shows all four groups on one page with no topic bar. `faq.ts` carries the short
+answer only: the `FAQPage` structured data and llms.txt are generated from `publishedFaqs`, so they show the
+same one-sentence answer, which is what the page shows, and the facts they point to are already in the
+venue's structured data and in llms.txt's own sections.
 
 ### Page by page: what is cut or merged
 
