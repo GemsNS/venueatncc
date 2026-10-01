@@ -460,7 +460,7 @@ so all paths below are absolute.
 | `NODE_ENV` | `development` (`config.ts:99`) | `production` | Production refuses to start without both secrets (`config.ts:79-91`) and always sets Secure cookies (`config.ts:130`). Also set in the pm2 ecosystem. |
 | `HOST` | `0.0.0.0` (`config.ts:123`) | `127.0.0.1` | Never leave the default here: 0.0.0.0 would expose the app on the public IP, bypassing Apache. Also set in the ecosystem. |
 | `PORT` | `8787` (`config.ts:122`) | `3020` | Also set in the ecosystem. |
-| `PUBLIC_ORIGIN` | `https://venueatncc.org` (`site.url`, `config.ts:101`, `src/data/site.ts:47`) | `https://venueatncc.org` | Used for the same-origin check on every POST/PATCH/DELETE (`middleware.ts:60-86`) and links in emails. Because it is https, the app sends HSTS (`config.ts:131`, `middleware.ts:43`). |
+| `PUBLIC_ORIGIN` | `https://venueatncc.org` (`site.url`, `config.ts:101`, `src/data/site.ts:47`) | `https://venueatncc.org` | Used for the same-origin check on every POST/PATCH/DELETE (`middleware.ts:60-86`) and links in emails. Because it is https, the app sends HSTS with `includeSubDomains` (`config.ts:131`, `middleware.ts:43`): once a browser has visited the site, every venueatncc.org subdomain must be served over HTTPS. |
 | `TRUST_PROXY` | `false` (`config.ts:129`) | `true` | The client IP becomes the right-most `X-Forwarded-For` entry (`server/context.ts:77-88`). Safe here because the app listens on 127.0.0.1 only and Apache's mod_proxy_http appends the real client address as the last entry, so a visitor cannot spoof it. With `false`, every visitor would share 127.0.0.1 and one person's failed sign-ins would lock everyone out. |
 | `SITE_DIR` | `./dist` (`config.ts:125`) | `/var/www/venueatncc.org/app/dist` | The built site the app serves. |
 | `DATABASE_PATH` | `./data/venue.db` (`config.ts:95`) | `/var/www/venueatncc.org/data/venue.db` | Its folder is created if missing (`db.ts:238`). WAL mode (`db.ts:240`). |
@@ -618,7 +618,7 @@ processes. Restart this app only by name: `pm2 restart venueatncc`.
 pm2 boot startup is not configured on this server: after a reboot, **no** pm2 app (including the two
 existing sites) comes back until someone starts pm2 by hand.
 
-**Manual recovery after a reboot** (until J2 is approved):
+**Manual recovery after a reboot** [SHARED: brings back all saved pm2 apps, as the brief prescribes] (until J2 is approved):
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 resurrect; sleep 5; pm2 ls'
@@ -836,10 +836,10 @@ curl -sI http://venueatncc.org/ | grep -iE '^(HTTP|location)'          # expect 
 curl -sI http://www.venueatncc.org/ | grep -iE '^(HTTP|location)'      # expect 301, Location: https://www.venueatncc.org/
 curl -sI https://venueatncc.org/ | grep -iE '^(HTTP|strict-transport)' # expect 200 and Strict-Transport-Security
 curl -sI https://www.venueatncc.org/ | head -1                          # expect 200
-echo | openssl s_client -connect 34.30.208.144:443 -servername venueatncc.org 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName -enddate
+echo | openssl s_client -connect 34.30.208.144:443 -servername venueatncc.org 2>/dev/null | openssl x509 -noout -subject -enddate -text | grep -E "subject=|notAfter|DNS:"
 # expect subject CN venueatncc.org, SAN DNS:venueatncc.org, DNS:www.venueatncc.org
 sudo certbot certificates
-sudo certbot renew --dry-run
+sudo certbot renew --dry-run      # [SHARED] runs the challenge for all four certificates and reloads Apache gracefully; changes no real certificate
 ```
 
 If `http://venueatncc.org/` answers 200 instead of 301, the proxy is taking the request before the
