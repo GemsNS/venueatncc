@@ -720,6 +720,15 @@ sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versi
 # continue only if it prints: 3 of 3 online
 ```
 
+Record which Node each existing app runs on and how it is started, for the report to Joel. The
+running daemon was started under Node 16, but the boot service starts pm2 with the v24 `PATH`, so
+after a reboot an app whose saved interpreter is plain `node` may come back on a different Node than
+today. This changes nothing; include the file in the report so Joel can judge it:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 describe ncc-backend; pm2 describe vandyke-home-loan' | grep -iE 'name|interpreter|node.js version|script path' | tee ~/venueatncc-deploy/pm2-interp-before.txt
+```
+
 Install the boot service (as the brief prescribes, with the v24 pm2 by absolute path), then save the
 list again with the gated command:
 
@@ -732,16 +741,20 @@ Verify, without rebooting:
 
 ```sh
 systemctl is-enabled pm2-mvandykeanthony          # enabled
-systemctl cat pm2-mvandykeanthony | grep -E '^(User|ExecStart|PIDFile|Environment=PATH)'
-# User=mvandykeanthony, ExecStart=.../v24.16.0/lib/node_modules/pm2/bin/pm2 resurrect, PATH includes v24.16.0/bin
+systemctl cat pm2-mvandykeanthony | grep -E '^(User|ExecStart|ExecReload|ExecStop|PIDFile|Environment=PATH)'
+# User=mvandykeanthony, ExecStart=.../pm2 resurrect, ExecReload=.../pm2 reload all, ExecStop=.../pm2 kill, PATH includes v24.16.0/bin
 sudo -H -u mvandykeanthony ls -l /home/mvandykeanthony/.pm2/dump.pm2  # just written by pm2 save
 ps -eo user:20,args | grep '[P]M2 v'                # still exactly one daemon, owned by mvandykeanthony
 ```
 
-Do **not** reboot the server to test this; reboots of the shared server are Joel's call. After the
+Do **not** reboot the server to test this; reboots of the shared server are Joel's call. Never run
+`systemctl stop`, `restart`, or `reload` on `pm2-mvandykeanthony`: its ExecStop is `pm2 kill` and
+its ExecReload is `pm2 reload all`, so each one stops or bounces all three apps. The unit is only
+for boot. After the
 next reboot, check `pm2 ls` shows all three apps online and run the baseline loop from section 1.
 
-If the boot service ever fails to bring the apps back, the manual recovery is:
+If the boot service ever fails to bring the apps back, the manual recovery is [SHARED: brings back
+all saved pm2 apps, as the brief prescribes]:
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 resurrect; sleep 5; pm2 ls'
@@ -1099,10 +1112,12 @@ request, then sign in at https://venueatncc.org/admin/ and find it.
 
 ## 11. Email
 
-Every booking request sends two emails (`server/routes/public.ts:105-136`):
+Every booking request sends two emails (`sendInquiryEmails`, `server/routes/public.ts:103-138`):
 
 - a **staff notification** to `NOTIFY_TO`, with Reply-To set to the guest;
 - a **guest confirmation** to the guest, From `MAIL_FROM`, with **Reply-To set to `NOTIFY_TO`**.
+  It is skipped (and the skip noted on the request's timeline) once the hourly cap on guest
+  confirmations is reached (`public.ts:119-131`), so space out test requests.
 
 Requests are **always saved to the database first**; an email problem never loses one, and each send
 attempt is recorded on the request's timeline in the admin.
@@ -1169,9 +1184,10 @@ This is what the `.env` from section 6 does: `SMTP_HOST` is empty and `NOTIFY_TO
    `faith@venueatncc.org` from an outside account; it must arrive in Faith's Outlook inbox.
 
 If the dashboard does not allow an alias on a second domain, use a mail forwarder for
-`faith@venueatncc.org` (GoDaddy's forwarding, if offered on this domain, or Cloudflare Email
-Routing / ForwardEmail) that forwards to `faith@wearencc.org`, with the MX records that service
-gives instead of the Outlook MX above. Either way, guests only see `faith@venueatncc.org`.
+`faith@venueatncc.org` (GoDaddy's forwarding, if offered on this domain, or a service such as
+ForwardEmail or ImprovMX that works with MX records at GoDaddy; not Cloudflare Email Routing, which
+needs the domain's nameservers moved to Cloudflare) that forwards to `faith@wearencc.org`, with the
+MX records that service gives instead of the Outlook MX above. Either way, guests only see `faith@venueatncc.org`.
 
 When Faith replies to a guest from Outlook, she should choose `faith@venueatncc.org` in the From
 field (Outlook on the web: From, Other email address). If Outlook replaces it with the wearencc.org
@@ -1193,7 +1209,7 @@ entirely on `venueatncc.org`. Recommended: **Postmark** (simple, made for transa
    | TXT | `<selector>pm._domainkey` | `k=rsa; p=<key from Postmark>` | DKIM for Postmark |
    | CNAME | `pm-bounces` | `pm.mtasv.net` | Postmark Return-Path (SPF alignment; no change to the `@` SPF) |
    | CNAME (x3) | `<token>._domainkey` | `<token>.dkim.amazonses.com` | DKIM for SES |
-   | TXT | `@` (edit the existing SPF) | SES: `v=spf1 include:secureserver.net include:amazonses.com ~all`; Brevo or Mailgun: add `include:spf.brevo.com` or `include:mailgun.org` the same way | One SPF record, both senders |
+   | TXT | `@` (edit the existing SPF) | Brevo or Mailgun: `v=spf1 include:secureserver.net include:spf.brevo.com ~all` (or `include:mailgun.org`). SES: no change unless a custom MAIL FROM subdomain is set up (then follow SES's records for that subdomain); by default SES passes DMARC through DKIM. | One SPF record, both senders |
 
    The `_dmarc` record from 11.2 stays.
 3. **Owner:** wait until the provider shows the domain as verified, and give grokbot the SMTP
@@ -1261,8 +1277,8 @@ sudo -H -u mvandykeanthony bash -c '/usr/sbin/logrotate -d -s /var/www/venueatnc
 
 ### 12.2 The crontab entries [SHARED] (J1)
 
-Decided on 2026-09-30: run this as part of the deploy. The owner's crontab is shared and may hold other sites' jobs, so it is
-never rebuilt in a pipeline: the new crontab is written to a file, checked with `diff`, and only then
+Decided on 2026-09-30: run this as part of the deploy. The owner's crontab is shared and may hold
+other sites' jobs, so it is never rebuilt in a pipeline: the new crontab is written to a file, checked with `diff`, and only then
 installed. Every copy stays private (mode 600, in the 700 snapshot folder), and only line counts,
 checksums, and the diff of the new lines are printed, never the other sites' job lines. Cron runs in
 the server's time zone, America/New_York.
@@ -1412,9 +1428,8 @@ done                                                    # every line 404 (the ap
 ```
 
 Also confirm: the first admin exists and signed in (10.4), the test inquiry is archived, a backup
-file exists, the crontab has the two venueatncc jobs, `systemctl is-enabled pm2-mvandykeanthony` prints
-`enabled`, and `pm2 save` ran after
-all three apps were online. Report the deployed commit (`deployed-commit.txt`, which must be the
+file exists, the crontab has the two venueatncc jobs, `systemctl is-enabled pm2-mvandykeanthony`
+prints `enabled`, and `pm2 save` ran after all three apps were online. Report the deployed commit (`deployed-commit.txt`, which must be the
 lead's `<APPROVED_COMMIT>`) to Joel with the results.
 
 ---
@@ -1600,7 +1615,7 @@ both vhost files and `PUBLIC_ORIGIN=https://venueatncc.org` in `.env`. For curl 
 less than 3 seconds old (`security.ts:132`); wait and retry. "This form has expired" means it is
 older than 24 hours, or `FORM_TOKEN_SECRET` changed since it was issued; fetch a new token.
 
-**`http://` does not redirect to `https://`.** See the end of [9.5](#95-test-reload-verify).
+**`http://` does not redirect to `https://`.** See the end of [9.5](#95-test-reload-verify-shared).
 
 **Other sites broke after a reload.** `sudo apachectl configtest`; `sudo a2dissite venueatncc.org.conf venueatncc.org-le-ssl.conf && sudo systemctl reload apache2`;
 re-run the baseline loop; tell Joel. Never restart Apache and never edit the other vhosts.
