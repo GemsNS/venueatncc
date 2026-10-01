@@ -332,9 +332,12 @@ the built output, so the server only installs the five runtime packages. Try Pat
 to Path B if memory is short, the build fails on a native module (sharp, resvg), or it is too slow.
 
 **Both paths need `/var/www/venueatncc.org/better_sqlite3.node.keep` on the server before the first
-`npm ci`.** Do [5.4](#54-the-native-add-on-better-sqlite3) first: the better-sqlite3 binary that
-`npm ci` downloads cannot load on this server, and every `npm ci` below copies the rebuilt file over
-it in the same command.
+`npm ci`.** Do [5.4](#54-the-native-add-on-better-sqlite3) first. better-sqlite3's own install
+script cannot succeed on this server (see 5.4), so **every `npm ci` here runs with
+`--ignore-scripts`** and then, in the same command, reruns the one other install script the app
+needs (esbuild's, only when devDependencies are installed), creates
+`node_modules/better-sqlite3/build/Release/`, and copies the rebuilt file in. In the lockfile only
+better-sqlite3, esbuild, and fsevents (macOS only) have install scripts.
 
 Every `npm ci` here passes `--cache /var/www/venueatncc.org/.npm-cache`, and the install and build
 wrappers also export `npm_config_cache` with that path (so `npm run` and `npx` logs go there too),
@@ -357,14 +360,14 @@ several minutes. Build one thing at a time; never run two builds at once on this
 ### 5.2 Path A: build on the server
 
 Install everything, including devDependencies (Astro, esbuild, sharp, tsx), which the build needs,
-and put the rebuilt better-sqlite3 binary in place in the same command:
+without install scripts, then rerun esbuild's and put the rebuilt better-sqlite3 binary in place,
+all in the same command:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --ignore-scripts --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && npm rebuild esbuild && mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
-Check the native add-on now, before spending time on the build ([5.4](#54-the-native-add-on-better-sqlite3)).
-`npm ci` exits 0 even with an unusable binary, so this check is the only thing that catches it:
+Check the native add-on now, before spending time on the build ([5.4](#54-the-native-add-on-better-sqlite3)):
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; cd /var/www/venueatncc.org/app && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())"'
@@ -421,7 +424,7 @@ in by the same command:
 chmod 644 /tmp/venueatncc-build.tgz
 sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && rm -rf dist server-dist && tar xzf /tmp/venueatncc-build.tgz'
 rm -f /tmp/venueatncc-build.tgz
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
 Then run the better-sqlite3 check from [5.4](#54-the-native-add-on-better-sqlite3). With Path B,
@@ -436,16 +439,16 @@ sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versi
 # expect: { v: '3.x.y' }
 ```
 
-**The downloaded binary will not work.** `npm ci` runs better-sqlite3's install script, which uses
-`prebuild-install` to download the official prebuilt `better_sqlite3.node` for linux-x64 and Node
-24 (ABI 137; release asset `better-sqlite3-v12.11.1-node-v137-linux-x64.tar.gz`, version from
-`package-lock.json`). That prebuilt links `log`, `pow`, `log2`, and `exp` from libm at
-`GLIBC_2.29`, newer than the glibc 2.28 the patched Node runs on (`/opt/glibc-2.28`), so the check
-fails with `GLIBC_2.29 not found (required by .../better_sqlite3.node)`. This was confirmed by
-inspecting the release asset itself. `npm ci` still exits 0, because `prebuild-install` only checks
-that the download finished, so **always run the check**. `npm rebuild better-sqlite3` re-downloads
-the same file and reproduces the error. Without a working add-on the server cannot open its database
-and does not start.
+**better-sqlite3's install script cannot succeed here.** Its official prebuilt `better_sqlite3.node`
+for linux-x64 and Node 24 (ABI 137; release asset `better-sqlite3-v12.11.1-node-v137-linux-x64.tar.gz`,
+version from `package-lock.json`) links `log`, `pow`, `log2`, and `exp` from libm at
+`GLIBC_2.29`, newer than the glibc 2.28 the patched Node runs on (`/opt/glibc-2.28`). When the install
+script cannot use the prebuilt it falls back to compiling with node-gyp, which needs Python 3.8 or
+newer; the server has 3.6.9. That compile fails, and `npm ci` then **exits non-zero and deletes
+`node_modules`** (seen on the first deploy, 2026-10-01). So never run `npm ci` on this server without
+`--ignore-scripts`, and never `npm rebuild better-sqlite3`. Without a working add-on the server
+cannot open its database and does not start. A plain `npm ci` may also leave Node headers in
+`/home/mvandykeanthony/.cache/node-gyp/`; they are harmless and can stay.
 
 So build the add-on once, off the server, on a glibc 2.28 system, and upload it. Its C++ runtime
 needs (`GLIBCXX_3.4.20`, `CXXABI_1.3.9` in the official build) are met by Ubuntu 18.04's libstdc++.
@@ -484,11 +487,12 @@ ls -l /var/www/venueatncc.org/better_sqlite3.node.keep
 ```
 
 **Step 3: every `npm ci` copies it in** inside the same command (5.2, 5.3, 14.1):
-`... npm ci ... && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node`,
-followed by the check above. If it was not copied (for example `npm ci` was run alone), copy it now:
+`... npm ci --ignore-scripts ... && [npm rebuild esbuild &&] mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node`,
+followed by the check above. With `--ignore-scripts` the `build/Release` folder does not exist
+until the `mkdir` creates it. If the file was not copied, copy it now:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'cp /var/www/venueatncc.org/better_sqlite3.node.keep /var/www/venueatncc.org/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
 **If the check still fails with the rebuilt file:**
@@ -1108,6 +1112,21 @@ Sessions last 14 days and end after 12 hours idle (`routes/admin.ts:21-23`).
 A person should also do the same once in a real browser: open https://venueatncc.org/book/, send a
 request, then sign in at https://venueatncc.org/admin/ and find it.
 
+### 10.5 Set the admin's own password
+
+The first deploy signed in with a one-time password that was then thrown away, so the admin has no
+known password until this is done. The admin (or Joel, sitting with the admin) runs this in an SSH
+session with a terminal (`ssh -t`), and types the new password (at least 12 characters) at the
+hidden prompt. grokbot never sees or handles it:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node server-dist/create-admin.mjs --email faith@venueatncc.org'
+# expect: Updated the password for faith@venueatncc.org. Signed out N session(s).
+```
+
+For an existing admin the tool only resets the password (`create-admin.ts:113-127`), and that signs
+the admin out of other sessions. The admin then signs in at https://venueatncc.org/admin/.
+
 ---
 
 ## 11. Email
@@ -1454,10 +1473,10 @@ sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && /home/mvan
 sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && git fetch origin && git checkout <APPROVED_COMMIT> && git log -1 --oneline'
 sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse HEAD' | tee ~/venueatncc-deploy/deployed-commit.txt
 
-# 3. Install and build (Path A). npm ci, the copy of the rebuilt better-sqlite3 binary, and its check are
-#    one chain, so the check never sees the unusable downloaded binary. The site is built into
+# 3. Install and build (Path A). npm ci without install scripts, esbuild's rebuild, the copy of the rebuilt
+#    better-sqlite3 binary, and its check are one chain (5.4). The site is built into
 #    .tmp/dist-next so the live dist/ keeps serving until the swap.
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs && echo "STEP 3 OK"'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && npm ci --ignore-scripts --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && npm rebuild esbuild && mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs && echo "STEP 3 OK"'
 
 # 4. Only if step 3 printed "STEP 3 OK": swap the site in and restart this app only (migrations run automatically at start, db.ts:244)
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/dist-next/index.html && rm -rf .tmp/dist-prev && mv dist .tmp/dist-prev && mv .tmp/dist-next dist'
@@ -1474,8 +1493,8 @@ while the old process keeps running from memory, so the site stays up until the 
 any restart now (including a crash, `max_memory_restart`, or a reboot) would fail. Fix the cause and
 re-run step 3 until it prints `STEP 3 OK`. To return to the running version instead, check out
 `previous-commit.txt` (14.2) and re-run step 3 for it before any restart. Never split the chain in
-step 3: run without the `cp`, the restart would load the downloaded GLIBC_2.29 binary and crash-loop
-up to `max_restarts` (10), taking the site down.
+step 3: run without the `mkdir` and `cp`, there is no better-sqlite3 binary at all, and the restart
+would crash-loop up to `max_restarts` (10), taking the site down.
 
 **With Path B**, build `<APPROVED_COMMIT>` on the other machine as in 5.3 and upload the tarball to
 `/tmp/` as there. On the server run steps 0 to 2, then instead of steps 3 and 4:
@@ -1483,7 +1502,7 @@ up to `max_restarts` (10), taking the site down.
 ```sh
 # 3B. Unpack into .tmp/next (not over the live files), install runtime packages, copy and check the add-on
 chmod 644 /tmp/venueatncc-build.tgz
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && rm -rf .tmp/next && mkdir -p .tmp/next && tar xzf /tmp/venueatncc-build.tgz -C .tmp/next && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && echo "STEP 3 OK"'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH npm_config_cache=/var/www/venueatncc.org/.npm-cache; umask 002; cd /var/www/venueatncc.org/app && rm -rf .tmp/next && mkdir -p .tmp/next && tar xzf /tmp/venueatncc-build.tgz -C .tmp/next && npm ci --omit=dev --ignore-scripts --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && mkdir -p node_modules/better-sqlite3/build/Release && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && echo "STEP 3 OK"'
 rm -f /tmp/venueatncc-build.tgz
 # 4B. Only after "STEP 3 OK": swap dist/ and server-dist/, then restart this app only
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/next/dist/index.html && test -f .tmp/next/server-dist/index.mjs && rm -rf .tmp/dist-prev .tmp/server-dist-prev && mv dist .tmp/dist-prev && mv server-dist .tmp/server-dist-prev && mv .tmp/next/dist dist && mv .tmp/next/server-dist server-dist'
@@ -1523,12 +1542,16 @@ do not re-patch it yourself.
 
 **better-sqlite3 will not load** (`Error loading shared library`, `GLIBCXX_3.4.xx not found`,
 `NODE_MODULE_VERSION` mismatch, `Could not locate the bindings file`).
-- `GLIBC_2.29 not found` naming `better_sqlite3.node`: the downloaded prebuilt is in place (an
-  `npm ci` ran without the copy). This happens with the correct Node too; it is not a PATH problem.
-  Copy the off-server build back in (5.4 step 3) and re-run the check before any restart.
+- `Could not locate the bindings file`: an `npm ci --ignore-scripts` ran without the `mkdir` and
+  `cp`. `GLIBC_2.29 not found` naming `better_sqlite3.node`: someone ran `npm ci` without
+  `--ignore-scripts` or `npm rebuild better-sqlite3`, and the downloaded prebuilt is in place. Either
+  way it is not a PATH problem: copy the off-server build back in (5.4 step 3) and re-run the check
+  before any restart.
+- `npm ci` fails with a node-gyp or Python error and `node_modules` is gone: it ran without
+  `--ignore-scripts`. Re-run the full chain from 5.2 (or 14.1 step 3).
 - Otherwise work through [5.4](#54-the-native-add-on-better-sqlite3). A `NODE_MODULE_VERSION`
   mismatch means npm ran under a different Node, or the `.keep` file was built for another Node or
-  better-sqlite3 version; re-run `npm ci` with the v24 `PATH`, or rebuild the `.keep` file.
+  better-sqlite3 version; re-run the full install chain with the v24 `PATH`, or rebuild the `.keep` file.
 
 **sharp or the Astro build fails on the server** (`Could not load the "sharp" module`, `GLIBC`
 errors from `@img/sharp-linux-x64` or `@resvg/resvg-js`, or the build is killed for memory). Use
