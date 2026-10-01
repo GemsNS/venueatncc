@@ -524,8 +524,10 @@ Plum name must stay legible over it without a veil heavy enough to wash the rose
 - A licence that allows commercial use without attribution: the Mixkit Stock Video Free License, the Pexels
   licence, or the Pixabay Content License. The source URL, author, licence, download date, and edit are
   recorded in `public/media/CREDITS.md`, as for the petals.
-- The petals files (`hero-petals.*`, both posters) move to `design-archive/hero-petals-2560/` with their
-  credit; nothing generated or licensed is deleted.
+- The petals files (`hero-petals.*`, both posters) move to `design-archive/hero-petals/` with their credit
+  (a move of exactly this kind is already staged in the worktree, with `hero-roses.*` files beside it in
+  `public/media/`; whoever finishes that work records the clip in CREDITS.md and checks it against the
+  criteria above); nothing generated or licensed is deleted.
 
 ### Candidates found on October 1, 2026 (the builder reviews each against the criteria; none is approved yet)
 
