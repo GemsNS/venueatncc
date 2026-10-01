@@ -233,7 +233,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
               id="location-heading"
               eyebrow="Getting here"
               heading="Find us in north Suffolk"
-              lead={`${fullAddress}. A long paved drive leads past open lawn to the building and the lot.`}
+              lead={`${fullAddress}.`}
             >
               <Fragment slot="actions">
                 <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
@@ -458,6 +458,13 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--accent-text);
+  }
+
+  /* Phones: over the pinkest video frames the Berry line can dip below 4.5:1, so it is set in the text color there. */
+  @media (width < 46.5rem) {
+    .welcome__line {
+      color: var(--label);
+    }
   }
 
   .welcome__actions {
