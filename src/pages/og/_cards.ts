@@ -1,11 +1,17 @@
 /**
- * What each share card (/og/<key>.jpg) shows: a real photo of the property, the page title, and one short
- * line. Kept apart from the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro).
- * The underscore keeps Astro from routing this file.
+ * What each share card (/og/<key>.jpg) shows: a photo, the page title, and one short line. Kept apart from
+ * the renderer so pages can describe the same card in og:image:alt (BaseLayout.astro). The underscore keeps
+ * Astro from routing this file.
  *
- * Only real photographs (brand.md, Photography). A staged event photo is never a share image, so pick() uses
- * the real photo it was made from (realPhoto), and the hero photo when there is none. An event card therefore
- * shows the real base of its staged hero, or the page's own real hero while the event photos are not staged.
+ * The home card is the one exception to the photo rule (brand.md, Photography): a still life of pink and
+ * white roses (share-rose-bouquet.jpg, generated, see design-archive/generated-scenes/share-bouquet/), with
+ * the title in a white panel over the plain blush wall to its left. It shows no part of the property, so it
+ * is not described as one and is not used in structured data (schema.ts).
+ *
+ * Every other card uses a real photograph of the property, chosen by pick(). A staged event photo is never a
+ * share image, so pick() uses the real photo it was made from (realPhoto), and the hero photo when there is
+ * none. An event card therefore shows the real base of its staged hero, or the page's own real hero while
+ * the event photos are not staged. pick() never returns a share still.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
@@ -22,6 +28,12 @@ export interface ShareCard {
    * as fractions of its width and height, before it is fitted to the card.
    */
   photo: { file: string; caption?: string; region?: { left: number; top: number; width: number; height: number } };
+  /**
+   * 'photo' (the default): a real photo under a Plum bottom scrim, the Blush panel bottom left.
+   * 'still': a light still life with plain space on its left; no scrim, a narrower White panel centred on
+   * the left, clear of the subject.
+   */
+  layout?: 'photo' | 'still';
 }
 
 function pick(photo: VenuePhoto | null): ShareCard['photo'] {
@@ -41,12 +53,16 @@ const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
 // event's name. Keep them in step when a heading changes.
 export const shareCards: Record<string, ShareCard> = {
-  // The building at blue hour without its gable: the cross may appear in photos of the building, but never
-  // beside the headline as a subject (brand.md, Separation). The left 80% keeps the lit entry and the pines.
+  // The still life of roses, not a photo of the property (see above). The bouquet stands whole in the right
+  // half; the panel sits on the plain wall to its left and never covers it.
   home: {
     title: `Welcome to ${site.name}`,
     line: `Event venue in ${site.address.city}, ${site.address.regionName}`,
-    photo: { ...byName('exterior-dusk'), region: { left: 0, top: 0, width: 0.8, height: 1 } },
+    photo: {
+      file: 'share-rose-bouquet.jpg',
+      caption: 'A hand-tied bouquet of blush, pink, and ivory roses against a pale blush wall. Illustrative still life.',
+    },
+    layout: 'still',
   },
   'the-space': { title: 'Three spaces, indoors and out', line: spacesLine, photo: byName('hall-windows') },
   pricing: {
@@ -74,6 +90,8 @@ export function shareCardAlt(key: string): string | undefined {
   const card = shareCards[key];
   if (!card) return undefined;
   const sentence = (s: string) => (/[.?]$/.test(s) ? s : `${s}.`);
-  const photo = card.photo.caption ? ` Photo: ${sentence(card.photo.caption)}` : '';
+  // A still life is an image, not a photo of the venue.
+  const label = card.layout === 'still' ? 'Image' : 'Photo';
+  const photo = card.photo.caption ? ` ${label}: ${sentence(card.photo.caption)}` : '';
   return `${site.name}. ${sentence(card.title)} ${sentence(card.line)}${photo}`;
 }

@@ -240,7 +240,13 @@ and without scripts, the header lockup shows at once and the welcome stays still
 ### The rule
 
 - **Real photographs show the spaces.** Everything that shows what a client rents uses real photos only: the
-  home photo band, the home space cards, The Space, the arrival band, share images, and structured data.
+  home photo band, the home space cards, The Space, the arrival band, share images (except the home card,
+  below), and structured data.
+- **The home share card is a still life.** The client asked for "a beautiful bouquet of pink and white
+  roses" in place of the building: a generated still life (`share-rose-bouquet.jpg`, every variant kept in
+  `design-archive/generated-scenes/share-bouquet/`), straight and level, the whole bouquet in frame. It is
+  the only image on the site that is not the property, so it never stands for the venue: it is not in
+  `photos`, not in structured data, and its og:image:alt calls it an illustrative still life.
 - **Staged photographs show events.** Every event tile and every event page hero uses a staged image of that
   event, all eight in one décor style, each with the same small "Styled Concept" badge. The events section on
   the home page and the /events/ page carry one line: "Event photos show our spaces styled for each occasion.
@@ -258,7 +264,7 @@ and without scripts, the header lockup shows at once and the welcome stays still
 | File | Subject | Uses |
 |---|---|---|
 | `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3500 x 2532) for full-bleed screens, and `grove-pines-tall` is 7:10 | The home photo band; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
-| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Home share image only, cropped to its left 80% so the gable cross is out of frame |
+| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Not used since the home share card became a still life of roses (October 1, 2026); kept for reference |
 | `approach-dusk` | The long drive and lawn toward the building at dusk | Arrival band, The grounds |
 | `driveway` | The paved drive and lot in daylight | Parking, The grounds |
 | `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
@@ -271,8 +277,8 @@ and without scripts, the header lockup shows at once and the welcome stays still
 | `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
 
 The photo band and structured data show The Grove, not the building: it is what a client rents, and it keeps
-the gable cross out of the first screens and out of search results. The home share card keeps the building at
-blue hour because a share card's title covers its lower left, where the gazebo would sit in `grove-pines`.
+the gable cross out of the first screens and out of search results. The home share card is the rose still
+life (above), not a photo of the property, and is left out of structured data.
 Keep this split on purpose; move the `hero` tag only with this paragraph.
 
 `grove-pines` and the staged `community-events` tile (made from `grove-path`) come from the same original,
@@ -373,7 +379,10 @@ the lockup with one sentence, Visit and contact, Plan your event, and the legal 
 
 **Share images.** A real photo full bleed under a soft Plum bottom scrim, with a Blush caption panel bottom
 left (the hero caption box on the page surface) holding the Plum lockup, the page title in Caslon Display in
-Plum, and one short Caslon Text line in Mauve. The home card's title is the welcome, "Welcome to The Venue @ NCC".
+Plum, and one short Caslon Text line in Mauve. The home card is the exception: the rose still life
+(`share-rose-bouquet.jpg`) with no scrim, and a White panel with a Rose Mist hairline, centred on the plain
+wall to the left of the bouquet and never over it, holding the lockup, a short Rose rule, the welcome
+"Welcome to The Venue @ NCC" (the name kept on one line), and the location line.
 
 **Emails.** A Blush page with a white card: `email-lockup.png` at the top, a thin Rose rule, Berry links and
 a Berry capsule button with a serif label (white text), Plum text, Mauve secondary text, a Petal reference

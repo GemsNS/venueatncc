@@ -1,13 +1,16 @@
 # Venue photos
 
 Every jpg, jpeg, png, webp, or avif file in this folder is **published** on the site. Only real photographs
-of the property belong here, plus the staged event photos made from them. Keep reference-only or unapproved
-images somewhere else.
+of the property belong here, plus the staged event photos made from them and the one share card still,
+`share-rose-bouquet.jpg`. Keep reference-only or unapproved images somewhere else.
 
 ## The rule (docs/design/brand.md, Photography)
 
 - **Real photographs show the spaces**: the home hero, the space cards, The Space, the arrival band, share
-  images, and structured data.
+  images (except the home card), and structured data.
+- **The home share card is a still life**: `share-rose-bouquet.jpg`, a generated bouquet of pink and white
+  roses, is the home page's link preview only (`src/pages/og/_cards.ts`). Files named `share-*` are never
+  listed in `photos`, never shown in a gallery, and never used in structured data.
 - **Staged photographs show events**: every event tile and event page hero, all eight in one décor style,
   each with the "Styled Concept" badge.
 - **All or nothing**: `eventsStaged` in `src/data/photos.ts` is true only when all eight staged files are
@@ -25,6 +28,7 @@ images somewhere else.
 | `name-tall.jpg` | 4:5 portrait, 1600px wide | Attached to `name.jpg` as `tall`. Shown instead of the landscape file on phones (below 46.5rem) wherever a page asks for the tall crop. Never listed on its own. |
 | `grove-pines.jpg`, `grove-pines-tall.jpg` | The home hero, the one exception: both are cut from the original after leveling it by 2.5 degrees (the camera was slightly rotated); the landscape file is nearly its full width (3500 x 2532) for full-bleed screens, and the portrait file is 7:10 | The hero's frames in src/pages/index.astro are fitted to these two framings (the roof, the gazebo, and the cut through the front table's legs). Re-measure them there if either file changes. |
 | `styled-event-<slug>.jpg` | The staged photo of one event: furniture, linens, florals, and lighting added; architecture, fixtures, and trees unchanged | Its `photoDetails` entry (already registered) names the real photo it was made from (`styledOf`) and the event (`event`). Shown only through `eventPhoto()`, with the badge, and on the event page with the caption "Styled concept. Décor is not included." |
+| `share-<name>.jpg` | A still life for a share card, not a photo of the property. Today only `share-rose-bouquet.jpg`: Gemini's 1024 x 572 output (variant 4 of 4, all kept in `design-archive/generated-scenes/share-bouquet/`) upscaled to 1920 wide | Read from disk by `src/pages/og/[key].jpg.ts` for the home card. Skipped by `src/data/photos.ts`. |
 
 The eight staged files and the real photo each is made from:
 

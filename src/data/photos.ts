@@ -2,7 +2,8 @@
  * Venue photos, under one rule (docs/design/brand.md, "Photography"):
  *
  *   Real photographs show the spaces. The home hero, the space cards, The Space, the arrival band, share
- *   images, and structured data use real photos only.
+ *   images, and structured data use real photos only. The one exception is the home page's share card, a
+ *   still life of roses (share-rose-bouquet.jpg) that shows no part of the property.
  *   Staged photographs show events. Every event tile and event page hero uses a staged image of that event,
  *   all eight in one décor style, or none of them do (eventsStaged, below). While any staged image is
  *   missing, each event page hero shows the real photo its staged image is made from, with no badge or
@@ -20,6 +21,8 @@
  *                                and lighting added; architecture, fixtures, and trees unchanged). Its
  *                                photoDetails entry names the real photo it was made from (styledOf) and the
  *                                event (event). Shown only through eventPhoto(), always with its badge.
+ *   share-<name>.jpg             A still life for a share card (src/pages/og/_cards.ts), not a photo of the
+ *                                property. Never in `photos`, a gallery, or structured data.
  *
  * Describe each photo in `photoDetails`: precise, factual alt text that says only what the photo shows,
  * a short caption, tags, and the part of the property it shows. The build warns about files with no entry,
@@ -231,6 +234,8 @@ const GENERIC_ALT = 'The Venue @ NCC in Suffolk, Virginia';
 const CAMERA_WORDS = new Set(['img', 'dsc', 'dscn', 'dscf', 'pxl', 'mvimg', 'photo', 'image', 'screenshot', 'dcim', 'whatsapp', 'edited', 'copy', 'mp', 'portrait', 'night']);
 const TALL_SUFFIX = '-tall';
 const STYLED_PREFIX = 'styled-';
+/** Share card stills: the share card renderer reads them from disk; they are never photos of the property. */
+const SHARE_PREFIX = 'share-';
 
 const stemOf = (file: string) => file.replace(/\.[a-z0-9]+$/i, '');
 
@@ -285,7 +290,9 @@ const byDetailOrder = (a: VenuePhoto, b: VenuePhoto) => {
   return a.file.localeCompare(b.file);
 };
 
-const all = files.filter((f) => !stemOf(f.file).endsWith(TALL_SUFFIX)).map((f) => toPhoto(f.file, f.src));
+const all = files
+  .filter((f) => !stemOf(f.file).endsWith(TALL_SUFFIX) && !stemOf(f.file).startsWith(SHARE_PREFIX))
+  .map((f) => toPhoto(f.file, f.src));
 const staged = all.filter((p) => p.name.startsWith(STYLED_PREFIX) || p.styledOf !== undefined).sort(byDetailOrder);
 
 /** The real photographs, in photoDetails order. Tall versions are attached; staged photos are never listed. */

@@ -6,6 +6,9 @@
  * Display in Plum, and one short line in Libre Caslon Text in Mauve (12.8:1 and 6.9:1 on Blush). What each
  * card shows lives in _cards.ts. JPEG keeps each card well under 300 KB: some messengers skip link previews
  * for images much over that, which a lossless PNG of a photo always is.
+ *
+ * The home card uses the 'still' layout instead (stillTree below): a still life of roses with no scrim and
+ * a White panel on its plain left side.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -14,6 +17,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { shareCards, type ShareCard } from './_cards';
+import { site } from '../../data/site';
 
 export const getStaticPaths = (() =>
   Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
@@ -111,7 +115,71 @@ export const GET: APIRoute = async ({ props }) => {
   const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo)]);
   const size = titleSize(card.title);
 
-  const tree = h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: PLUM, fontFamily: 'Libre Caslon Text', color: PLUM }, [
+  const tree = card.layout === 'still' ? stillTree(card, a, photo) : photoTree(card, a, photo, size);
+
+  const svg = await satori(tree as never, {
+    width: W,
+    height: H,
+    fonts: [
+      { name: 'Libre Caslon Display', data: a.caslonDisplay, weight: 400, style: 'normal' },
+      { name: 'Libre Caslon Text', data: a.caslonText, weight: 400, style: 'normal' },
+    ],
+  });
+  const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
+  // Full-resolution color (4:4:4) keeps the serif edges crisp on the Blush panel.
+  const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+  return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
+};
+
+/**
+ * The still life layout (the home card): the photo full bleed with no scrim, since a light still life needs
+ * none, and a White panel centred on the plain left side, ending well before the subject (STILL_PANEL_W
+ * from STILL_LEFT stays left of the bouquet's first leaves at about x 605). The title breaks before the
+ * business name so the name is never split. A short Rose rule between the lockup and the title, a Rose
+ * Mist hairline, and a soft Plum shadow lift the panel off the blush wall.
+ */
+const STILL_LEFT = 72;
+const STILL_PANEL_W = 488;
+const STILL_PAD = 40;
+const ROSE = '#B5456E';
+const ROSE_MIST = '#EFC5D0';
+function stillTree(card: ShareCard, a: Shared, photo: string): Node {
+  const nameAt = card.title.indexOf(site.name);
+  const lines = nameAt > 0 ? [card.title.slice(0, nameAt).trim(), card.title.slice(nameAt)] : [card.title];
+  return h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: BLUSH, fontFamily: 'Libre Caslon Text', color: PLUM }, [
+    h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
+    h('div', { ...layer, display: 'flex', alignItems: 'center', paddingLeft: STILL_LEFT }, [
+      h(
+        'div',
+        {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          width: STILL_PANEL_W,
+          padding: STILL_PAD,
+          borderRadius: PANEL_RADIUS,
+          backgroundColor: 'rgba(255, 255, 255, 0.94)',
+          border: `1px solid ${ROSE_MIST}`,
+          boxShadow: `0 18px 48px ${plum(0.1)}`,
+        },
+        [
+          h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
+          h('div', { width: 48, height: 2, backgroundColor: ROSE, marginTop: 26, marginBottom: 24 }),
+          h(
+            'div',
+            { display: 'flex', flexDirection: 'column', fontFamily: 'Libre Caslon Display', fontSize: 50, lineHeight: 1.1, letterSpacing: -0.5, color: PLUM, whiteSpace: 'nowrap' },
+            lines.map((l) => h('div', {}, l)),
+          ),
+          h('div', { fontSize: 22, lineHeight: 1.35, color: MAUVE, marginTop: 18 }, card.line),
+        ],
+      ),
+    ]),
+  ]);
+}
+
+/** The default layout: a real photo under the hero's Plum bottom scrim, the Blush panel bottom left. */
+function photoTree(card: ShareCard, a: Shared, photo: string, size: number): Node {
+  return h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: PLUM, fontFamily: 'Libre Caslon Text', color: PLUM }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
     // The hero's bottom scrim: the panel sits on it, and the photo's lower edge settles under the type.
     h('div', { ...layer, backgroundImage: `linear-gradient(180deg, ${plum(0)} 0%, ${plum(0)} 42%, ${plum(0.22)} 70%, ${plum(0.5)} 100%)` }),
@@ -136,17 +204,4 @@ export const GET: APIRoute = async ({ props }) => {
       ),
     ]),
   ]);
-
-  const svg = await satori(tree as never, {
-    width: W,
-    height: H,
-    fonts: [
-      { name: 'Libre Caslon Display', data: a.caslonDisplay, weight: 400, style: 'normal' },
-      { name: 'Libre Caslon Text', data: a.caslonText, weight: 400, style: 'normal' },
-    ],
-  });
-  const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
-  // Full-resolution color (4:4:4) keeps the serif edges crisp on the Blush panel.
-  const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
-  return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
-};
+}

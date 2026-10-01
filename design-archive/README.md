@@ -12,6 +12,9 @@ of `src/assets/venue/`, never by deleting it here.
   `raw/` holds the images as generated; `web/` holds the upscaled versions that were used on the site.
 - `round-2-warm-neutral/`: the eight event scenes styled in ivory, eucalyptus, natural wood, and peach.
   These are the images the site uses (copies live in `src/assets/venue/styled-event-*.jpg`).
+- `share-bouquet/`: four still lifes of a hand-tied bouquet of pink and white roses, generated with Gemini
+  (1024 x 572 each) for the home page's share card when the client asked to replace the building photo.
+  `share-bouquet-v4.png` is the one used, upscaled to 1920 wide as `src/assets/venue/share-rose-bouquet.jpg`.
 - `base-crops/`: the two tighter framings of The Hall that some round 2 scenes were generated from.
 
 The same set is also kept next to the original photos in `C:\NoOnedrive\venue\Generated scenes`.

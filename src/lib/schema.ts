@@ -15,10 +15,11 @@ const venueId = `${site.url}/#venue`;
 const websiteId = `${site.url}/#website`;
 
 /**
- * Share images that stand for the venue as a whole: the building at blue hour and The Hall.
+ * Share images that stand for the venue as a whole: The Hall (the-space). The home card is a still life of
+ * roses, not a photo of the property, so it is left out.
  * Fixed paths rather than hashed assets, so the URLs in structured data stay stable between builds.
  */
-const VENUE_SHARE_IMAGES = ['/og/home.jpg', '/og/the-space.jpg'];
+const VENUE_SHARE_IMAGES = ['/og/the-space.jpg'];
 
 /**
  * Words and phrases the brand keeps out of public copy (docs/design/brand.md, Voice). Structured data and
@@ -84,7 +85,7 @@ const feature = (name: string, value: boolean | string = true) => ({
  * The venue as a local business and event venue. Emitted on every page and referenced by @id.
  * Capacity and parking facts are shown on the home page and The Space, and describe the venue as a whole,
  * so they are included here; room details (containsPlace) only where a page asks for them.
- * imageUrls are absolute URLs of real photos of the property; the venue's share images follow them.
+ * imageUrls are absolute URLs of real photos of the property; the venue's share image of The Hall follows them.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {
   const data: Record<string, unknown> = {
