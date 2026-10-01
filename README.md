@@ -3,6 +3,9 @@
 Website and booking system for **The Venue @ NCC** (venueatncc.org), an event venue at
 5112 Godwin Blvd, Suffolk, VA 23434.
 
+Deploying to production: see [docs/deploy-gcloud-apache.md](docs/deploy-gcloud-apache.md), the runbook
+for the shared Google Cloud server (Apache, pm2, certbot).
+
 - A fast, search-optimized marketing site designed after Apple's Human Interface Guidelines, in a pastel pink palette (Blush and Petal surfaces, Berry accents, Plum text) with full dark mode.
 - A live availability calendar, instant price estimates, and a four-step booking request.
 - The venue's own backend: an API server with a SQLite database, email notifications, and a staff admin app. No third-party form services.
@@ -59,7 +62,8 @@ Preact islands:                        Hono API  /api/*  ───────�
 | Design tokens (colors, type, radii, glass) | `src/styles/global.css` |
 | Brand: palette, logo, photo rule, voice (binding) | `docs/design/brand.md` |
 | Interaction rules we follow | `docs/design/hig-web-spec.md` |
-| Deployment, DNS, SMTP, backups | `docs/deploy.md` |
+| Production deployment on the shared Google Cloud VM (Apache, pm2, certbot) | `docs/deploy-gcloud-apache.md` |
+| Generic deployment (Docker, Caddy), DNS, SMTP, backups | `docs/deploy.md` |
 
 Change a rate in `pricing.ts` and the pricing page, every estimate, the booking wizard, the
 confirmation emails, and the structured data all update.

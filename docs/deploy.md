@@ -1,5 +1,9 @@
 # Deploying The Venue @ NCC
 
+> **Production runbook:** venueatncc.org is deployed on the shared Google Cloud VM behind Apache and
+> pm2. Follow [deploy-gcloud-apache.md](deploy-gcloud-apache.md) for that server. The Docker and Caddy
+> notes below are the generic alternative for a dedicated server.
+
 The production site is one small Node server. It serves the built pages from `dist/` and the API under
 `/api` (booking requests, the calendar, and the admin), keeps everything in one SQLite file
 (`data/venue.db`), and sends email through any SMTP account. [Caddy](https://caddyserver.com) sits in
