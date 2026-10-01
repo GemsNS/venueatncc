@@ -84,10 +84,16 @@ const {
   class: className,
 } = Astro.props;
 const frost = frostProp ?? FROST[photo.name] ?? FROST_DEFAULT;
+
+/*
+  Phones: the 4:5 file covers a band at least max(30rem, 80svh) tall (the phone rule below), so it is drawn
+  0.8 times that height wide, wider than the screen on most phones.
+*/
+const PHONE_SIZES = 'max(100vw, 64vh, 24rem)';
 ---
 <section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}; --frost-phone: ${frost.phone}; --frost-wide: ${frost.wide}`} data-phone={phone}>
   <div class="phero__media">
-    <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" caption={false} class="phero__photo" />
+    <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" tallSizes={PHONE_SIZES} caption={false} class="phero__photo" />
   </div>
   <div class="container phero__inner">
     <div class="phero__panel">
