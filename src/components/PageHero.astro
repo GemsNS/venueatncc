@@ -3,8 +3,14 @@
  * The inner-page hero (redesign-spec.md, PageHero; the reference's venue page): a full-bleed photograph
  * (the 4:5 file on phones, never cropped into its subject) with a Plum bottom scrim and a rounded, translucent
  * caption panel bottom-left holding an eyebrow, the h1, an optional line of descriptors, and up to three
- * fact columns (LABEL / value). The photo is the page's main image and loads first. A staged photo keeps
- * its badge; the styled caption goes beneath the hero where the page shows it.
+ * facts (LABEL / value columns; on phones LABEL: value rows, as the reference's mobile venue page sets
+ * them). The photo is the page's main image and loads first. A staged photo keeps its badge.
+ *
+ * `phone="stack"` is for a photo that has no portrait file (the staged event photos, 3:2 only): cover-
+ * cropping it into a tall phone frame would cut its scene off at the sides (brand.md, "No cropped
+ * subjects"), so below 46.5rem the photo is shown whole, full bleed at its own shape, and the caption sits
+ * on the page beneath it in the page's own colors (the way the reference's venues index titles its phone
+ * page). From 46.5rem both modes are the same overlay hero.
  */
 import Photo from './Photo.astro';
 import type { VenuePhoto } from '../data/photos';
@@ -18,12 +24,14 @@ interface Props {
   facts?: { label: string; value: string }[];
   /** Height of the band on regular screens, as a CSS length. */
   height?: string;
+  /** Phones: the caption over the portrait photo (default), or the whole photo with the caption beneath. */
+  phone?: 'overlay' | 'stack';
   class?: string;
 }
 
-const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh', class: className } = Astro.props;
+const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh', phone = 'overlay', class: className } = Astro.props;
 ---
-<section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`}>
+<section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`} data-phone={phone}>
   <div class="phero__media">
     <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" caption={false} class="phero__photo" />
     <div class="phero__scrim" aria-hidden="true"></div>
@@ -176,6 +184,16 @@ const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh
     color: var(--white);
   }
 
+  /* A link inside the panel takes the panel's color: white over the photo, Plum on the page. */
+  .phero__panel :global(.link-more) {
+    color: inherit;
+  }
+
+  .phero__panel :global(.link-more:focus-visible) {
+    outline-color: var(--on-dark-accent);
+    outline-offset: 4px;
+  }
+
   @media (width < 46.5rem) {
     .phero {
       min-height: max(30rem, 80svh);
@@ -184,6 +202,90 @@ const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh
     .phero__panel {
       max-width: none;
       width: 100%;
+    }
+
+    /* Facts as LABEL: value rows, so three fit without the panel climbing over the photo. */
+    .phero__facts {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    .phero__fact {
+      grid-template-columns: max-content minmax(0, 1fr);
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .phero__fact dt::after {
+      content: ':';
+      letter-spacing: 0;
+    }
+
+    /* ---------- phone="stack": the photo whole, then the caption on the page ---------- */
+
+    .phero[data-phone='stack'] {
+      display: block;
+      min-height: 0;
+      color: var(--label);
+    }
+
+    .phero[data-phone='stack'] .phero__media {
+      position: relative;
+      inset: auto;
+      z-index: auto;
+    }
+
+    .phero[data-phone='stack'] .phero__media :global(.phero__photo),
+    .phero[data-phone='stack'] .phero__media :global(.phero__photo .photo__frame) {
+      height: auto;
+    }
+
+    .phero[data-phone='stack'] .phero__media :global(.phero__photo .photo__frame) {
+      aspect-ratio: 3 / 2;
+    }
+
+    .phero[data-phone='stack'] .phero__scrim {
+      display: none;
+    }
+
+    .phero[data-phone='stack'] .phero__inner {
+      padding-block: 1.75rem 0;
+    }
+
+    .phero[data-phone='stack'] .phero__panel {
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .phero[data-phone='stack'] .phero__eyebrow {
+      color: var(--accent-text);
+    }
+
+    .phero[data-phone='stack'] .phero__title {
+      color: var(--label);
+    }
+
+    .phero[data-phone='stack'] .phero__descriptors {
+      color: var(--label-2);
+    }
+
+    .phero[data-phone='stack'] .phero__facts {
+      border-top-color: var(--separator);
+    }
+
+    .phero[data-phone='stack'] .phero__fact dt {
+      color: var(--label-2);
+    }
+
+    .phero[data-phone='stack'] .phero__fact dd {
+      color: var(--label);
+    }
+
+    .phero[data-phone='stack'] .phero__panel :global(.link-more:focus-visible) {
+      outline-color: var(--focus-ring);
     }
   }
 </style>

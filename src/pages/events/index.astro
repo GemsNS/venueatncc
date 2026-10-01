@@ -15,7 +15,7 @@
  * event's own one-line summary.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import EventHero from './_EventHero.astro';
+import PageHero from '../../components/PageHero.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import PhotoCard from '../../components/PhotoCard.astro';
 import CtaBand from '../../components/CtaBand.astro';
@@ -59,12 +59,14 @@ const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== unde
 <BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[breadcrumbs(crumbs), itemList]}>
   {
     heroPhoto && (
-      <EventHero
+      <PageHero
         photo={heroPhoto}
         id="events-title"
         eyebrow="Events"
         title="Weddings, celebrations, and gatherings in Suffolk"
         descriptors={eventsStaged ? [EVENTS_STYLED_NOTE] : []}
+        height="min(72svh, 76vw)"
+        phone={heroPhoto.tall ? 'overlay' : 'stack'}
       />
     )
   }

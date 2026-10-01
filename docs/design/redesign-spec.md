@@ -120,7 +120,7 @@ The hero overlay is Blush: a radial veil (0.9 at the centre, 0.62 at 70 percent,
 | `ImageTextSplit.astro` | A photo beside copy (eyebrow, heading, text, actions), `flip` for photo right. | 1:1 from 60rem | Stacked, photo first |
 | `FeatureStrip.astro` | Three or four items (`items`): a line icon, a Caslon Text title, one sentence in Inter. The reference's "We Do, So You Can" row; the section's hairline sits above it. | 3 or 4 columns from 60rem | 2 columns from 36rem, stacked below |
 | `Checklist.astro` | A Petal panel (`title`, `items`) of check-marked serif items, 16px radius; several panels in a row. The reference's "essentials" panels. | Up to 3 panels across (the page sets the grid) | Stacked |
-| `FaqAccordion.astro` | Native `details` rows split by hairlines, no card, the question in Caslon Text 1.125rem with a chevron, the answer in Caslon Text Mauve. `FaqList.astro` re-exports it for older imports. | Max 50rem wide | Full width |
+| `FaqAccordion.astro` | Native `details` rows split by hairlines, no card, the question in Caslon Text 1.125rem with a chevron, the answer in Caslon Text Mauve. | Max 50rem wide | Full width |
 | `AnchorBar.astro` | A sticky row of in-page links (`items`: id and label) under the header (the reference venue page's tab bar), horizontally scrollable on phones, the current section underlined in Berry as the page scrolls (`aria-current="location"`). Targets need `scroll-margin-top` of about the bar plus 4rem. | Sticky at `--nav-h` | Sticky, scrollable |
 | `VerticalTabs.astro` | A left list of section names (`items`) on a hairline rail, the current one marked in Berry, beside the stacked panels on the right, one named slot per item id (photo, sub-head, copy). Built as in-page anchors with `aria-current`; a small scroll listener marks the current one. | 1:2.2 columns, the list sticky | The list becomes a scrollable row above the panels |
 | `CtaBand.astro` | The closing band: a heading, one sentence, one filled Check Availability, on Petal with a hairline (the reference's dark band, kept pastel here). | Copy left, button right | Stacked, button full width |
@@ -129,16 +129,19 @@ The hero overlay is Blush: a radial veil (0.9 at the centre, 0.62 at 70 percent,
 | `Icon.astro`, `Logo.astro`, `Breadcrumbs.astro`, `JsonLd.astro` | Unchanged. Breadcrumbs are used only on event pages, under the hero. |  |  |
 
 Removed: `TabBar.astro` (the floating tab bar), the `Petals.astro` canvas (the video replaced it; the file is
-deleted rather than left unused), and `LocationBand.astro` (replaced by `ImageTextSplit` on the home page).
-`EventIndex.astro` (white-body event tiles) still exists because /events/ and the event page import it; their
-owners replace it with `PhotoCard` in a `Carousel` or a grid and then delete the file. `FaqList.astro` stays
-as a thin wrapper around `FaqAccordion` until its importers are updated.
+deleted rather than left unused), `LocationBand.astro` (replaced by `ImageTextSplit` on the home page),
+`EventIndex.astro` (the white-body event tiles, replaced by `PhotoCard` in the events grid and carousels),
+and `FaqList.astro` (every page imports `FaqAccordion` directly).
+
+`PageHero` takes `phone="stack"` for a photo that has no portrait file (the staged event photos): below
+46.5rem the photo is shown whole at its own 3:2 shape and the caption sits on the page beneath it, in the
+page's own colors; from 46.5rem it is the same overlay hero. Facts on phones are LABEL: value rows.
 
 ### What the foundation built (commit "Redesign foundation:")
 
 Tokens and the button system in `src/styles/global.css`; `Header.astro` (with the menu), `Footer.astro`,
 `HeroVideo.astro`, `SectionHeading.astro`, `PhotoCard.astro`, `Carousel.astro`, `ImageTextSplit.astro`,
-`FeatureStrip.astro`, `Checklist.astro`, `FaqAccordion.astro` (and `FaqList.astro` as its wrapper),
+`FeatureStrip.astro`, `Checklist.astro`, `FaqAccordion.astro`,
 `AnchorBar.astro`, `VerticalTabs.astro`, `PageHero.astro`, `CtaBand.astro`; `BaseLayout.astro` (no tab
 bar, the `headerOver` prop, the Caslon Text preload); the home page; the hero video and its credits. Page
 owners build the other routes from the plan below with these components and do not add a second button or
@@ -174,14 +177,14 @@ Built by the foundation, in this order:
 ### `/the-space/` (reference: the venue page)
 
 1. `PageHero` with `main-hall` (portrait file on phones): eyebrow "The Space", h1 "Three spaces, indoors and
-   out", descriptors "Indoor · Outdoor · Renovated grounds", facts LOCATION Suffolk, VA / SPACES 3 / CAPACITY
-   up to 150.
-2. `AnchorBar`: The Hall, The Main Hall, The Grove, Amenities, The grounds, Included, Visit.
+   out", descriptors "Indoor · Outdoor · Renovated grounds", facts LOCATION Suffolk, VA / CAPACITY up to 150
+   (the title already counts the spaces).
+2. `AnchorBar`: The Hall, The Main Hall, The Grove, Gallery, Amenities, The grounds, Included, Visit.
 3. **Spaces** (`VerticalTabs`, one panel per space): the primary photo, the name (`--t-title-2`), the lead,
-   a spec list (Capacity, Features, Rates: Ask about rates linking to /pricing/). Photos: hall-doors,
-   main-hall-stage, gazebo (the hero already shows main-hall).
-4. **Photo gallery** (`Carousel` of `PhotoCard`s with the caption as the label): hall-fireplace, hall-windows,
-   grove-tables, grove-path, driveway. Tap to enlarge stays.
+   a spec list (Capacity, Features, Rates: Ask about rates linking to /pricing/). Photos: the primaries
+   brand.md names, hall-windows, main-hall-stage, grove-tables (the hero already shows main-hall).
+4. **Photo gallery** (`Carousel` of `PhotoCard`s with the caption as the label): hall-fireplace, hall-doors,
+   gazebo, grove-path, driveway. Tap to enlarge stays.
 5. **Premium amenities** (`FeatureStrip`): `site.amenities`.
 6. **The grounds** (`ImageTextSplit`, approach-dusk): parking, Get Directions.
 7. **What the rental includes** (`Checklist`): `site.included`.

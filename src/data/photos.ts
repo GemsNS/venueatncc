@@ -6,7 +6,7 @@
  *   Staged photographs show events. Every event tile and event page hero uses a staged image of that event,
  *   all eight in one décor style, or none of them do (eventsStaged, below). While any staged image is
  *   missing, each event page hero shows the real photo its staged image is made from, with no badge or
- *   caption, and event tiles show no photo at all (EventIndex): eight events cannot map to eight different
+ *   caption, and the events pages list the events as links instead of cards: eight events cannot map to eight different
  *   real photos, and no image may appear twice on a page. There are no toggles between the two.
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)

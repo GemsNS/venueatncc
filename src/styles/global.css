@@ -759,9 +759,8 @@ main:focus {
 /*
   The one button: a capsule with a serif label (Libre Caslon Text at 16px, the reference's pill), 44px tall,
   52px for .btn--lg. Three looks: filled (Berry, white label), outline (a hairline in the current text color,
-  so it is Plum on the page and white on Plum or a photo scrim) and light (white, Plum label, for scrims).
-  The older names (.btn--tinted, .btn--gray) draw the outline look and .btn--plain the quiet text look, so
-  the booking and admin islands keep one system until their owners rename them.
+  so it is Plum on the page and white on Plum or a photo scrim) and light (white, Plum label, for scrims),
+  plus .btn--plain, the quiet text button the admin uses. The older .btn--tinted and .btn--gray names are gone.
 */
 .btn {
   --btn-h: 44px;
@@ -825,19 +824,13 @@ main:focus {
   background: var(--accent-hover);
 }
 
-.btn--outline,
-.btn--tinted,
-.btn--gray,
-.btn--outline-light {
+.btn--outline {
   background: transparent;
   color: inherit;
   box-shadow: inset 0 0 0 1px currentColor;
 }
 
-.btn--outline:hover,
-.btn--tinted:hover,
-.btn--gray:hover,
-.btn--outline-light:hover {
+.btn--outline:hover {
   background: var(--fill-3);
 }
 

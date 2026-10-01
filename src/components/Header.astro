@@ -251,8 +251,11 @@ const showCta = !current(bookHref);
     font-size: min(0.75rem, 15px);
   }
 
-  /* A narrow phone (320px), or larger text, has no room beside the lockup and the phone for the demo pill. */
-  @media (width < 24rem) {
+  /*
+    Phones up to about 430px wide have no room for the demo pill between the menu button and the centred
+    lockup (it would overlap the ring), so it is left out there; the footer's demo line still says so.
+  */
+  @media (width < 28rem) {
     .nav__demo {
       display: none;
     }

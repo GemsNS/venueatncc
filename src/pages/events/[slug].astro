@@ -1,7 +1,8 @@
 ---
 /**
  * An event landing page (redesign-spec.md, "/events/[slug]/"; the reference's venue page): the photo hero
- * with a caption panel (the styled caption inside it), breadcrumbs under it, a sticky anchor bar, About (the intro
+ * with a caption panel (the styled caption inside it; on phones the 3:2 staged photo is shown whole with the
+ * caption beneath, PageHero's stack mode), breadcrumbs under it, a sticky anchor bar, About (the intro
  * beside a second photo), the planning guide in two columns, the checklist beside its heading and the
  * shared-information line, the questions, three other events as photo cards, and the closing band. Copy
  * lives in src/data/events.ts.
@@ -23,7 +24,7 @@
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import EventHero from './_EventHero.astro';
+import PageHero from '../../components/PageHero.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import AnchorBar from '../../components/AnchorBar.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
@@ -129,9 +130,18 @@ const schema = [
 <BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
   {
     photo && (
-      <EventHero photo={photo} id="event-title" eyebrow="Events" title={event.h1} descriptors={spaces.map((s) => s.name)} facts={facts}>
+      <PageHero
+        photo={photo}
+        id="event-title"
+        eyebrow="Events"
+        title={event.h1}
+        descriptors={spaces.map((s) => s.name)}
+        facts={facts}
+        height="min(72svh, 76vw)"
+        phone={photo.tall ? 'overlay' : 'stack'}
+      >
         {eventsStaged && photo.styledOf && <p class="ev-hero__note">{STYLED_CAPTION}</p>}
-      </EventHero>
+      </PageHero>
     )
   }
 
@@ -256,7 +266,7 @@ const schema = [
   }
 
   @media (width < 46.5rem) {
-    .ev-hero__note {
+    :global(.phero[data-phone='stack']) .ev-hero__note {
       color: var(--label-2);
     }
   }

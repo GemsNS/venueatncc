@@ -275,8 +275,9 @@ blue hour because a share card's title covers its lower left, where the gazebo w
 Keep this split on purpose; move the `hero` tag only with this paragraph.
 
 `grove-pines` and the staged `community-events` tile (made from `grove-path`) come from the same original,
-IMG_4906, in different framings. The no-repeat rule is checked by file name (EventIndex's `avoid`), on
-purpose: matching by original would, under the all-or-nothing rule, turn every event tile into text.
+IMG_4906, in different framings. The no-repeat rule is checked by file name (the events pages compare
+photo names), on purpose: matching by original would, under the all-or-nothing rule, turn every event tile
+into text.
 
 Describe only what the photos and the owner's copy confirm. The owner confirmed The Main Hall's stage and
 stage seating, kitchen access with banquet arrangements, private hospitality rooms, and that the rental
@@ -304,9 +305,11 @@ archive earlier ones.
 | `graduations-reunions` | grove-tables | Picnic tables dressed, lanterns, string lights |
 | `community-events` | grove-path | An outdoor community gathering on the lawn |
 
-Two more staged photos sit outside the event set, both on the weddings page under their own captions:
-`styled-wedding-indoor-ceremony.jpg`, a ceremony in The Main Hall (`styledOf: 'main-hall.jpg'`), and
-`styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`).
+Two more staged photos sit outside the event set. `styled-wedding-indoor-ceremony.jpg`, a ceremony in The
+Main Hall (`styledOf: 'main-hall.jpg'`), is the /events/ hero (a wedding scene that is no event's own tile,
+so all eight events can be cards without a repeat) and the second view on the weddings page, under its own
+caption. `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
+set but is not placed on any page: the building's cross is front and centre in it (Separation).
 
 ## Redundancy rules
 
@@ -367,8 +370,10 @@ information instead of repeated blocks.
 **Footer.** The brand line ("Celebrate among the pines.", `site.tagline`) as a large Caslon statement, then
 the lockup with one sentence, Visit and contact, Plan your event, and the legal line.
 
-**Share images.** Real photo background, Plum scrim, light lockup, page title in Caslon, secondary line in
-Petal. The home card's title is the welcome, "Welcome to The Venue @ NCC".
+**Share images.** A real photo full bleed under a soft Plum bottom scrim, with a Blush caption panel bottom
+left (the hero caption box on the page surface) holding the Plum lockup, the page title in Caslon Display in
+Plum, and one short Caslon Text line in Mauve. The home card's title is the welcome, "Welcome to The Venue @ NCC".
 
-**Emails.** `email-lockup.png` header on white, a thin Rose rule, Berry links and button (white text), Plum
-text, Mauve secondary text, a Blush reference box, Georgia for headings, the interface stack for body text.
+**Emails.** A Blush page with a white card: `email-lockup.png` at the top, a thin Rose rule, Berry links and
+a Berry capsule button with a serif label (white text), Plum text, Mauve secondary text, a Petal reference
+box, Georgia for headings, the interface stack for body text.

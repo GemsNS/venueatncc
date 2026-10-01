@@ -744,16 +744,43 @@
   color: var(--label-2);
 }
 
+.bk-actions__cap,
+.bk-actions__val,
+.bk-actions__none {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .bk-actions__val {
   font-family: var(--font-serif);
   font-size: var(--t-headline);
-  white-space: nowrap;
 }
 
 .bk-actions__none {
   font-family: var(--font-serif);
   font-size: var(--t-subhead);
   color: var(--label-2);
+}
+
+/*
+  A narrow measure (a 320px phone, or 200% text on any phone): the bar keeps its buttons alone, so it stays
+  one row high. The date label is decorative here (aria-hidden); the step above and the review state it. The
+  query is in em so it follows the text size, which a media query in rem would not.
+*/
+.bk-actions {
+  container: bk-actions / inline-size;
+}
+
+@container bk-actions (width < 19em) {
+  .bk-actions__total {
+    display: none;
+  }
+
+  .bk-actions__next {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .bk-actions__back {
