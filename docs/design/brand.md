@@ -189,8 +189,9 @@ Dark mode, in the same family: page Mulberry Night `#2A151F`, grouped `#1F0E16`,
 `#FBEFF2` (15.3:1 on Night), secondary `#E9C9D3` (11.2:1), tertiary `#B58FA0` (6.0:1), primary button Pink
 Bloom `#F2B7C6` with Night text (10.1:1), hover `#F8CBD6`, accent text Blossom `#F5A8BD` (9.2:1 on Night,
 8.0:1 on cards), focus ring Pink Bloom, chips and selected rows in translucent Pink, separators
-`rgba(251,239,242,0.14)`. The footer, the closing band, and the rates band are the card color, a step
-lighter than the Night page, each with a hairline (tokens `--footer-bg` and `--band`). Photo scrims use Plum.
+`rgba(251,239,242,0.14)`. The closing band and the rates band are the card color, a step lighter than the
+Night page, each with a hairline (`--band`); the footer and the admin sidebar are the deepest surface,
+`#1F0E16` (`--footer-bg`), so the page ends on its darkest step as it does in light mode. Photo scrims use Plum.
 
 Tokens live in `src/styles/global.css` under the palette names above (`--ink`, `--ink-rgb`, `--mauve`,
 `--berry`, `--berry-deep`, `--rose`, `--pink`, `--rose-mist`, `--petal`, `--blush`, `--white`) and the role
