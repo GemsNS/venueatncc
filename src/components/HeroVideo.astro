@@ -135,6 +135,11 @@ const poster = href('/media/hero-petals-poster.jpg');
     }
   }
 
+  /*
+    Dark mode: a plain wash lightens the frame under the light text, so it is weaker here (0.2) than the
+    multiply was; over 12 frames at 360, 390 and 768 the eyebrow keeps 5.2:1, the line 6.2:1, and the name
+    7.8:1 (ink) and 6.0:1 (accent).
+  */
   @media (orientation: portrait) and (prefers-color-scheme: dark) {
     .hero__tint {
       opacity: 0.2;

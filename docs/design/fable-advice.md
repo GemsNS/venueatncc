@@ -46,7 +46,10 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
   against the brightest frame of the video, not only the poster.
 - "Welcome to The Venue @ NCC" stays the H1 and the dominant element; "The Venue @ NCC" is by far the largest type.
 - Morph: tie progress to the hero leaving the viewport (0 to 100svh of scroll), not a fixed 420px, so the name lands in the header exactly as
-  the header turns solid. Ease-out, transforms only, no layout shift.
+  the header turns solid. Ease-out, transforms only, no layout shift. (Amended October 1, 2026, after the client called the
+  morph laggy: the ease-out bolted and then parked short of the bar, so the name now waits while the welcome fades over the
+  first 20% and then flies on an ease-in-out, still moving as it lands. Transforms only and no layout shift still hold. For
+  the lead to confirm when reviewing the morph.)
 
 ## Pitfalls to avoid
 
