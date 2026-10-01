@@ -1,12 +1,15 @@
 ---
 /**
- * A real photograph of the property: a plain rectangle with a modest radius, or full bleed.
- * Never masked, never decorated (docs/design/brand.md).
+ * A real photograph of the property in a plain frame, shown whole (docs/design/redesign-v7.md, section 1).
  *
- * The file is served as responsive AVIF and WebP at widths up to the source width and cropped with CSS
- * (object-fit: cover) to the frame's ratio. With `tall`, phones below 46.5rem get the 4:5 portrait file
- * instead, in a 4:5 frame. A staged event photo always carries its "Styled Concept" badge, and its caption
- * unless the page passes caption={false} (event tiles, where the badge alone is shown; brand.md).
+ * The frame takes the file's own aspect ratio (3:2 for the landscape files, 4:5 for a portrait file), so
+ * nothing is cropped into its subject. With `tall`, phones below 46.5rem get the 4:5 portrait file, in a
+ * 4:5 frame, where the photo has one. Nothing is ever drawn over the photo: no badge, no label, no button.
+ * Captions, the styled-concept disclosure, and the enlarge affordance belong to Figure.astro, under the
+ * frame. The file is served as responsive AVIF and WebP at widths up to the source width.
+ *
+ * `frame="button"` renders the frame as the figure's enlarge button (Figure.astro passes it); a linked card
+ * (FigureCard.astro) keeps the plain frame inside its link.
  */
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -14,64 +17,43 @@ import type { VenuePhoto } from '../data/photos';
 
 interface Props {
   photo: VenuePhoto;
-  /** Rendered width at each breakpoint, e.g. "(min-width: 64rem) 40vw, 100vw". */
+  /** Rendered width at each breakpoint, e.g. "(min-width: 64rem) 40vw, 100vw". The last entry is the phone width. */
   sizes?: string;
-  /**
-   * Rendered width of the portrait file on phones. Defaults to `sizes`, whose last entry is the phone width
-   * (the portrait source only applies below 46.5rem, so the wider entries never match). A frame taller than
-   * 4:5 (a phone hero) crops the sides off, so the file is drawn wider than the screen; say how wide.
-   */
-  tallSizes?: string;
   /** The page's main image: loads eagerly with high fetch priority. */
   priority?: boolean;
-  /** Frame ratio "width / height", or "fill" to fill a parent that sets the height. */
-  ratio?: string;
   /** Use the 4:5 portrait file, in a 4:5 frame, on phones (when the photo has one). */
   tall?: boolean;
-  /** Rounded corners (var(--r-card)). false for full bleed. */
+  /** Rounded corners (var(--r-card)). */
   rounded?: boolean;
+  /** The frame element: a plain box, or the enlarge button of a Figure. */
+  frame?: 'div' | 'button';
+  /** The enlarge button's accessible name (frame="button"). */
+  label?: string;
   class?: string;
-  /** A caption under the photo. true uses the photo's own caption; false shows none, even for a styled concept. */
-  caption?: string | boolean;
-  /** A short label on a small glass pill in the top-left corner, e.g. "Styled Concept". */
-  badge?: string;
-  /** CSS object-position for this frame, e.g. '85% 50%'. Overrides the photo's own crop. */
-  crop?: string;
-  /** Tap or click to see the whole photo, uncropped, in a full-screen viewer. Off inside links and the hero. */
-  zoom?: boolean;
 }
 
 const {
   photo,
   sizes = '(min-width: 75rem) 1200px, 100vw',
-  tallSizes = sizes,
   priority = false,
-  ratio = '3 / 2',
   tall = false,
   rounded = true,
+  frame = 'div',
+  label,
   class: className,
-  caption,
-  badge,
-  crop = photo.crop,
-  zoom = ratio !== 'fill',
 } = Astro.props;
 
-const isStyled = photo.styledOf !== undefined;
-const captionText = caption === false ? undefined : isStyled || caption === true ? photo.caption : caption || undefined;
-const badgeText = badge ?? (isStyled ? 'Styled Concept' : undefined);
-const fill = ratio === 'fill';
 const useTall = tall && photo.tall !== undefined;
 
 /*
-  Up to 3840 so a full-bleed photo stays sharp at 1920 on a 2x screen (2880 covers 1440 at 2x). The larger
-  widths exist only where the source is that wide, and a browser fetches one only when its screen needs it.
+  Up to 3840 so a wide photo stays sharp on a 2x screen. The larger widths exist only where the source is
+  that wide, and a browser fetches one only when its screen needs it.
 */
 const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400, 2880, 3840];
 
 /*
   Encoder quality. Sharp's defaults (AVIF 50, WebP 80) smear wall texture, foliage and petals into flat
-  patches on a large screen; these keep that detail (src/assets/venue/README.md, Resolution, gives the
-  measured page weights).
+  patches on a large screen; these keep that detail (src/assets/venue/README.md, Resolution).
 */
 const AVIF_QUALITY = 60;
 const WEBP_QUALITY = 82;
@@ -94,285 +76,65 @@ async function sources(img: ImageMetadata) {
 
 const main = await sources(photo.src);
 const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
-const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: ${crop}` : ''].filter(Boolean).join('; ');
-/*
-  The viewer shows the whole landscape file, uncropped, up to 1600 CSS px wide. It offers 1600, 2400 and
-  3200 wide files (3200 covers 1600 at 2x) and the browser picks by the screen, so a phone fetches the 1600
-  file, not the 3200 one. It loads only when a visitor opens the viewer.
-*/
-const viewerMax = Math.min(photo.src.width, 3200);
-const viewerWidths = [...[1600, 2400].filter((w) => w < viewerMax), viewerMax];
-const full = zoom
-  ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: WEBP_QUALITY })
-  : null;
+// The frame is the file's own shape, so the photo is never cover-cropped.
+const style = [
+  `--photo-ratio: ${main.width} / ${main.height}`,
+  portrait ? `--photo-ratio-tall: ${portrait.width} / ${portrait.height}` : '',
+]
+  .filter(Boolean)
+  .join('; ');
+const Frame = frame;
 ---
-<figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
-  <div class="photo__frame">
-    <picture>
-      {
-        portrait && (
-          <>
-            <source media="(max-width: 46.49rem)" type="image/avif" srcset={portrait.avif} sizes={tallSizes} width={portrait.width} height={portrait.height} />
-            <source media="(max-width: 46.49rem)" type="image/webp" srcset={portrait.webp} sizes={tallSizes} width={portrait.width} height={portrait.height} />
-          </>
-        )
-      }
-      <source type="image/avif" srcset={main.avif} sizes={sizes} width={main.width} height={main.height} />
-      <img
-        class="photo__img"
-        src={main.src}
-        srcset={main.webp}
-        sizes={sizes}
-        width={main.width}
-        height={main.height}
-        alt={photo.alt}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchpriority={priority ? 'high' : undefined}
-        decoding={priority ? undefined : 'async'}
-      />
-    </picture>
-    {badgeText && <span class="photo__badge">{badgeText}</span>}
+<Frame
+  class:list={['photo__frame', { 'photo__frame--rounded': rounded, 'photo__frame--tall': portrait, 'photo__frame--button': frame === 'button' }, className]}
+  style={style}
+  type={frame === 'button' ? 'button' : undefined}
+  aria-label={frame === 'button' ? label : undefined}
+  data-zoom-open={frame === 'button' ? '' : undefined}
+>
+  <picture>
     {
-      full && (
-        <button
-          type="button"
-          class="photo__zoom"
-          data-zoom-src={full.src}
-          data-zoom-srcset={full.srcSet.attribute}
-          data-zoom-alt={photo.alt}
-          data-zoom-caption={captionText ?? (badgeText ? `${badgeText}. Décor is not included.` : '')}
-          aria-label={`Enlarge photo: ${photo.alt}`}
-        >
-          <svg class="photo__zoom-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" /></svg>
-        </button>
+      portrait && (
+        <>
+          <source media="(max-width: 46.49rem)" type="image/avif" srcset={portrait.avif} sizes={sizes} width={portrait.width} height={portrait.height} />
+          <source media="(max-width: 46.49rem)" type="image/webp" srcset={portrait.webp} sizes={sizes} width={portrait.width} height={portrait.height} />
+        </>
       )
     }
-    <slot />
-  </div>
-  {captionText && <figcaption class="photo__caption">{captionText}</figcaption>}
-</figure>
-
-<script>
-  // One full-screen viewer for every enlargeable photo on the page: the whole photo, uncropped.
-  const buttons = () => [...document.querySelectorAll<HTMLButtonElement>('.photo__zoom')];
-  let dialog: HTMLDialogElement | null = null;
-  let index = 0;
-  let opener: HTMLElement | null = null;
-
-  function build(): HTMLDialogElement {
-    const d = document.createElement('dialog');
-    d.className = 'lightbox';
-    d.setAttribute('aria-label', 'Photo viewer');
-    d.innerHTML = `
-      <figure class="lightbox__figure">
-        <img class="lightbox__img" alt="" />
-        <figcaption class="lightbox__caption"></figcaption>
-      </figure>
-      <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-      <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button type="button" class="lightbox__btn lightbox__next" aria-label="Next photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>`;
-    document.body.append(d);
-    d.querySelector('.lightbox__close')!.addEventListener('click', () => d.close());
-    d.querySelector('.lightbox__prev')!.addEventListener('click', () => show(index - 1));
-    d.querySelector('.lightbox__next')!.addEventListener('click', () => show(index + 1));
-    // A tap on the dark backdrop (outside the photo) closes the viewer.
-    d.addEventListener('click', (e) => {
-      if (e.target === d) d.close();
-    });
-    d.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') show(index - 1);
-      if (e.key === 'ArrowRight') show(index + 1);
-    });
-    d.addEventListener('close', () => {
-      document.documentElement.classList.remove('lightbox-open');
-      opener?.focus();
-    });
-    // Swipe left or right on phones.
-    let x0: number | null = null;
-    d.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
-    d.addEventListener('touchend', (e) => {
-      if (x0 === null) return;
-      const dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
-      x0 = null;
-    });
-    return d;
-  }
-
-  function show(i: number) {
-    const list = buttons();
-    if (!dialog || list.length === 0) return;
-    index = (i + list.length) % list.length;
-    const b = list[index];
-    const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
-    // sizes before srcset, so the browser chooses with the right width.
-    img.sizes = 'min(100vw - 2rem, 1600px)';
-    img.srcset = b.dataset.zoomSrcset ?? '';
-    img.src = b.dataset.zoomSrc ?? '';
-    img.alt = b.dataset.zoomAlt ?? '';
-    const cap = dialog.querySelector<HTMLElement>('.lightbox__caption')!;
-    cap.textContent = b.dataset.zoomCaption ?? '';
-    cap.hidden = !cap.textContent;
-    const many = list.length > 1;
-    dialog.querySelectorAll<HTMLElement>('.lightbox__prev, .lightbox__next').forEach((el) => (el.hidden = !many));
-  }
-
-  document.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.photo__zoom');
-    if (!b) return;
-    e.preventDefault();
-    dialog ??= build();
-    opener = b;
-    show(buttons().indexOf(b));
-    document.documentElement.classList.add('lightbox-open');
-    dialog.showModal();
-    dialog.querySelector<HTMLElement>('.lightbox__close')!.focus();
-  });
-</script>
-
-<style is:global>
-  .lightbox {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
-    border: 0;
-    /* The viewer is bright like the site (brand.md, version 6): near-solid White, Plum controls. */
-    background: rgb(255 255 255 / 0.97);
-    color: var(--ink);
-  }
-
-  .lightbox::backdrop {
-    background: rgb(255 244 247 / 0.7);
-  }
-
-  html.lightbox-open {
-    overflow: hidden;
-  }
-
-  .lightbox__figure {
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 0.75rem;
-    height: 100%;
-    margin: 0;
-    pointer-events: none;
-  }
-
-  /* The whole photo, never cropped: it fits inside the screen at its own shape. */
-  .lightbox__img {
-    display: block;
-    max-width: min(100%, 1600px);
-    max-height: calc(100dvh - 7rem);
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 12px;
-    pointer-events: auto;
-  }
-
-  .lightbox__caption {
-    max-width: 44rem;
-    text-align: center;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1rem;
-    color: var(--mauve);
-  }
-
-  .lightbox__btn {
-    position: absolute;
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--petal);
-    color: var(--ink);
-    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.12);
-    cursor: pointer;
-  }
-
-  .lightbox__btn svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .lightbox__btn:hover {
-    background: var(--rose-mist);
-  }
-
-  .lightbox__btn:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
-
-  .lightbox__close {
-    top: max(1rem, env(safe-area-inset-top));
-    right: 1rem;
-  }
-
-  .lightbox__prev,
-  .lightbox__next {
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .lightbox__prev {
-    left: 1rem;
-  }
-
-  .lightbox__next {
-    right: 1rem;
-  }
-
-  /* Phones: arrows sit at the bottom so they never cover the photo. */
-  @media (width < 46.5rem) {
-    .lightbox__prev,
-    .lightbox__next {
-      top: auto;
-      bottom: max(1rem, env(safe-area-inset-bottom));
-      transform: none;
-    }
-  }
-</style>
+    <source type="image/avif" srcset={main.avif} sizes={sizes} width={main.width} height={main.height} />
+    <img
+      class="photo__img"
+      src={main.src}
+      srcset={main.webp}
+      sizes={sizes}
+      width={main.width}
+      height={main.height}
+      alt={photo.alt}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : undefined}
+      decoding={priority ? undefined : 'async'}
+    />
+  </picture>
+</Frame>
 
 <style>
-  .photo {
-    margin: 0;
-  }
-
   .photo__frame {
+    display: block;
     position: relative;
+    width: 100%;
     aspect-ratio: var(--photo-ratio, 3 / 2);
     overflow: hidden;
-    isolation: isolate;
     background: var(--fill-2);
   }
 
-  .photo--rounded .photo__frame {
+  .photo__frame--rounded {
     border-radius: var(--r-card);
   }
 
-  .photo--fill,
-  .photo--fill .photo__frame {
-    height: 100%;
-  }
-
-  /* Phones get the 4:5 portrait file, so the frame follows it. */
+  /* Phones get the portrait file, so the frame follows its shape. */
   @media (width < 46.5rem) {
-    .photo--tall:not(.photo--fill) .photo__frame {
-      aspect-ratio: 4 / 5;
+    .photo__frame--tall {
+      aspect-ratio: var(--photo-ratio-tall, 4 / 5);
     }
   }
 
@@ -383,89 +145,22 @@ const full = zoom
     height: 100%;
   }
 
+  /* The frame has the file's ratio, so cover fills it exactly and crops nothing. */
   .photo__img {
     object-fit: cover;
-    object-position: var(--photo-pos, center);
   }
 
-  /* A small glass pill over the photo: near-white glass with a Plum label, legible on any frame (at least 10:1 even over black). */
-  .photo__badge {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    min-height: 28px;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--r-full);
-    --badge-bg: rgb(255 255 255 / 0.86);
-    --badge-bg-solid: rgb(255 255 255 / 0.96);
-    background: var(--badge-bg);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    backdrop-filter: blur(12px) saturate(160%);
-    border: 1px solid rgb(var(--ink-rgb) / 0.08);
-    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.18);
-    /* With very large text on a narrow frame the label wraps inside the pill instead of running off the photo. */
-    max-width: calc(100% - 1.5rem);
-    color: var(--ink);
-    font-size: var(--t-footnote);
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .photo__badge {
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      background: var(--badge-bg-solid);
-    }
-  }
-
-  /* The whole frame is the tap target; a small glass button in the corner says it can be enlarged. */
-  .photo__zoom {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    padding: 0.75rem;
+  /* The frame as the enlarge button: nothing drawn over the photo, a zoom cursor, and a focus ring around it. */
+  .photo__frame--button {
+    padding: 0;
     border: 0;
-    background: transparent;
+    font: inherit;
+    color: inherit;
     cursor: zoom-in;
   }
 
-  .photo__zoom-icon {
-    width: 36px;
-    height: 36px;
-    padding: 8px;
-    border-radius: var(--r-full);
-    background: rgb(255 255 255 / 0.86);
-    color: var(--ink);
-    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.2);
-    opacity: 0.9;
-    transition: opacity var(--dur-1, 0.15s) ease, transform var(--dur-1, 0.15s) ease;
-  }
-
-  .photo__zoom:hover .photo__zoom-icon,
-  .photo__zoom:focus-visible .photo__zoom-icon {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-
-  .photo__zoom:focus-visible {
-    outline: 3px solid var(--focus-ring, var(--accent));
-    outline-offset: -3px;
-    border-radius: inherit;
-  }
-
-  .photo__caption {
-    margin-top: 0.75rem;
-    color: var(--label-2);
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.4;
+  .photo__frame--button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
   }
 </style>

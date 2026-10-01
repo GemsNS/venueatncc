@@ -1,15 +1,19 @@
 ---
 /**
- * Home (docs/design/redesign-spec.md, "Home"), in this order: the video hero with the welcome (the business
- * name as the first screen's one dominant element, which morphs into the header lockup on scroll), the three
- * spaces as photo cards in a carousel, the date checker beside its copy, the events carousel, the feature
- * strip, the rates band (the approved wording, a Call button, and a link to the inquiry form), the arrival
- * split, and the closing band.
+ * Home (docs/design/redesign-v7.md, section 5, "/ Home"), in this order: the video hero with the welcome
+ * over the pink rose clip (the business name as the first screen's one dominant element, which morphs into
+ * the header lockup on scroll), the three spaces as figure cards, the date checker beside its copy, the
+ * events we host (one staged figure beside the eight event names), and where to find us.
  *
- * Each fact has one place on the page (brand.md, "Redundancy rules"): capacities on the space cards, tables,
- * chairs, and parking in the feature strip, the address in the arrival split, a call to phone for rates in
- * the rates band. Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces and the
- * arrival, staged photos with their badge for the events. No image appears twice.
+ * Nothing sits on any photo: the cards show each photo whole with the name and the capacity under it, and
+ * the splits put their captions under the photo. The welcome over the rose video is the one exception: it
+ * is footage, not a photograph of the property.
+ *
+ * Each fact has one home (redesign-v7.md, section 4): the capacities appear here only on the space cards,
+ * which link to their sections on The Space; what the rental includes is on The Space, the rates on Rates,
+ * the address here once beside Get Directions (arrival), and in the footer. Booking is the welcome's button
+ * and the date checker. Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces
+ * and the arrival, one staged photo with its disclosure for the events. No image appears twice.
  *
  * The morph. The welcome's name is the header lockup's own words (Logo, 'lockup-name') on one line at every
  * width, with the lockup's ring ('lockup-ring') beside it, unseen, so it has the very shape it lands on.
@@ -18,8 +22,9 @@
  * the name) and fades, and the line and the button fade where they stand, below it, while the page slides
  * up over them; then an inner box glides the name up and shrinks it into the header's lockup (an
  * ease-in-out, so it is still moving as it lands) while the ring gathers around it. Over the last 6 pixels
- * the header's own lockup, in exactly the same place, fades in as the name fades out. The morph runs over the hero's height less the bar, the same distance after which the header turns
- * solid (Header.astro), so the name lands as the bar appears.
+ * the header's own lockup, in exactly the same place, fades in as the name fades out. The morph runs over
+ * the hero's height less the bar, the same distance after which the header turns solid (Header.astro), so
+ * the name lands as the bar appears.
  *
  * Every part is a transform or an opacity on a scroll timeline, so the compositor moves the name in the
  * same frame as the scroll: no script runs per frame, nothing reads layout while scrolling, and nothing
@@ -35,17 +40,14 @@ import Logo from '../components/Logo.astro';
 import Icon from '../components/Icon.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Carousel from '../components/Carousel.astro';
-import PhotoCard from '../components/PhotoCard.astro';
-import FeatureStrip from '../components/FeatureStrip.astro';
+import FigureCard from '../components/FigureCard.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
-import CtaBand from '../components/CtaBand.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site, cityState, fullAddress } from '../data/site';
 import { events } from '../data/events';
-import { EVENTS_STYLED_NOTE, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { bookHref, pricingHref } from '../data/nav';
+import { EVENTS_STYLED_NOTE, STAGED_SCENES, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
-import type { IconName } from '../shared/icons';
 
 const hall = site.spaces.find((s) => s.id === 'indoor');
 const mainHall = site.spaces.find((s) => s.id === 'main');
@@ -54,50 +56,28 @@ const hallName = hall?.name ?? 'The Hall';
 const mainHallName = mainHall?.name ?? 'The Main Hall';
 const groveName = grove?.name ?? 'The Grove';
 
-/* The three spaces: each card shows its space's primary real photo, its capacity (the only capacity on this page). */
+/* The three spaces: each card shows its space's primary real photo and its capacity (the only capacity on this page). */
 interface SpaceCard {
-  id: 'hall' | 'main-hall' | 'grove';
   name: string;
   capacity: number | undefined;
   photo: VenuePhoto | undefined;
   href: string;
 }
 const spaceCards: SpaceCard[] = [
-  { id: 'hall', name: hallName, capacity: hall?.capacity, photo: photosFor('hall')[0], href: '/the-space/#hall' },
-  { id: 'main-hall', name: mainHallName, capacity: mainHall?.capacity, photo: photosFor('main')[0], href: '/the-space/#main-hall' },
-  { id: 'grove', name: groveName, capacity: grove?.capacity, photo: photosFor('grove')[0], href: '/the-space/#grove' },
+  { name: hallName, capacity: hall?.capacity, photo: photosFor('hall')[0], href: '/the-space/#hall' },
+  { name: mainHallName, capacity: mainHall?.capacity, photo: photosFor('main')[0], href: '/the-space/#main-hall' },
+  { name: groveName, capacity: grove?.capacity, photo: photosFor('grove')[0], href: '/the-space/#grove' },
 ];
 
-/* The events: every tile is that event's staged photo with its badge, or the list is text (photos.ts). */
+/*
+  The events: the weddings staged photo, with its disclosure, beside the eight event names. Without the
+  staged set the list stands alone (photos.ts: a staged image or none).
+*/
 const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), 'driveway'].filter((n): n is string => Boolean(n)));
-const eventCards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
-const eventsWithPhotos = eventsStaged && eventCards.every((c) => c.photo?.styledOf !== undefined && !pagePhotos.has(c.photo.name));
+const weddingsPhoto = eventsStaged ? eventPhoto('weddings') : null;
+const eventsPhoto = weddingsPhoto?.styledOf !== undefined && !pagePhotos.has(weddingsPhoto.name) ? weddingsPhoto : null;
 
-/* The feature strip: four things true of every booking, each said here and nowhere else on this page. */
-const features: { icon: IconName; name: string; text: string }[] = [
-  {
-    icon: 'building',
-    name: 'Indoors and outdoors',
-    text: `${hallName}, ${mainHallName}, and ${groveName}, booked on their own or ${hallName} and ${groveName} together.`,
-  },
-  {
-    icon: 'calendar',
-    name: 'Full-day access',
-    text: 'Book the hours your event needs, from setup to the last farewell, on one property.',
-  },
-  {
-    icon: 'check-circle',
-    name: 'Tables and chairs included',
-    text: 'They come with the rental, and you may use them if you wish.',
-  },
-  {
-    icon: 'parking',
-    name: 'On-site parking',
-    text: 'A large paved lot beside the building, included with every booking.',
-  },
-];
-
-/* The arrival: the drive and lot in daylight, so the page's last photo is as bright as the rest (brand.md, Home). */
+/* The arrival: the drive and lot in daylight. */
 const arrival = photoByName('driveway');
 
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
@@ -135,8 +115,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
           lead="Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and community gatherings, with elegant backdrops, flexible layouts, and full-day access."
         >
           <Fragment slot="actions">
-            <a class="btn btn--filled" href={href('/the-space/')}>Explore The Space</a>
-            <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+            <a class="btn btn--outline" href={href('/the-space/')}>Explore The Space</a>
           </Fragment>
         </SectionHeading>
         <Carousel cols={3} label="The spaces">
@@ -144,7 +123,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             spaceCards.map(
               (card) =>
                 card.photo && (
-                  <PhotoCard
+                  <FigureCard
                     photo={card.photo}
                     label={card.name}
                     meta={card.capacity ? `Up to ${card.capacity} guests` : undefined}
@@ -161,12 +140,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     <section class="section" aria-labelledby="date-heading">
       <div class="container checker">
         <div class="checker__copy">
-          <SectionHeading
-            id="date-heading"
-            eyebrow="Availability"
-            heading="Check a date"
-            lead="See which spaces are open on your day, then send your request in about two minutes. We confirm every booking personally."
-          />
+          <SectionHeading id="date-heading" eyebrow="Availability" heading="Check a date" lead="See which spaces are open on your day." />
         </div>
         <div class="checker__panel">
           <DateChecker client:load bookHref={href(bookHref)} />
@@ -176,64 +150,43 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
     <section class="section" aria-labelledby="events-heading">
       <div class="container">
-        <SectionHeading id="events-heading" eyebrow="Occasions" heading="Events we host" lead={eventsWithPhotos ? EVENTS_STYLED_NOTE : undefined}>
-          <Fragment slot="actions">
-            <a class="btn btn--outline" href={href('/events/')}>See All Events</a>
-          </Fragment>
-        </SectionHeading>
         {
-          eventsWithPhotos ? (
-            <Carousel cols={4} label="Events we host">
-              {eventCards.map(
-                (c) =>
-                  c.photo && (
-                    <PhotoCard
-                      photo={c.photo}
-                      label={c.event.name}
-                      href={`/events/${c.event.slug}/`}
-                      sizes="(min-width: 75rem) 300px, (min-width: 60rem) 23vw, (min-width: 46.5rem) 46vw, 82vw"
-                    />
-                  ),
-              )}
-            </Carousel>
+          eventsPhoto ? (
+            <ImageTextSplit
+              photo={eventsPhoto}
+              id="events-heading"
+              eyebrow="Occasions"
+              heading="Events we host"
+              lead={EVENTS_STYLED_NOTE}
+              caption={STAGED_SCENES[eventsPhoto.name] ?? false}
+              sizes="(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw"
+            >
+              <ul class="event-links" aria-label="Events we host">
+                {events.map((e) => (
+                  <li>
+                    <a class="event-link" href={href(`/events/${e.slug}/`)}>{e.name}</a>
+                  </li>
+                ))}
+              </ul>
+              <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+            </ImageTextSplit>
           ) : (
-            <ul class="event-links">
-              {events.map((e) => (
-                <li>
-                  <a class="link-more" href={href(`/events/${e.slug}/`)}>
-                    {e.name} <Icon name="chevron-right" />
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <>
+              <SectionHeading id="events-heading" eyebrow="Occasions" heading="Events we host">
+                <Fragment slot="actions">
+                  <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+                </Fragment>
+              </SectionHeading>
+              <ul class="event-links" aria-label="Events we host">
+                {events.map((e) => (
+                  <li>
+                    <a class="event-link" href={href(`/events/${e.slug}/`)}>{e.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </>
           )
         }
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="included-heading">
-      <div class="container">
-        <SectionHeading id="included-heading" eyebrow="Every booking" heading="What every booking includes" />
-        <FeatureStrip items={features} />
-      </div>
-    </section>
-
-    <section class="section band-section rates" aria-labelledby="rates-heading">
-      <div class="container">
-        <SectionHeading
-          id="rates-heading"
-          eyebrow="Rates"
-          heading="Our special rates"
-          lead="Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us and we will be happy to help you."
-        >
-          <Fragment slot="actions">
-            <a class="btn btn--filled" href={`tel:${site.contact.phoneE164}`}>
-              <Icon name="phone" />
-              Call {site.contact.phone}
-            </a>
-            <a class="link-more" href={href(pricingHref)}>Or send an inquiry <Icon name="chevron-right" /></a>
-          </Fragment>
-        </SectionHeading>
       </div>
     </section>
 
@@ -247,6 +200,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
               eyebrow="Getting here"
               heading="Find us in north Suffolk"
               lead={`${fullAddress}.`}
+              caption="The drive and the parking lot"
             >
               <Fragment slot="actions">
                 <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
@@ -258,8 +212,6 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         </section>
       )
     }
-
-    <CtaBand />
   </div>
 </BaseLayout>
 
@@ -505,7 +457,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
   /*
     The first screen: "Welcome to" and the business name, the largest type on the site, centred over the
-    petals. The name is the header lockup's own words on one line, at every width, so it has the very shape
+    roses. The name is the header lockup's own words on one line, at every width, so it has the very shape
     it lands on. --u is one unit of the lockup's grid in pixels: the words are 402.5 units wide (NAME_BOX in
     src/lib/lockup.ts), so they span the container's width on phones (89vw at 390) and 74vw (at most 68rem)
     from 46.5rem. The ring is drawn in the same unit, so the words must never be capped apart from it.
@@ -575,6 +527,17 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     text-shadow: 0 0 12px var(--bg), 0 0 3px var(--bg);
   }
 
+  /*
+    The name keeps a soft White halo that hugs its letters, so the Plum words and the Cerise "@ NCC" hold
+    their contrast at the glyph edge over the darker rose petals while the veil stays light enough for the
+    roses to read as pink (redesign-v7.md, section 6; brand.md, "The hero loop", gives the measured values).
+    The filter is static: the morph only moves and fades the box that holds it, and over the solid White bar
+    the halo is invisible, so the landing is unchanged.
+  */
+  .welcome__words {
+    filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px rgb(255 255 255 / 0.8));
+  }
+
   .welcome__below {
     display: grid;
     justify-items: center;
@@ -586,7 +549,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     font-size: var(--t-subhead);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    /* The text color at every size: over the clip's grey petal shadows Cerise drops below 4.5:1. */
+    /* The text color at every size: over the darker rose petals Cerise drops below 4.5:1. */
     color: var(--label);
   }
 
@@ -650,29 +613,41 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     outline-color: var(--focus-ring);
   }
 
-  /* ---------- Events as text (while the staged set is incomplete) ---------- */
+  /* ---------- Events we host: the eight names in two columns of serif links on hairlines ---------- */
 
   .event-links {
     display: grid;
-    gap: 0.25rem 2rem;
-    margin: 0;
+    width: 100%;
+    margin: 0.25rem 0 0.5rem;
     padding: 0;
     list-style: none;
+    border-top: 1px solid var(--separator);
   }
 
   @media (min-width: 36rem) {
     .event-links {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.5rem;
     }
   }
 
-  /* ---------- Rates ---------- */
-
-  .rates {
-    background: var(--band);
+  .event-link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding-block: 0.5rem;
+    border-bottom: 1px solid var(--separator);
+    color: var(--label);
+    font-family: var(--font-serif);
+    font-size: var(--t-headline);
+    line-height: 1.3;
+    text-decoration: none;
   }
 
-  .rates :global(.section-head) {
-    margin-bottom: 0;
+  .event-link:hover {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
 </style>

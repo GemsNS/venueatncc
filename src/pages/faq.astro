@@ -2,15 +2,14 @@
 /**
  * Frequently asked questions (redesign-spec.md, "/faq/"; the reference's FAQ pattern on its venue pages).
  *
- * A serif title band on Petal, a sticky bar of the topics, then one group per topic: the topic's serif
- * head on the left and its questions as a hairline accordion on the right (the reference's two-column
- * section with the heading beside the copy), the groups split by hairlines, and the closing band.
- * Only questions with an answer are published (src/data/faq.ts). Breadcrumbs are for event pages only.
+ * A serif title band on Petal, then one group per topic, all on one page with no topic bar
+ * (docs/design/redesign-v7.md, section 5): the topic's serif head on the left and its questions as a
+ * hairline accordion on the right, the groups split by hairlines. Answers follow the FAQ rule: one sentence
+ * and a link to the fact's home where it has one (src/data/faq.ts). Only questions with an answer are
+ * published. Breadcrumbs are for event pages only.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AnchorBar from '../components/AnchorBar.astro';
 import FaqAccordion from '../components/FaqAccordion.astro';
-import CtaBand from '../components/CtaBand.astro';
 import { site } from '../data/site';
 import { publishedFaqs, type Faq } from '../data/faq';
 import { faqPage } from '../lib/schema';
@@ -31,7 +30,6 @@ const groups = (
 )
   .map((g) => ({ ...g, id: `faq-${g.topic}`, items: publishedFaqs.filter((f) => f.topic === g.topic) }))
   .filter((g) => g.items.length > 0);
-const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
 ---
 <BaseLayout title={title} description={description} og="faq" schema={[faqPage(publishedFaqs)]}>
   <section class="band-section title-band" aria-labelledby="page-title">
@@ -41,8 +39,6 @@ const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
       <p class="t-lead">Answers to the questions we hear most about the spaces, rates, and booking.</p>
     </div>
   </section>
-
-  <AnchorBar items={anchors} label="Topics" />
 
   <section class="section faq-body">
     <div class="container">
@@ -61,8 +57,6 @@ const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
       }
     </div>
   </section>
-
-  <CtaBand />
 </BaseLayout>
 
 <style>
@@ -102,8 +96,6 @@ const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
     display: grid;
     gap: 1.25rem 3rem;
     padding-block: calc(var(--section) * 0.6);
-    /* The page's scroll padding already clears the header; this clears the sticky topic bar (52px) too. */
-    scroll-margin-top: calc(52px + 0.5rem);
   }
 
   .faq-group + .faq-group {
@@ -142,7 +134,7 @@ const anchors = groups.map((g) => ({ id: g.id, label: g.title }));
 
     .faq-group__head {
       position: sticky;
-      top: calc(var(--nav-h) + 52px + 2rem);
+      top: calc(var(--nav-h) + 2rem);
     }
   }
 </style>

@@ -2,7 +2,7 @@
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
  * 1200 x 630 JPEG in the shape of the site's inner-page hero (redesign-spec.md, "Emails and share images"):
  * a real photo of the property, full bleed with no scrim (brand.md, version 6: bright and white-first); a
- * near-solid White caption panel bottom-left with a Rose Mist hairline (the hero's frosted caption box; a
+ * near-solid White caption panel bottom-left with a Rose Mist hairline (the earlier hero caption box; a
  * share image has no backdrop blur, so the panel stays near-solid for small previews) holding the Plum and
  * Cerise lockup, the page title in Libre Caslon Display in Plum, and one short line in Libre Caslon Text in
  * Mauve (at least 12.4:1 and 6.7:1 on the panel even over black). What each
@@ -28,7 +28,7 @@ export const getStaticPaths = (() =>
 
 const W = 1200;
 const H = 630;
-/** The card's margin, the panel's padding, and the panel's radius (the hero caption panel's 20px, scaled). */
+/** The card's margin, the panel's padding, and the panel's radius (20px, scaled). */
 const PAD = 56;
 const PANEL_PAD = 40;
 const PANEL_RADIUS = 24;

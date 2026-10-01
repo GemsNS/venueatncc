@@ -2,10 +2,11 @@
 /**
  * A photo beside copy (redesign-spec.md, ImageTextSplit; the reference's "Getting to" and contact sections):
  * the photo on the left (or right with `flip`), and on the right an eyebrow, a heading, the slotted copy, and
- * the actions (`actions` slot). Phones stack the photo first. The photo keeps its 3:2 shape (the 4:5 file on
- * phones) and opens in the viewer.
+ * the actions (`actions` slot). Phones stack the photo, its caption, then the copy. The photo is shown whole
+ * at 3:2 (the 4:5 file on phones) with its caption under it, never over it, and opens in the viewer
+ * (Figure.astro; docs/design/redesign-v7.md, "Editorial split").
  */
-import Photo from './Photo.astro';
+import Figure from './Figure.astro';
 import type { VenuePhoto } from '../data/photos';
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   eyebrow?: string;
   lead?: string;
   flip?: boolean;
+  /** The caption under the photo: a string, or true for the photo's own. A staged photo always gets the disclosure. */
+  caption?: string | boolean;
   level?: 'h1' | 'h2';
   sizes?: string;
   class?: string;
@@ -27,6 +30,7 @@ const {
   eyebrow,
   lead,
   flip = false,
+  caption = true,
   level = 'h2',
   sizes = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw',
   class: className,
@@ -34,7 +38,7 @@ const {
 const Heading = level;
 ---
 <div class:list={['split', { 'split--flip': flip }, className]}>
-  <Photo photo={photo} tall sizes={sizes} class="split__photo" />
+  <Figure photo={photo} caption={caption} sizes={sizes} class="split__photo" />
   <div class="split__copy">
     {eyebrow && <p class="eyebrow">{eyebrow}</p>}
     <Heading id={id}>{heading}</Heading>
@@ -55,10 +59,6 @@ const Heading = level;
     display: grid;
     gap: 2rem clamp(2rem, 5vw, 5rem);
     align-items: center;
-  }
-
-  .split :global(.split__photo .photo__frame) {
-    border-radius: var(--r-card);
   }
 
   .split__copy {

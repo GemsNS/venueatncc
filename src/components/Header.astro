@@ -9,10 +9,9 @@
  * call to action; compact screens show a menu button on the left, the lockup centred, and a round phone
  * button on the right. The menu button opens the full-screen menu (a native dialog: focus trapped, Escape
  * closes, focus returns to the button, the page does not scroll behind it) with large serif links, the
- * filled Check Availability, and the phone. There is no bottom bar.
- *
- * `over="photo"` (a page whose hero is a photograph under the transparent bar) sets white text and the
- * white lockup until the bar turns solid.
+ * filled Check Availability, and the phone. There is no bottom bar. The menu's Events row has a native
+ * disclosure, "All events", under it that lists the eight event pages, so every page is one tap from the
+ * menu (docs/design/redesign-v7.md, section 3). No photo ever sits under the bar, so its text is always Plum.
  *
  * On the home page (`morph`) the lockup is hidden until the welcome's large name has flown into its place
  * (src/pages/index.astro, "The morph"), then fades in beneath it on the same scroll timeline and the page's
@@ -30,7 +29,8 @@
  */
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
-import { site, fullAddress } from '../data/site';
+import { site } from '../data/site';
+import { events } from '../data/events';
 import { mainNav, menuNav, bookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
@@ -40,17 +40,15 @@ interface Props {
   ctaHref?: string;
   /** Home only: the lockup's words wait for the welcome's name to arrive (see above). */
   morph?: boolean;
-  /** What sits under the transparent bar at the top of the page: a light surface (default) or a photo. */
-  over?: 'light' | 'photo';
 }
 
-const { ctaHref = bookHref, morph = false, over = 'light' } = Astro.props;
+const { ctaHref = bookHref, morph = false } = Astro.props;
 const path = withoutBase(Astro.url.pathname);
 const current = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
 // On the booking page the call to action would link to the page itself.
 const showCta = !current(bookHref);
 ---
-<header class="nav" data-nav data-morph={morph ? '' : undefined} data-over={over}>
+<header class="nav" data-nav data-morph={morph ? '' : undefined}>
   <div class="nav__inner container">
     <div class="nav__left">
       <button type="button" class="btn-round nav__menu" aria-label="Open menu" aria-haspopup="dialog" aria-controls="site-menu" data-menu-open>
@@ -106,6 +104,23 @@ const showCta = !current(bookHref);
               {item.label}
               <Icon name="chevron-right" />
             </a>
+            {item.href === '/events/' && (
+              <details class="menu__more">
+                <summary class="menu__more-toggle">
+                  All events
+                  <svg class="icon menu__more-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+                </summary>
+                <ul class="menu__sub">
+                  {events.map((e) => (
+                    <li>
+                      <a class="menu__sublink" href={href(`/events/${e.slug}/`)} aria-current={path === `/events/${e.slug}/` ? 'page' : undefined}>
+                        {e.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </li>
         ))
       }
@@ -123,7 +138,6 @@ const showCta = !current(bookHref);
         Call {site.contact.phone}
       </a>
     </div>
-    <p class="menu__address secondary">{fullAddress}</p>
   </nav>
 </dialog>
 
@@ -218,13 +232,6 @@ const showCta = !current(bookHref);
   .nav[data-solid] {
     background: var(--bg);
     border-bottom-color: var(--separator);
-  }
-
-  /* Over a photo hero: white text and the white lockup until the bar turns solid. */
-  .nav[data-over='photo']:not([data-solid]) {
-    color: var(--white);
-    --logo-ink: var(--white);
-    --logo-accent: var(--pink);
   }
 
   /* Three columns: links, the centred brand, actions. min-height, not height: larger text grows the bar. */
@@ -584,9 +591,57 @@ const showCta = !current(bookHref);
     gap: 0.75rem;
   }
 
-  .menu__address {
+  /* The Events row's disclosure: the eight event pages as a secondary list, 44px rows. */
+  .menu__more {
+    margin: -0.25rem 0 0.5rem;
+  }
+
+  .menu__more-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: var(--accent-text);
     font-family: var(--font-serif);
-    font-size: var(--t-callout);
+    font-size: 1.125rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .menu__more-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu__more-chev {
+    width: 1.1rem;
+    height: 1.1rem;
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  .menu__more[open] .menu__more-chev {
+    transform: rotate(180deg);
+  }
+
+  .menu__sub {
+    display: grid;
+    margin: 0 0 0.5rem;
+    padding: 0 0 0 1rem;
+    border-left: 1px solid var(--separator-strong);
+    list-style: none;
+  }
+
+  .menu__sublink {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--label);
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    text-decoration: none;
+  }
+
+  .menu__sublink[aria-current] {
+    color: var(--accent-text);
   }
 
   @media (min-width: 60rem) {

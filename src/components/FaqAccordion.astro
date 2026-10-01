@@ -3,8 +3,12 @@
  * Questions and answers (redesign-spec.md, FaqAccordion): native disclosure rows split by hairlines, no card,
  * the question in the serif with a chevron, the answer in the serif Mauve. No script needed.
  */
+import Icon from './Icon.astro';
+import { href } from '../lib/paths';
+
 interface Props {
-  items: { q: string; a: string }[];
+  /** `more` links to the fact's home after the answer (the FAQ rule, docs/design/redesign-v7.md, section 4). */
+  items: { q: string; a: string; more?: { label: string; href: string } }[];
   openFirst?: boolean;
   class?: string;
 }
@@ -32,6 +36,11 @@ const withPhoneLinks = (a: string) => a.split(PHONE);
         </summary>
         <div class="faq__a">
           <p>{withPhoneLinks(item.a).map((part, j) => (j % 2 === 1 ? <a class="faq__tel" href={telHref(part)}>{part}</a> : part))}</p>
+          {item.more && (
+            <a class="link-more faq__more" href={href(item.more.href)}>
+              {item.more.label} <Icon name="chevron-right" />
+            </a>
+          )}
         </div>
       </details>
     ))
@@ -81,6 +90,10 @@ const withPhoneLinks = (a: string) => a.split(PHONE);
   .faq[open] .faq__chev {
     transform: rotate(180deg);
     color: var(--accent-text);
+  }
+
+  .faq__a .faq__more {
+    margin-top: 0.25rem;
   }
 
   .faq__a {

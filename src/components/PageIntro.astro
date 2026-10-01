@@ -1,0 +1,132 @@
+---
+/**
+ * The top of an inner page (docs/design/redesign-v7.md, section 2, PageIntro): the text beside the photo,
+ * never over it. From 60rem two columns, 5:7: the text block on the left (breadcrumbs on event pages, the
+ * eyebrow, the h1, the lead, a row of links, one action) and the photo on the right, shown whole at 3:2 with
+ * its caption under it. On phones the text comes first, then the photo (the 4:5 file where there is one),
+ * then the caption. The photo is the page's main image: it loads first and opens in the viewer. A staged
+ * photo carries the disclosure at the start of its caption (Figure.astro).
+ */
+import Figure from './Figure.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Icon from './Icon.astro';
+import type { VenuePhoto } from '../data/photos';
+import { href as toHref } from '../lib/paths';
+
+interface Props {
+  id: string;
+  title: string;
+  eyebrow?: string;
+  lead?: string;
+  /** A row of serif links with chevrons, e.g. an event's spaces, each to its section on The Space. */
+  links?: { label: string; href: string }[];
+  /** The label for the links row, for screen readers. */
+  linksLabel?: string;
+  photo?: VenuePhoto | null;
+  /** The caption under the photo (a staged photo gets the disclosure first). */
+  caption?: string | boolean;
+  breadcrumbs?: { name: string; path: string }[];
+  class?: string;
+}
+
+const { id, title, eyebrow, lead, links = [], linksLabel, photo, caption = true, breadcrumbs, class: className } = Astro.props;
+---
+<section class:list={['section', 'intro', { 'intro--photo': photo }, className]} aria-labelledby={id}>
+  <div class="container intro__inner">
+    <div class="intro__text">
+      {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h1 id={id} class="intro__title">{title}</h1>
+      {lead && <p class="t-lead intro__lead">{lead}</p>}
+      <slot />
+      {
+        links.length > 0 && (
+          <ul class="intro__links" aria-label={linksLabel}>
+            {links.map((l) => (
+              <li>
+                <a class="link-more" href={l.href.startsWith('#') ? l.href : toHref(l.href)}>
+                  {l.label} <Icon name="chevron-right" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {
+        Astro.slots.has('actions') && (
+          <div class="btn-row intro__actions">
+            <slot name="actions" />
+          </div>
+        )
+      }
+    </div>
+    {
+      photo && (
+        <Figure
+          photo={photo}
+          caption={caption}
+          priority
+          class="intro__photo"
+          sizes="(min-width: 81.25rem) 740px, (min-width: 60rem) 56vw, 100vw"
+        />
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .intro {
+    padding-block: clamp(2rem, 1.5rem + 2.5vw, 4rem) var(--section);
+  }
+
+  .intro__inner {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .intro__text {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    align-content: start;
+    max-width: 34rem;
+  }
+
+  .intro__text :global(.crumbs) {
+    margin-bottom: 0.25rem;
+  }
+
+  .intro__title {
+    font-size: var(--t-large-title);
+    line-height: 1.05;
+  }
+
+  .intro__lead {
+    color: var(--label-2);
+  }
+
+  .intro__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .intro__actions {
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .intro--photo .intro__inner {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(2.5rem, 4vw, 4.5rem);
+      align-items: start;
+    }
+
+    .intro__text {
+      padding-top: 0.5rem;
+    }
+  }
+</style>

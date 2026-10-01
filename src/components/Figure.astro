@@ -1,0 +1,328 @@
+---
+/**
+ * A photo shown whole with its caption under it (docs/design/redesign-v7.md, section 2, Figure).
+ *
+ * The frame is the enlarge button (Photo.astro, frame="button"), and the caption line under it ends with a
+ * text button, "Enlarge", that opens the same full-screen viewer: the obvious affordance on touch screens
+ * and for screen readers. Nothing is drawn over the photo. A staged photo always carries the disclosure,
+ * "Styled concept. Décor is not included.", at the start of its caption, even when the page passes none,
+ * so every staged image declares itself on the image itself.
+ *
+ * `zoom={false}` leaves out both buttons (a figure inside a link, FigureCard).
+ */
+import { getImage } from 'astro:assets';
+import Photo from './Photo.astro';
+import { STYLED_CAPTION, type VenuePhoto } from '../data/photos';
+
+interface Props {
+  photo: VenuePhoto;
+  sizes?: string;
+  /** The 4:5 portrait file on phones, where the photo has one. */
+  tall?: boolean;
+  /** The caption: a string, true for the photo's own caption, or false for none (a staged photo still gets the disclosure). */
+  caption?: string | boolean;
+  priority?: boolean;
+  zoom?: boolean;
+  class?: string;
+}
+
+const { photo, sizes, tall = true, caption = false, priority = false, zoom = true, class: className } = Astro.props;
+
+const isStyled = photo.styledOf !== undefined;
+const own = caption === true ? photo.caption : caption || undefined;
+/* The disclosure leads every staged photo's caption; a page's own words follow it. */
+const captionText = isStyled
+  ? own && own !== STYLED_CAPTION
+    ? `${STYLED_CAPTION} ${own.replace(STYLED_CAPTION, '').trim()}`
+    : STYLED_CAPTION
+  : own;
+
+/*
+  The viewer shows the whole landscape file up to 1600 CSS px wide. It offers 1600, 2400 and 3200 wide
+  files (3200 covers 1600 at 2x), and the browser picks by the screen. It loads only when the viewer opens.
+*/
+const viewerMax = Math.min(photo.src.width, 3200);
+const viewerWidths = [...[1600, 2400].filter((w) => w < viewerMax), viewerMax];
+const full = zoom
+  ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: 82 })
+  : null;
+---
+<figure
+  class:list={['figure', className]}
+  data-zoom-src={full?.src}
+  data-zoom-srcset={full?.srcSet.attribute}
+  data-zoom-alt={full ? photo.alt : undefined}
+  data-zoom-caption={full ? (captionText ?? '') : undefined}
+>
+  <Photo photo={photo} sizes={sizes} tall={tall} priority={priority} frame={full ? 'button' : 'div'} label={`Enlarge photo: ${photo.alt}`} />
+  {
+    (captionText || full) && (
+      <figcaption class="figure__caption">
+        {captionText && <span>{captionText}</span>}
+        {full && (
+          <button type="button" class="figure__enlarge" data-zoom-open aria-label={`Enlarge photo: ${photo.alt}`}>
+            Enlarge
+          </button>
+        )}
+      </figcaption>
+    )
+  }
+</figure>
+
+<script>
+  // One full-screen viewer for every enlargeable figure on the page: the whole photo, uncropped.
+  const figures = () => [...document.querySelectorAll<HTMLElement>('figure[data-zoom-src]')];
+  let dialog: HTMLDialogElement | null = null;
+  let index = 0;
+  let opener: HTMLElement | null = null;
+
+  function build(): HTMLDialogElement {
+    const d = document.createElement('dialog');
+    d.className = 'lightbox';
+    d.setAttribute('aria-label', 'Photo viewer');
+    d.innerHTML = `
+      <figure class="lightbox__figure">
+        <img class="lightbox__img" alt="" />
+        <figcaption class="lightbox__caption"></figcaption>
+      </figure>
+      <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__next" aria-label="Next photo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>`;
+    document.body.append(d);
+    d.querySelector('.lightbox__close')!.addEventListener('click', () => d.close());
+    d.querySelector('.lightbox__prev')!.addEventListener('click', () => show(index - 1));
+    d.querySelector('.lightbox__next')!.addEventListener('click', () => show(index + 1));
+    // A tap on the dark backdrop (outside the photo) closes the viewer.
+    d.addEventListener('click', (e) => {
+      if (e.target === d) d.close();
+    });
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      if (e.key === 'ArrowRight') show(index + 1);
+    });
+    d.addEventListener('close', () => {
+      document.documentElement.classList.remove('lightbox-open');
+      opener?.focus();
+    });
+    // Swipe left or right on phones.
+    let x0: number | null = null;
+    d.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
+    d.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+    return d;
+  }
+
+  function show(i: number) {
+    const list = figures();
+    if (!dialog || list.length === 0) return;
+    index = (i + list.length) % list.length;
+    const f = list[index];
+    const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
+    // sizes before srcset, so the browser chooses with the right width.
+    img.sizes = 'min(100vw - 2rem, 1600px)';
+    img.srcset = f.dataset.zoomSrcset ?? '';
+    img.src = f.dataset.zoomSrc ?? '';
+    img.alt = f.dataset.zoomAlt ?? '';
+    const cap = dialog.querySelector<HTMLElement>('.lightbox__caption')!;
+    cap.textContent = f.dataset.zoomCaption ?? '';
+    cap.hidden = !cap.textContent;
+    const many = list.length > 1;
+    dialog.querySelectorAll<HTMLElement>('.lightbox__prev, .lightbox__next').forEach((el) => (el.hidden = !many));
+  }
+
+  // The frame and the caption's Enlarge button both open the viewer on their figure.
+  document.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-zoom-open]');
+    const f = b?.closest<HTMLElement>('figure[data-zoom-src]');
+    if (!b || !f) return;
+    e.preventDefault();
+    dialog ??= build();
+    opener = b;
+    show(figures().indexOf(f));
+    document.documentElement.classList.add('lightbox-open');
+    dialog.showModal();
+    dialog.querySelector<HTMLElement>('.lightbox__close')!.focus();
+  });
+</script>
+
+<style is:global>
+  .lightbox {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    border: 0;
+    /* The viewer is bright like the site (brand.md, version 6): near-solid White, Plum controls. */
+    background: rgb(255 255 255 / 0.97);
+    color: var(--ink);
+  }
+
+  .lightbox::backdrop {
+    background: rgb(255 244 247 / 0.7);
+  }
+
+  html.lightbox-open {
+    overflow: hidden;
+  }
+
+  .lightbox__figure {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.75rem;
+    height: 100%;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  /* The whole photo, never cropped: it fits inside the screen at its own shape. */
+  .lightbox__img {
+    display: block;
+    max-width: min(100%, 1600px);
+    max-height: calc(100dvh - 9rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    pointer-events: auto;
+  }
+
+  .lightbox__caption {
+    max-width: 44rem;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--mauve);
+  }
+
+  .lightbox__btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--petal);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.12);
+    cursor: pointer;
+  }
+
+  .lightbox__btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .lightbox__btn:hover {
+    background: var(--rose-mist);
+  }
+
+  .lightbox__btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .lightbox__close {
+    top: max(1rem, env(safe-area-inset-top));
+    right: 1rem;
+  }
+
+  .lightbox__prev,
+  .lightbox__next {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .lightbox__prev {
+    left: 1rem;
+  }
+
+  .lightbox__next {
+    right: 1rem;
+  }
+
+  /* Wider screens: the photo stops short of the arrows at its sides, so no control covers it. */
+  @media (width >= 46.5rem) {
+    .lightbox__img {
+      max-width: min(100% - 8rem, 1600px);
+    }
+  }
+
+  /* Phones: arrows sit at the bottom so they never cover the photo. */
+  @media (width < 46.5rem) {
+    .lightbox__prev,
+    .lightbox__next {
+      top: auto;
+      bottom: max(1rem, env(safe-area-inset-bottom));
+      transform: none;
+    }
+  }
+</style>
+
+
+<style>
+  .figure {
+    margin: 0;
+    min-width: 0;
+  }
+
+  /* The caption line: Caslon Text italic in Mauve, under the frame, ending with the Enlarge button. */
+  .figure__caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 1rem;
+    margin-top: 0.5rem;
+    color: var(--label-2);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .figure__caption > span {
+    flex: 1 1 14rem;
+    padding-top: 0.25rem;
+  }
+
+  .figure__enlarge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-left: auto;
+    padding: 0 0.25rem;
+    border: 0;
+    background: none;
+    color: var(--accent-text);
+    font-family: var(--font-serif);
+    font-style: normal;
+    font-size: var(--t-subhead);
+    cursor: pointer;
+  }
+
+  .figure__enlarge:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .figure__enlarge:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+</style>

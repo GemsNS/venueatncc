@@ -1,11 +1,35 @@
-# The Venue @ NCC: brand and redesign spec (version 6)
+# The Venue @ NCC: brand and redesign spec (version 7)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: capsule buttons, Title Case
 button labels, sentence-case headings, 44px targets, reduced motion, no em or en dashes anywhere in copy.
 Dark mode is withdrawn in version 6: the site is light only. The layout system, the section patterns, and
 the page plans are in `redesign-spec.md` (version 5, with its version 6 colour note), which page owners
-build from; the creative director's decisions in `fable-advice.md` are binding.
+build from; the creative director's decisions in `fable-advice.md` are binding. Version 7
+(`redesign-v7.md`, image first) is binding on top of all three and overrides them where they differ.
+
+## Version 7 amendments (image first, October 1, 2026)
+
+The client asked to "get rid of the concept of cards covering image", to have "the images fully shown", for
+pink roses in the hero in place of the petals, and for "less redundency" and a site that is "easy to
+navigate". `redesign-v7.md` is the binding spec; in short:
+
+1. **Nothing sits on a photo.** No text, panel, card, label strip, scrim, badge, or button over any
+   photograph anywhere. Every photo is shown whole in a plain 12px frame at its own ratio (3:2, or the 4:5
+   file on phones), with its caption, label, and the styled-concept disclosure under or beside it. The one
+   exception is the home welcome over the rose video, which is footage, not a photo of the property.
+2. **Components.** `PageIntro` (text beside the photo), `Figure` (photo, caption, Enlarge), and
+   `FigureCard` (photo, label and meta under it) replace `PageHero` and `PhotoCard`; `AnchorBar`,
+   `VerticalTabs`, and `CtaBand` are removed. The frosted glass (`--frost-*`) is gone with them.
+3. **The disclosure** moves under the photo: a single staged photo's caption begins "Styled concept. Décor is
+   not included."; each staged card's meta line begins "Styled concept", with the full sentence once in the
+   section lead. The alt text keeps its "Styled concept:" prefix.
+4. **The hero** is a clip of pink roses (`public/media/hero-roses.*`) under a light veil; see "Motion and
+   graphics".
+5. **Navigation and redundancy.** The Space, Events, Rates, FAQ, then the phone and Check Availability; the
+   phone menu's Events row expands to the eight event pages; no in-page sticky bars; one primary action per
+   page; each fact has one home and is linked from elsewhere (`redesign-v7.md`, sections 3 and 4). The
+   footer opens with the statement and holds Explore, Plan, and Visit, with no blurb and no button.
 
 ## Version 6 amendments (bright, white-first pastel pink, light only)
 
@@ -22,24 +46,27 @@ rule, including version 5 amendment 4 (the Blush page and the Plum footer).
    Deep are retired everywhere: tokens, logo files, icons, the manifest, share images, and emails.
 3. **Light only.** No dark-mode rules or tokens remain; `color-scheme: light` and a White `theme-color`.
 4. **See-through caption panels** over photos, tuned per photo (Color, "Caption panels over photos").
+   *Superseded by version 7: no panel sits on a photo.*
 5. **The home hero veil** is bright white with a pastel pink cast (HeroVideo, and "Motion and graphics").
 6. **Photo card labels on frosted White** (amended October 1, 2026, for the lead to confirm): the Plum bottom
    gradient with white type is gone; the label and meta line sit on a frosted White strip, Plum and Mauve
    (Color, "Photo card labels"). The dark gradient failed 4.5:1 over the bright staged photos.
+   *Superseded by version 7: card labels sit under the photo, on the page.*
 
 ## Version 5 amendments (the reference-site rebuild)
 
 The client asked for the site to be rebuilt on the patterns of https://www.wedgewoodweddings.com/. These
 amendments supersede the matching version 4 rules below wherever the two differ.
 
-1. **A video hero.** The home page hero is a full-viewport, muted, looping royalty-free clip of white rose
-   petals on a pink ground (`public/media/hero-petals.*`, credited in `public/media/CREDITS.md`) under a Blush
-   overlay, with the welcome centred over it. The version 4 rule "no footage" is withdrawn; the rule that no
+1. **A video hero.** The home page hero is a full-viewport, muted, looping royalty-free clip (since version
+   7, pink roses, `public/media/hero-roses.*`; the earlier petals clip is archived in
+   `design-archive/hero-petals/`; all credited in `public/media/CREDITS.md`) under a light veil, with the
+   welcome centred over it. The version 4 rule "no footage" is withdrawn; the rule that no
    clip may show an identifiable venue, building, room, or person stays. The petals canvas is removed.
 2. **Navigation.** The floating tab bar is gone, and no bottom bar replaces it (the reference has none).
    Phones get a menu button on the left, the lockup centred, the phone on the right, and a full-screen menu
    with large serif links, Check Availability, and the phone; the closing band on every page carries Check
-   Availability too. The header is transparent over the home hero and a solid bar (not glass; White since version 6) once
+   Availability too (*superseded by version 7: the closing band is removed*). The header is transparent over the home hero and a solid bar (not glass; White since version 6) once
    the hero has scrolled past; inner pages start with the solid bar.
 3. **One serif for the interface.** Libre Caslon Text sets nav links, button labels, leads, card labels, and
    section copy; the interface stack (Inter) stays for forms, the wizard, the admin, chips, and small labels.
@@ -47,7 +74,8 @@ amendments supersede the matching version 4 rules below wherever the two differ.
    hairlines rather than alternating bands; the footer keeps the reference's shape (a very large centred
    serif statement).
 5. **Cards.** Photo cards carry their label and capacity inside the photo (on a frosted White strip since version 6), 12px radius,
-   in horizontal carousels; there is no white card body under a photo.
+   in horizontal carousels; there is no white card body under a photo. *Superseded by version 7: the label
+   and meta sit under the photo on the page surface, with no box (`FigureCard`).*
 6. **Buttons.** One button: the Peony capsule (`.btn--filled`, version 6), a hairline outline, and a white capsule for
    photos. The header's Check Availability is filled on every page, and an in-page primary may be filled too;
    the one-filled-button-per-viewport rule is withdrawn.
@@ -233,6 +261,8 @@ put white text on Pink or lighter.
 
 ### Caption panels over photos (version 6)
 
+> **Superseded by version 7** (`redesign-v7.md`): the whole subsection, including the FROST table and its floors. No panel sits on any photo; there is nothing to measure over a photo any more.
+
 **Amended 2026-10-01:** the client said the panels still looked opaque. Every panel is now White at 0.3 over
 `blur(10px) brightness(1.3) saturate(1.1)`, so the photo clearly shows through, and each line of text carries a
 White glow (`text-shadow`) that keeps Plum legible over dark parts of a photo. The per-photo opacities below are
@@ -282,6 +312,8 @@ under reduced transparency or increased contrast it is White at 0.96 with no blu
 badge stays near-white glass.
 
 ### Photo card labels (version 6, amended October 1, 2026)
+
+> **Superseded by version 7** (`redesign-v7.md`): the whole subsection. Card labels and meta lines sit under the photo on the page surface (FigureCard): Plum 14.2:1 and Mauve 7.6:1 on White.
 
 `PhotoCard` labels sit on a frosted White strip along the bottom of the photo, the same glass as the caption
 panels: White at 0.78, `--frost-blur`, a white hairline on top, a Plum label and a Mauve meta line. The Plum
@@ -357,7 +389,22 @@ under the bar, and the bar turns solid after 8px.
 
 ## Motion and graphics
 
-- **The hero loop** (`src/components/HeroVideo.astro`, version 5): a royalty-free clip of white rose petals on
+- **The hero loop, version 7** (`src/components/HeroVideo.astro`; `redesign-v7.md`, section 6): Pexels video
+  36494699, "Close-up of Beautiful Pink Roses in Bloom" (Marek Ruczaj, Pexels License): pink roses on a bright
+  white ground, a 13.96 s seamless loop at 2560 x 1440 (`public/media/hero-roses.*`, the edit and grade in
+  `public/media/CREDITS.md`), with a 1216 x 2160 portrait poster. The veil is White at 0.5 across the band
+  that holds the welcome, easing to 0.2 at the edges (0.32 on portrait screens, where the clip is one large
+  rose), with no colour blend layer, so the roses read as pink. The first screen's mean HSL lightness
+  measures 78.2 at 360 and 390, 80.3 at 768, and 79.7 at 1440 (12 frames; the band is 78 to 90). The welcome's
+  name carries a static White halo (`drop-shadow`) that hugs its letters. Measured over 12 frames at 360,
+  390, 768, 1440, and 1920, at the 2nd-percentile pixel: "Welcome to" 5.2:1 and the location line 5.7:1 or
+  better against the veiled clip; the Plum name 5.3:1 against the veiled clip alone and 7.5:1 or better at
+  its glyph edges with the halo; the Cerise "@ NCC" 2.4:1 against the veiled clip alone and 3.3:1 (phones) to
+  4.0:1 (1440) at its glyph edges with the halo. The name is large text, so AA asks 3:1, which the halo meets;
+  version 7's own floors (7:1 for the name, 4.5:1 for "@ NCC", against the clip) are not reachable for the
+  Cerise accent over pink roses under the 0.5 veil cap, and that is open for the lead's decision.
+- **The hero loop, version 5 and 6** (*superseded by version 7; the files are archived in
+  `design-archive/hero-petals/`*): a royalty-free clip of white rose petals on
   a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, fixed behind the welcome under a
   bright white veil with a pastel pink cast. Since October 1, 2026 the clip and its poster are 2560 x 1440, cut
   from the source's 4K rendition (the 1280 x 720 files were the softest image on the site and are kept in
@@ -388,17 +435,19 @@ under the bar, and the bar turns solid after 8px.
   `design-archive/generated-scenes/share-bouquet/`), straight and level, the whole bouquet in frame. It is
   the only image on the site that is not the property, so it never stands for the venue: it is not in
   `photos`, not in structured data, and its og:image:alt calls it an illustrative still life.
-- **Staged photographs show events.** Every event tile and every event page hero uses a staged image of that
-  event, all eight in one décor style, each with the same small "Styled Concept" badge. The events section on
-  the home page and the /events/ page carry one line: "Event photos show our spaces styled for each occasion.
-  Décor is not included." Event page heroes carry the caption "Styled concept. Décor is not included."
+- **Staged photographs show events.** Every event card and every event page's main photo uses a staged image
+  of that event, all eight in one décor style. *Version 7:* the "Styled Concept" badge is withdrawn; the
+  disclosure is text under the photo. A single staged photo's caption begins "Styled concept. Décor is not
+  included." and says what it shows; each staged card's meta line begins "Styled concept", and the section
+  lead on the home page and /events/ carries the full line once: "Event photos show our spaces styled for each
+  occasion. Décor is not included."
 - **All or nothing.** If a staged image is missing for any event, no staged image is shown: each event page hero
   shows the real photo its staged image is made from, with no badge or caption, event tiles show no photo, and
   the one-line note is hidden. This is computed in `src/data/photos.ts` from which files exist.
 - **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
 - **No repeats.** No image appears twice on the same page.
-- **No cropped subjects.** Frames never cut into a photo's subject; the tap-to-enlarge viewer
-  (`src/components/Photo.astro`) shows every photo whole.
+- **No cropped subjects.** Since version 7 every frame has the file's own ratio, so nothing is cropped at
+  all; the tap-to-enlarge viewer (`src/components/Figure.astro`) shows every photo larger.
 
 ### Real photos (in `src/assets/venue/`, each as 3:2 `name.jpg` and 4:5 `name-tall.jpg`, except the home band)
 
@@ -469,6 +518,8 @@ set but is not placed on any page: the building's cross is front and centre in i
   works") lives in one place and is linked, not copied.
 - Footer navigation does not duplicate the header navigation item for item: the footer's "Plan your event"
   column holds the requests that have no header link (a visit, an inquiry) and, on compact screens, the FAQ.
+  *Superseded by version 7: the footer's columns are Explore, Plan (Check availability, Request a visit, Send
+  an inquiry), and Visit (`redesign-v7.md`, section 3), and each fact's one home is in its section 4.*
 - A section that only restates another page earns its place only if it answers something the visitor needs
   before scrolling on; otherwise it is cut.
 

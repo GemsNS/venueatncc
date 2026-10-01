@@ -1,5 +1,12 @@
 # The Venue @ NCC: redesign specification (version 5)
 
+> **Amended by version 7** (`redesign-v7.md`, October 1, 2026, binding): nothing sits on any photo. The
+> rows of section 1 for the hero caption panel, the cards, the venue page (anchor bar, vertical tab list), and
+> the footer statement with a pill; the section 3 rows for `PageHero`, `PhotoCard`, `AnchorBar`,
+> `VerticalTabs`, `CtaBand`, and the `phone="stack"` paragraph; and every page plan in section 4 are
+> superseded by `redesign-v7.md` sections 1 to 5. Those components are removed from the code; their rows
+> are kept here as history only.
+
 The site is rebuilt, page by page and component by component, on the patterns of the reference site
 (https://www.wedgewoodweddings.com/) at 390 and 1440. Its patterns, layout system, rhythm, and quality are
 adopted; none of its content, text, logos, or photographs. This document is the build spec for every page
@@ -126,6 +133,12 @@ behind the name, "Welcome to" 6.4:1, and the line 5.0:1.
 
 ## 3. Component catalogue (`src/components/`)
 
+> **Superseded in part by version 7:** `PageHero`, `PhotoCard`, `AnchorBar`, `VerticalTabs`, and `CtaBand`
+> are removed; `PageIntro`, `Figure`, and `FigureCard` replace them (`redesign-v7.md`, section 2). `Photo` no
+> longer carries a badge, `ratio="fill"`, `tallSizes`, or a zoom button; `Header`'s `over` prop and the
+> layout's `headerOver` are removed (no photo sits under the bar), its links are The Space, Events, Rates,
+> FAQ, and the menu's Events row expands to the eight event pages; the footer has no blurb or button.
+
 | Component | Anatomy | Desktop | Phone |
 |---|---|---|---|
 | `Header.astro` | Menu button (phones), links (Events, The Space, Rates, FAQ) left, lockup centred, phone and Check Availability right. `over="light"` (default) keeps Plum text; `over="photo"` uses the white lockup and white text until the bar turns solid. Solid Blush with a hairline once the hero (`[data-hero]`) has scrolled past, or after 8px on pages without one. | Three columns, 80px tall with a 52px lockup (72px and 46px from 960px to 1119px) | Menu button left, lockup centred (40px; 44px on tablets in a 72px bar; less only where a 320px screen or large text leaves less room, never under 32px), phone icon right, 64px tall |
@@ -167,6 +180,8 @@ card style.
 
 ## 4. Page-by-page plan
 
+> **Superseded by version 7:** every page plan below is replaced by `redesign-v7.md`, section 5.
+
 Each section names its component, the reference pattern it follows, and its content source. Every fact keeps
 one home (brand.md, Redundancy rules); no photo appears twice on a page; every staged photo keeps its badge.
 
@@ -177,7 +192,8 @@ Built by the foundation, in this order:
 1. **Hero** (`HeroVideo`): H1 "Welcome to The Venue @ NCC" (the italic serif "Welcome to", then the name as
    the lockup's own words on one line at 74vw on desktop and 94vw on phones, by far the largest type), the
    Berry serif line "Event venue in Suffolk, Virginia", one filled Check Availability. The name flies into the
-   header lockup as one shape as the hero scrolls out. Video: `public/media/hero-petals.*`.
+   header lockup as one shape as the hero scrolls out. Video: `public/media/hero-petals.*` (since version 7,
+   `public/media/hero-roses.*`; the petals are archived in `design-archive/hero-petals/`).
 2. **The spaces** (`SectionHeading` + `Carousel` of three `PhotoCard`s, `cols=3`): eyebrow "The spaces", h2
    "Three spaces, indoors and out", the owner's welcome text as the lead, Explore The Space (filled) and
    "Check Availability >" (link). Cards: hall-windows / main-hall / grove-tables with "Up to N guests".

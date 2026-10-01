@@ -1,39 +1,31 @@
 ---
 /**
- * The Space (docs/design/redesign-spec.md, "/the-space/"; the reference's venue page), in this order: the
- * full-bleed photo hero with its caption panel (name, descriptors, LOCATION / SPACES / CAPACITY), the sticky
- * anchor bar, a short introduction, the three spaces as a vertical tab list beside stacked panels (a photo,
- * the name, the lead, and a fact row), the photo gallery carousel, the amenities strip, the grounds beside
- * the drive at dusk, what the rental includes as a checklist panel, the visit request, and the closing band.
+ * The Space (docs/design/redesign-v7.md, section 5, "/the-space/"), in this order: the page intro (the text
+ * beside The Main Hall, with three links that jump to the spaces), each space as an editorial split with
+ * its fact row (The Hall and The Grove each followed by two more views as figures), the amenities, the
+ * grounds, what the rental includes, and the visit request. Nothing sits on any photo: every photo is
+ * shown whole with its caption under it, and there is no in-page sticky bar.
  *
- * Real photos only, each shown once (brand.md, Photography): main-hall in the hero; the primaries
- * hall-windows, main-hall-stage, and grove-tables in the panels; hall-fireplace, hall-doors, gazebo,
- * grove-path, and driveway in the gallery; approach-dusk with the grounds. Only facts the photos and the
- * owner's copy confirm.
+ * Real photos only, each shown once: main-hall (intro), hall-windows, hall-fireplace, hall-doors (The
+ * Hall), main-hall-stage (The Main Hall), grove-tables, gazebo, grove-path (The Grove), approach-dusk (the
+ * grounds). driveway is the home page's arrival photo and is not on this page.
  *
- * Each fact lives here once (brand.md, Redundancy rules): the capacities and features in the panels' fact
- * rows, the lot with the grounds, the amenities in their strip (this is their one page), the inclusions
- * (the space, tables and chairs, parking) in the checklist, the visit request in the visit section. The
- * venue does not publish prices, so each panel's Rates fact links to /pricing/ (Ask about rates) instead of
- * naming an amount. Booking is the header CTA and the closing band; the address and phone are in the footer.
+ * This page is the one home of the capacities, the features, the amenities, the grounds, what the rental
+ * includes, and the visit request (redesign-v7.md, section 4). Rates, the address, and the phone and email
+ * live on Rates and in the footer.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/PageHero.astro';
-import AnchorBar from '../components/AnchorBar.astro';
+import PageIntro from '../components/PageIntro.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import VerticalTabs from '../components/VerticalTabs.astro';
-import Photo from '../components/Photo.astro';
-import Carousel from '../components/Carousel.astro';
-import PhotoCard from '../components/PhotoCard.astro';
+import Figure from '../components/Figure.astro';
 import FeatureStrip from '../components/FeatureStrip.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
 import Checklist from '../components/Checklist.astro';
 import Icon from '../components/Icon.astro';
-import CtaBand from '../components/CtaBand.astro';
-import { site, fullAddress } from '../data/site';
-import { photoByName, photosFor, type VenuePhoto } from '../data/photos';
-import { bookHref, pricingHref } from '../data/nav';
+import { site } from '../data/site';
+import { photoByName, type VenuePhoto } from '../data/photos';
+import { bookHref } from '../data/nav';
 import { breadcrumbs, abs } from '../lib/schema';
 import { href, withoutBase } from '../lib/paths';
 import type { IconName } from '../shared/icons';
@@ -44,42 +36,38 @@ const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
 
 const title = 'Event spaces in Suffolk, VA | The Venue @ NCC';
 const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See the spaces, amenities, and grounds.`;
-/** The page's place in the site, for structured data only: breadcrumbs are shown on event pages alone (redesign-spec.md). */
+/** The page's place in the site, for structured data only: breadcrumbs are shown on event pages alone. */
 const crumbs = [
   { name: 'Home', path: '/' },
   { name: 'The Space', path: '/the-space/' },
 ];
 
-/**
- * The hero: The Main Hall down its aisle, the one photo that reads at every frame the hero takes (the
- * chairs and the stage sit low, so the 4:5 file on phones and the wide desktop frame both keep them).
- * Two facts, not three: on a 390px phone the caption panel spans the width, and a third fact column wraps
- * the row and pushes the panel over the whole photo. The title already counts the spaces.
- */
-const heroPhoto = photoByName('main-hall') ?? photosFor('main')[0] ?? photosFor('hall')[0] ?? null;
+const introPhoto = photoByName('main-hall');
 
 interface Fact {
   label: string;
   value: string;
-  /** A base-relative path: the value is shown as a link to it. */
-  href?: string;
 }
 
-/** Rates are quoted personally, so the fact links to the inquiry page instead of naming an amount. */
-const ratesFact: Fact = { label: 'Rates', value: 'Ask about rates', href: pricingHref };
+interface Extra {
+  photo: VenuePhoto | null;
+  caption: string;
+}
 
-interface SpacePanel {
+interface SpaceSection {
   id: 'hall' | 'main-hall' | 'grove';
   name: string;
-  /** The panel's sub-head: what the space is for. */
   heading: string;
   lead: string;
   facts: Fact[];
   photo: VenuePhoto | null;
+  caption: string;
+  flip: boolean;
+  extras: Extra[];
 }
 
-/** The three spaces, each with its primary photo (brand.md, Real photos) and the facts the photos confirm. */
-const panels: SpacePanel[] = [
+/** The three spaces, each with its primary photo, the facts the photos confirm, and any further views. */
+const spaces: SpaceSection[] = [
   {
     id: 'hall',
     name: hall.name,
@@ -88,9 +76,14 @@ const panels: SpacePanel[] = [
     facts: [
       { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
       { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, a wall-mounted screen, and double doors' },
-      ratesFact,
     ],
     photo: photoByName('hall-windows'),
+    caption: 'The Hall, with its arched windows and fireplace wall',
+    flip: false,
+    extras: [
+      { photo: photoByName('hall-fireplace'), caption: 'The open floor and the fireplace wall' },
+      { photo: photoByName('hall-doors'), caption: 'The double doors and arched windows' },
+    ],
   },
   {
     id: 'main-hall',
@@ -100,9 +93,11 @@ const panels: SpacePanel[] = [
     facts: [
       { label: 'Capacity', value: `Up to ${mainHall.capacity} guests` },
       { label: 'Features', value: 'A raised stage with steps, rows of upholstered chairs, a vaulted ceiling with recessed lighting, and a wall-mounted screen' },
-      ratesFact,
     ],
     photo: photoByName('main-hall-stage'),
+    caption: 'The raised stage',
+    flip: true,
+    extras: [],
   },
   {
     id: 'grove',
@@ -112,19 +107,16 @@ const panels: SpacePanel[] = [
     facts: [
       { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
       { label: 'Features', value: 'A timber gazebo with a metal roof, picnic tables on a patio, open lawn, and paths through the trees' },
-      ratesFact,
     ],
     photo: photoByName('grove-tables'),
+    caption: 'Picnic tables and the gazebo',
+    flip: false,
+    extras: [
+      { photo: photoByName('gazebo'), caption: 'The gazebo' },
+      { photo: photoByName('grove-path'), caption: 'The path to the gazebo' },
+    ],
   },
 ];
-
-const tabItems = panels.map((p) => ({ id: p.id, label: p.name }));
-
-/** The gallery: every remaining real photo of the spaces, each once, labelled with its caption and its space. */
-const SPACE_NAMES: Record<string, string> = { hall: hall.name, main: mainHall.name, grove: grove.name, grounds: 'The grounds' };
-const galleryPhotos = ['hall-fireplace', 'hall-doors', 'gazebo', 'grove-path', 'driveway']
-  .map((n) => photoByName(n))
-  .filter((p): p is VenuePhoto => p !== null);
 
 /** The owner's amenities (site.amenities), each with a line icon. */
 const AMENITY_ICONS: IconName[] = ['users', 'home', 'sparkles'];
@@ -132,18 +124,12 @@ const amenities = site.amenities.map((a, i) => ({ icon: AMENITY_ICONS[i % AMENIT
 
 const grounds = photoByName('approach-dusk');
 
-/** The anchor bar, in page order. The first three are the tab panels. */
-const anchors = [
-  ...tabItems,
-  { id: 'gallery', label: 'Gallery' },
-  { id: 'amenities', label: 'Amenities' },
-  { id: 'grounds', label: 'The grounds' },
-  { id: 'included', label: 'Included' },
-  { id: 'visit', label: 'Visit' },
-];
-
 // Structured data lists the photos on this page.
-const pagePhotos = [heroPhoto, ...panels.map((p) => p.photo), ...galleryPhotos, grounds].filter((p): p is VenuePhoto => p !== null);
+const pagePhotos = [
+  introPhoto,
+  ...spaces.flatMap((s) => [s.photo, ...s.extras.map((e) => e.photo)]),
+  grounds,
+].filter((p): p is VenuePhoto => p !== null);
 const fullImages = await Promise.all(
   pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
 );
@@ -163,85 +149,47 @@ const gallerySchema =
       ]
     : [];
 
-const PANEL_SIZES = '(min-width: 81.25rem) 840px, (min-width: 60rem) 62vw, 100vw';
-/* Carousel cards: one at 82 percent on phones, two across on tablets, three from 60rem (Carousel). */
-const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw';
+const SPLIT_SIZES = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw';
+const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw';
 ---
 <BaseLayout title={title} description={description} og="the-space" venueDetails schema={[breadcrumbs(crumbs), ...gallerySchema]}>
+  <PageIntro
+    id="space-title"
+    eyebrow="The Space"
+    title="Three spaces, indoors and out"
+    lead={`Well-maintained indoor and outdoor spaces surrounded by nature, with bright natural light and a dedicated stage area. Book one space, or ${hall.name} and ${grove.name} together.`}
+    links={spaces.map((s) => ({ label: s.name, href: `#${s.id}` }))}
+    linksLabel="The spaces"
+    photo={introPhoto}
+    caption="The Main Hall, down the aisle to the stage"
+  />
+
   {
-    heroPhoto ? (
-      <PageHero
-        photo={heroPhoto}
-        id="space-title"
-        eyebrow="The Space"
-        title="Three spaces, indoors and out"
-        descriptors={['Indoor', 'Outdoor', 'Renovated grounds']}
-        facts={[
-          { label: 'Location', value: `${site.address.city}, ${site.address.region}` },
-          { label: 'Capacity', value: `Up to ${site.maxCapacity} guests` },
-        ]}
-      />
-    ) : (
-      <section class="section" aria-labelledby="space-title">
+    spaces.map((s) => (
+      <section id={s.id} class="section sp-target" aria-labelledby={`${s.id}-heading`}>
         <div class="container">
-          <SectionHeading id="space-title" level="h1" eyebrow="The Space" heading="Three spaces, indoors and out" />
-        </div>
-      </section>
-    )
-  }
-
-  <AnchorBar items={anchors} />
-
-  <section class="section sp-intro" aria-label="About the property">
-    <div class="container">
-      <p class="t-copy sp-intro__copy">
-        Well-maintained indoor and outdoor spaces surrounded by nature, with bright natural light and a dedicated
-        stage area. Book one space, or {hall.name} and {grove.name} together.
-      </p>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="spaces-heading">
-    <div class="container">
-      <SectionHeading id="spaces-heading" eyebrow="The spaces" heading="Venue highlights" />
-      <VerticalTabs items={tabItems} label="The spaces">
-        {
-          panels.map((p) => (
-            <div slot={p.id} class="sp-panel">
-              {p.photo && <Photo photo={p.photo} tall sizes={PANEL_SIZES} caption={false} class="sp-panel__photo" />}
-              <div class="sp-panel__copy">
-                <p class="eyebrow">{p.name}</p>
-                <h3 class="sp-panel__title">{p.heading}</h3>
-                <p class="t-copy sp-panel__lead">{p.lead}</p>
-              </div>
+          {s.photo ? (
+            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} caption={s.caption} flip={s.flip} sizes={SPLIT_SIZES}>
               <dl class="sp-facts">
-                {p.facts.map((f) => (
+                {s.facts.map((f) => (
                   <div class="sp-fact">
                     <dt>{f.label}</dt>
-                    <dd>{f.href ? <a class="sp-fact__link" href={href(f.href)}>{f.value}</a> : f.value}</dd>
+                    <dd>{f.value}</dd>
                   </div>
                 ))}
               </dl>
+            </ImageTextSplit>
+          ) : (
+            <SectionHeading id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} />
+          )}
+          {s.extras.some((e) => e.photo) && (
+            <div class="sp-extras">
+              {s.extras.map((e) => e.photo && <Figure photo={e.photo} caption={e.caption} tall={false} sizes={EXTRA_SIZES} />)}
             </div>
-          ))
-        }
-      </VerticalTabs>
-    </div>
-  </section>
-
-  {
-    galleryPhotos.length > 0 && (
-      <section id="gallery" class="section sp-target" aria-labelledby="gallery-heading">
-        <div class="container">
-          <SectionHeading id="gallery-heading" eyebrow="Gallery" heading="Photo gallery" lead="More views of the spaces and the grounds. Open any photo to see it whole." />
-          <Carousel cols={3} label="Photo gallery">
-            {galleryPhotos.map((p) => (
-              <PhotoCard photo={p} label={p.caption ?? p.alt} meta={p.space ? SPACE_NAMES[p.space] : undefined} sizes={CARD_SIZES} />
-            ))}
-          </Carousel>
+          )}
         </div>
       </section>
-    )
+    ))
   }
 
   {
@@ -264,10 +212,10 @@ const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-widt
             id="grounds-heading"
             eyebrow="The grounds"
             heading="Renovated grounds and on-site parking"
-            lead={`On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot with landscaped islands, so guests park steps from the door.`}
+            lead="On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot with landscaped islands, so guests park steps from the door."
+            caption="The drive at dusk"
             flip
           >
-            <p class="sp-address t-copy">{fullAddress}</p>
             <Fragment slot="actions">
               <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
                 Get Directions<span class="visually-hidden">, opens in a new tab</span>
@@ -308,56 +256,20 @@ const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-widt
       </SectionHeading>
     </div>
   </section>
-
-  <CtaBand body="Choose a date and a space and send your request in about two minutes. We confirm availability and send your quote personally." />
 </BaseLayout>
 
 <style>
-  /* Anchors land under the sticky header and anchor bar. */
+  /* Links from the intro and from the home page land just under the header. */
   .sp-target {
-    scroll-margin-top: calc(var(--nav-h) + 4rem);
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
   }
 
-  /* The introduction: the reference's paragraph under the tab bar, in the serif, on one measure. */
-  .sp-intro {
-    padding-block: clamp(2.5rem, 2rem + 2vw, 4rem);
-  }
-
-  .sp-intro__copy {
-    max-width: 44rem;
-    font-size: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
-    line-height: 1.55;
-  }
-
-  /* Each space's panel: the photo, then the name, the sub-head and the lead, then the fact row. */
-  .sp-panel {
-    display: grid;
-    gap: 1.5rem;
-  }
-
-  .sp-panel__copy {
-    display: grid;
-    gap: 0.6rem;
-    max-width: 44rem;
-  }
-
-  .sp-panel__title {
-    font-family: var(--font-serif);
-    font-size: var(--t-title-2);
-    font-weight: 400;
-    line-height: 1.2;
-    letter-spacing: 0;
-  }
-
-  .sp-panel__lead {
-    color: var(--label-2);
-  }
-
-  /* The fact row: LABEL / value columns on a hairline, the hero's fact pattern in Plum. */
+  /* The fact row: LABEL / value pairs on a hairline under the lead. */
   .sp-facts {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1rem 2rem;
+    width: 100%;
     margin: 0.25rem 0 0;
     padding-top: 1.25rem;
     border-top: 1px solid var(--separator);
@@ -365,7 +277,7 @@ const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-widt
 
   @media (min-width: 36rem) {
     .sp-facts {
-      grid-template-columns: minmax(8rem, 1fr) minmax(0, 2.4fr) minmax(8rem, 1fr);
+      grid-template-columns: minmax(7rem, 1fr) minmax(0, 2.6fr);
     }
   }
 
@@ -391,18 +303,18 @@ const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-widt
     color: var(--label);
   }
 
-  /* A 44px target that keeps the row the height of its neighbours. */
-  .sp-fact__link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    min-height: 44px;
-    margin-block: -10px;
-    color: var(--accent-text);
+  /* Further views of a space: two figures in a row under its split, stacked on phones. */
+  .sp-extras {
+    display: grid;
+    gap: 2rem clamp(2rem, 5vw, 5rem);
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
   }
 
-  .sp-address {
-    color: var(--label-2);
+  @media (min-width: 46.5rem) {
+    .sp-extras {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 1.5rem;
+    }
   }
 
   /* What the rental includes: the heading beside one checklist panel. */

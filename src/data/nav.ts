@@ -1,7 +1,11 @@
-/** Top navigation (regular screens). Paths are base-relative; wrap with href() when rendering. */
+/**
+ * Navigation (docs/design/redesign-v7.md, section 3): one short list, the same everywhere. The Space comes
+ * ahead of Events because it is what the business rents. Paths are base-relative; wrap with href() when
+ * rendering.
+ */
 export const mainNav = [
-  { label: 'Events', href: '/events/' },
   { label: 'The Space', href: '/the-space/' },
+  { label: 'Events', href: '/events/' },
   { label: 'Rates', href: '/pricing/' },
   { label: 'FAQ', href: '/faq/' },
 ];

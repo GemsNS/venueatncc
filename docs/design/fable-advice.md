@@ -5,6 +5,15 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
 
 ## Decisions (resolved by the lead)
 
+- **Version 7, image first (October 1, 2026, binding; `redesign-v7.md`).** The client asked to "get rid of the concept of
+  cards covering image" and wants "the images fully shown", pink roses in the hero, and less redundancy with easier navigation.
+  Nothing sits on any photo: no caption panel, label strip, scrim, badge, or button. Photos are shown whole at their own ratio
+  with the text beside or below them. This withdraws points 3, 5, and 6 of "What makes Wedgewood feel like Wedgewood" below
+  (the caption panel over the hero, the label inside the photo, the sticky anchor bar and vertical tab list), the closing band
+  "on every page", the caption panels and card strips of the two bright retheme notes, and the hero guidance's "Blush glass
+  panel ... or a Plum bottom scrim". The rest of that list (one serif, the header, section headers, the footer statement, mobile
+  stacking) still applies.
+
 - **Video hero is approved.** brand.md v4 said "no footage, petals are the only motion graphic". That is superseded: the client asked for a
   royalty-free video hero. Amend brand.md's Motion section accordingly. Petals may remain as a subtle accent only if they do not compete.
 - **Mobile navigation follows the reference:** hamburger (menu button) on the left, centred logo, one right-side action (phone or Check
@@ -30,12 +39,15 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
 2. Header: links left, lockup centred, phone and a dark pill button right; transparent with light text over the hero, then dark text on a
    solid cream or blush bar (not glass) once the hero has scrolled away.
 3. Hero: full-viewport (100svh) fixed video; the page content slides up over it. A caption panel (rounded, translucent) sits bottom-left.
+   *Withdrawn by version 7: inner pages open with the text beside the photo (PageIntro); only the home welcome sits over the video.*
 4. Section header: h2 about 48px, light weight, left; a half-width lead beneath; a pill button plus a text link with chevron aligned right
    to the h2; a full-width hairline between sections; cream or off-white surfaces; generous padding (about 96px desktop).
 5. Cards: the label and capacity sit inside the photo over a bottom gradient scrim, 12px radius, arranged in horizontal carousels that bleed
    past the viewport edge. No white card body under the photo.
+   *Withdrawn by version 7: the label and meta sit under the photo on the page surface (FigureCard).*
 6. Venue page pattern (use for The Space): full-bleed hero with a caption box (name, three adjectives, LOCATION / TYPE / CAPACITY facts), a
    sticky in-page anchor bar, then a left vertical tab list (The Hall, The Main Hall, The Grove) with image and copy on the right.
+   *Withdrawn by version 7: no in-page bars; The Space is a page intro and three editorial splits.*
 7. Footer: a large centred serif statement, three link columns, a contact row, on a contrasting surface.
 8. Mobile: everything stacks in the same order, carousels stay horizontal and swipeable, buttons keep the pill shape, type stays large.
 
@@ -55,7 +67,8 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
   or landscape that could be mistaken for the property. Muted, playsinline, poster, WebM + MP4, still frame under reduced motion, license note
   in the repo.
 - Legibility: either a Blush glass panel (Blush at 0.85 opacity, Plum text) or a Plum bottom scrim with the white lockup. Check contrast
-  against the brightest frame of the video, not only the poster.
+  against the brightest frame of the video, not only the poster. *Version 7: a light veil (at most White 0.5) over pink roses and a
+  White halo on the name; see brand.md, "The hero loop, version 7".*
 - "Welcome to The Venue @ NCC" stays the H1 and the dominant element; "The Venue @ NCC" is by far the largest type.
 - Morph: tie progress to the hero leaving the viewport (0 to 100svh of scroll), not a fixed 420px, so the name lands in the header exactly as
   the header turns solid. Ease-out, transforms only, no layout shift. (Amended October 1, 2026, after the client called the

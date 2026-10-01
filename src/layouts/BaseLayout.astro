@@ -36,8 +36,6 @@ interface Props {
   venueDetails?: boolean;
   /** Hide the site chrome (used by the admin app). */
   bare?: boolean;
-  /** What sits under the transparent header at the top of the page: a light surface (default) or a photo hero. */
-  headerOver?: 'light' | 'photo';
   /**
    * Where the header's Check Availability goes, base-relative. An event page passes the booking page
    * with its event chosen, e.g. '/book/?event=weddings'. Defaults to '/book/'.
@@ -59,7 +57,6 @@ const {
   schema = [],
   venueDetails = false,
   bare = false,
-  headerOver = 'light',
   bookPath = bookHref,
   morphLogo = false,
 } = Astro.props;
@@ -138,7 +135,7 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
   </head>
   <body class:list={{ 'is-bare': bare }}>
     <a class="skip-link" href="#main">Skip to content</a>
-    {!bare && <Header ctaHref={bookPath} morph={morphLogo} over={headerOver} />}
+    {!bare && <Header ctaHref={bookPath} morph={morphLogo} />}
     <main id="main" tabindex="-1">
       <slot />
     </main>

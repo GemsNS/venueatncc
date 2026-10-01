@@ -1,17 +1,18 @@
 /*
   The Venue @ NCC design system. The layout system, section rhythm, and components follow
   docs/design/redesign-spec.md (version 5 with its version 6 colour note, modelled on the reference site's
-  patterns); the brand (color, type, imagery rules) follows docs/design/brand.md (version 6);
+  patterns) as amended by docs/design/redesign-v7.md (image first: nothing sits on a photo); the brand
+  (color, type, imagery rules) follows docs/design/brand.md (version 7);
   the interaction model follows Apple's Human Interface Guidelines (docs/design/hig-web-spec.md).
 
   Principles
     Name first, then photographs. The business name is the first screen's one dominant element, and the
               real photos of the property follow in a soft, light frame.
     Clarity   Legible type and plain words. Every screen has one obvious next step.
-    Deference Chrome stays quiet: a transparent bar over the hero, then a solid White bar. Caption panels
-              over photographs are frosted and see-through, so the photo shows.
+    Deference Chrome stays quiet: a transparent bar over the hero, then a solid White bar. Nothing sits
+              on a photograph: photos are shown whole, with their text beside or below them.
     Rhythm    One bright page surface (White), hairline rules between sections, generous vertical space, flat
-              cards with hairline edges, and photo-led cards labelled on a frosted White strip in Plum.
+              cards with hairline edges, and photo cards labelled under the photo in Plum.
 
   Color      Version 6: bright, white-first pastel pink, light only. White is the page, the bar, the cards
              and the panels; the footer is Blush; the pastel pinks are accents and quiet bands. Peony fills the buttons,
@@ -26,7 +27,7 @@
                            primary button (white text 5.9:1).
     Pink          #F48FB1  the accent of the white lockup artwork (kept; no page shows it since version 6).
     Rose Mist     #F9C6D7  decorative: hairlines, stronger tints (Plum text 9.5:1). Never Cerise text on it (3.9:1).
-    Petal         #FCE4EC  chips, capacity tags, selected rows, the closing band, quiet panels.
+    Petal         #FCE4EC  chips, capacity tags, selected rows, title bands, quiet panels.
     Blush         #FFF4F7  the footer, the faint alternate band.
     White         #FFFFFF  the page, the bar, cards, form panels.
     Never set Pink, Rose Mist, or Petal as text on a light surface, and never put white text on Pink or
@@ -36,8 +37,8 @@
     the bright site.
     --accent is a fill. Anything that is text, a link, or a selection border uses --accent-text, and
     focus rings use --focus-ring; both keep 3:1 or better against the page (WCAG 1.4.11).
-    No gradients as decoration. The only gradient is the home hero's veil; text over a photograph sits on
-    frosted White (the hero caption panels and the photo card strips), never on a dark scrim.
+    No gradients as decoration. The only gradient is the home hero's veil over the rose clip. No text,
+    panel, or scrim is ever placed over a photograph (redesign-v7.md).
 
   Type       Libre Caslon Display 400 for page titles (h1, h2, display and title styles), never bold,
              only at 28px and above where the size allows. Libre Caslon Text 400 and italic for the
@@ -73,7 +74,7 @@
   /* A grouped section where a page needs the change (the inquiry form, the wizard). */
   --bg-grouped: var(--blush);
   --bg-elevated: var(--white);
-  /* A quiet tinted panel: checklist boxes, the plain closing band. */
+  /* A quiet tinted panel: checklist boxes, the "Before you send" panel. */
   --panel: var(--petal);
   --fill: rgba(106, 75, 87, 0.11);
   --fill-2: rgba(106, 75, 87, 0.07);
@@ -110,23 +111,16 @@
   --accent-tint: rgba(214, 51, 108, 0.08);
   --accent-tint-2: rgba(214, 51, 108, 0.15);
 
-  /* The footer is a very pale pink with a hairline; the closing band is Petal. */
+  /* The footer is a very pale pink with a hairline; title bands are Petal. */
   --footer-bg: var(--blush);
   --band: var(--petal);
 
   /*
     The white lockup artwork's two colors (Logo tone="white"). Since version 6 no page sets text on a dark
-    surface: photo card labels and hero captions are Plum on frosted White, and the photo viewer is light.
+    surface, and since version 7 no text sits on a photo; the photo viewer is light.
   */
   --on-dark: var(--white);
   --on-dark-accent: var(--pink);
-
-  /*
-    Frosted caption panels over photographs (PageHero): White at --frost-alpha over the photo, blurred,
-    with a white hairline. The alpha is tuned per photo so every line keeps its contrast (PageHero).
-  */
-  --frost-blur: blur(10px) brightness(1.3) saturate(1.1);
-  --frost-border: rgba(255, 255, 255, 0.7);
 
   /* Status */
   --green: #1b6e30;
@@ -176,7 +170,7 @@
   /* Nav links, button labels, card meta: the serif at 16px (the reference's interface size). */
   --t-ui: 1rem;
 
-  /* Radii (concentric). --r-card is the photo and card radius (the reference's 12px); --r-lg panels; --r-xl hero caption panels. */
+  /* Radii (concentric). --r-card is the photo and card radius (the reference's 12px); --r-lg panels; --r-xl large panels. */
   --r-card: 12px;
   --r-xs: 8px;
   --r-sm: 10px;

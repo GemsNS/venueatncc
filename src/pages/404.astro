@@ -1,12 +1,12 @@
 ---
 /**
- * The 404 page (redesign-spec.md, "/404"; the reference's not-found page): a full-bleed photo hero with the
- * caption panel, then a short serif lead and a plain list of serif links (Home, Check Availability, Rates,
- * Events). The gazebo is the one photo, so nothing repeats. The page is noindex and carries no closing band:
- * the list already offers Check Availability, and the header does too.
+ * The 404 page (docs/design/redesign-v7.md, section 5, "/404"): the page intro with the text beside the
+ * gazebo, never over it: the eyebrow, the h1, the lead, a plain list of serif links (Home, Check
+ * Availability, The Space, Events, Rates), and the phone line. The gazebo is the one photo. The page is
+ * noindex and carries no structured data.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/PageHero.astro';
+import PageIntro from '../components/PageIntro.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
 import { photoByName } from '../data/photos';
@@ -17,8 +17,9 @@ const photo = photoByName('gazebo');
 const links = [
   { label: 'Home', href: '/' },
   { label: 'Check Availability', href: bookHref },
-  { label: 'Rates', href: pricingHref },
+  { label: 'The Space', href: '/the-space/' },
   { label: 'Events', href: '/events/' },
+  { label: 'Rates', href: pricingHref },
 ];
 ---
 <BaseLayout
@@ -26,59 +27,39 @@ const links = [
   description="This page does not exist. Find events, rates, and open dates at The Venue @ NCC, an event venue in Suffolk, Virginia."
   noindex
 >
-  {
-    photo ? (
-      <PageHero photo={photo} id="nf-title" eyebrow="Page not found" title="This page could not be found" />
-    ) : (
-      <section class="section">
-        <div class="container section-head">
-          <p class="eyebrow">Page not found</p>
-          <h1 id="nf-title">This page could not be found</h1>
-        </div>
-      </section>
-    )
-  }
-
-  <section class="section nf">
-    <div class="container nf__inner">
-      <p class="nf__lead t-serif-lead">The link may be out of date, or the address may have a typo. These pages can help.</p>
-      <ul class="nf__links" aria-label="Helpful pages">
-        {
-          links.map((l) => (
-            <li>
-              <a class="nf__link" href={href(l.href)}>
-                <span>{l.label}</span>
-                <Icon name="chevron-right" />
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="nf__phone t-copy secondary">
-        Or call us at <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>.
-      </p>
-    </div>
-  </section>
+  <PageIntro
+    id="nf-title"
+    eyebrow="Page not found"
+    title="This page could not be found"
+    lead="The link may be out of date, or the address may have a typo. These pages can help."
+    photo={photo}
+    caption="The gazebo in The Grove"
+  >
+    <ul class="nf__links" aria-label="Helpful pages">
+      {
+        links.map((l) => (
+          <li>
+            <a class="nf__link" href={href(l.href)}>
+              <span>{l.label}</span>
+              <Icon name="chevron-right" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="nf__phone t-copy">
+      Or call us at <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>.
+    </p>
+  </PageIntro>
 </BaseLayout>
 
 <style>
-  /* The container keeps its gutters; the copy and the list set their own measures inside it. */
-  .nf__inner {
-    display: grid;
-    gap: 1.25rem;
-    justify-items: start;
-  }
-
-  .nf__lead {
-    max-width: 34rem;
-  }
-
   /* The reference's plain list of serif links, each a full-height target. */
   .nf__links {
     display: grid;
     width: 100%;
-    max-width: 24rem;
-    margin: 0.75rem 0;
+    max-width: 28rem;
+    margin: 0.5rem 0;
     padding: 0;
     list-style: none;
   }
@@ -101,7 +82,7 @@ const links = [
     border-top: 1px solid var(--separator);
   }
 
-  .nf__link .icon {
+  .nf__link :global(.icon) {
     width: 1.1em;
     height: 1.1em;
     color: var(--accent-icon);
@@ -113,28 +94,17 @@ const links = [
     text-underline-offset: 0.2em;
   }
 
-  .nf__link:hover .icon {
+  .nf__link:hover :global(.icon) {
     transform: translateX(3px);
+  }
+
+  .nf__phone {
+    color: var(--label-2);
   }
 
   .nf__phone a {
     text-decoration: underline;
     text-underline-offset: 0.18em;
     text-decoration-thickness: 1px;
-  }
-
-  @media (min-width: 64rem) {
-    .nf__inner {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 2rem 4rem;
-      align-items: start;
-    }
-
-    .nf__links {
-      grid-row: 1 / 3;
-      grid-column: 2;
-      max-width: 28rem;
-      margin: 0;
-    }
   }
 </style>

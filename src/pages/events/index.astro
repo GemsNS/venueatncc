@@ -1,27 +1,27 @@
 ---
 /**
- * The events index (redesign-spec.md, "/events/"; the reference's venues index): a photo hero, then every
- * event as a photo card in a grid, then the closing band.
+ * The events index (docs/design/redesign-v7.md, section 5, "/events/"): the page intro (the text beside one
+ * photo), then every event as a figure card in a grid. Nothing sits on any photo: each card is the photo
+ * shown whole, with the event's name and a meta line under it.
  *
  * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
- * staged set is complete (eventsStaged) the hero is the styled indoor ceremony (a wedding scene that is not
- * any event's own tile, so all eight events can be cards without an image appearing twice on the page), with
- * its Styled Concept badge and the styled note as its descriptor line, and each card is its event's staged
- * photo with the badge. Without the staged set the hero shows the real photo the ceremony image is made from,
- * with no badge or note, and the events are a list of links: eight events cannot map to eight distinct real
- * photos.
+ * staged set is complete (eventsStaged) the intro shows the styled indoor ceremony (a wedding scene that is
+ * not any event's own card, so all eight events can be cards without an image appearing twice), its caption
+ * beginning with the disclosure, and each card shows its event's staged photo with a meta line that begins
+ * "Styled concept"; the section lead carries the full sentence once. Without the staged set the intro shows
+ * the real photo the ceremony image is made from, with its plain caption, and the events are a list of
+ * links: eight events cannot map to eight distinct real photos.
  *
  * The venue's facts (capacities, parking, rates) are left to The Space and Rates; each card's line is the
  * event's own one-line summary.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHero from '../../components/PageHero.astro';
+import PageIntro from '../../components/PageIntro.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
-import PhotoCard from '../../components/PhotoCard.astro';
-import CtaBand from '../../components/CtaBand.astro';
+import FigureCard from '../../components/FigureCard.astro';
 import Icon from '../../components/Icon.astro';
 import { events } from '../../data/events';
-import { EVENTS_STYLED_NOTE, eventPhoto, eventsStaged, photoByName, realPhoto } from '../../data/photos';
+import { EVENTS_STYLED_NOTE, STAGED_SCENES, eventPhoto, eventsStaged, photoByName, realPhoto } from '../../data/photos';
 import { site } from '../../data/site';
 import { breadcrumbs, abs } from '../../lib/schema';
 import { href } from '../../lib/paths';
@@ -47,28 +47,25 @@ const itemList = {
   })),
 };
 
-/** The hero: the styled indoor ceremony while the set is staged, otherwise the real room it is made from. */
+/** The intro photo: the styled indoor ceremony while the set is staged, otherwise the real room it is made from. */
 const HERO_NAME = 'styled-wedding-indoor-ceremony';
 const styledHero = photoByName(HERO_NAME);
-const heroPhoto = eventsStaged ? styledHero : (realPhoto(styledHero) ?? eventPhoto(events[0].slug));
+const introPhoto = eventsStaged ? styledHero : (realPhoto(styledHero) ?? eventPhoto(events[0].slug));
+const introCaption = introPhoto?.styledOf ? (STAGED_SCENES[introPhoto.name] ?? false) : true;
 
 /** The cards: every event with its staged photo; without the staged set, links only. */
 const cards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
-const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== undefined && c.photo.name !== heroPhoto?.name);
+const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== undefined && c.photo.name !== introPhoto?.name);
 ---
 <BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[breadcrumbs(crumbs), itemList]}>
-  {
-    heroPhoto && (
-      <PageHero
-        photo={heroPhoto}
-        id="events-title"
-        eyebrow="Events"
-        title="Weddings, celebrations, and gatherings in Suffolk"
-        descriptors={eventsStaged ? [EVENTS_STYLED_NOTE] : []}
-        phone={heroPhoto.tall ? 'overlay' : 'stack'}
-      />
-    )
-  }
+  <PageIntro
+    id="events-title"
+    eyebrow="Events"
+    title="Weddings, celebrations, and gatherings in Suffolk"
+    lead="Each occasion has its own planning guide, the space that suits it, and a practical checklist. For another kind of event, describe it in your request and we will confirm which space suits it."
+    photo={introPhoto}
+    caption={introCaption}
+  />
 
   <section class="section" aria-labelledby="occasions-heading">
     <div class="container">
@@ -76,7 +73,7 @@ const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== unde
         id="occasions-heading"
         eyebrow="Occasions"
         heading="Every occasion we host"
-        lead="Each one has its own planning guide, the space that suits it, and a practical checklist."
+        lead={withPhotos ? EVENTS_STYLED_NOTE : undefined}
       />
       {
         withPhotos ? (
@@ -85,12 +82,13 @@ const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== unde
               (c) =>
                 c.photo && (
                   <li>
-                    <PhotoCard
+                    <FigureCard
                       photo={c.photo}
                       label={c.event.name}
-                      meta={c.event.summary}
+                      meta={`Styled concept · ${c.event.summary}`}
                       href={`/events/${c.event.slug}/`}
-                      sizes="(min-width: 75rem) 410px, (min-width: 56rem) 31vw, (min-width: 36rem) 46vw, 100vw"
+                      tall={false}
+                      sizes="(min-width: 81.25rem) 300px, (min-width: 75rem) 23vw, (min-width: 56rem) 31vw, (min-width: 36rem) 46vw, 100vw"
                     />
                   </li>
                 ),
@@ -110,20 +108,14 @@ const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== unde
       }
     </div>
   </section>
-
-  <CtaBand heading="Planning something else?" body="Describe it in your request, and we will confirm which space suits it." />
 </BaseLayout>
 
 <style>
-  /*
-    The reference's venues grid: one card across on phones, two from 36rem, three from 56rem. Three is the
-    most that keeps a card about 400px wide at 1440, so a two-line name and its summary sit low in the frame
-    instead of covering the photo.
-  */
+  /* One card across on phones, two from 36rem, three from 56rem, four from 75rem. */
   .ev-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
+    gap: 2.5rem 1.5rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -136,13 +128,18 @@ const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== unde
   @media (min-width: 36rem) {
     .ev-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.5rem;
     }
   }
 
   @media (min-width: 56rem) {
     .ev-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .ev-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 

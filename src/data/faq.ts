@@ -9,19 +9,21 @@
  * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
  * The venue does not publish prices: no answer names an amount, a percentage, a deposit figure, or a
- * discount. The rates answer uses the owner's approved wording with the phone number, and it is the one
- * answer that carries the number (the visit answer says "call us"; the footer has the number too).
+ * discount. The rates answer points to Rates, which carries the owner's approved wording (RATES_WORDING,
+ * also used by llms.txt) and the Call button.
  *
- * Each answer says a fact once. Parking and the tables and chairs live in "What is included in the rental?". How booking works is
- * said by the closing band on each page, so the availability answer only points to the calendar. The two
- * rental policies each have one answer here (the deposit, the building hours) and are otherwise stated
- * only on /pricing/ (Rates).
+ * The FAQ rule (docs/design/redesign-v7.md, section 4): an answer whose fact has a home elsewhere on the
+ * site is one sentence, and `more` links to that home (capacities and inclusions on The Space, rates, the
+ * deposit and the hours on Rates). Only questions with no other home carry a full answer. The answer here
+ * is the short one, so the FAQ page, the FAQPage structured data, and llms.txt all say the same thing.
  */
 import { site, fullAddress } from './site';
 
 export interface Faq {
   q: string;
   a: string | null;
+  /** A link to the fact's home, shown after the answer on the FAQ page. Base-relative path. */
+  more?: { label: string; href: string };
   /** Groups questions on the FAQ page. */
   topic: 'booking' | 'space' | 'pricing' | 'about';
 }
@@ -39,6 +41,7 @@ export const faqs: Faq[] = [
     topic: 'booking',
     q: 'How do I check if my date is available?',
     a: `Use the availability calendar on our booking page to see open dates for ${hall?.name}, ${mainHall?.name}, and ${grove?.name}.`,
+    more: { label: 'Check availability', href: '/book/' },
   },
   {
     topic: 'booking',
@@ -48,17 +51,20 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'Can I see the venue before I book?',
-    a: 'Yes. We would be glad to give you a personal tour. Ask for a visit when you send your request, or call us, and we will arrange a time to walk through the space with you.',
+    a: 'Yes. Ask for a personal tour when you send your request, or call us, and we will arrange a time to walk through the space with you.',
+    more: { label: 'Request a visit', href: '/book/?visit=1' },
   },
   {
     topic: 'booking',
     q: 'What days and hours can I book?',
-    a: `Building access for events is ${site.access.days}, ${site.access.hours}, so your event, with setup and cleanup, ends by midnight. We are closed on Sundays.`,
+    a: `Events can be booked ${site.access.days}, ${site.access.hours}, with setup and cleanup included in that time.`,
+    more: { label: 'Rental policies on Rates', href: '/pricing/' },
   },
   {
     topic: 'space',
     q: 'How many guests can the venue hold?',
-    a: `Indoors, ${hall?.name} and ${mainHall?.name} each hold up to ${hall?.capacity} guests. Outdoors, ${grove?.name} holds up to ${grove?.capacity} guests.`,
+    a: `${hall?.name} and ${mainHall?.name} each hold up to ${hall?.capacity} guests, and ${grove?.name} holds up to ${grove?.capacity}.`,
+    more: { label: 'See The Space', href: '/the-space/' },
   },
   {
     topic: 'space',
@@ -78,17 +84,20 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How much does it cost to rent the venue?',
-    a: RATES_WORDING,
+    a: 'We quote each event personally. See Rates to call us or send an inquiry.',
+    more: { label: 'Rates and inquiries', href: '/pricing/' },
   },
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
-    a: `${site.depositPolicy} We confirm availability and send your quote personally, with the payment terms for your date.`,
+    a: site.depositPolicy,
+    more: { label: 'Rental policies on Rates', href: '/pricing/' },
   },
   {
     topic: 'pricing',
     q: 'What is included in the rental?',
-    a: 'Every rental includes the space you book, tables and chairs, which you may use if you wish, and on-site parking.',
+    a: 'Every rental includes the space you book, tables and chairs, and on-site parking.',
+    more: { label: 'What the rental includes', href: '/the-space/#included' },
   },
   {
     topic: 'about',
@@ -99,6 +108,7 @@ export const faqs: Faq[] = [
     topic: 'about',
     q: 'What kinds of events can I host?',
     a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, conferences, meetings and workshops, graduations and reunions, and community events. For another kind of event, describe it in your request, and we will confirm which space suits it.',
+    more: { label: 'See all events', href: '/events/' },
   },
   // To answer, then publish:
   { topic: 'space', q: 'Can I decorate, and when can I start setting up?', a: null },

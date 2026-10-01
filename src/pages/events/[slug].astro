@@ -1,43 +1,33 @@
 ---
 /**
- * An event landing page (redesign-spec.md, "/events/[slug]/"; the reference's venue page): the photo hero
- * with a caption panel (the styled caption inside it; on phones the 3:2 staged photo is shown whole with the
- * caption beneath, PageHero's stack mode), breadcrumbs under it, a sticky anchor bar, About (the intro
- * beside a second photo), the planning guide in two columns, the checklist beside its heading and the
- * shared-information line, the questions, three other events as photo cards, and the closing band. Copy
- * lives in src/data/events.ts.
+ * An event landing page (docs/design/redesign-v7.md, section 5, "/events/[slug]/"): the page intro (the
+ * breadcrumbs, the h1, the intro, and the event's spaces as links to their sections on The Space, beside
+ * the event's photo), the first planning section beside a second view of the space, the rest of the
+ * planning guide, the checklist, the questions, and three other events as text links. Nothing sits on any
+ * photo, and there is no in-page sticky bar. Copy lives in src/data/events.ts.
  *
- * Photos follow one rule (docs/design/brand.md, "Photography"). The hero is eventPhoto(slug): while the
- * staged set is complete (eventsStaged) it is the event's staged photo, with its Styled Concept badge and
- * the caption "Styled concept. Décor is not included." in the hero's panel; otherwise it is the event's real
- * photo, with no badge and no caption. About shows one second view: on the weddings page the styled indoor
- * ceremony (the spec's one extra staged photo, with its own styled caption); on every other page the real
- * photograph of the event's first space, in a view the staged hero is not made from (ABOUT_PHOTOS below,
- * checked against brand.md's photo table: hall-fireplace is the same view as hall-windows, so the two are
- * never paired), captioned "<space>, as photographed". The related cards show other events' staged photos.
- * No image appears twice on a page; without the staged set the related events are cards only when their
- * real photos would all differ, otherwise links.
+ * Photos follow one rule (docs/design/brand.md, "Photography"). The intro photo is eventPhoto(slug): while
+ * the staged set is complete (eventsStaged) it is the event's staged photo, its caption beginning "Styled
+ * concept. Décor is not included."; otherwise it is the event's real photo. The second view: on the
+ * weddings page the styled indoor ceremony (with its own disclosure); on every other page the real
+ * photograph of the event's first space, in a view the staged photo is not made from (ABOUT_PHOTOS below),
+ * captioned "<space>, as photographed". No image appears twice on a page.
  *
- * Facts that are the same for every event (rates, deposits, payments, parking, visits) live on /pricing/
- * (rates by inquiry, since the venue does not publish prices) and /faq/. This page links to them in one
- * line beside the checklist instead of repeating them.
+ * Facts that are the same for every event (rates, deposits, parking, visits) have their homes on Rates,
+ * The Space, and the FAQ (redesign-v7.md, section 4); this page links to them (Request a Visit, Ask about
+ * rates) beside the checklist instead of repeating them.
  */
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHero from '../../components/PageHero.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import AnchorBar from '../../components/AnchorBar.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import ImageTextSplit from '../../components/ImageTextSplit.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import Checklist from '../../components/Checklist.astro';
 import FaqAccordion from '../../components/FaqAccordion.astro';
-import Carousel from '../../components/Carousel.astro';
-import PhotoCard from '../../components/PhotoCard.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import Icon from '../../components/Icon.astro';
-import Photo from '../../components/Photo.astro';
 import { events, type EventType } from '../../data/events';
-import { site } from '../../data/site';
-import { eventPhoto, eventsStaged, photoByName, STYLED_CAPTION, type VenuePhoto } from '../../data/photos';
+import { site, type SpaceId } from '../../data/site';
+import { eventPhoto, eventsStaged, photoByName, STAGED_SCENES, type VenuePhoto } from '../../data/photos';
 import { bookHref, pricingHref } from '../../data/nav';
 import { breadcrumbs, eventService, faqPage } from '../../lib/schema';
 import { href } from '../../lib/paths';
@@ -65,17 +55,19 @@ const PHONE = site.contact.phone;
 const tel = `tel:${site.contact.phoneE164}`;
 const splitPhone = (text: string) => text.split(PHONE);
 
-/* The hero's caption: the spaces the event uses as descriptors, the first (most suitable) space's capacity, the lead time. */
-const spaces = event.spaces.map((id) => site.spaces.find((s) => s.id === id)).filter((s) => s !== undefined);
-const capacity = spaces[0]?.capacity;
-const facts = [
-  ...(capacity ? [{ label: 'Capacity', value: `Up to ${capacity} guests` }] : []),
-  { label: 'Booking lead time', value: event.leadTime },
-];
+/* The event's spaces, the most suitable first, each linking to its section on The Space. */
+const SPACE_ANCHORS: Record<SpaceId, string> = { indoor: 'hall', main: 'main-hall', outdoor: 'grove' };
+const spaceLinks = event.spaces
+  .map((id) => site.spaces.find((s) => s.id === id))
+  .filter((s) => s !== undefined)
+  .map((s) => ({ label: s.name, href: `/the-space/#${SPACE_ANCHORS[s.id]}` }));
+
+/* The intro photo's caption: a staged photo gets the disclosure first (Figure.astro). */
+const introCaption = photo?.styledOf ? (STAGED_SCENES[photo.name] ?? false) : true;
 
 /*
- * About's second view. Weddings: the styled indoor ceremony. Others: the real photo of the event's first
- * space in a view the hero's staged photo is not made from (its styledOf), so the two views differ.
+ * The second view. Weddings: the styled indoor ceremony. Others: the real photo of the event's first
+ * space in a view the intro's staged photo is not made from (its styledOf), so the two views differ.
  */
 const ABOUT_PHOTOS: Record<string, string> = {
   weddings: 'styled-wedding-indoor-ceremony',
@@ -88,18 +80,28 @@ const ABOUT_PHOTOS: Record<string, string> = {
   'community-events': 'main-hall',
 };
 const aboutCandidate = ABOUT_PHOTOS[event.slug] ? photoByName(ABOUT_PHOTOS[event.slug]) : null;
-// Never the hero itself, and never the real photo the hero is made from or shows.
+// Never the intro photo itself, and never the real photo the intro photo is made from.
 const heroBase = photo?.styledOf ? photo.styledOf.replace(/\.[a-z0-9]+$/i, '') : photo?.name;
 const aboutPhoto: VenuePhoto | null =
   aboutCandidate && aboutCandidate.name !== photo?.name && aboutCandidate.name !== heroBase && (eventsStaged || !aboutCandidate.styledOf)
     ? aboutCandidate
     : null;
-const aboutSpace = aboutPhoto ? site.spaces.find((s) => (s.id === 'indoor' && aboutPhoto.space === 'hall') || (s.id === 'main' && aboutPhoto.space === 'main') || (s.id === 'outdoor' && aboutPhoto.space === 'grove')) : undefined;
+const aboutSpace = aboutPhoto
+  ? site.spaces.find((s) => (s.id === 'indoor' && aboutPhoto.space === 'hall') || (s.id === 'main' && aboutPhoto.space === 'main') || (s.id === 'outdoor' && aboutPhoto.space === 'grove'))
+  : undefined;
 const aboutCaption = aboutPhoto?.styledOf
-  ? `A ceremony indoors in ${site.spaces.find((s) => s.id === 'main')?.name ?? 'The Main Hall'}. ${STYLED_CAPTION}`
+  ? (STAGED_SCENES[aboutPhoto.name] ?? false)
   : aboutSpace
     ? `${aboutSpace.name}, as photographed`
-    : aboutPhoto?.caption;
+    : true;
+
+/*
+ * The first planning section describes the spaces, so it sits beside the second view; the guide holds the
+ * rest. Without a second view every section is in the guide.
+ */
+const [firstSection, ...otherSections] = event.sections;
+const aboutSection = aboutPhoto ? firstSection : undefined;
+const guideSections = aboutPhoto ? otherSections : event.sections;
 
 // Three related events: the event's own related list first, then the other events in list order.
 const RELATED_COUNT = 3;
@@ -107,19 +109,6 @@ const related = [...new Set([...event.related, ...events.map((e) => e.slug)])]
   .map((slug) => events.find((e) => e.slug === slug))
   .filter((e): e is EventType => e !== undefined && e.slug !== event.slug)
   .slice(0, RELATED_COUNT);
-const pagePhotos = new Set([photo?.name, aboutPhoto?.name, heroBase].filter((n): n is string => Boolean(n)));
-const relatedCards = related.map((e) => ({ event: e, photo: eventPhoto(e.slug) }));
-const relatedWithPhotos =
-  relatedCards.every((c) => c.photo !== null && !pagePhotos.has(c.photo.name)) &&
-  new Set(relatedCards.map((c) => c.photo?.name)).size === relatedCards.length;
-
-const anchors = [
-  { id: 'about', label: 'About' },
-  { id: 'guide', label: 'Planning guide' },
-  { id: 'checklist', label: 'Checklist' },
-  ...(event.faqs.length > 0 ? [{ id: 'questions', label: 'Questions' }] : []),
-  ...(related.length > 0 ? [{ id: 'others', label: 'Other events' }] : []),
-];
 
 const schema = [
   breadcrumbs(crumbs),
@@ -128,70 +117,63 @@ const schema = [
 ];
 ---
 <BaseLayout title={event.metaTitle} description={event.metaDescription} og={event.slug} schema={schema} bookPath={eventBookPath}>
+  <PageIntro
+    id="event-title"
+    eyebrow="Events"
+    title={event.h1}
+    lead={event.intro[0]}
+    links={spaceLinks}
+    linksLabel="Spaces for this event"
+    photo={photo}
+    caption={introCaption}
+    breadcrumbs={crumbs}
+  >
+    {
+      event.intro.slice(1).map((p) => (
+        <p class="t-copy ev-intro__more">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
+      ))
+    }
+  </PageIntro>
+
   {
-    photo && (
-      <PageHero
-        photo={photo}
-        id="event-title"
-        eyebrow="Events"
-        title={event.h1}
-        descriptors={spaces.map((s) => s.name)}
-        facts={facts}
-        phone={photo.tall ? 'overlay' : 'stack'}
-      >
-        {eventsStaged && photo.styledOf && <p class="ev-hero__note">{STYLED_CAPTION}</p>}
-      </PageHero>
+    aboutPhoto && aboutSection && (
+      <section id="about" class="section ev-target" aria-labelledby="about-heading">
+        <div class="container">
+          <ImageTextSplit photo={aboutPhoto} id="about-heading" eyebrow="About this occasion" heading={aboutSection.heading} caption={aboutCaption} flip>
+            {aboutSection.body.map((p) => (
+              <p class="t-copy ev-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
+            ))}
+          </ImageTextSplit>
+        </div>
+      </section>
     )
   }
 
-  <div class="container ev-under">
-    <Breadcrumbs items={crumbs} />
-  </div>
-
-  <AnchorBar items={anchors} label="On this page" />
-
-  <section id="about" class="section ev-target" aria-labelledby="about-heading">
-    <div class:list={['container', 'ev-about', { 'ev-about--photo': aboutPhoto }]}>
-      <div class="ev-about__copy">
-        <h2 id="about-heading" class="eyebrow">About this occasion</h2>
-        {event.intro.map((p, i) => (i === 0 ? <p class="t-serif-lead">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p> : <p class="t-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>))}
-      </div>
-      {
-        aboutPhoto && (
-          <Photo photo={aboutPhoto} tall caption={aboutCaption} class="ev-about__photo" sizes="(min-width: 75rem) 640px, (min-width: 60rem) 50vw, 100vw" />
-        )
-      }
-    </div>
-  </section>
-
-  <section id="guide" class="section ev-target" aria-labelledby="guide-heading">
-    <div class="container">
-      <SectionHeading id="guide-heading" eyebrow="Step by step" heading="Planning guide" />
-      <div class="ev-guide">
-        {
-          event.sections.map((s) => (
-            <section class="ev-guide__item" aria-label={s.heading}>
-              <h3 class="t-title-2">{s.heading}</h3>
-              {s.body.map((p) => (
-                <p class="t-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
-              ))}
-            </section>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+  {
+    guideSections.length > 0 && (
+      <section id="guide" class="section ev-target" aria-labelledby="guide-heading">
+        <div class="container">
+          <SectionHeading id="guide-heading" eyebrow="Step by step" heading="Planning guide" />
+          <div class:list={['ev-guide', { 'ev-guide--one': guideSections.length === 1 }]}>
+            {guideSections.map((s) => (
+              <section class="ev-guide__item" aria-label={s.heading}>
+                <h3 class="t-title-2">{s.heading}</h3>
+                {s.body.map((p) => (
+                  <p class="t-copy ev-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
+                ))}
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <section id="checklist" class="section ev-target" aria-labelledby="checklist-heading">
     <div class="container ev-check">
       <div class="ev-check__copy">
-        <SectionHeading id="checklist-heading" eyebrow="Checklist" heading={event.checklist.heading}>
-          <p class="t-lead ev-check__shared">
-            Rates vary with the season, holidays, and the day of the week, so we quote each event personally. The{' '}
-            <a href={href('/faq/')}>FAQ</a> covers payments, parking, and visits.
-          </p>
-        </SectionHeading>
-        <div class="btn-row btn-row--stack ev-check__actions">
+        <SectionHeading id="checklist-heading" eyebrow="Checklist" heading={event.checklist.heading} />
+        <div class="btn-row ev-check__actions">
           <a class="btn btn--outline" href={visitLink}>Request a Visit</a>
           <a class="link-more" href={href(pricingHref)}>Ask about rates <Icon name="chevron-right" /></a>
         </div>
@@ -220,62 +202,31 @@ const schema = [
               <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
             </Fragment>
           </SectionHeading>
-          {relatedWithPhotos ? (
-            <Carousel cols={3} label="Other events we host">
-              {relatedCards.map(
-                (c) =>
-                  c.photo && (
-                    <PhotoCard photo={c.photo} label={c.event.name} meta={c.event.summary} href={`/events/${c.event.slug}/`} sizes="(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw" />
-                  ),
-              )}
-            </Carousel>
-          ) : (
-            <ul class="ev-links">
-              {related.map((e) => (
-                <li>
-                  <a class="link-more" href={href(`/events/${e.slug}/`)}>
-                    {e.name} <Icon name="chevron-right" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul class="ev-links">
+            {related.map((e) => (
+              <li>
+                <a class="ev-link" href={href(`/events/${e.slug}/`)}>
+                  <span class="ev-link__name">{e.name}</span>
+                  <Icon name="chevron-right" />
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     )
   }
-
-  <CtaBand body="Choose a date and a space and send your request in about two minutes. We confirm availability and send your quote personally." bookHref={eventBookPath} />
 </BaseLayout>
 
 <style>
-  /* ---------- Under the hero: the breadcrumbs ---------- */
-
-  .ev-under {
-    padding-block: 1rem;
-  }
-
-  /*
-    The styled caption inside the hero panel: Plum on the frosted panel, where Mauve would sink into a dark
-    photo; Mauve on the page where phones stack the caption under the photo.
-  */
-  .ev-hero__note {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.4;
-    color: var(--label);
-  }
-
-  @media (width < 46.5rem) {
-    :global(.phero[data-phone='stack']) .ev-hero__note {
-      color: var(--label-2);
-    }
-  }
-
-  /* An anchor lands below the header and the sticky anchor bar. */
+  /* An anchor lands just under the header. */
   .ev-target {
-    scroll-margin-top: calc(var(--nav-h) + 4rem);
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+
+  .ev-intro__more,
+  .ev-copy {
+    color: var(--label);
   }
 
   /* Tap-to-call numbers in the copy stay on one line and are underlined like other inline links. */
@@ -284,34 +235,6 @@ const schema = [
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 0.18em;
-  }
-
-  /* ---------- About: the intro beside the second view ---------- */
-
-  .ev-about {
-    display: grid;
-    gap: 2rem clamp(2rem, 5vw, 5rem);
-    align-items: center;
-  }
-
-  .ev-about__copy {
-    display: grid;
-    gap: 1.25rem;
-    max-width: 38rem;
-  }
-
-  .ev-about__copy .t-copy {
-    color: var(--label);
-  }
-
-  .ev-about :global(.ev-about__photo .photo__frame) {
-    border-radius: var(--r-card);
-  }
-
-  @media (min-width: 60rem) {
-    .ev-about--photo {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
   }
 
   /* ---------- Planning guide: serif sub-heads over serif copy, two columns from 60rem ---------- */
@@ -324,6 +247,13 @@ const schema = [
   @media (min-width: 60rem) {
     .ev-guide {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* A single remaining section reads as one column on the page measure, not half an empty row. */
+  @media (min-width: 60rem) {
+    .ev-guide--one {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
@@ -344,11 +274,7 @@ const schema = [
     margin-top: 0;
   }
 
-  .ev-guide__item .t-copy {
-    color: var(--label);
-  }
-
-  /* ---------- Checklist: the heading and the shared line beside the panel ---------- */
+  /* ---------- Checklist: the heading and the two links beside the panel ---------- */
 
   .ev-check {
     display: grid;
@@ -369,10 +295,6 @@ const schema = [
 
   .ev-check__copy :global(.section-head) {
     margin-bottom: 0;
-  }
-
-  .ev-check__shared {
-    color: var(--label-2);
   }
 
   .ev-check__panel {
@@ -401,19 +323,52 @@ const schema = [
     }
   }
 
-  /* ---------- Related events as links (while the staged set is incomplete) ---------- */
+  /* ---------- Other events: three serif links on hairlines ---------- */
 
   .ev-links {
     display: grid;
-    gap: 0.25rem 2rem;
     margin: 0;
     padding: 0;
     list-style: none;
+    border-top: 1px solid var(--separator);
   }
 
-  @media (min-width: 36rem) {
+  @media (min-width: 60rem) {
     .ev-links {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 2rem;
     }
+  }
+
+  .ev-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--separator);
+    color: var(--label);
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    text-decoration: none;
+  }
+
+  .ev-link :global(.icon) {
+    flex: none;
+    width: 1.1em;
+    height: 1.1em;
+    color: var(--accent-icon);
+    transition: transform var(--dur-2) var(--ease-spring);
+  }
+
+  .ev-link:hover .ev-link__name {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  .ev-link:hover :global(.icon) {
+    transform: translateX(3px);
   }
 </style>

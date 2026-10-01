@@ -6,7 +6,7 @@
  *   still life of roses (share-rose-bouquet.jpg) that shows no part of the property.
  *   Staged photographs show events. Every event tile and event page hero uses a staged image of that event,
  *   all eight in one décor style, or none of them do (eventsStaged, below). While any staged image is
- *   missing, each event page hero shows the real photo its staged image is made from, with no badge or
+ *   missing, each event page shows the real photo its staged image is made from, with no disclosure or
  *   caption, and the events pages list the events as links instead of cards: eight events cannot map to eight different
  *   real photos, and no image may appear twice on a page. There are no toggles between the two.
  *
@@ -20,7 +20,7 @@
  *   styled-event-<slug>.jpg      The staged photo of one event (virtual staging: furniture, linens, florals,
  *                                and lighting added; architecture, fixtures, and trees unchanged). Its
  *                                photoDetails entry names the real photo it was made from (styledOf) and the
- *                                event (event). Shown only through eventPhoto(), always with its badge.
+ *                                event (event). Shown only through eventPhoto(), always with the disclosure in its caption.
  *   share-<name>.jpg             A still life for a share card (src/pages/og/_cards.ts), not a photo of the
  *                                property. Never in `photos`, a gallery, or structured data.
  *
@@ -73,6 +73,22 @@ export const EVENTS_STYLED_NOTE = 'Event photos show our spaces styled for each 
 /** The caption under a staged event page hero. Every staged photo carries it. */
 export const STYLED_CAPTION = 'Styled concept. Décor is not included.';
 const STYLED_ALT_PREFIX = 'Styled concept:';
+
+/**
+ * What each staged photo shows, in a few words, for the caption under it after the disclosure
+ * ("Styled concept. Décor is not included. A ceremony at the gazebo in The Grove."; redesign-v7.md, section 2).
+ */
+export const STAGED_SCENES: Record<string, string> = {
+  'styled-event-weddings': 'A ceremony at the gazebo in The Grove.',
+  'styled-event-receptions-banquets': 'The Hall set for a reception.',
+  'styled-event-baby-bridal-showers': 'The Hall set for a shower.',
+  'styled-event-birthday-parties': 'The Hall set for a milestone dinner.',
+  'styled-event-repasts-memorials': 'The Hall set for a repast.',
+  'styled-event-meetings-trainings': 'The Hall set for a workshop.',
+  'styled-event-graduations-reunions': 'The Grove set for a reunion.',
+  'styled-event-community-events': 'The Grove set for a community gathering.',
+  'styled-wedding-indoor-ceremony': 'A ceremony in The Main Hall.',
+};
 
 export const photoDetails: Record<string, PhotoDetail> = {
   // Shown on no page since the home share card became a still life of roses (brand.md, Real photos); kept
@@ -340,7 +356,7 @@ export function photoByName(name: string): VenuePhoto | null {
 
 /**
  * All or nothing: true only when every event type has its staged photo in src/assets/venue/. Then every
- * event tile and event page hero is staged, with its badge; otherwise event page heroes are real photos and
+ * event card and event page photo is staged, with its disclosure; otherwise event page heroes are real photos and
  * event tiles are text.
  */
 export const eventsStaged = eventTypes.every((e) => staged.some((p) => p.name === stagedName(e.slug)));

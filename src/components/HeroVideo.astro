@@ -1,8 +1,9 @@
 ---
 /**
  * The home page hero (redesign-spec.md, HeroVideo; brand.md, Motion): a full-viewport section over a fixed,
- * muted, looping clip of white rose petals on a pink ground (public/media/hero-petals.*, credited in
- * public/media/CREDITS.md), under a bright white veil that keeps the Plum name legible on every frame.
+ * muted, looping clip of pink roses on a bright white ground (public/media/hero-roses.*, credited in
+ * public/media/CREDITS.md; docs/design/redesign-v7.md, section 6), under a light white veil that keeps the
+ * Plum name legible on every frame while the roses stay clearly pink.
  * The page's content slides up over it, as on the reference. The poster is an image beneath the video, so
  * there is no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the
  * poster shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
@@ -22,8 +23,8 @@ const { labelledby, class: className } = Astro.props;
   get their own poster, the middle of the 4K first frame at 9:16 (1216 x 2160), which is the part the cover
   crop shows there, so a phone's still frame is drawn from a file as tall as its screen.
 */
-const poster = href('/media/hero-petals-poster.jpg');
-const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
+const poster = href('/media/hero-roses-poster.jpg');
+const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
 ---
 <section class:list={['hero', className]} data-hero aria-labelledby={labelledby}>
   <div class="hero__media" aria-hidden="true">
@@ -32,10 +33,9 @@ const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
       <img class="hero__poster" src={poster} alt="" width="2560" height="1440" decoding="async" fetchpriority="high" />
     </picture>
     <video class="hero__video" muted autoplay loop playsinline preload="auto" poster={poster} tabindex="-1" data-hero-video>
-      <source src={href('/media/hero-petals.webm')} type="video/webm" />
-      <source src={href('/media/hero-petals.mp4')} type="video/mp4" />
+      <source src={href('/media/hero-roses.webm')} type="video/webm" />
+      <source src={href('/media/hero-roses.mp4')} type="video/mp4" />
     </video>
-    <div class="hero__tint"></div>
     <div class="hero__overlay"></div>
   </div>
   <div class="hero__content container">
@@ -97,42 +97,23 @@ const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
   }
 
   /*
-    A bright white veil, strongest in the centre, so the first screen is the brightest surface on the site
-    with the petals' pink still showing at its edges (brand.md, version 6): mean luminance 0.90 or more at 390
-    and 1440. A brighter veil only raises the contrast of the Plum name, the Cerise "@ NCC", "Welcome to" and
-    the line over every frame of the clip (brand.md, "Header and the morph", gives the floors).
+    A light white veil, strongest behind the welcome, so the roses stay clearly pink and recognisable while
+    the Plum name, the Cerise "@ NCC", "Welcome to", and the line keep their contrast over every frame
+    (redesign-v7.md, section 6: the centre no stronger than White at 0.5, no colour blend layer, and the
+    first screen's mean lightness between 78 and 90; brand.md, "The hero loop", gives the measured values).
   */
   .hero__overlay {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 75% 60% at 50% 50%, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.22) 100%);
+      radial-gradient(ellipse 85% 50% at 50% 50%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5) 55%, rgba(255, 255, 255, 0.2) 100%);
   }
 
-  /*
-    Portrait screens (phones, tall tablets) crop the 16:9 clip to its middle, where the petals are white and
-    the pink ground at the edges is cut away. A pastel Rose Mist wash gives those frames the blush the
-    landscape crop shows, and the white veil above it keeps the centre bright. The wash is a plain layer, not
-    a blend mode, so a playing video costs the phone's compositor no extra pass while the name flies.
-  */
-  .hero__tint {
-    display: none;
-  }
-
+  /* Portrait screens show the middle of the clip, one large rose: the veil is a taller band there. */
   @media (orientation: portrait) {
-    .hero__tint {
-      display: block;
-      position: absolute;
-      inset: 0;
-      background: #f48fb1;
-      /* Colour, not multiply: the white petals and their grey shadows take on pink at their own lightness. */
-      mix-blend-mode: color;
-      opacity: 0.55;
-    }
-
     .hero__overlay {
       background:
-        radial-gradient(ellipse 95% 40% at 50% 50%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3) 100%);
+        radial-gradient(ellipse 100% 45% at 50% 50%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0.32) 100%);
     }
   }
 

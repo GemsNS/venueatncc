@@ -1,26 +1,26 @@
 ---
 /**
- * Rates and inquiries (redesign-spec.md, "/pricing/ Rates"; the reference's contact and tour page).
+ * Rates and inquiries (docs/design/redesign-v7.md, section 5, "/pricing/ Rates").
  *
  * In order: a serif title band on Petal; the rates split (the approved wording beside a real photo of The
- * Hall, a Call button, and the contact person); the rental information and policies as three checklist
- * panels (what the rental includes, the deposit, the building hours); then the contact section, a portrait
- * photo beside the inquiry form, whose field groups sit in Petal panels. The form sends through the site's
- * own API (the same call and schema as the booking wizard), so every inquiry lands in the admin CRM.
+ * Hall, shown whole with its caption under it, a Call button, and the contact person); then the contact
+ * section, a portrait photo beside the inquiry form, with a small "Before you send" panel under the form
+ * (the deposit and the building hours, whose one home is this page) and a link to what the rental
+ * includes (its home is The Space). The form sends through the site's own API (the same call and schema as
+ * the booking wizard), so every inquiry lands in the admin CRM.
  *
  * The venue does not publish prices: no amounts, packages, fees, or estimates appear here, and no price
- * in structured data. The phone number appears once, on the Call button. This is the one page with the
- * rental policies; the FAQ answers each once, and The Space lists the inclusions beside the spaces.
+ * in structured data. The phone number appears once, on the Call button.
  * The URL stays /pricing/ so existing links keep working. Breadcrumbs are for event pages only.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
-import Checklist from '../components/Checklist.astro';
-import Photo from '../components/Photo.astro';
+import Figure from '../components/Figure.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import InquiryForm from '../components/booking/InquiryForm';
 import { site } from '../data/site';
+import { href } from '../lib/paths';
 import { photoByName, type VenuePhoto } from '../data/photos';
 
 const title = 'Rates and inquiries | The Venue @ NCC, Suffolk, VA';
@@ -39,12 +39,6 @@ const hallPhoto = photoByName('hall-fireplace');
  */
 const gazebo = photoByName('gazebo');
 const formPhoto: VenuePhoto | null = gazebo?.tall ? { ...gazebo, src: gazebo.tall, tall: undefined } : gazebo;
-
-const panels: { title: string; items: string[] }[] = [
-  { title: 'What the rental includes', items: [...site.included] },
-  { title: 'Holding your date', items: [site.depositPolicy] },
-  { title: 'Hours of operation', items: [site.access.days, site.access.hours] },
-];
 ---
 <BaseLayout title={title} description={description} og="pricing" pageType="ContactPage">
   <section class="band-section title-band" aria-labelledby="page-title">
@@ -58,7 +52,7 @@ const panels: { title: string; items: string[] }[] = [
     <div class="container">
       {
         hallPhoto ? (
-          <ImageTextSplit photo={hallPhoto} id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead}>
+          <ImageTextSplit photo={hallPhoto} id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead} caption="The Hall">
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -83,18 +77,9 @@ const panels: { title: string; items: string[] }[] = [
     </div>
   </section>
 
-  <section class="section" aria-labelledby="policies-heading">
-    <div class="container">
-      <SectionHeading id="policies-heading" eyebrow="Good to know" heading="Rental information and policies" />
-      <div class="panels">
-        {panels.map((p) => <Checklist title={p.title} items={p.items} />)}
-      </div>
-    </div>
-  </section>
-
   <section class="section" aria-labelledby="inquiry-heading">
     <div class="container contact">
-      {formPhoto && <Photo photo={formPhoto} ratio="4 / 5" sizes="(min-width: 75rem) 520px, (min-width: 60rem) 42vw, 100vw" class="contact__photo" />}
+      {formPhoto && <Figure photo={formPhoto} tall={false} caption="The gazebo in The Grove" sizes="(min-width: 75rem) 520px, (min-width: 60rem) 42vw, 100vw" class="contact__photo" />}
       <div class="contact__form">
         <SectionHeading
           id="inquiry-heading"
@@ -111,6 +96,14 @@ const panels: { title: string; items: string[] }[] = [
             </p>
           </div>
         </noscript>
+        <aside class="before" aria-labelledby="before-heading">
+          <h3 id="before-heading" class="before__title">Before you send</h3>
+          <ul class="before__list">
+            <li>{site.depositPolicy}</li>
+            <li>Building access for events is {site.access.days}, {site.access.hours}.</li>
+          </ul>
+          <a class="link-more" href={href('/the-space/#included')}>What the rental includes is listed on The Space <Icon name="chevron-right" /></a>
+        </aside>
       </div>
     </div>
   </section>
@@ -151,32 +144,36 @@ const panels: { title: string; items: string[] }[] = [
     color: var(--accent-text);
   }
 
-  /* ---------- Policies: three checklist panels in a row, stacked on phones ---------- */
+  /* ---------- Before you send: one small Petal panel under the form ---------- */
 
-  .panels {
+  .before {
     display: grid;
-    gap: var(--space-4, 1rem);
+    gap: 0.75rem;
+    justify-items: start;
+    margin-top: 2rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    border-radius: var(--r-card);
+    background: var(--panel);
   }
 
-  /* Two across on tablets; an odd last panel takes the full row rather than leaving a gap beside it. */
-  @media (min-width: 36rem) {
-    .panels {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .panels > :global(.checklist:last-child:nth-child(odd)) {
-      grid-column: 1 / -1;
-    }
+  .before__title {
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    font-weight: 400;
   }
 
-  @media (min-width: 56rem) {
-    .panels {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.5rem;
-    }
+  .before__list {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-left: 1.1rem;
+    font-family: var(--font-serif);
+    color: var(--label);
+  }
 
-    .panels > :global(.checklist:last-child:nth-child(odd)) {
-      grid-column: auto;
+  @media (forced-colors: active) {
+    .before {
+      border: 1px solid CanvasText;
     }
   }
 
@@ -186,10 +183,6 @@ const panels: { title: string; items: string[] }[] = [
     display: grid;
     gap: 2.5rem clamp(2rem, 5vw, 5rem);
     align-items: start;
-  }
-
-  .contact :global(.contact__photo .photo__frame) {
-    border-radius: var(--r-card);
   }
 
   .contact__form {
