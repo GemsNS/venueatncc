@@ -10,6 +10,11 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
 - **Mobile navigation follows the reference:** hamburger (menu button) on the left, centred logo, one right-side action (phone or Check
   Availability), opening a full-screen or sheet menu with large serif links. Remove the floating bottom tab bar entirely (it covers photos and
   copy on The Space and Rates). Keep 44px targets, focus trap and Escape to close in the menu, and a visible way to book on every page.
+- **Bright retheme (amended October 1, 2026, for the lead to confirm).** The client asked for the site to be "bright as can be, pink
+  pastels but with white being the main color", "less dark pink more bright", and for the cards over hero images to be transparent "so
+  they're not blocking the image". This supersedes three points below: the solid bar is White (not cream or blush); the footer is a very
+  pale Blush band under a hairline (not a contrasting dark surface); and hero caption panels are see-through frosted White at 0.45 to 0.6
+  with Plum text, tuned per photo to 4.5:1 (not Blush glass at 0.85). The site is light only. Details in brand.md, version 6.
 
 ## What makes Wedgewood feel like Wedgewood (must capture)
 
