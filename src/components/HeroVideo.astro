@@ -26,6 +26,7 @@ const poster = href('/media/hero-petals-poster.jpg');
       <source src={href('/media/hero-petals.webm')} type="video/webm" />
       <source src={href('/media/hero-petals.mp4')} type="video/mp4" />
     </video>
+    <div class="hero__tint"></div>
     <div class="hero__overlay"></div>
   </div>
   <div class="hero__content container">
@@ -104,6 +105,43 @@ const poster = href('/media/hero-petals-poster.jpg');
       background:
         radial-gradient(ellipse 80% 65% at 50% 50%, rgba(42, 21, 31, 0.8), rgba(42, 21, 31, 0.56) 70%, rgba(42, 21, 31, 0.45)),
         linear-gradient(rgba(42, 21, 31, 0.35), rgba(42, 21, 31, 0.35));
+    }
+  }
+
+  /*
+    Portrait screens (phones, tall tablets) crop the 16:9 clip to its middle, where the petals are white and
+    the pink ground at the edges is cut away. A Rose multiply layer gives those frames the same blush the
+    landscape crop shows, and the veil above it is lighter so the pink comes through.
+  */
+  .hero__tint {
+    display: none;
+  }
+
+  @media (orientation: portrait) {
+    .hero__tint {
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: #f4b6c8;
+      mix-blend-mode: multiply;
+      opacity: 0.6;
+    }
+
+    .hero__overlay {
+      background:
+        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(251, 241, 243, 0.55), rgba(251, 241, 243, 0) 80%),
+        linear-gradient(rgba(252, 226, 234, 0.6), rgba(252, 226, 234, 0.6));
+    }
+  }
+
+  @media (orientation: portrait) and (prefers-color-scheme: dark) {
+    .hero__tint {
+      opacity: 0.35;
+    }
+
+    .hero__overlay {
+      background:
+        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(42, 21, 31, 0.72), rgba(42, 21, 31, 0.5) 75%, rgba(42, 21, 31, 0.4));
     }
   }
 
