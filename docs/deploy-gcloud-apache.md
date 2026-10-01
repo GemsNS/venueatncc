@@ -43,7 +43,7 @@ Contents:
 - [8. Apache vhost](#8-apache-vhost)
 - [9. TLS with certbot](#9-tls-with-certbot)
 - [10. First admin and smoke test](#10-first-admin-and-smoke-test)
-- [11. Email: the owner's decision](#11-email-the-owners-decision)
+- [11. Email](#11-email)
 - [12. Backups](#12-backups)
 - [13. Post-install verification checklist](#13-post-install-verification-checklist)
 - [14. Updating later, and rollback](#14-updating-later-and-rollback)
@@ -80,14 +80,22 @@ Contents:
 
 ### Changes that touch shared state
 
+**Decided on 2026-09-30** (part of this deploy; grokbot runs them as written and reports each one to
+Joel when done):
+
+| # | Change | Why it is shared | Section |
+| --- | --- | --- | --- |
+| J1 | Nightly database backups: two lines added to `mvandykeanthony`'s crontab (nightly backup, weekly log rotation). Backups are kept **on the server**, in `/var/www/venueatncc.org/data/backups/`. | It is the shared owner account's crontab, which may hold other sites' jobs. The change is additive and the existing crontab is saved first. | [12.2](#122-the-crontab-entries-shared-j1) |
+| J2 | `pm2 startup systemd` for `mvandykeanthony`, so pm2 starts when the server reboots | Creates a system service that brings back **all** pm2 apps at boot (the two existing sites as well as this one). | [7.5](#75-start-on-reboot-shared-j2) |
+| | The TLS certificate for `venueatncc.org` and `www.venueatncc.org` | It does not exist yet; issuing it with certbot is part of grokbot's job. | [9](#9-tls-with-certbot) |
+
+The site is permanent: there is no site-removal procedure, and the new certificate is never deleted.
+
 **Need Joel's explicit OK before running** (ask, quote the reason, wait for a yes):
 
 | # | Change | Why it is shared | When it is needed |
 | --- | --- | --- | --- |
-| J1 | Adding two lines to `mvandykeanthony`'s crontab (nightly database backup, weekly log rotation), [section 12](#12-backups) | It is the shared owner account's crontab, which may hold other sites' jobs. The change is additive and the existing crontab is saved first. | Every deploy (backups protect guest inquiries). |
-| J2 | `pm2 startup systemd` for `mvandykeanthony`, [section 7.5](#75-reboots-the-known-gap-and-the-optional-fix) | Creates a system service that brings back **all** pm2 apps at boot, not only this one. | Optional, but without it no site comes back after a reboot until someone runs `pm2 resurrect`. |
 | J3 | Any `apt install` (for example `build-essential` and a newer Python to compile better-sqlite3), [section 5.4](#54-the-native-add-on-better-sqlite3) | System packages on an EOL OS that every site depends on. | **Not needed** when the off-server better-sqlite3 build ("Required before the deploy" below) is done. Only if that build cannot be made anywhere. |
-| J4 | Deleting the new certificate (`certbot delete --cert-name venueatncc.org`) during a full rollback | certbot's state is shared with the other three certificates. | Only on a full removal of the site. |
 | J5 | `/etc/logrotate.d/` file, GCP firewall rules, installing a database server, enabling Apache modules, `ufw` | System-wide. | **Not needed by this runbook.** Listed so grokbot knows not to do them. |
 
 **Pre-authorized by the server brief's procedure** (no separate OK needed, but announce each one to
@@ -106,8 +114,7 @@ Joel when done, and follow the steps exactly):
 | Build `better_sqlite3.node` for Node 24 on a glibc 2.28 system (Rocky 8 in Docker) and upload it | The official prebuilt that `npm ci` downloads needs `GLIBC_2.29` (libm `log`, `pow`, `log2`, `exp`), newer than the glibc 2.28 the patched Node runs on, so it cannot load here. Without the rebuilt file the app cannot open its database or start. | [5.4](#54-the-native-add-on-better-sqlite3) |
 | Pick the commit to deploy: one the lead has reviewed (`<APPROVED_COMMIT>`) | Project policy: nothing goes live until the lead has reviewed it. The runbook never deploys "whatever is on `main`". | [3](#3-getting-the-code-onto-the-server) |
 
-**Decisions for the venue owner** (not Joel's server, but blocking for email): the email option in
-[section 11](#11-email-the-owners-decision). The site can launch before that decision (option a).
+**Email** is set up as described in [section 11](#11-email).
 
 ---
 
@@ -545,13 +552,13 @@ so all paths below are absolute.
 | `DATABASE_PATH` | `./data/venue.db` (`config.ts:95`) | `/var/www/venueatncc.org/data/venue.db` | Its folder is created if missing (`db.ts:238`). WAL mode (`db.ts:240`). |
 | `SESSION_SECRET` | none; required in production, at least 32 characters (`config.ts:45,127`) | `openssl rand -hex 32` (64 characters) | Also salts the stored IP hashes used for rate limits (`app.ts:47`, `security.ts:163-166`). Changing it does not sign admins out (sessions are random tokens), but it resets the per-address booking limits. |
 | `FORM_TOKEN_SECRET` | none; required in production, at least 32 characters (`config.ts:128`) | `openssl rand -hex 32`, different from the session secret | Signs the booking form's anti-spam token (`security.ts:132-158`). |
-| `SMTP_HOST` | unset, which means the outbox (`config.ts:104-114`) | unset at launch (option a) | See [section 11](#11-email-the-owners-decision). |
+| `SMTP_HOST` | unset, which means the outbox (`config.ts:104-114`) | unset at launch (11.1); the relay host once 11.3 is done | See [section 11](#11-email). |
 | `SMTP_PORT` | `587` (`config.ts:109`) | `587` | Only used when `SMTP_HOST` is set. |
 | `SMTP_SECURE` | `false` (`config.ts:110`) | `false` for 587, `true` for 465 | |
 | `SMTP_USER` | unset | per provider | |
 | `SMTP_PASS` | empty when `SMTP_USER` is set (`config.ts:112`) | per provider | Not trimmed, so no trailing spaces. |
-| `MAIL_FROM` | `The Venue @ NCC <faith@venueatncc.org>` (`config.ts:133`) | leave unset (default) | Must be an address the SMTP account may send as. |
-| `NOTIFY_TO` | `faith@venueatncc.org` (`config.ts:134`) | `faith@venueatncc.org` while on the outbox; **a working mailbox** once SMTP sends | That address has no MX record yet, so real mail to it bounces. |
+| `MAIL_FROM` | `The Venue @ NCC <faith@venueatncc.org>` (`config.ts:133`) | leave unset (default) | The relay in 11.3 is verified for this address. Never a wearencc.org address. |
+| `NOTIFY_TO` | `faith@venueatncc.org` (`config.ts:134`) | `faith@venueatncc.org` | Also the Reply-To on guest confirmations (`routes/public.ts:135`), so it must never be a wearencc.org address. It receives mail once 11.2 is done. |
 | `OUTBOX_DIR` | `./data/outbox` (`config.ts:135`) | `/var/www/venueatncc.org/data/outbox` | Created as 700, files 600 (`mailer.ts:62-68`). |
 | `OUTBOX_RETENTION_DAYS` | unset or `0`: keep forever (`config.ts:136`) | unset | Set (for example `90`) only once SMTP is sending; checked hourly (`index.ts:68-90`). |
 | `ADMIN_EMAIL` | unset (`config.ts:116`) | unset (use the CLI, [section 10](#10-first-admin-and-smoke-test)) | With `ADMIN_PASSWORD`, creates the first admin at startup when none exists (`bootstrap.ts:19-38`). |
@@ -699,27 +706,50 @@ Never `pm2 restart all`, `pm2 delete all`, `pm2 kill`, `pm2 update`, or any comm
 processes. Restart this app only by name:
 `sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`.
 
-### 7.5 Reboots: the known gap and the optional fix
+### 7.5 Start on reboot [SHARED] (J2)
 
-pm2 boot startup is not configured on this server: after a reboot, **no** pm2 app (including the two
-existing sites) comes back until someone starts pm2 by hand.
+pm2 boot startup is not configured on this server yet: today, after a reboot, **no** pm2 app
+(including the two existing sites) comes back until someone starts pm2 by hand. This step fixes that
+for all three apps. It was decided on 2026-09-30; run it as part of the deploy, after 7.4.
 
-**Manual recovery after a reboot** [SHARED: brings back all saved pm2 apps, as the brief prescribes] (until J2 is approved):
+First confirm all three apps are online (the same check as 7.4), because the boot service brings back
+exactly the list that `pm2 save` stores:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan|venueatncc" | grep -cw online); echo "$n of 3 online"'
+# continue only if it prints: 3 of 3 online
+```
+
+Install the boot service (as the brief prescribes, with the v24 pm2 by absolute path), then save the
+list again with the gated command:
+
+```sh
+sudo env PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/pm2 startup systemd -u mvandykeanthony --hp /home/mvandykeanthony
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan|venueatncc" | grep -cw online); if [ "$n" -eq 3 ]; then pm2 save; else echo "STOP: $n of 3 apps online, pm2 save NOT run"; fi'
+```
+
+Verify, without rebooting:
+
+```sh
+systemctl is-enabled pm2-mvandykeanthony          # enabled
+systemctl cat pm2-mvandykeanthony | grep -E '^(User|ExecStart|PIDFile|Environment=PATH)'
+# User=mvandykeanthony, ExecStart=.../v24.16.0/lib/node_modules/pm2/bin/pm2 resurrect, PATH includes v24.16.0/bin
+sudo -H -u mvandykeanthony ls -l /home/mvandykeanthony/.pm2/dump.pm2  # just written by pm2 save
+ps -eo user:20,args | grep '[P]M2 v'                # still exactly one daemon, owned by mvandykeanthony
+```
+
+Do **not** reboot the server to test this; reboots of the shared server are Joel's call. After the
+next reboot, check `pm2 ls` shows all three apps online and run the baseline loop from section 1.
+
+If the boot service ever fails to bring the apps back, the manual recovery is:
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 resurrect; sleep 5; pm2 ls'
 curl -s http://127.0.0.1:3020/api/health; echo
 ```
 
-`pm2 resurrect` restores the list saved by the last `pm2 save`, which is why 7.4 matters.
-
-**Optional permanent fix: [SHARED, JOEL OK] (J2).** It affects all three apps. Only after Joel says yes:
-
-```sh
-sudo env PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/pm2 startup systemd -u mvandykeanthony --hp /home/mvandykeanthony
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan|venueatncc" | grep -cw online); if [ "$n" -eq 3 ]; then pm2 save; else echo "STOP: $n of 3 apps online, pm2 save NOT run"; fi'
-systemctl status pm2-mvandykeanthony --no-pager | head -5
-```
+Whenever the set of apps changes later, run the gated `pm2 save` from 7.4 again so the boot service
+restores the current list.
 
 ---
 
@@ -812,6 +842,9 @@ Until [section 9](#9-tls-with-certbot) is done, `https://venueatncc.org` reaches
 ## 9. TLS with certbot
 
 ### 9.1 Before running certbot
+
+The certificate for venueatncc.org does not exist yet; issuing it is part of this deploy, after the
+:80 vhost from section 8 serves the site over plain HTTP.
 
 Confirm which ACME server the existing setup uses. certbot 0.27 is old; its built-in default may
 still be the retired ACME v1 endpoint, so pass the v2 server explicitly:
@@ -1064,105 +1097,127 @@ request, then sign in at https://venueatncc.org/admin/ and find it.
 
 ---
 
-## 11. Email: the owner's decision
+## 11. Email
 
-Every booking request sends two emails: a notification to `NOTIFY_TO` (Reply-To set to the guest)
-and a confirmation to the guest. Requests are **always saved to the database first**; an email
-problem never loses one, and each send attempt is recorded on the request's timeline in the admin.
+Every booking request sends two emails (`server/routes/public.ts:105-136`):
 
-Today `venueatncc.org` has no MX records, so `faith@venueatncc.org` cannot
-receive mail. Outbound SMTP on ports 587 and 465 works from Google Cloud (only port 25 is blocked),
-so options b and c need no firewall change.
+- a **staff notification** to `NOTIFY_TO`, with Reply-To set to the guest;
+- a **guest confirmation** to the guest, From `MAIL_FROM`, with **Reply-To set to `NOTIFY_TO`**.
 
-All DNS for `venueatncc.org` is managed by the **venue owner** at GoDaddy (My Products,
-venueatncc.org, DNS). Keep exactly **one** SPF (`v=spf1 ...`) TXT record on `@`; merge includes into it.
+Requests are **always saved to the database first**; an email problem never loses one, and each send
+attempt is recorded on the request's timeline in the admin.
 
-### Option a: launch with SMTP unset (no decision or DNS needed; the default above)
+**The plan (decided 2026-09-30).** The owner's working mailbox is `faith@wearencc.org` on GoDaddy's
+Microsoft 365 (Outlook). The venue is a separate business, so guests must only ever see
+`faith@venueatncc.org`. Because `NOTIFY_TO` is also the guests' Reply-To, **never set `NOTIFY_TO`
+or `MAIL_FROM` to a wearencc.org address**, and never send through the wearencc.org mailbox's SMTP
+login (Microsoft rewrites the From to the mailbox's main address unless sending from aliases is
+enabled, and the message headers name that tenant either way). Instead:
+
+| Step | Who | Result |
+| --- | --- | --- |
+| 11.1 Launch with the outbox | grokbot, at deploy | Site live; staff see every inquiry in the admin; no email is sent yet. |
+| 11.2 Receive: `faith@venueatncc.org` as an alias of Faith's existing Outlook mailbox | Owner, in GoDaddy (plus DNS) | Mail to `faith@venueatncc.org` arrives in the Outlook inbox Faith already uses. |
+| 11.3 Send: a transactional relay for `venueatncc.org` | Owner signs up and adds DNS; grokbot edits `.env` | Notifications and confirmations go out From `faith@venueatncc.org`. |
+
+Turn on 11.3 only after 11.2 works, so guests' replies and staff notifications have somewhere to
+land. Outbound SMTP on port 587 works from Google Cloud (only port 25 is blocked), so nothing here
+needs a firewall change or touches the server's shared state.
+
+All DNS for `venueatncc.org` is managed by the owner at GoDaddy (My Products, venueatncc.org, DNS).
+Keep exactly **one** SPF (`v=spf1 ...`) TXT record on `@`; merge includes into it.
+
+### 11.1 Launch with the outbox (grokbot, at deploy)
+
+This is what the `.env` from section 6 does: `SMTP_HOST` is empty and `NOTIFY_TO` is
+`faith@venueatncc.org`.
 
 - Every email is written to `/var/www/venueatncc.org/data/outbox/` as an `.eml` (the full message)
   and an `.html` (its body), files mode 600 (`server/email/mailer.ts:57-70`). Nothing is sent, so
   guests get **no** confirmation email; the booking page still shows them their reference number.
-- **Staff see every new inquiry in the admin anyway:** https://venueatncc.org/admin/, the inquiry
-  list, newest first, with status, details, notes, and the email timeline (which says "saved to the
-  outbox"). Staff should check it daily and contact guests by phone or from their own email.
-- To read or copy the outbox files on the server:
+- **Staff see every new inquiry in the admin:** https://venueatncc.org/admin/, the inquiry list,
+  newest first, with status, details, notes, and the email timeline (which says "saved to the
+  outbox"). Until 11.3 is done, staff should check it daily and contact guests by phone or email.
+- To read the outbox files on the server:
 
   ```sh
   sudo ls -lt /var/www/venueatncc.org/data/outbox/ | head
   sudo cat /var/www/venueatncc.org/data/outbox/<FILE>.html
   ```
 
-- Leave `OUTBOX_RETENTION_DAYS` unset while on this option (the files are the only copy of the
+- Leave `OUTBOX_RETENTION_DAYS` unset while on the outbox (the files are the only copy of the
   rendered emails).
 
-### Option b: a transactional SMTP relay (owner decision + DNS changes)
+### 11.2 Receive: faith@venueatncc.org as an alias in Microsoft 365 from GoDaddy (owner)
 
-A sending service such as Postmark, Amazon SES, Brevo, or Mailgun. Sending only: it does **not** make
-`faith@venueatncc.org` receive mail, so `NOTIFY_TO` must be a mailbox that works today (for example
-the owner's existing address), and guests' replies go there too.
+1. **Owner, GoDaddy Email & Office Dashboard:** add `venueatncc.org` as a domain on the same
+   Microsoft 365 account that holds `faith@wearencc.org` (GoDaddy offers to set up the DNS records
+   automatically; accept only the records listed in step 2).
+2. **Owner, GoDaddy DNS for venueatncc.org** (if not added automatically):
 
-1. **Owner:** create the account, add `venueatncc.org` as a sending domain.
-2. **Owner, GoDaddy DNS:** add the records the provider shows. Typical shapes (use the provider's
-   exact values; selectors and tokens are generated per account):
+   | Type | Name | Value |
+   | --- | --- | --- |
+   | MX | `@` | `0 venueatncc-org.mail.protection.outlook.com` (confirm the exact host the dashboard shows) |
+   | CNAME | `autodiscover` | `autodiscover.outlook.com` |
+   | TXT | `@` | `v=spf1 include:secureserver.net ~all` (the SPF GoDaddy uses for its Microsoft 365; 11.3 adds the relay to this same record) |
+   | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:faith@venueatncc.org` |
+
+   Do not change any wearencc.org DNS record.
+3. **Owner, Email & Office Dashboard:** open Faith's mailbox (`faith@wearencc.org`), Email aliases,
+   **Add alias** `faith` on the domain `venueatncc.org`.
+4. **Check:** `dig +short MX venueatncc.org @8.8.8.8` shows the Outlook host. Send a test message to
+   `faith@venueatncc.org` from an outside account; it must arrive in Faith's Outlook inbox.
+
+If the dashboard does not allow an alias on a second domain, use a mail forwarder for
+`faith@venueatncc.org` (GoDaddy's forwarding, if offered on this domain, or Cloudflare Email
+Routing / ForwardEmail) that forwards to `faith@wearencc.org`, with the MX records that service
+gives instead of the Outlook MX above. Either way, guests only see `faith@venueatncc.org`.
+
+When Faith replies to a guest from Outlook, she should choose `faith@venueatncc.org` in the From
+field (Outlook on the web: From, Other email address). If Outlook replaces it with the wearencc.org
+address, the owner asks GoDaddy support to turn on "sending from aliases" for the account.
+
+### 11.3 Send: a transactional relay for venueatncc.org (owner + grokbot)
+
+The app sends through a relay's SMTP service, not through the Outlook mailbox, so outgoing mail is
+entirely on `venueatncc.org`. Recommended: **Postmark** (simple, made for transactional mail) or
+**Amazon SES** (cheapest; request production access to leave the sandbox). Brevo and Mailgun also work.
+
+1. **Owner:** create the account and add `venueatncc.org` as a sending domain (sender
+   `faith@venueatncc.org`).
+2. **Owner, GoDaddy DNS:** add the records the provider shows (use its exact values; selectors and
+   tokens are generated per account):
 
    | Type | Name | Value | Purpose |
    | --- | --- | --- | --- |
-   | TXT | `@` | `v=spf1 include:amazonses.com ~all` (SES), `v=spf1 include:spf.brevo.com ~all` (Brevo), `v=spf1 include:mailgun.org ~all` (Mailgun) | SPF. Postmark needs no SPF on `@`; it uses a Return-Path CNAME instead (below). |
-   | CNAME (x3) | `<token>._domainkey` | `<token>.dkim.amazonses.com` | DKIM for SES |
    | TXT | `<selector>pm._domainkey` | `k=rsa; p=<key from Postmark>` | DKIM for Postmark |
-   | CNAME | `pm-bounces` | `pm.mtasv.net` | Postmark Return-Path (SPF alignment) |
-   | TXT | `mail._domainkey` / `<selector>._domainkey` | key from Brevo or Mailgun | DKIM for Brevo or Mailgun |
-   | TXT | `_dmarc` | `v=DMARC1; p=none` (add `; rua=mailto:<working address>` if reports are wanted) | DMARC |
+   | CNAME | `pm-bounces` | `pm.mtasv.net` | Postmark Return-Path (SPF alignment; no change to the `@` SPF) |
+   | CNAME (x3) | `<token>._domainkey` | `<token>.dkim.amazonses.com` | DKIM for SES |
+   | TXT | `@` (edit the existing SPF) | SES: `v=spf1 include:secureserver.net include:amazonses.com ~all`; Brevo or Mailgun: add `include:spf.brevo.com` or `include:mailgun.org` the same way | One SPF record, both senders |
 
-3. **Owner:** wait until the provider shows the domain as verified.
-4. **grokbot:** edit `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`):
+   The `_dmarc` record from 11.2 stays.
+3. **Owner:** wait until the provider shows the domain as verified, and give grokbot the SMTP
+   username and password (or token) through a private channel, never in chat logs or the repo.
+4. **grokbot:** edit only these lines of `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`):
 
    ```ini
-   SMTP_HOST=<provider SMTP host, e.g. smtp.postmarkapp.com, email-smtp.us-east-1.amazonaws.com, smtp-relay.brevo.com, smtp.mailgun.org>
+   SMTP_HOST=<smtp.postmarkapp.com, or email-smtp.<region>.amazonaws.com, smtp-relay.brevo.com, smtp.mailgun.org>
    SMTP_PORT=587
    SMTP_SECURE=false
    SMTP_USER=<provider SMTP username or token>
    SMTP_PASS=<provider SMTP password or token>
-   NOTIFY_TO=<a mailbox that receives mail today>
    OUTBOX_RETENTION_DAYS=90
    ```
 
-   `MAIL_FROM` stays at its default (`The Venue @ NCC <faith@venueatncc.org>`) if the provider allows
-   any address on the verified domain; otherwise set it to the address the provider allows.
-5. Restart this app only (`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`),
-   check the log says `[email] Sending through <host>:587 as ...`, and send
-   one test request (10.3) with **your own** email address instead of `example.com`.
-
-### Option c: mailbox hosting for faith@venueatncc.org (owner decision + DNS changes)
-
-A real mailbox (Google Workspace, Microsoft 365, or Zoho Mail; GoDaddy resells the first two).
-Receiving works, and the same account can usually send through its SMTP server.
-
-1. **Owner:** buy the mailbox for `faith@venueatncc.org` and verify the domain (a TXT record the
-   provider gives).
-2. **Owner, GoDaddy DNS:** remove any existing MX records, then add:
-
-   | Provider | MX records (priority, host) | SPF TXT on `@` |
-   | --- | --- | --- |
-   | Google Workspace | `1 smtp.google.com` | `v=spf1 include:_spf.google.com ~all` |
-   | Microsoft 365 | `0 venueatncc-org.mail.protection.outlook.com` (confirm the exact host in the Microsoft 365 admin center) | `v=spf1 include:spf.protection.outlook.com -all` |
-   | Zoho Mail | `10 mx.zoho.com`, `20 mx2.zoho.com`, `50 mx3.zoho.com` | `v=spf1 include:zohomail.com ~all` |
-
-   Plus the provider's DKIM record (`google._domainkey` TXT for Google; `selector1._domainkey` and
-   `selector2._domainkey` CNAMEs for Microsoft; `zmail._domainkey` TXT for Zoho) and a DMARC record
-   `_dmarc` TXT `v=DMARC1; p=none; rua=mailto:faith@venueatncc.org`.
-3. **Check:** `dig +short MX venueatncc.org @8.8.8.8` shows the new MX; send a test message to
-   `faith@venueatncc.org` from another account.
-4. **grokbot:** set SMTP in `.env` with the mailbox's own sign-in (Microsoft 365: `smtp.office365.com`
-   587 `false`, SMTP AUTH enabled for the mailbox; Google: `smtp.gmail.com` 587 `false` with an app
-   password; Zoho: `smtp.zoho.com` 465 `true`), keep `NOTIFY_TO=faith@venueatncc.org`, set
-   `OUTBOX_RETENTION_DAYS=90`, restart this app with the full command from option b step 5, and
-   test as in option b.
-
-Options b and c combine well (mailbox for people, relay for automated mail); then the single SPF
-record includes both, for example `v=spf1 include:_spf.google.com include:amazonses.com ~all`.
-
-None of the email options touches the server's shared state.
+   Leave `MAIL_FROM` unset (default `The Venue @ NCC <faith@venueatncc.org>`) and keep
+   `NOTIFY_TO=faith@venueatncc.org`.
+5. Restart this app only (`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`), check the log says
+   `[email] Sending through <host>:587 as The Venue @ NCC <faith@venueatncc.org>. Notifications go to faith@venueatncc.org.`,
+   and send one test request (10.3) with **your own** email address instead of `example.com`.
+6. **Check both emails:** the staff notification reaches Faith's Outlook inbox; the guest
+   confirmation arrives From and Reply-To `faith@venueatncc.org`, and its headers
+   (`Authentication-Results`) show `spf=pass` or `dkim=pass` with `dmarc=pass`. No
+   `wearencc.org` appears anywhere in the guest's copy.
 
 ---
 
@@ -1204,9 +1259,9 @@ sudo -H -u mvandykeanthony bash -c '/usr/sbin/logrotate -d -s /var/www/venueatnc
 # -d is a dry run; expect no "error:" lines
 ```
 
-### 12.2 The crontab entries [SHARED, JOEL OK] (J1)
+### 12.2 The crontab entries [SHARED] (J1)
 
-Only after Joel approves. The owner's crontab is shared and may hold other sites' jobs, so it is
+Decided on 2026-09-30: run this as part of the deploy. The owner's crontab is shared and may hold other sites' jobs, so it is
 never rebuilt in a pipeline: the new crontab is written to a file, checked with `diff`, and only then
 installed. Every copy stays private (mode 600, in the 700 snapshot folder), and only line counts,
 checksums, and the diff of the new lines are printed, never the other sites' job lines. Cron runs in
@@ -1252,20 +1307,9 @@ sudo crontab -u mvandykeanthony -l 2>/dev/null | cmp - "$D/cron-new.txt" && echo
 Check the next morning: `sudo tail /var/www/venueatncc.org/logs/backup.log` shows
 `Backed up /var/www/venueatncc.org/data/venue.db to .../venue-YYYYMMDD-HHMMSS.db` (UTC time in the name).
 
-**Off-server copies** are the owner's decision (where to keep them; somewhere private, because the
-file holds guests' names, emails, and phone numbers). Backups on the same disk do not survive the loss
-of the VM. Either a GCP disk snapshot schedule (a GCP change, needs Joel), or a pull of the newest
-backup, done exactly like this and never through `/tmp` or any world-readable place:
-
-```sh
-# on the server: a private copy in the SSH account's home
-F=$(sudo ls -1 /var/www/venueatncc.org/data/backups/ | grep -E '^venue-[0-9]{8}-[0-9]{6}\.db$' | tail -1); echo "$F"
-sudo install -m 600 -o "$(id -un)" -g "$(id -gn)" "/var/www/venueatncc.org/data/backups/$F" ~/venueatncc-backup.db
-# on the machine that keeps the copies
-scp <SSH_USER>@34.30.208.144:venueatncc-backup.db ./venue-backup-$(date +%Y%m%d).db
-# back on the server, straight after
-rm -f ~/venueatncc-backup.db
-```
+Backups are kept **on the server only** (decided 2026-09-30): the newest 30 nightly copies in
+`/var/www/venueatncc.org/data/backups/` (mode 700, owner `mvandykeanthony`), never under a
+DocumentRoot, never copied to `/tmp` or anywhere world-readable.
 
 ### 12.3 Check a backup
 
@@ -1368,7 +1412,8 @@ done                                                    # every line 404 (the ap
 ```
 
 Also confirm: the first admin exists and signed in (10.4), the test inquiry is archived, a backup
-file exists, the crontab has the two venueatncc jobs (if J1 was approved), and `pm2 save` ran after
+file exists, the crontab has the two venueatncc jobs, `systemctl is-enabled pm2-mvandykeanthony` prints
+`enabled`, and `pm2 save` ran after
 all three apps were online. Report the deployed commit (`deployed-commit.txt`, which must be the
 lead's `<APPROVED_COMMIT>`) to Joel with the results.
 
@@ -1447,39 +1492,6 @@ than this server"). Then also restore the backup from step 1 ([12.4](#124-restor
 The quick undo for a bad site build alone, without rebuilding: swap `.tmp/dist-prev` back into
 `dist`, then restart this app:
 `sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`.
-
-### 14.3 Remove the site entirely (new site only)
-
-```sh
-# pm2: delete only venueatncc [SHARED]
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 delete venueatncc && pm2 ls'
-# save only if the other two are online; the command checks and refuses otherwise [SHARED]
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan" | grep -cw online); if [ "$n" -eq 2 ]; then pm2 save; else echo "STOP: $n of 2 apps online, pm2 save NOT run; tell Joel"; fi'
-# Apache: disable only the new vhosts, then a graceful reload [SHARED]
-sudo a2dissite venueatncc.org.conf venueatncc.org-le-ssl.conf && sudo apachectl configtest && sudo systemctl reload apache2
-sudo apachectl -S
-# certificate: [SHARED, JOEL OK] (J4) only if asked
-# sudo certbot delete --cert-name venueatncc.org
-```
-
-**crontab: remove the venueatncc lines only [SHARED, JOEL OK] (J1).** Same file-and-diff method as
-12.2; never a pipeline into `crontab -`:
-
-```sh
-bash <<'SH'
-set -u; umask 077; D=$HOME/venueatncc-deploy
-sudo crontab -u mvandykeanthony -l > "$D/cron-cur.txt" 2> "$D/cron-cur.err" || { echo "STOP: could not read the crontab; nothing changed"; cat "$D/cron-cur.err"; exit 1; }
-grep -v -e '^# venueatncc' -e '/var/www/venueatncc.org/' "$D/cron-cur.txt" > "$D/cron-new.txt"
-chmod 600 "$D/cron-cur.txt" "$D/cron-cur.err" "$D/cron-new.txt"
-echo "current: $(wc -l < "$D/cron-cur.txt") lines; new: $(wc -l < "$D/cron-new.txt") lines"
-diff "$D/cron-cur.txt" "$D/cron-new.txt"
-SH
-```
-
-The `diff` must show exactly the 4 venueatncc lines removed (`< ...`) and nothing else. Then install
-with step 2 of [12.2](#122-the-crontab-entries-shared-joel-ok-j1) (the same two commands).
-
-Keep `/var/www/venueatncc.org/data/` (guest data) until the owner decides what to do with it.
 
 ---
 
