@@ -15,10 +15,20 @@ Conventions in this document:
 - Commands run as **grokbot** unless they start with `sudo -H -u mvandykeanthony bash -c '...'`,
   which runs them as the site owner with the patched Node 24 first on `PATH` (the only working way
   to run npm and pm2 as the owner on this server).
+- **`pm2` anywhere in this document means exactly that wrapper**, for example
+  `sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`.
+  Never run `sudo pm2`, `npx pm2`, or pm2 as grokbot's own account: that starts a **second pm2
+  daemon** under root's or grokbot's `~/.pm2`, whose copy of `venueatncc` collides on port 3020 and
+  is invisible to the owner's `pm2 ls` and `pm2 save`. Never run `pm2 update`, `pm2 kill`,
+  `pm2 restart all`, or `pm2 delete all` on this server, even if pm2 prints a prompt suggesting it.
+- grokbot connects as its own SSH account, written `<SSH_USER>` in `scp`/`rsync` targets. The
+  server brief lists only the unix users `mvandykeanthony`, `box`, and `joel`, so confirm the
+  account name first ([section 1](#1-preflight-and-before-snapshots)). It must **not** be
+  `mvandykeanthony`; never upload into another user's home.
 - **[SHARED]** marks a command that touches state other sites share (Apache, certbot, pm2's process
   list, the owner's crontab). **[SHARED, JOEL OK]** marks one that must not run until Joel has said
   yes, in writing, for that specific change.
-- Snapshots and notes go in `~/venueatncc-deploy/` in grokbot's home directory.
+- Snapshots and notes go in `~/venueatncc-deploy/` (mode 700) in the SSH account's home directory.
 
 Contents:
 
@@ -64,7 +74,9 @@ Contents:
 | Apache logs | `/var/log/apache2/venueatncc.org-error.log`, `/var/log/apache2/venueatncc.org-access.log` |
 | Certificate name | `venueatncc.org` (new, separate; covers `venueatncc.org` and `www.venueatncc.org`) |
 | Health check | `GET /api/health` returns `{"ok":true,"time":"..."}` (503 if the database is unavailable) |
-| Git source | `https://github.com/GemsNS/venueatncc.git` (public), branch `main` |
+| Git source | `https://github.com/GemsNS/venueatncc.git` (public), checked out at `<APPROVED_COMMIT>` (a commit or tag the lead has reviewed), never the moving tip of `main` |
+| npm cache | `/var/www/venueatncc.org/.npm-cache` (every `npm ci` passes `--cache`, so nothing is written to the owner's shared `~/.npm`) |
+| Native add-on build | `/var/www/venueatncc.org/better_sqlite3.node.keep` (built off-server, [5.4](#54-the-native-add-on-better-sqlite3)), copied into `node_modules` after every `npm ci` |
 
 ### Changes that touch shared state
 
@@ -74,7 +86,7 @@ Contents:
 | --- | --- | --- | --- |
 | J1 | Adding two lines to `mvandykeanthony`'s crontab (nightly database backup, weekly log rotation), [section 12](#12-backups) | It is the shared owner account's crontab, which may hold other sites' jobs. The change is additive and the existing crontab is saved first. | Every deploy (backups protect guest inquiries). |
 | J2 | `pm2 startup systemd` for `mvandykeanthony`, [section 7.5](#75-reboots-the-known-gap-and-the-optional-fix) | Creates a system service that brings back **all** pm2 apps at boot, not only this one. | Optional, but without it no site comes back after a reboot until someone runs `pm2 resurrect`. |
-| J3 | Any `apt install` (for example `build-essential` and a newer Python to compile better-sqlite3), [section 5.4](#54-the-native-add-on-better-sqlite3) | System packages on an EOL OS that every site depends on. | Only if the prebuilt better-sqlite3 binary does not load **and** building elsewhere is not possible. Unlikely to be needed. |
+| J3 | Any `apt install` (for example `build-essential` and a newer Python to compile better-sqlite3), [section 5.4](#54-the-native-add-on-better-sqlite3) | System packages on an EOL OS that every site depends on. | **Not needed** when the off-server better-sqlite3 build ("Required before the deploy" below) is done. Only if that build cannot be made anywhere. |
 | J4 | Deleting the new certificate (`certbot delete --cert-name venueatncc.org`) during a full rollback | certbot's state is shared with the other three certificates. | Only on a full removal of the site. |
 | J5 | `/etc/logrotate.d/` file, GCP firewall rules, installing a database server, enabling Apache modules, `ufw` | System-wide. | **Not needed by this runbook.** Listed so grokbot knows not to do them. |
 
@@ -87,6 +99,13 @@ Joel when done, and follow the steps exactly):
 | `certbot --apache` for a new, separate certificate `venueatncc.org` (adds `venueatncc.org-le-ssl.conf`, a renewal config, and another graceful reload) | [9](#9-tls-with-certbot) |
 | `pm2 start` of the new process `venueatncc`, and `pm2 save` once all three apps are online (rewrites the shared dump file) | [7](#7-pm2) |
 
+**Required before the deploy, off the server** (not a shared change, but nothing works without it):
+
+| Item | Why | Section |
+| --- | --- | --- |
+| Build `better_sqlite3.node` for Node 24 on a glibc 2.28 system (Rocky 8 in Docker) and upload it | The official prebuilt that `npm ci` downloads needs `GLIBC_2.29` (libm `log`, `pow`, `log2`, `exp`), newer than the glibc 2.28 the patched Node runs on, so it cannot load here. Without the rebuilt file the app cannot open its database or start. | [5.4](#54-the-native-add-on-better-sqlite3) |
+| Pick the commit to deploy: one the lead has reviewed (`<APPROVED_COMMIT>`) | Project policy: nothing goes live until the lead has reviewed it. The runbook never deploys "whatever is on `main`". | [3](#3-getting-the-code-onto-the-server) |
+
 **Decisions for the venue owner** (not Joel's server, but blocking for email): the email option in
 [section 11](#11-email-the-owners-decision). The site can launch before that decision (option a).
 
@@ -97,8 +116,17 @@ Joel when done, and follow the steps exactly):
 Nothing in this section changes anything. Save everything so [section 13](#13-post-install-verification-checklist)
 can diff against it.
 
+First confirm which account you are (the brief lists no `grokbot` unix user, so the SSH account
+name is not known in advance):
+
 ```sh
-mkdir -p ~/venueatncc-deploy && cd ~/venueatncc-deploy
+id; echo "$HOME"
+# STOP if the user is mvandykeanthony or root, or $HOME is not your own home directory.
+# Everywhere this document writes <SSH_USER>, use the name `id` printed.
+```
+
+```sh
+mkdir -p -m 700 ~/venueatncc-deploy && chmod 700 ~/venueatncc-deploy && cd ~/venueatncc-deploy
 
 # Apache: vhost map, enabled sites, and a checksum of every vhost file
 sudo apachectl -S > ~/venueatncc-deploy/apache-S-before.txt 2>&1
@@ -110,6 +138,8 @@ sudo apachectl configtest 2>&1 | tee ~/venueatncc-deploy/configtest-before.txt  
 # pm2 (as the owner, with the documented PATH)
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls' | tee ~/venueatncc-deploy/pm2-before.txt
 # expect: ncc-backend (id 0) and vandyke-home-loan (id 1), both online
+ps -eo user,args | grep '[P]M2 v' | tee ~/venueatncc-deploy/pm2-daemons-before.txt
+# expect exactly one line, user mvandykeanthony (the one pm2 daemon on this server)
 
 # Node versions that must not change
 sudo -H -u mvandykeanthony bash -c 'cat /home/mvandykeanthony/.nvm/alias/default; /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node -v' | tee ~/venueatncc-deploy/node-before.txt
@@ -176,6 +206,8 @@ touched, and no `chown`/`chmod` is ever recursive above this directory.
 ├── .env                            600   mvandykeanthony   (secrets; symlinked as app/.env)
 ├── ecosystem.config.cjs            664   pm2 definition
 ├── logrotate.conf                  644   user-level rotation of logs/ (section 12)
+├── better_sqlite3.node.keep        664   native add-on built off-server (section 5.4)
+├── .npm-cache/                           npm's download cache (kept out of the owner's ~/.npm)
 ├── app/                            git checkout: code, node_modules, dist/, server-dist/
 ├── data/                           700   venue.db (+ -wal, -shm), outbox/, backups/
 ├── logs/                           750   pm2 out/error logs, backup log
@@ -214,27 +246,48 @@ The repository is public, so clone it over HTTPS as the owner. Use a full clone 
 the sitemap's `lastmod` dates come from git history and are left out in a shallow clone
 (`astro.config.mjs:48-56`).
 
+Deploy a **reviewed** commit, not whatever is on `main` today. Project policy is that nothing goes
+live until the lead has reviewed it at phone and desktop sizes. Get the commit hash or tag from the
+lead (or Joel, who relays it) and use it as `<APPROVED_COMMIT>`:
+
 ```sh
-sudo -H -u mvandykeanthony bash -c 'umask 002; git clone --branch main https://github.com/GemsNS/venueatncc.git /var/www/venueatncc.org/app'
+sudo -H -u mvandykeanthony bash -c 'umask 002; git clone https://github.com/GemsNS/venueatncc.git /var/www/venueatncc.org/app && git -C /var/www/venueatncc.org/app checkout <APPROVED_COMMIT>'
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && git log -1 --oneline && ls src/data/site.ts package-lock.json'
 git -C /var/www/venueatncc.org/app rev-parse HEAD | tee ~/venueatncc-deploy/deployed-commit.txt
+# the hash must be <APPROVED_COMMIT>; include it in the report to Joel
 ```
+
+(`git checkout <hash>` leaves a detached HEAD; that is intended. If `git -C` as grokbot complains
+about "dubious ownership", run the `rev-parse` inside the owner wrapper instead.)
 
 `umask 002` gives the 775/664 modes the brief asks for, while keeping executable bits that
 `node_modules` needs (never `chmod -R 664` the app folder: it would break `esbuild` and other binaries).
 
-**Alternative: rsync** (from a machine that has the repository, when cloning is not possible). Upload
-to a staging folder grokbot owns, then copy in as the owner:
+**Alternative: rsync** (from a machine that has the repository, when cloning is not possible). Check
+out `<APPROVED_COMMIT>` there first, with a clean working tree. Upload to a staging folder in the SSH
+account's home (not `/tmp`), then copy in as the owner. The excludes are **rooted** (leading `/`):
+an unrooted `--exclude data` would also drop `src/data/` (site.ts, events.ts, faq.ts, photos.ts and
+more) and break the build. `.git` is deliberately included, so the deployed commit is recorded, the
+sitemap dates work, and the git-based update (14.1) and rollback (14.2) work as written.
 
 ```sh
-# on the source machine
-rsync -az --delete --exclude node_modules --exclude dist --exclude dist-demo --exclude server-dist \
-  --exclude data --exclude .env --exclude .tmp --exclude .astro \
-  ./ grokbot@34.30.208.144:/tmp/venueatncc-src/
+# on the source machine, from the repository root, at <APPROVED_COMMIT>
+git status --porcelain     # must print nothing
+rsync -az --delete --exclude /node_modules --exclude /dist --exclude /dist-demo --exclude /server-dist \
+  --exclude /data --exclude /.env --exclude /.tmp --exclude /.astro \
+  ./ <SSH_USER>@34.30.208.144:venueatncc-src/
 # on the server
-sudo -H -u mvandykeanthony bash -c 'umask 002; mkdir -p /var/www/venueatncc.org/app && cp -a /tmp/venueatncc-src/. /var/www/venueatncc.org/app/'
-rm -rf /tmp/venueatncc-src
+sudo install -d -o mvandykeanthony -g www-data -m 2775 /var/www/venueatncc.org/app
+sudo cp -R ~/venueatncc-src/. /var/www/venueatncc.org/app/
+sudo chown -R mvandykeanthony:www-data /var/www/venueatncc.org/app     # recursive only inside the new site
+rm -rf ~/venueatncc-src
+sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && git log -1 --oneline && ls src/data/site.ts package-lock.json'
+sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse HEAD' | tee ~/venueatncc-deploy/deployed-commit.txt
 ```
+
+If `.git` could not be uploaded, write the hash into `~/venueatncc-deploy/deployed-commit.txt` by
+hand, and know that 14.1 and 14.2 then do not work: such a server must also be updated and rolled
+back by rsync of the new or previous commit.
 
 Do not use FTP: it is plaintext and creates files with mode 600.
 
@@ -270,6 +323,18 @@ There are two ways. **Path A** builds on the server. **Path B** builds on anothe
 the built output, so the server only installs the five runtime packages. Try Path A first; switch
 to Path B if memory is short, the build fails on a native module (sharp, resvg), or it is too slow.
 
+**Both paths need `/var/www/venueatncc.org/better_sqlite3.node.keep` on the server before the first
+`npm ci`.** Do [5.4](#54-the-native-add-on-better-sqlite3) first: the better-sqlite3 binary that
+`npm ci` downloads cannot load on this server, and every `npm ci` below copies the rebuilt file over
+it in the same command.
+
+Every `npm ci` here passes `--cache /var/www/venueatncc.org/.npm-cache`, so npm's download cache
+stays inside the new site's folder instead of the owner's shared `/home/mvandykeanthony/.npm`.
+(The other native binaries the build uses, from sharp and libvips, rolldown, lightningcss, the
+Astro compiler, and resvg, were checked against the lockfile versions: they need glibc 2.28 or
+older and `GLIBCXX_3.4.22` or older, which this server has, so Path A is expected to work. Only
+better-sqlite3 needs the off-server build.)
+
 ### 5.1 Memory check (both paths)
 
 ```sh
@@ -282,13 +347,15 @@ several minutes. Build one thing at a time; never run two builds at once on this
 
 ### 5.2 Path A: build on the server
 
-Install everything, including devDependencies (Astro, esbuild, sharp, tsx), which the build needs:
+Install everything, including devDependencies (Astro, esbuild, sharp, tsx), which the build needs,
+and put the rebuilt better-sqlite3 binary in place in the same command:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
-Check the native add-on now, before spending time on the build ([5.4](#54-the-native-add-on-better-sqlite3)):
+Check the native add-on now, before spending time on the build ([5.4](#54-the-native-add-on-better-sqlite3)).
+`npm ci` exits 0 even with an unusable binary, so this check is the only thing that catches it:
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; cd /var/www/venueatncc.org/app && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())"'
@@ -304,7 +371,7 @@ sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versi
 `npm run build` runs `astro build` (static site into `dist/`) and then esbuild (the server into
 `server-dist/index.mjs`) (`package.json`, scripts `build` and `build:server`).
 
-Then bundle the two command-line tools, exactly as the Dockerfile does (`Dockerfile:562-563`), so
+Then bundle the two command-line tools, exactly as the Dockerfile does (`Dockerfile:27-28`), so
 the admin tool and the nightly backup run with plain `node` and never need `tsx` or `npx`:
 
 ```sh
@@ -334,17 +401,18 @@ npm run build
 npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs
 npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs
 tar czf venueatncc-build.tgz dist server-dist
-scp venueatncc-build.tgz grokbot@34.30.208.144:/tmp/
+scp venueatncc-build.tgz <SSH_USER>@34.30.208.144:/tmp/
 ```
 
 On the server, unpack as the owner and install only the runtime dependencies (hono,
-@hono/node-server, better-sqlite3, nodemailer, zod):
+@hono/node-server, better-sqlite3, nodemailer, zod), with the rebuilt better-sqlite3 binary copied
+in by the same command:
 
 ```sh
 chmod 644 /tmp/venueatncc-build.tgz
 sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && rm -rf dist server-dist && tar xzf /tmp/venueatncc-build.tgz'
 rm -f /tmp/venueatncc-build.tgz
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --no-audit --no-fund'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node'
 ```
 
 Then run the better-sqlite3 check from [5.4](#54-the-native-add-on-better-sqlite3). With Path B,
@@ -356,74 +424,83 @@ Then run the better-sqlite3 check from [5.4](#54-the-native-add-on-better-sqlite
 
 ```sh
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; cd /var/www/venueatncc.org/app && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())"'
+# expect: { v: '3.x.y' }
 ```
 
-**Why it should work.** `npm ci` runs better-sqlite3's install script, which first tries
-`prebuild-install`: it downloads a prebuilt `better_sqlite3.node` for linux-x64 and the ABI of the
-Node that runs npm (Node 24, because v24 is first on `PATH`). The add-on is loaded with `dlopen`
-into the patched Node process, which already runs on glibc 2.28 from `/opt/glibc-2.28` and has
-already loaded the system `libstdc++`. So the add-on works as long as the glibc and libstdc++
-symbol versions it needs are no newer than glibc 2.28 and the GLIBCXX versions of Ubuntu 18.04's
-libstdc++.
+**The downloaded binary will not work.** `npm ci` runs better-sqlite3's install script, which uses
+`prebuild-install` to download the official prebuilt `better_sqlite3.node` for linux-x64 and Node
+24 (ABI 137; release asset `better-sqlite3-v12.11.1-node-v137-linux-x64.tar.gz`, version from
+`package-lock.json`). That prebuilt links `log`, `pow`, `log2`, and `exp` from libm at
+`GLIBC_2.29`, newer than the glibc 2.28 the patched Node runs on (`/opt/glibc-2.28`), so the check
+fails with `GLIBC_2.29 not found (required by .../better_sqlite3.node)`. This was confirmed by
+inspecting the release asset itself. `npm ci` still exits 0, because `prebuild-install` only checks
+that the download finished, so **always run the check**. `npm rebuild better-sqlite3` re-downloads
+the same file and reproduces the error. Without a working add-on the server cannot open its database
+and does not start.
 
-**If it fails** (`GLIBC_2.29 not found`, `GLIBCXX_3.4.xx not found`, `invalid ELF header`, or
-`was compiled against a different Node.js version`), work down this ladder and stop at the first
-step that makes the check pass:
+So build the add-on once, off the server, on a glibc 2.28 system, and upload it. Its C++ runtime
+needs (`GLIBCXX_3.4.20`, `CXXABI_1.3.9` in the official build) are met by Ubuntu 18.04's libstdc++.
 
-1. **See what it needs.** Compare against what the server has:
+**Step 1: build on a Rocky Linux 8 container (any machine with Docker).** RHEL/Rocky/Alma 8 has glibc
+2.28, and its `gcc-toolset` compilers link newer C++ runtime parts statically, which is how the
+official Node 24 binaries are built. This recipe has been read through but not yet run; if it fails,
+fix it there, never on the server.
+
+```sh
+docker run --rm -v "$PWD/out:/out" rockylinux:8 bash -c '
+  dnf -y install gcc-toolset-12 python3.11 make tar xz &&
+  source /opt/rh/gcc-toolset-12/enable &&
+  curl -fsSL https://nodejs.org/dist/v24.16.0/node-v24.16.0-linux-x64.tar.xz | tar xJ -C /opt &&
+  export PATH=/opt/node-v24.16.0-linux-x64/bin:$PATH PYTHON=python3.11 &&
+  mkdir /b && cd /b && npm init -y >/dev/null &&
+  npm install better-sqlite3@12.11.1 --build-from-source &&
+  cp node_modules/better-sqlite3/build/Release/better_sqlite3.node /out/'
+grep -ao 'GLIBC_2\.[0-9]*' out/better_sqlite3.node | sort -uV | tail -1
+# expect GLIBC_2.28 or lower; GLIBC_2.29 or higher means the build is not usable here
+scp out/better_sqlite3.node <SSH_USER>@34.30.208.144:/tmp/
+```
+
+Use the better-sqlite3 version that `package-lock.json` of `<APPROVED_COMMIT>` pins (12.11.1 today:
+`grep -A1 '"node_modules/better-sqlite3"' package-lock.json`). When a later commit changes that
+version, rebuild the file with the new version before updating.
+
+**Step 2: keep it on the server** as the owner, outside `app/` so no `npm ci` or re-clone deletes it:
+
+```sh
+chmod 644 /tmp/better_sqlite3.node
+sudo -H -u mvandykeanthony bash -c 'umask 002; cp /tmp/better_sqlite3.node /var/www/venueatncc.org/better_sqlite3.node.keep'
+rm -f /tmp/better_sqlite3.node
+sudo grep -ao 'GLIBC_2\.[0-9]*' /var/www/venueatncc.org/better_sqlite3.node.keep | sort -uV | tail -1   # expect GLIBC_2.28 or lower
+ls -l /var/www/venueatncc.org/better_sqlite3.node.keep
+```
+
+**Step 3: every `npm ci` copies it in** inside the same command (5.2, 5.3, 14.1):
+`... npm ci ... && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node`,
+followed by the check above. If it was not copied (for example `npm ci` was run alone), copy it now:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'cp /var/www/venueatncc.org/better_sqlite3.node.keep /var/www/venueatncc.org/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+```
+
+**If the check still fails with the rebuilt file:**
+
+1. **See what it needs** and compare against what the server has:
 
    ```sh
    cd /var/www/venueatncc.org/app
-   objdump -T node_modules/better-sqlite3/build/Release/better_sqlite3.node | grep -o 'GLIBC[X]*_[0-9.]*' | sort -uV
-   strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep -o '^GLIBCXX_[0-9.]*' | sort -uV | tail -3
+   grep -ao 'GLIBC[X]*_[0-9.]*' node_modules/better-sqlite3/build/Release/better_sqlite3.node | sort -uV
+   grep -ao 'GLIBCXX_[0-9.]*' /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | sort -uV | tail -3
    ls /opt/glibc-2.28/lib/libc.so.6 && echo "glibc 2.28 is the maximum GLIBC_ version available"
    ```
 
-   Anything above `GLIBC_2.28`, or a `GLIBCXX_` above the highest one listed, is why it fails.
-   (`objdump` and `strings` come with binutils; if they are missing, skip to step 3.)
+   Anything above `GLIBC_2.28`, or a `GLIBCXX_` above the highest one listed, is why it fails; fix
+   the build in step 1. `was compiled against a different Node.js version` means the build used a
+   Node other than 24.x.
 
-2. **Retry the prebuilt download** in case it was interrupted or fetched for the wrong Node:
-
-   ```sh
-   sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; cd /var/www/venueatncc.org/app && npm rebuild better-sqlite3'
-   ```
-
-   If `npm rebuild` falls back to compiling and fails with gyp or compiler errors, that is expected
-   on this server; go to step 3.
-
-3. **Build the add-on on a compatible machine and upload it (recommended fallback).** A
-   RHEL/Rocky/Alma 8 system has glibc 2.28, and its `gcc-toolset` compilers link newer C++ runtime
-   parts statically, which is exactly how the official Node 24 binaries are built. With Docker on
-   any machine:
-
-   ```sh
-   docker run --rm -v "$PWD/out:/out" rockylinux:8 bash -c '
-     dnf -y install gcc-toolset-12 python3.11 make tar xz &&
-     source /opt/rh/gcc-toolset-12/enable &&
-     curl -fsSL https://nodejs.org/dist/v24.16.0/node-v24.16.0-linux-x64.tar.xz | tar xJ -C /opt &&
-     export PATH=/opt/node-v24.16.0-linux-x64/bin:$PATH PYTHON=python3.11 &&
-     mkdir /b && cd /b && npm init -y >/dev/null &&
-     npm install better-sqlite3@12.11.1 --build-from-source &&
-     cp node_modules/better-sqlite3/build/Release/better_sqlite3.node /out/'
-   scp out/better_sqlite3.node grokbot@34.30.208.144:/tmp/
-   ```
-
-   On the server:
-
-   ```sh
-   chmod 644 /tmp/better_sqlite3.node
-   sudo -H -u mvandykeanthony bash -c 'cp /tmp/better_sqlite3.node /var/www/venueatncc.org/app/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
-   rm -f /tmp/better_sqlite3.node
-   ```
-
-   Re-run the check. Keep a copy of this file in `/var/www/venueatncc.org/better_sqlite3.node.keep`
-   (as the owner), because every `npm ci` replaces it; copy it back in after each `npm ci` until a
-   prebuilt version works.
-
-4. **Compile on the server** (last resort). This needs `gcc`/`g++`/`make` (not surveyed) and a Python
+2. **Compile on the server** (last resort). This needs `gcc`/`g++`/`make` (not surveyed) and a Python
    that current node-gyp accepts (3.6.9 is too old), and Ubuntu 18.04's GCC 7 is likely too old for
    Node 24's C++20 headers. Installing a toolchain is an **apt install: [SHARED, JOEL OK] (J3)**,
-   and may still not succeed. Prefer step 3.
+   and may still not succeed. Prefer fixing the off-server build.
 
 ### 5.5 Do the admin and backup tools need devDependencies?
 
@@ -524,8 +601,9 @@ sudo grep -c '^SESSION_SECRET=[0-9a-f]\{64\}$' /var/www/venueatncc.org/.env     
 sudo grep -c '^FORM_TOKEN_SECRET=[0-9a-f]\{64\}$' /var/www/venueatncc.org/.env  # expect: 1
 ```
 
-To edit later: `sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`, then
-`pm2 restart venueatncc` ([section 14](#14-updating-later-and-rollback)). Do not put secrets in the
+To edit later: `sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`, then restart this app
+only ([section 14](#14-updating-later-and-rollback)):
+`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`. Do not put secrets in the
 ecosystem file, the vhost, or anything under `dist/`.
 
 ---
@@ -585,6 +663,10 @@ variables win over `.env`).
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 start /var/www/venueatncc.org/ecosystem.config.cjs --only venueatncc && sleep 5 && pm2 ls'
 ```
 
+The pm2 daemon was started under Node 16, and this is the pm2 7.0.4 CLI from v24. If pm2 prints
+`In-memory PM2 is out-of-date, do: $ pm2 update`, **ignore it**. Never run `pm2 update`, `pm2 kill`,
+or `pm2 restart all` on this server: `pm2 update` restarts the daemon and every app on it.
+
 ### 7.3 Verify
 
 ```sh
@@ -604,14 +686,16 @@ count for `venueatncc` must not grow.
 
 ### 7.4 Save the process list [SHARED]
 
-Only when `pm2 ls` shows **all three** (`ncc-backend`, `vandyke-home-loan`, `venueatncc`) online:
+Only when `pm2 ls` shows **all three** (`ncc-backend`, `vandyke-home-loan`, `venueatncc`) online.
+The command checks that itself and refuses to save otherwise:
 
 ```sh
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; pm2 save'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan|venueatncc" | grep -cw online); if [ "$n" -eq 3 ]; then pm2 save; else echo "STOP: $n of 3 apps online, pm2 save NOT run"; fi'
 ```
 
 Never `pm2 restart all`, `pm2 delete all`, `pm2 kill`, `pm2 update`, or any command on the other two
-processes. Restart this app only by name: `pm2 restart venueatncc`.
+processes. Restart this app only by name:
+`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`.
 
 ### 7.5 Reboots: the known gap and the optional fix
 
@@ -631,8 +715,7 @@ curl -s http://127.0.0.1:3020/api/health; echo
 
 ```sh
 sudo env PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/pm2 startup systemd -u mvandykeanthony --hp /home/mvandykeanthony
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls'   # all three online?
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 save'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan|venueatncc" | grep -cw online); if [ "$n" -eq 3 ]; then pm2 save; else echo "STOP: $n of 3 apps online, pm2 save NOT run"; fi'
 systemctl status pm2-mvandykeanthony --no-pager | head -5
 ```
 
@@ -655,7 +738,7 @@ systemctl status pm2-mvandykeanthony --no-pager | head -5
 - **ACME:** `/.well-known/acme-challenge/` is excluded from the proxy so certbot's challenge files
   are always reachable.
 - **`retry=0`:** without it, Apache marks the backend as failed for 60 seconds after any refused
-  connection (for example during `pm2 restart venueatncc`) and answers 503 for that whole time.
+  connection (for example while this app restarts) and answers 503 for that whole time.
 
 ### 8.2 Write the :80 vhost [SHARED: Apache config]
 
@@ -695,9 +778,8 @@ by this runbook.
 ### 8.3 Enable, test, reload gracefully [SHARED]
 
 ```sh
-sudo a2ensite venueatncc.org.conf
-sudo apachectl configtest           # must say: Syntax OK. If not: sudo a2dissite venueatncc.org.conf, fix, retry.
-sudo systemctl reload apache2       # graceful; NEVER systemctl restart apache2
+# Reload (graceful; NEVER systemctl restart apache2) only if the config test passes; otherwise undo the enable.
+sudo a2ensite venueatncc.org.conf && sudo apachectl configtest && sudo systemctl reload apache2 || { sudo a2dissite venueatncc.org.conf; sudo apachectl configtest; echo 'STOP: config test failed, new site disabled, nothing reloaded'; }
 sudo apachectl -S 2>&1 | tee ~/venueatncc-deploy/apache-S-after-80.txt
 ```
 
@@ -706,7 +788,8 @@ In the `apachectl -S` output, check:
 - `*:80` still says `default server pinnaclepublishinggroup.net`, and `*:443` likewise. Apache picks
   the first vhost loaded, in alphabetical order of `sites-enabled`; `pinnaclepublishinggroup.net.conf`
   sorts before `venueatncc.org.conf`, so the default does not change.
-- A new line `port 80 namevhost venueatncc.org (/etc/apache2/sites-available/venueatncc.org.conf:3)`
+- A new line `port 80 namevhost venueatncc.org (/etc/apache2/sites-enabled/venueatncc.org.conf:3)`
+  (Apache reports the `sites-enabled` path it included)
   with `alias www.venueatncc.org`.
 - Every other line is identical to `apache-S-before.txt`: `diff ~/venueatncc-deploy/apache-S-before.txt ~/venueatncc-deploy/apache-S-after-80.txt`
   shows only additions.
@@ -839,16 +922,44 @@ curl -sI https://www.venueatncc.org/ | head -1                          # expect
 echo | openssl s_client -connect 34.30.208.144:443 -servername venueatncc.org 2>/dev/null | openssl x509 -noout -subject -enddate -text | grep -E "subject=|notAfter|DNS:"
 # expect subject CN venueatncc.org, SAN DNS:venueatncc.org, DNS:www.venueatncc.org
 sudo certbot certificates
+```
+
+**Renewal dry run.** A full `certbot renew --dry-run` changes no real certificate, but it is not
+free of side effects: it runs every existing renewal config's authenticator and, in certbot 0.27,
+its `pre_hook`, `post_hook`, and the scripts in `renewal-hooks/`. If another certificate used the
+`standalone` authenticator with a hook that stops Apache, or a hook that restarts services, the dry
+run would take every site down. Inspect first and save the output:
+
+```sh
+sudo grep -HE '^(authenticator|installer|pre_hook|post_hook|renew_hook|deploy_hook)' /etc/letsencrypt/renewal/*.conf 2>&1 | tee ~/venueatncc-deploy/renewal-hooks-check.txt
+sudo ls -la /etc/letsencrypt/renewal-hooks/*/ 2>&1 | tee -a ~/venueatncc-deploy/renewal-hooks-check.txt
+# expect for every file: authenticator = apache and installer = apache, no *_hook lines,
+# and the pre/, post/, deploy/ folders empty
+```
+
+Then dry-run the new certificate alone:
+
+```sh
+sudo certbot renew --dry-run --cert-name venueatncc.org     # [SHARED] challenge for venueatncc.org only, graceful Apache reload
+```
+
+Only if **no** existing config uses `standalone` (or `webroot` pointing somewhere unexpected) and
+there are **no** hooks that stop or restart services, run the full dry run the brief asks for:
+
+```sh
 sudo certbot renew --dry-run      # [SHARED] runs the challenge for all four certificates and reloads Apache gracefully; changes no real certificate
 ```
+
+Otherwise skip the full run, and send Joel the contents of `renewal-hooks-check.txt` and ask before
+running it.
 
 If `http://venueatncc.org/` answers 200 instead of 301, the proxy is taking the request before the
 redirect. Fix it in the :80 file only: delete its `ProxyPass`, `ProxyPassReverse`, and `RequestHeader`
 lines (keep the rewrite lines), then `sudo apachectl configtest && sudo systemctl reload apache2`.
 
 `certbot certificates` must list `venueatncc.org` (both names) and the three existing certificates
-with the same names, domains, and expiry dates as in `certbot-before.txt`. `renew --dry-run` must
-report success for all four; it does not change real certificates.
+with the same names, domains, and expiry dates as in `certbot-before.txt`. Each `renew --dry-run`
+that ran must report success for every certificate it covered; it does not change real certificates.
 
 Renewal is automatic through the existing `certbot.timer`; nothing to add.
 
@@ -878,8 +989,8 @@ shell until the admin sign-in test below is done, then `unset PW`.
 The same command adds another admin or resets a password (an existing email gets the new password
 and is signed out everywhere, `create-admin.ts:123-126`). Passwords need 12 to 500 characters.
 
-**Alternative:** set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (12+ characters) in `.env` and
-`pm2 restart venueatncc`; the admin is created at startup when none exists (`bootstrap.ts:19-38`).
+**Alternative:** set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (12+ characters) in `.env` and restart this
+app (`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`); the admin is created at startup when none exists (`bootstrap.ts:19-38`).
 Then remove `ADMIN_PASSWORD` from `.env` and restart again. Not recommended here: the password
 sits on disk until removed.
 
@@ -907,7 +1018,8 @@ only exist on this server, not in the GitHub Pages demo.
 
 This creates one real inquiry (archived again in 10.4). The form token must be at least 3 seconds
 old (`security.ts:132`), POSTs need an `Origin` from this site (`middleware.ts:76-86`), the date must
-be Monday to Saturday within two years, and the start time 09:00 or later (`schemas.ts:57-101`).
+be Monday to Saturday within two years, and the start time 09:00 or later
+(`src/shared/schemas.ts:57-96`; two-year limit `server/routes/public.ts:228-233`).
 
 ```sh
 BASE=https://venueatncc.org
@@ -919,6 +1031,7 @@ curl -s -X POST "$BASE/api/inquiries" \
   --data "{\"eventType\":\"meetings-trainings\",\"date\":\"$DATE\",\"startTime\":\"10:00\",\"hours\":2,\"space\":\"indoor\",\"guests\":10,\"name\":\"Deploy Test\",\"email\":\"deploy-test@example.com\",\"contactPreference\":\"email\",\"message\":\"Deployment smoke test. Please archive.\",\"formToken\":\"$TOKEN\"}"
 echo
 # expect: {"ok":true,"reference":"NCC-XXXXX"}  (note the reference)
+sleep 2     # the app answers first and writes the emails in a background task (server/routes/public.ts:290)
 sudo ls -l /var/www/venueatncc.org/data/outbox/
 # expect two .eml + two .html files: ...-NCC-XXXXX-venue-... and ...-NCC-XXXXX-guest-..., mode -rw-------
 ```
@@ -1014,7 +1127,8 @@ the owner's existing address), and guests' replies go there too.
 
    `MAIL_FROM` stays at its default (`The Venue @ NCC <faith@venueatncc.org>`) if the provider allows
    any address on the verified domain; otherwise set it to the address the provider allows.
-5. `pm2 restart venueatncc`, check the log says `[email] Sending through <host>:587 as ...`, and send
+5. Restart this app only (`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`),
+   check the log says `[email] Sending through <host>:587 as ...`, and send
    one test request (10.3) with **your own** email address instead of `example.com`.
 
 ### Option c: mailbox hosting for faith@venueatncc.org (owner decision + DNS changes)
@@ -1040,7 +1154,8 @@ Receiving works, and the same account can usually send through its SMTP server.
 4. **grokbot:** set SMTP in `.env` with the mailbox's own sign-in (Microsoft 365: `smtp.office365.com`
    587 `false`, SMTP AUTH enabled for the mailbox; Google: `smtp.gmail.com` 587 `false` with an app
    password; Zoho: `smtp.zoho.com` 465 `true`), keep `NOTIFY_TO=faith@venueatncc.org`, set
-   `OUTBOX_RETENTION_DAYS=90`, `pm2 restart venueatncc`, and test as in option b.
+   `OUTBOX_RETENTION_DAYS=90`, restart this app with the full command from option b step 5, and
+   test as in option b.
 
 Options b and c combine well (mailbox for people, relay for automated mail); then the single SPF
 record includes both, for example `v=spf1 include:_spf.google.com include:amazonses.com ~all`.
@@ -1055,7 +1170,9 @@ The database file is everything that matters (inquiries, admins, calendar blocks
 backup tool takes a consistent online copy with SQLite's backup API while the server runs, WAL
 included (`server/cli/backup.ts`). It writes `data/backups/venue-YYYYMMDD-HHMMSS.db` next to the
 database and keeps the newest N (default 14, `backup.ts:26`). It fails with "No database" before
-the app has first started (`backup.ts:24`).
+the app has first started (`backup.ts:24`). The timestamp in the file name is **UTC**
+(`backup.ts:30`), not the server's America/New_York time, so the 03:15 nightly job writes names
+ending `-0715xx` (EDT, summer) or `-0815xx` (EST, winter).
 
 Run it once by hand:
 
@@ -1087,31 +1204,66 @@ sudo -H -u mvandykeanthony bash -c '/usr/sbin/logrotate -d -s /var/www/venueatnc
 
 ### 12.2 The crontab entries [SHARED, JOEL OK] (J1)
 
-Only after Joel approves. Save the current crontab first, then **append** (never replace). Cron runs
-in the server's time zone, America/New_York.
+Only after Joel approves. The owner's crontab is shared and may hold other sites' jobs, so it is
+never rebuilt in a pipeline: the new crontab is written to a file, checked with `diff`, and only then
+installed. Every copy stays private (mode 600, in the 700 snapshot folder), and only line counts,
+checksums, and the diff of the new lines are printed, never the other sites' job lines. Cron runs in
+the server's time zone, America/New_York.
+
+**Step 1: read, snapshot, and prepare** (changes nothing; runs in its own `bash`, so a STOP does not
+end your SSH session):
 
 ```sh
-sudo crontab -u mvandykeanthony -l > ~/venueatncc-deploy/crontab-mvandykeanthony-before.txt 2>&1; cat ~/venueatncc-deploy/crontab-mvandykeanthony-before.txt
-( sudo crontab -u mvandykeanthony -l 2>/dev/null
-  echo '# venueatncc: nightly SQLite backup, keeps 30 (docs/deploy-gcloud-apache.md section 12)'
-  echo '15 3 * * * cd /var/www/venueatncc.org/app && /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node server-dist/backup.mjs --keep 30 >> /var/www/venueatncc.org/logs/backup.log 2>&1'
-  echo '# venueatncc: weekly rotation of /var/www/venueatncc.org/logs'
-  echo '30 3 * * 0 /usr/sbin/logrotate -s /var/www/venueatncc.org/logs/.logrotate-state /var/www/venueatncc.org/logrotate.conf'
-) | sudo crontab -u mvandykeanthony -
-sudo crontab -u mvandykeanthony -l
-diff ~/venueatncc-deploy/crontab-mvandykeanthony-before.txt <(sudo crontab -u mvandykeanthony -l)   # only the 4 new lines
+bash <<'SH'
+set -u; umask 077; D=$HOME/venueatncc-deploy
+sudo crontab -u mvandykeanthony -l > "$D/cron-cur.txt" 2> "$D/cron-cur.err"; rc=$?
+if [ $rc -ne 0 ] && ! grep -q 'no crontab for mvandykeanthony' "$D/cron-cur.err"; then
+  echo "STOP: could not read mvandykeanthony's crontab (exit $rc); nothing changed"; cat "$D/cron-cur.err"; exit 1
+fi
+[ -e "$D/crontab-mvandykeanthony-before.txt" ] || cp "$D/cron-cur.txt" "$D/crontab-mvandykeanthony-before.txt"
+if grep -q 'venueatncc' "$D/cron-cur.txt"; then echo "STOP: venueatncc lines are already installed"; exit 1; fi
+cp "$D/cron-cur.txt" "$D/cron-new.txt"
+cat >> "$D/cron-new.txt" <<'CRON'
+# venueatncc: nightly SQLite backup, keeps 30 (docs/deploy-gcloud-apache.md section 12)
+15 3 * * * cd /var/www/venueatncc.org/app && /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node server-dist/backup.mjs --keep 30 >> /var/www/venueatncc.org/logs/backup.log 2>&1
+# venueatncc: weekly rotation of /var/www/venueatncc.org/logs
+30 3 * * 0 /usr/sbin/logrotate -s /var/www/venueatncc.org/logs/.logrotate-state /var/www/venueatncc.org/logrotate.conf
+CRON
+chmod 600 "$D/cron-cur.txt" "$D/cron-cur.err" "$D/cron-new.txt" "$D/crontab-mvandykeanthony-before.txt"
+echo "current: $(wc -l < "$D/cron-cur.txt") lines, md5 $(md5sum < "$D/cron-cur.txt" | cut -c1-32)"
+echo "new:     $(wc -l < "$D/cron-new.txt") lines"
+diff "$D/cron-cur.txt" "$D/cron-new.txt"
+SH
 ```
 
-(If the "before" file says `no crontab for mvandykeanthony`, the diff also shows that line removed;
-that is expected.)
+The `diff` must show exactly the 4 lines above being added (`> ...`) and nothing removed; the new
+line count is the current one plus 4. If not, stop.
+
+**Step 2: install**, only if the live crontab is still identical to what step 1 read:
+
+```sh
+D=~/venueatncc-deploy
+sudo crontab -u mvandykeanthony -l 2>/dev/null | cmp -s - "$D/cron-cur.txt" && sudo crontab -u mvandykeanthony "$D/cron-new.txt" && echo "installed" || echo "STOP: the crontab changed since step 1, or the install failed; nothing installed, re-run step 1"
+sudo crontab -u mvandykeanthony -l 2>/dev/null | cmp - "$D/cron-new.txt" && echo "OK: the live crontab matches cron-new.txt"
+```
 
 Check the next morning: `sudo tail /var/www/venueatncc.org/logs/backup.log` shows
-`Backed up /var/www/venueatncc.org/data/venue.db to .../venue-YYYYMMDD-HHMMSS.db`.
+`Backed up /var/www/venueatncc.org/data/venue.db to .../venue-YYYYMMDD-HHMMSS.db` (UTC time in the name).
 
-**Off-server copies** are the owner's decision (where to keep them). Backups on the same disk do not
-survive the loss of the VM. The simplest option is a periodic pull from another machine:
-`scp grokbot@34.30.208.144:...` after grokbot copies the newest file somewhere readable, or a GCP disk
-snapshot schedule (a GCP change, needs Joel).
+**Off-server copies** are the owner's decision (where to keep them; somewhere private, because the
+file holds guests' names, emails, and phone numbers). Backups on the same disk do not survive the loss
+of the VM. Either a GCP disk snapshot schedule (a GCP change, needs Joel), or a pull of the newest
+backup, done exactly like this and never through `/tmp` or any world-readable place:
+
+```sh
+# on the server: a private copy in the SSH account's home
+F=$(sudo ls -1 /var/www/venueatncc.org/data/backups/ | grep -E '^venue-[0-9]{8}-[0-9]{6}\.db$' | tail -1); echo "$F"
+sudo install -m 600 -o "$(id -un)" -g "$(id -gn)" "/var/www/venueatncc.org/data/backups/$F" ~/venueatncc-backup.db
+# on the machine that keeps the copies
+scp <SSH_USER>@34.30.208.144:venueatncc-backup.db ./venue-backup-$(date +%Y%m%d).db
+# back on the server, straight after
+rm -f ~/venueatncc-backup.db
+```
 
 ### 12.3 Check a backup
 
@@ -1189,7 +1341,9 @@ curl -sI http://127.0.0.1:3010/ | head -1              # 200
 # 8. pm2: three apps online, no restart loops (run twice, 30 s apart; restart counts must not grow)
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 ls' | tee pm2-after.txt
 # ncc-backend (0), vandyke-home-loan (1), venueatncc: all "online". Compare ids, names, and restart counts of 0 and 1 with pm2-before.txt.
-# Then (only now): pm2 save, as in section 7.4, if not done yet.
+# Then (only now): pm2 save, as in section 7.4 (the gated command), if not done yet.
+ps -eo user,args | grep '[P]M2 v'                       # exactly ONE line, user mvandykeanthony (no second daemon from sudo/npx pm2)
+diff pm2-daemons-before.txt <(ps -eo user,args | grep '[P]M2 v')   # no output
 
 # 9. Node untouched
 sudo -H -u mvandykeanthony bash -c 'cat /home/mvandykeanthony/.nvm/alias/default; /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node -v' | tee node-after.txt
@@ -1203,11 +1357,18 @@ df -h /
 curl -sI https://venueatncc.org/about/ | grep -i '^location'                         # /the-space/
 curl -sI https://venueatncc.org/events/church-community-events/ | grep -i '^location' # /events/community-events/
 sudo -H -u mvandykeanthony bash -c 'ls -la /var/www/venueatncc.org/data /var/www/venueatncc.org/data/backups'
+
+# 12. Nothing sensitive is reachable over the web
+sudo ls -A /var/www/venueatncc.org/public_html            # empty (or only .well-known)
+for p in /.env /app/.env /ecosystem.config.cjs /better_sqlite3.node.keep /data/venue.db /logs/out.log /package.json; do
+  printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "https://venueatncc.org$p")" "$p"
+done                                                    # every line 404 (the app's 404 page), never 200 with file content
 ```
 
 Also confirm: the first admin exists and signed in (10.4), the test inquiry is archived, a backup
 file exists, the crontab has the two venueatncc jobs (if J1 was approved), and `pm2 save` ran after
-all three apps were online.
+all three apps were online. Report the deployed commit (`deployed-commit.txt`, which must be the
+lead's `<APPROVED_COMMIT>`) to Joel with the results.
 
 ---
 
@@ -1215,21 +1376,28 @@ all three apps were online.
 
 ### 14.1 Update (new site only)
 
+Update only to a commit the lead has reviewed (`<APPROVED_COMMIT>`), never to whatever is on `main`
+at the time. If the new commit changes the better-sqlite3 version in `package-lock.json`, rebuild
+`better_sqlite3.node.keep` for that version first ([5.4](#54-the-native-add-on-better-sqlite3)).
+
 ```sh
 # 0. Record what is running now, and check memory
-git -C /var/www/venueatncc.org/app rev-parse HEAD | tee ~/venueatncc-deploy/previous-commit.txt
+sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse HEAD' | tee ~/venueatncc-deploy/previous-commit.txt
 free -m
 
 # 1. Back up the database (a new version can run a migration that rebuilds tables)
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && /home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin/node server-dist/backup.mjs --keep 30'
 
-# 2. Pull the new code
-sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && git fetch origin && git checkout main && git pull --ff-only origin main && git log -1 --oneline'
+# 2. Check out the approved commit
+sudo -H -u mvandykeanthony bash -c 'umask 002; cd /var/www/venueatncc.org/app && git fetch origin && git checkout <APPROVED_COMMIT> && git log -1 --oneline'
+sudo -H -u mvandykeanthony bash -c 'git -C /var/www/venueatncc.org/app rev-parse HEAD' | tee ~/venueatncc-deploy/deployed-commit.txt
 
-# 3. Install and build (Path A). The site is built into .tmp/dist-next so the live dist/ keeps serving until the swap.
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund && node -e "require(\"better-sqlite3\")" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs'
+# 3. Install and build (Path A). npm ci, the copy of the rebuilt better-sqlite3 binary, and its check are
+#    one chain, so the check never sees the unusable downloaded binary. The site is built into
+#    .tmp/dist-next so the live dist/ keeps serving until the swap.
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && npm ci --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && NODE_OPTIONS=--max-old-space-size=1536 nice -n 19 npx astro build --outDir .tmp/dist-next && npm run build:server && npx esbuild server/cli/create-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/create-admin.mjs && npx esbuild server/cli/backup.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=server-dist/backup.mjs && echo "STEP 3 OK"'
 
-# 4. Swap the site in and restart this app only (migrations run automatically at start, db.ts:244)
+# 4. Only if step 3 printed "STEP 3 OK": swap the site in and restart this app only (migrations run automatically at start, db.ts:244)
 sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/dist-next/index.html && rm -rf .tmp/dist-prev && mv dist .tmp/dist-prev && mv .tmp/dist-next dist'
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && sleep 5 && pm2 ls'
 
@@ -1239,9 +1407,30 @@ curl -s -o /dev/null -w '%{http_code}\n' https://venueatncc.org/
 sudo tail -n 20 /var/www/venueatncc.org/logs/error.log
 ```
 
-If better-sqlite3 needed the uploaded binary from 5.4 step 3, copy it back in after `npm ci` (before
-the `node -e` check). With Path B, build on the other machine as in 5.3 and upload; then
-`npm ci --omit=dev`, swap, restart. Changing only `.env`: edit it, then `pm2 restart venueatncc`.
+**If step 3 fails anywhere, do not restart the app.** `npm ci` has already replaced `node_modules`
+while the old process keeps running from memory, so the site stays up until the next restart, but
+any restart now (including a crash, `max_memory_restart`, or a reboot) would fail. Fix the cause and
+re-run step 3 until it prints `STEP 3 OK`. To return to the running version instead, check out
+`previous-commit.txt` (14.2) and re-run step 3 for it before any restart. Never split the chain in
+step 3: run without the `cp`, the restart would load the downloaded GLIBC_2.29 binary and crash-loop
+up to `max_restarts` (10), taking the site down.
+
+**With Path B**, build `<APPROVED_COMMIT>` on the other machine as in 5.3 and upload the tarball to
+`/tmp/` as there. On the server run steps 0 to 2, then instead of steps 3 and 4:
+
+```sh
+# 3B. Unpack into .tmp/next (not over the live files), install runtime packages, copy and check the add-on
+chmod 644 /tmp/venueatncc-build.tgz
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; umask 002; cd /var/www/venueatncc.org/app && rm -rf .tmp/next && mkdir -p .tmp/next && tar xzf /tmp/venueatncc-build.tgz -C .tmp/next && npm ci --omit=dev --no-audit --no-fund --cache /var/www/venueatncc.org/.npm-cache && cp /var/www/venueatncc.org/better_sqlite3.node.keep node_modules/better-sqlite3/build/Release/better_sqlite3.node && node -e "const D=require(\"better-sqlite3\");console.log(new D(\":memory:\").prepare(\"select sqlite_version() v\").get())" && echo "STEP 3 OK"'
+rm -f /tmp/venueatncc-build.tgz
+# 4B. Only after "STEP 3 OK": swap dist/ and server-dist/, then restart this app only
+sudo -H -u mvandykeanthony bash -c 'cd /var/www/venueatncc.org/app && test -f .tmp/next/dist/index.html && test -f .tmp/next/server-dist/index.mjs && rm -rf .tmp/dist-prev .tmp/server-dist-prev && mv dist .tmp/dist-prev && mv server-dist .tmp/server-dist-prev && mv .tmp/next/dist dist && mv .tmp/next/server-dist server-dist'
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && sleep 5 && pm2 ls'
+```
+
+The same rule applies: if 3B fails, do not restart; fix and re-run it.
+
+Changing only `.env`: edit it, then restart this app with the command in step 4.
 
 ### 14.2 Roll back the code (new site only)
 
@@ -1254,22 +1443,39 @@ If the new version ran a migration, the older code refuses the database ("schema
 than this server"). Then also restore the backup from step 1 ([12.4](#124-restore)).
 
 The quick undo for a bad site build alone, without rebuilding: swap `.tmp/dist-prev` back into
-`dist` and `pm2 restart venueatncc`.
+`dist`, then restart this app:
+`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`.
 
 ### 14.3 Remove the site entirely (new site only)
 
 ```sh
-# pm2: delete only venueatncc, then save once the other two are confirmed online [SHARED]
+# pm2: delete only venueatncc [SHARED]
 sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 delete venueatncc && pm2 ls'
-sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 save'
+# save only if the other two are online; the command checks and refuses otherwise [SHARED]
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; n=$(pm2 ls | grep -E "ncc-backend|vandyke-home-loan" | grep -cw online); if [ "$n" -eq 2 ]; then pm2 save; else echo "STOP: $n of 2 apps online, pm2 save NOT run; tell Joel"; fi'
 # Apache: disable only the new vhosts, then a graceful reload [SHARED]
 sudo a2dissite venueatncc.org.conf venueatncc.org-le-ssl.conf && sudo apachectl configtest && sudo systemctl reload apache2
 sudo apachectl -S
-# crontab: remove the venueatncc lines only (restores the saved copy if nothing else changed since) [SHARED]
-sudo crontab -u mvandykeanthony -l | grep -v -e 'venueatncc' | sudo crontab -u mvandykeanthony -
 # certificate: [SHARED, JOEL OK] (J4) only if asked
 # sudo certbot delete --cert-name venueatncc.org
 ```
+
+**crontab: remove the venueatncc lines only [SHARED, JOEL OK] (J1).** Same file-and-diff method as
+12.2; never a pipeline into `crontab -`:
+
+```sh
+bash <<'SH'
+set -u; umask 077; D=$HOME/venueatncc-deploy
+sudo crontab -u mvandykeanthony -l > "$D/cron-cur.txt" 2> "$D/cron-cur.err" || { echo "STOP: could not read the crontab; nothing changed"; cat "$D/cron-cur.err"; exit 1; }
+grep -v -e '^# venueatncc' -e '/var/www/venueatncc.org/' "$D/cron-cur.txt" > "$D/cron-new.txt"
+chmod 600 "$D/cron-cur.txt" "$D/cron-cur.err" "$D/cron-new.txt"
+echo "current: $(wc -l < "$D/cron-cur.txt") lines; new: $(wc -l < "$D/cron-new.txt") lines"
+diff "$D/cron-cur.txt" "$D/cron-new.txt"
+SH
+```
+
+The `diff` must show exactly the 4 venueatncc lines removed (`< ...`) and nothing else. Then install
+with step 2 of [12.2](#122-the-crontab-entries-shared-joel-ok-j1) (the same two commands).
 
 Keep `/var/www/venueatncc.org/data/` (guest data) until the owner decides what to do with it.
 
@@ -1277,7 +1483,7 @@ Keep `/var/www/venueatncc.org/data/` (guest data) until the owner decides what t
 
 ## 15. Troubleshooting
 
-**`GLIBC_2.28 not found`, `GLIBC_2.29 not found`, or `node: command not found`.** The wrong Node
+**`GLIBC_2.28 not found` (naming `node`), or `node: command not found`.** The wrong Node
 ran. Every owner command must start with
 `export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH`, and pm2's `interpreter`
 must be the absolute v24 path. Check with `which node; node -v` inside the same `bash -c`. Do not
@@ -1287,16 +1493,20 @@ fails, run `patchelf --print-interpreter --print-rpath /home/mvandykeanthony/.nv
 do not re-patch it yourself.
 
 **better-sqlite3 will not load** (`Error loading shared library`, `GLIBCXX_3.4.xx not found`,
-`NODE_MODULE_VERSION` mismatch, `Could not locate the bindings file`). Work down the ladder in
-[5.4](#54-the-native-add-on-better-sqlite3). A `NODE_MODULE_VERSION` mismatch means npm ran under a
-different Node; re-run `npm ci` with the v24 `PATH`.
+`NODE_MODULE_VERSION` mismatch, `Could not locate the bindings file`).
+- `GLIBC_2.29 not found` naming `better_sqlite3.node`: the downloaded prebuilt is in place (an
+  `npm ci` ran without the copy). This happens with the correct Node too; it is not a PATH problem.
+  Copy the off-server build back in (5.4 step 3) and re-run the check before any restart.
+- Otherwise work through [5.4](#54-the-native-add-on-better-sqlite3). A `NODE_MODULE_VERSION`
+  mismatch means npm ran under a different Node, or the `.keep` file was built for another Node or
+  better-sqlite3 version; re-run `npm ci` with the v24 `PATH`, or rebuild the `.keep` file.
 
 **sharp or the Astro build fails on the server** (`Could not load the "sharp" module`, `GLIBC`
 errors from `@img/sharp-linux-x64` or `@resvg/resvg-js`, or the build is killed for memory). Use
 Path B ([5.3](#53-path-b-build-elsewhere-upload-the-output)); the runtime does not need sharp.
 
-**Apache answers 502 or 503.** The app is not listening. `pm2 ls` (is `venueatncc` online or
-looping?), `sudo tail -n 50 /var/www/venueatncc.org/logs/error.log`, `sudo ss -tlnp | grep 3020`,
+**Apache answers 502 or 503.** The app is not listening. `pm2 ls` with the owner wrapper (is
+`venueatncc` online or looping?), `sudo tail -n 50 /var/www/venueatncc.org/logs/error.log`, `sudo ss -tlnp | grep 3020`,
 `curl -s http://127.0.0.1:3020/api/health`. Common causes in the log:
 `SESSION_SECRET is required when NODE_ENV=production` or `must be at least 32 characters`
 (`.env` missing, not readable by the owner, or the symlink `app/.env` is broken: `ls -l /var/www/venueatncc.org/app/.env`);
@@ -1305,15 +1515,21 @@ looping?), `sudo tail -n 50 /var/www/venueatncc.org/logs/error.log`, `sudo ss -t
 A 503 lasting about a minute after a restart means `retry=0` is missing from a `ProxyPass` line.
 
 **pm2 shows `errored` or a growing restart count.** `sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 logs venueatncc --lines 50 --nostream'`.
-If the restarts line up with sign-ins, raise `max_memory_restart` in the ecosystem file, then
-`pm2 delete venueatncc && pm2 start /var/www/venueatncc.org/ecosystem.config.cjs --only venueatncc`
-(ecosystem changes need a fresh start of this app; never `restart all`), and `pm2 save` once all
-three are online.
+If the restarts line up with sign-ins, raise `max_memory_restart` in the ecosystem file, then start
+this app fresh (ecosystem changes need it; never `restart all`):
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 delete venueatncc && pm2 start /var/www/venueatncc.org/ecosystem.config.cjs --only venueatncc && sleep 5 && pm2 ls'
+```
+
+Then save with the gated command from [7.4](#74-save-the-process-list-shared), which runs `pm2 save`
+only when all three apps are online.
 
 **Port in use** (`EADDRINUSE 127.0.0.1:3020`). `sudo ss -tlnp | grep -E ':3020\b'` names the process.
 If it is not a stale `venueatncc`, choose 3030 or 4010 and change it in `.env`, the ecosystem file,
-and both vhost files (`ProxyPass` and `ProxyPassReverse`), then restart this app, `configtest`, and
-reload Apache.
+and both vhost files (`ProxyPass` and `ProxyPassReverse`), then start this app fresh with the
+`pm2 delete venueatncc && pm2 start ...` command above (the port is in the ecosystem file), and
+`sudo apachectl configtest && sudo systemctl reload apache2`.
 
 **certbot picks the wrong vhost, shows a menu, or fails validation.**
 - It must find exactly one :80 vhost whose `ServerName`/`ServerAlias` are the two names; check
@@ -1335,14 +1551,23 @@ reload Apache.
 
   Then add the redirect lines from 9.4 to `venueatncc.org.conf` (and remove its ProxyPass lines),
   configtest, reload. Renewals then use the webroot method automatically
-  (`/etc/letsencrypt/renewal/venueatncc.org.conf`); confirm with `sudo certbot renew --dry-run`.
+  (`/etc/letsencrypt/renewal/venueatncc.org.conf`); confirm with
+  `sudo certbot renew --dry-run --cert-name venueatncc.org`.
 - `The requested apache plugin does not appear to be installed`: stop; that is a shared certbot
   problem for Joel.
 
-**Wrong client IP** (everyone gets "Too many sign-in attempts" together, or the admin session list
-shows 127.0.0.1). `TRUST_PROXY` is not `true`, or the app was not restarted after changing `.env`.
-`sudo grep TRUST_PROXY /var/www/venueatncc.org/.env`, then `pm2 restart venueatncc`. Never set
-`TRUST_PROXY=true` if the app listens on anything but 127.0.0.1.
+**Wrong client IP** (everyone gets "Too many sign-in attempts" together). The admin pages show no
+IP addresses; the client IP is stored only with each admin session (`server/repo.ts:371-374`). After
+a sign-in, look at the newest sessions:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; cd /var/www/venueatncc.org/app && node -e "const D=require(\"better-sqlite3\");console.log(new D(\"/var/www/venueatncc.org/data/venue.db\",{readonly:true}).prepare(\"select ip,created_at from sessions order by created_at desc limit 5\").all())"'
+```
+
+If it shows `127.0.0.1`, `TRUST_PROXY` is not `true`, or the app was not restarted after changing
+`.env`. `sudo grep TRUST_PROXY /var/www/venueatncc.org/.env`, then restart this app
+(`sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && pm2 ls'`).
+Never set `TRUST_PROXY=true` if the app listens on anything but 127.0.0.1.
 
 **Admin cookie not set, or sign-in "works" but the next page says Sign in to continue.**
 - The cookie is `__Host-ncc_session` with `Secure`, so it only works over https. Sign in at
