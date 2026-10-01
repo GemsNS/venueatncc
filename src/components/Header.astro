@@ -14,11 +14,17 @@
  * `over="photo"` (a page whose hero is a photograph under the transparent bar) sets white text and the
  * white lockup until the bar turns solid.
  *
- * On the home page (`morph`) the lockup's two words are hidden until the welcome's large name has scrolled
- * into their place (src/pages/index.astro, "The morph"); the page's script then sets data-morphed. Readers
- * who prefer reduced motion, browsers without scripts, and short screens (where the bar scrolls away) see
- * the lockup at once. The morph and the solid bar are both tied to the hero's height, so the name lands in
- * the bar as the bar turns solid.
+ * On the home page (`morph`) the lockup is hidden until the welcome's large name has flown into its place
+ * (src/pages/index.astro, "The morph"), then fades in beneath it on the same scroll timeline and the page's
+ * script sets data-morphed. Readers who prefer reduced motion, browsers without scripts, and short screens
+ * (where the bar scrolls away) see the lockup at once. The morph and the solid bar are both tied to the
+ * hero's height, so the name lands in the bar as the bar turns solid.
+ *
+ * The lockup is the bar's largest element: 40px tall on phones, 44px on tablets, 46px from 960px and 52px
+ * on wider screens, in a bar 64px tall on phones, 72px on tablets and small desktops, and 80px from 1120px
+ * (--nav-h in global.css). Where the room beside it runs short (a 320px phone, the first few pixels past
+ * 1120px, larger text) it gives way first, never under the brand's 32px minimum, so nothing overlaps.
+ * The demo pill shows only where there is room for it: 480px to 959px, and from 1200px.
  */
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
@@ -120,13 +126,17 @@ const showCta = !current(bookHref);
 </dialog>
 
 <script>
-  // The solid bar: once the hero (the home video) has scrolled past the bar, or after 8px on pages without one.
+  /*
+    The solid bar: once the hero (the home video) has scrolled past the bar while the welcome's name flies
+    into it (data-morph), or after 8px otherwise: on pages without a hero, and on the home page when the
+    morph is off (reduced motion, short screens), where the welcome scrolls away under the bar.
+  */
   const nav = document.querySelector<HTMLElement>('[data-nav]');
   if (nav) {
     const hero = document.querySelector<HTMLElement>('[data-hero]');
     const threshold = () => (hero ? Math.max(8, hero.offsetHeight - nav.offsetHeight) : 8);
     let limit = threshold();
-    const onScroll = () => nav.toggleAttribute('data-solid', window.scrollY >= limit);
+    const onScroll = () => nav.toggleAttribute('data-solid', window.scrollY >= (nav.hasAttribute('data-morph') ? limit : 8));
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
@@ -163,8 +173,25 @@ const showCta = !current(bookHref);
 
 <style>
   /* Transparent at the top of the page, so the hero runs under it; solid Blush and a hairline on scroll. */
+  /*
+    The lockup's height on compact screens: 40px, or less where the centre column is narrower (a 320px
+    phone, larger text), so it always fits between the two 44px round buttons (each pulled 8px into the
+    gutter): the room left is 100vw less both gutters and 76px, and the lockup is 533/100 as wide as tall.
+  */
+  .nav,
+  .menu {
+    --lockup-h: clamp(32px, (100vw - 2 * var(--gutter) - 76px) * 0.1876, 40px);
+  }
+
+  /* Tablets (compact, from 46.5rem): 44px. */
+  @media (46.5rem <= width < 60rem) {
+    .nav,
+    .menu {
+      --lockup-h: 44px;
+    }
+  }
+
   .nav {
-    --lockup-h: 32px;
     position: sticky;
     top: 0;
     z-index: 60;
@@ -223,25 +250,17 @@ const showCta = !current(bookHref);
   }
 
   /*
-    Home: the lockup's words are hidden until the welcome's name has morphed into their place, then the
-    page's script sets data-morphed (the ring fades in meanwhile, driven by --nav-ring). Readers who prefer
-    reduced motion, and browsers without scripts, see the whole lockup at once.
+    Home: the lockup waits, unseen, while the welcome's name flies into its place; the page's scroll
+    timeline then fades it in under the arriving name, which is drawn in exactly the same place, and sets
+    data-morphed. Readers who prefer reduced motion, short screens, and browsers without scripts see the
+    lockup at once.
   */
-  .nav[data-morph]:not([data-morphed]) :global(.logo [data-part]) {
+  .nav[data-morph] .nav__lockup {
     opacity: 0;
   }
 
-  .nav[data-morph]:not([data-morphed]) :global(.logo circle),
-  .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])),
-  /* Phones (the welcome stacks its words): "@ NCC" fades in with the ring while "The Venue" travels. */
-  .nav[data-morph][data-morph-stack]:not([data-morphed]) :global(.logo [data-part='at-ncc']) {
-    opacity: var(--nav-ring, 0);
-  }
-
   @media (prefers-reduced-motion: reduce), (scripting: none), (max-height: 500px) {
-    .nav[data-morph]:not([data-morphed]) :global(.logo [data-part]),
-    .nav[data-morph]:not([data-morphed]) :global(.logo circle),
-    .nav[data-morph]:not([data-morphed]) :global(.logo path:not([data-part])) {
+    .nav[data-morph] .nav__lockup {
       opacity: 1;
     }
   }
@@ -252,10 +271,17 @@ const showCta = !current(bookHref);
   }
 
   /*
-    Phones up to about 430px wide have no room for the demo pill between the menu button and the centred
+    Phones up to 480px wide have no room for the demo pill between the menu button and the centred
     lockup (it would overlap the ring), so it is left out there; the footer's demo line still says so.
   */
-  @media (width < 28rem) {
+  @media (width < 30rem) {
+    .nav__demo {
+      display: none;
+    }
+  }
+
+  /* Nor is there room for it beside the links and the larger lockup from 960px to 1199px. */
+  @media (60rem <= width < 75rem) {
     .nav__demo {
       display: none;
     }
@@ -348,10 +374,14 @@ const showCta = !current(bookHref);
     inset: -4px 0;
   }
 
-  /* Regular size class: the links and the call to action; no menu button. */
+  /*
+    Regular size class: the links and the call to action; no menu button. The lockup is 52px tall, or less
+    where the bar is too narrow for it beside its two sides (each held to 22rem: the links, or the phone and
+    the call to action), so larger text shrinks the name before anything can overlap; never under 32px.
+  */
   @media (min-width: 60rem) {
     .nav {
-      --lockup-h: 36px;
+      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 46rem) * 0.1876, 52px);
     }
 
     .nav__menu {
@@ -364,6 +394,11 @@ const showCta = !current(bookHref);
     .nav__links,
     .nav__cta {
       display: none;
+    }
+
+    /* The two round buttons carry their own space, so the lockup can take all of the centre. */
+    .nav__inner {
+      column-gap: 0;
     }
 
     .nav__left {
@@ -394,21 +429,17 @@ const showCta = !current(bookHref);
   }
 
   /*
-    Regular but narrow (960px to 1119px at default text size, a 1024px tablet included): the lockup at its
-    32px minimum, tighter links, the phone as an icon, and no demo pill, so the name, the four links, and
-    the call to action fit on one row.
+    Regular but narrow (960px to 1119px at default text size, a 1024px tablet included): the lockup at
+    46px, tighter links, and the phone as an icon, so the name, the four links, and the call to action fit
+    on one row.
   */
   @media (60rem <= width < 70rem) {
     .nav {
-      --lockup-h: 32px;
+      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 37rem) * 0.1876, 46px);
     }
 
     .nav__inner {
       gap: 0.5rem;
-    }
-
-    .nav__demo {
-      display: none;
     }
 
     .nav__links ul {
@@ -445,7 +476,6 @@ const showCta = !current(bookHref);
   /* ---------- The full-screen menu ---------- */
 
   .menu {
-    --lockup-h: 32px;
     width: 100vw;
     max-width: 100vw;
     height: 100dvh;

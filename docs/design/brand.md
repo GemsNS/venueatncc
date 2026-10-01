@@ -31,7 +31,9 @@ amendments supersede the matching version 4 rules below wherever the two differ.
    photos. The header's Check Availability is filled on every page, and an in-page primary may be filled too;
    the one-filled-button-per-viewport rule is withdrawn.
 7. **The morph** runs over the hero's height (0 to 100svh minus the bar), so the name lands in the header as
-   the bar turns solid.
+   the bar turns solid. Since version 5.1 (2026-10-01) the name moves as one rigid shape on the browser's
+   scroll timeline, and the header lockup is larger (40px on phones, 52px on desktops); see "Header and the
+   morph".
 
 ## What changed in version 4, and why
 
@@ -133,12 +135,15 @@ Text italic. The ring frames the monogram the way a wax seal or an embossed invi
 | `venue-lockup-white.svg` | white `#FFFFFF`, accent Pink `#E9A9BB` | Over photos and on share images |
 | `venue-mark.svg` / `-white.svg` | as above | Monogram alone: admin sidebar, avatars |
 | `venue-wordmark.svg` / `-white.svg` | as above | Wordmark alone |
-| `venue-word-the-venue.svg`, `venue-word-at-ncc.svg` | Plum, Berry | The two words of the lockup, each in a tight viewBox, for the home welcome (see Home) |
+| `venue-word-the-venue.svg`, `venue-word-at-ncc.svg` | Plum, Berry | The two words of the lockup, each in a tight viewBox. Kept as artwork; the site no longer uses them (the home welcome is cut from the lockup itself, below) |
 
-In the lockup and wordmark the two word paths carry `data-part="the-venue"` and `data-part="at-ncc"`, so the
-home page can measure where each word sits in the header. `src/components/Logo.astro` recolors the SVG
+In the lockup and wordmark the two word paths carry `data-part="the-venue"` and `data-part="at-ncc"`.
+`Logo` cuts two variants from the lockup for the home welcome: `lockup-name` (the words alone, with the
+viewBox cut to `NAME_BOX` in `src/lib/lockup.ts`, x 125 to 527.5 and y 23 to 77 of the lockup's 533 by 100)
+and `lockup-ring` (the ring and its V, the first 100 units). Side by side at one scale they are the lockup. `src/components/Logo.astro` recolors the SVG
 through CSS variables by matching these exact hex values (`#3B2430` ink, `#9E2B52` accent, `#FFFFFF` light
-ink, `#E9A9BB` light accent). Minimum lockup height 32px. Icons in `public/`: favicon.ico, favicon.svg,
+ink, `#E9A9BB` light accent). Minimum lockup height 32px; the header sets it at 40px on phones, 44px on
+tablets, 46px from 960px and 52px on wider screens (Header and the morph). Icons in `public/`: favicon.ico, favicon.svg,
 favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Berry with a white
 monogram); `public/brand/email-lockup.png` is the email header.
 
@@ -151,7 +156,8 @@ accents real contrast; Plum is the ink. Nothing else is added.
 photo scrims, Berry for buttons and accents; neither is a large surface. Specifically:
 
 - **Header (version 5):** transparent over the home hero, then a solid Blush bar with a hairline once the hero
-  has scrolled past; inner pages start with the solid bar. Links left, lockup centred, phone and Check
+  has scrolled past (after 8px when the morph is off: reduced motion, short screens); inner pages start with
+  the solid bar. Links left, lockup centred, phone and Check
   Availability right; on phones a menu button opens the full-screen menu and the phone becomes a round icon
   button.
 - **Welcome surface (home, version 5):** the petals video under a Blush veil; Plum name, Berry "@ NCC", Mauve
@@ -209,19 +215,41 @@ follows the reference site's light serif display over a quiet sans, with our own
 ## Header and the morph
 
 The header is a three-column grid: links (Events, The Space, Rates, FAQ), the lockup centred, then the
-phone and Check Availability. It is sticky, transparent at the top, and strong glass with a hairline once
-scrolled (`data-scrolled`). On the home page the lockup's two words stay hidden (opacity 0) until the welcome
-has morphed into them, and the ring fades in over the last part of the way (`--nav-ring`).
+phone and Check Availability; on compact screens (below 60rem) a menu button, the lockup centred, and a
+round phone button. It is sticky, transparent over the home hero, and a solid Blush bar with a hairline once
+the hero has scrolled past (`data-solid`).
 
-The morph (`src/pages/index.astro`): the welcome shows the lockup's two word outlines at display size. On
-load, and on resize, the script measures each word's resting rectangle and its twin's rectangle in the
-header (the `data-part` paths of whichever lockup is displayed). On each scroll frame it sets a transform
-alone, translate and scale from rest toward the twin in step with progress p = scrollY / distance, where the
-distance is the greater of the word's natural travel and about half a screen (at most 420px). At p = 1 the
-header gets `data-morphed`, shows its own lockup, and the welcome's words are hidden; scrolling back reverses
-it. Transforms never touch layout, so nothing below shifts (the photo band's document position is constant
-through every frame). Under `prefers-reduced-motion: reduce`, on short screens (where the bar scrolls away),
-and without scripts, the header lockup shows at once and the welcome stays still.
+**The lockup is the bar's largest element** (version 5.1, after the owner asked for a bigger name): 40px tall
+on phones, 44px on tablets, 46px from 960px to 1119px, and 52px from about 1140px, in a bar 64px tall on
+phones, 72px on tablets and small desktops, and 80px from 1120px (`--nav-h`). Where the room beside it runs
+short it gives way first, never under 32px: on compact screens its width is the centre left between the two
+44px buttons (a 320px phone gets 39px, 200% text 34px); on regular screens each side is held to 22rem (17.5rem
+from 960px to 1119px), so larger text shrinks the name before a link can touch it. The links stay 16px
+Caslon Text. The demo pill shows only where there is room: 480px to 959px, and from 1200px.
+
+**The morph** (`src/pages/index.astro`, version 5.1). The welcome's name is the header lockup's own words
+(`Logo` `lockup-name`) on one line at every width, 94vw on phones and 74vw (at most 68rem) from 46.5rem, with
+the lockup's ring (`lockup-ring`) beside it where the lockup has it, unseen. It moves as one rigid shape, so
+no part of it ever crosses another. On load, resize, font load, or a change of text size the script measures
+once where the words rest and where the header's words sit (the lockup's box and `NAME_BOX`), and builds the
+tracks as plain numbers. Over the hero's height less the bar (the scroll after which the bar turns solid):
+
+- the name's outer box holds it still on the screen while the page scrolls, and its inner box glides up and
+  shrinks to the header's size with a quadratic ease-out, so it leaves at once and settles gently;
+- the ring fades in over 45% to 92% of the way, so the lockup gathers around the name as it arrives;
+- "Welcome to" scrolls away above the name and is gone by 20% (it rises faster than the name, so they never
+  meet); the line and the button stay put below the name, fade by 25% (then take no taps), and the page
+  slides up over them;
+- in the last few pixels the header's own lockup, drawn in exactly the same place, fades in and the moving
+  name fades out, and the header gets `data-morphed`. Scrolling back reverses all of it.
+
+Everything is a transform or an opacity on a scroll timeline (`ScrollTimeline` with the Web Animations API),
+so the browser's compositor moves the name in the same frame as the scroll, with no script per frame and no
+layout reads; browsers without scroll timelines run the same tracks from a frame callback. No filters animate
+(the name has no halo: over every sampled frame of the clip Plum keeps at least 8.2:1 and Berry 4.2:1, and
+in dark mode 7.6:1 and 4.5:1). Under `prefers-reduced-motion: reduce`, on short screens (where the bar
+scrolls away), and without scripts, the header lockup shows at once, the welcome stays still and scrolls
+under the bar, and the bar turns solid after 8px.
 
 ## Motion and graphics
 
@@ -344,10 +372,9 @@ exactly once, neutrally, in one FAQ entry. Prices never appear.
 **Home.** In order:
 
 1. **The welcome.** On Blush with petals: the h1 "Welcome to The Venue @ NCC", where "Welcome to" is a Caslon
-   Text italic line and the name is the lockup's two word outlines (`Logo` variants `word-the-venue` and
-   `word-at-ncc`, with the name in visually hidden text). The words keep the lockup's proportions through
-   one unit `--u`: from 46.5rem on one line, 74vw wide (at most 68rem); on phones stacked, "The Venue" at
-   92vw, so the whole name fits a 320px screen without wrapping awkwardly. One small Berry eyebrow line,
+   Text italic line and the name is the lockup's own words (`Logo` variant `lockup-name`, with the name in
+   visually hidden text) on one line at every width, in the lockup's proportions through one unit `--u`:
+   94vw wide on phones, 74vw (at most 68rem) from 46.5rem, the same shape it lands on in the header. One small Berry eyebrow line,
    "Event venue in Suffolk, Virginia", closes it. Nothing else shares the first screen's Blush.
 2. **The photo band.** `grove-pines`, full bleed (the portrait file on phones), with the date checker
    floating on glass at the bottom right from 64rem and as a card under the photo below that. Every frame

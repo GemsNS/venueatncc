@@ -96,23 +96,27 @@ be filled (the reference does this), so the old one-filled-button-per-viewport r
 ### Motion
 
 `--ease-out` cubic-bezier(0.22, 1, 0.36, 1); `--dur-1` 160ms, `--dur-2` 280ms, `--dur-3` 480ms. The hero video
-loops muted. The name-to-logo morph runs over the hero's height (0 to 100svh minus the bar), transforms only.
-The morph eases out (1 minus (1 minus p) squared); once the scroll would carry a word above its place in the
-bar, the word holds at that height and shrinks into place, so the name never leaves the screen. Carousels
-scroll with native snap. Under `prefers-reduced-motion: reduce`: the video is hidden and paused and its
-poster shows, the morph is off (the header lockup shows at once), and every transition is instant.
+loops muted. The name-to-logo morph runs over the hero's height (0 to 100svh minus the bar), transforms and
+opacity only, on the browser's scroll timeline (brand.md, "Header and the morph"). The name is the lockup's
+own words on one line and moves as one rigid shape: it holds still on the screen while the page scrolls and
+glides up and shrinks into the bar with an ease-out (1 minus (1 minus p) squared), the ring gathers around
+it, and in the last few pixels the header's own lockup takes over in exactly the same place. "Welcome to"
+scrolls away above it by 20%; the line and the button stay put below it and fade by 25%. Nothing crosses
+anything. Carousels scroll with native snap. Under `prefers-reduced-motion: reduce`: the video is hidden and
+paused and its poster shows, the morph is off (the header lockup shows at once and the bar turns solid after
+8px), and every transition is instant.
 
 The hero overlay is Blush: a radial veil (0.9 at the centre, 0.62 at 70 percent, 0.45 at the edge) over a
-0.35 wash, and the words carry a soft Blush halo. Measured over every sampled frame of the clip, Plum keeps
-7.0:1 and Berry 3.5:1 (large text) on the darkest pink behind the name, before the halo.
+0.35 wash. The name carries no halo (no filter on anything that moves): measured over every sampled frame of
+the clip, Plum keeps at least 8.2:1 and Berry 4.2:1 behind the name, and in dark mode 7.6:1 and 4.5:1.
 
 ## 3. Component catalogue (`src/components/`)
 
 | Component | Anatomy | Desktop | Phone |
 |---|---|---|---|
-| `Header.astro` | Menu button (phones), links (Events, The Space, Rates, FAQ) left, lockup centred, phone and Check Availability right. `over="light"` (default) keeps Plum text; `over="photo"` uses the white lockup and white text until the bar turns solid. Solid Blush with a hairline once the hero (`[data-hero]`) has scrolled past, or after 8px on pages without one. | Three columns, 72px tall | Menu button left, lockup centred (32px), phone icon right, 60px tall |
+| `Header.astro` | Menu button (phones), links (Events, The Space, Rates, FAQ) left, lockup centred, phone and Check Availability right. `over="light"` (default) keeps Plum text; `over="photo"` uses the white lockup and white text until the bar turns solid. Solid Blush with a hairline once the hero (`[data-hero]`) has scrolled past, or after 8px on pages without one. | Three columns, 80px tall with a 52px lockup (72px and 46px from 960px to 1119px) | Menu button left, lockup centred (40px; 44px on tablets in a 72px bar; less only where a 320px screen or large text leaves less room, never under 32px), phone icon right, 64px tall |
 | The menu (inside `Header.astro`) | A native `<dialog>` that fills the screen on Blush: a close button where the menu button was, the lockup centred, then Home, Events, The Space, Rates, FAQ in Caslon Display 2.25rem with chevrons, Check Availability (filled, large), Call (outline), and the address. Escape closes it, focus starts on the close button and returns to the menu button, the page does not scroll behind it (`html.menu-open`), and any link inside closes it. | Never shown | Full screen |
-| `HeroVideo.astro` | A 100svh section (`data-hero`) whose media is fixed to the viewport: a poster `<img>` beneath a muted, looping, playsinline `<video>` (WebM then MP4) under the Blush overlay; the slot content is centred; the content after it (`.page` on the home page, with its own background) slides up over it. The section makes no stacking context, so the welcome's words can rise above the bar. Reduced motion hides the video, pauses it by script, and shows the poster. | 100svh | 100svh (the poster is cropped by `object-fit: cover`, which is fine for petals) |
+| `HeroVideo.astro` | A 100svh section (`data-hero`) whose media is fixed to the viewport: a poster `<img>` beneath a muted, looping, playsinline `<video>` (WebM then MP4) under the Blush overlay; the slot content is centred; the content after it (`.page` on the home page, with its own background) slides up over it. The section makes no stacking context, so the welcome's name can rise above the bar. Reduced motion hides the video, pauses it by script, and shows the poster. | 100svh | 100svh (the poster is cropped by `object-fit: cover`, which is fine for petals) |
 | `PageHero.astro` | Full-bleed photo (the `Photo` component, portrait file on phones) with a Plum bottom scrim and a caption panel bottom-left: eyebrow, h1, an optional line of three descriptors, and up to three fact columns (LABEL / value). | The screen under the bar (100svh minus the bar), never taller than the 3:2 photo at that width (66.67vw), so a subject that spans the photo's height (the gazebo) keeps its roof and its base; caption panel 34rem wide | 80svh, the panel spans the width minus the gutter; facts as LABEL: value lines that wrap as text |
 | `SectionHeading.astro` | Eyebrow (optional), h2, lead (optional), and actions (a slot) aligned to the right on the h2's line. | Two columns: copy left (max 44rem), actions right | Stacked; actions wrap under the lead |
 | `PhotoCard.astro` | The one card. With `href` the whole card is a link named by its label; without one it is a gallery figure whose photo opens in the viewer. The photo fills a 12px-radius frame with a bottom Plum scrim (0 to 0.72); the label (Caslon Text 1.25rem, white) and a meta line (capacity, place) sit inside the photo, bottom-left; a staged photo keeps its Styled Concept badge top-left. | Ratio 3:2, the file's own shape, so nothing is cropped | The 4:5 portrait file (`tall`, default on), so nothing is cropped |
@@ -157,9 +161,9 @@ one home (brand.md, Redundancy rules); no photo appears twice on a page; every s
 Built by the foundation, in this order:
 
 1. **Hero** (`HeroVideo`): H1 "Welcome to The Venue @ NCC" (the italic serif "Welcome to", then the name as
-   the lockup's word outlines at 74vw on desktop and 92vw on phones, by far the largest type), the Berry
-   serif line "Event venue in Suffolk, Virginia", one filled Check Availability. The name morphs into the
-   header lockup as the hero scrolls out. Video: `public/media/hero-petals.*`.
+   the lockup's own words on one line at 74vw on desktop and 94vw on phones, by far the largest type), the
+   Berry serif line "Event venue in Suffolk, Virginia", one filled Check Availability. The name flies into the
+   header lockup as one shape as the hero scrolls out. Video: `public/media/hero-petals.*`.
 2. **The spaces** (`SectionHeading` + `Carousel` of three `PhotoCard`s, `cols=3`): eyebrow "The spaces", h2
    "Three spaces, indoors and out", the owner's welcome text as the lead, Explore The Space (filled) and
    "Check Availability >" (link). Cards: hall-windows / main-hall / grove-tables with "Up to N guests".
