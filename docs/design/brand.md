@@ -224,24 +224,33 @@ on phones, 44px on tablets, 46px from 960px to 1119px, and 52px from about 1140p
 phones, 72px on tablets and small desktops, and 80px from 1120px (`--nav-h`). Where the room beside it runs
 short it gives way first, never under 32px: on compact screens its width is the centre left between the two
 44px buttons (a 320px phone gets 39px, 200% text 34px); on regular screens each side is held to 22rem (17.5rem
-from 960px to 1119px), so larger text shrinks the name before a link can touch it. The links stay 16px
-Caslon Text. The demo pill shows only where there is room: 480px to 959px, and from 1200px.
+from 960px to 1119px), so larger text shrinks the name before a link can touch it. The heights are set in
+rem, so with larger text the name grows with the bar and its buttons and stays the bar's largest element.
+The links, the phone, and the call to action are 16px Caslon Text, and 17px from 1200px beside the 52px name.
+On the home page the lockup also shows whenever the home link has keyboard focus, even before the name has
+landed. The demo pill shows only where there is room: 480px to 959px, and from 1200px.
 
 **The morph** (`src/pages/index.astro`, version 5.1). The welcome's name is the header lockup's own words
-(`Logo` `lockup-name`) on one line at every width, 94vw on phones and 74vw (at most 68rem) from 46.5rem, with
-the lockup's ring (`lockup-ring`) beside it where the lockup has it, unseen. It moves as one rigid shape, so
-no part of it ever crosses another. On load, resize, font load, or a change of text size the script measures
-once where the words rest and where the header's words sit (the lockup's box and `NAME_BOX`), and builds the
-tracks as plain numbers. Over the hero's height less the bar (the scroll after which the bar turns solid):
+(`Logo` `lockup-name`) on one line at every width, the container's width on phones (89vw at 390) and 74vw
+(at most 68rem) from 46.5rem, with the lockup's ring (`lockup-ring`) beside it where the lockup has it,
+unseen, both drawn in one unit `--u` so they always register. It moves as one rigid shape, so no part of it
+ever crosses another. On load, resize, font load, or a change of text size the script measures where the
+words rest and where the header's words sit (the lockup's box and `NAME_BOX`), and builds the tracks as plain
+numbers; it skips the work when the window, the hero, the bar, and the lockup have not changed (a phone's
+address bar collapsing on the first scroll), and while new animations wait their first frame the same pose
+is held in inline styles. Over the hero's height less the bar (the scroll after which the bar turns solid):
 
-- the name's outer box holds it still on the screen while the page scrolls, and its inner box glides up and
-  shrinks to the header's size with a quadratic ease-out, so it leaves at once and settles gently;
-- the ring fades in over 45% to 92% of the way, so the lockup gathers around the name as it arrives;
-- "Welcome to" scrolls away above the name and is gone by 20% (it rises faster than the name, so they never
-  meet); the line and the button stay put below the name, fade by 25% (then take no taps), and the page
-  slides up over them;
-- in the last few pixels the header's own lockup, drawn in exactly the same place, fades in and the moving
-  name fades out, and the header gets `data-morphed`. Scrolling back reverses all of it.
+- the name's outer box holds it still on the screen while the page scrolls;
+- over the first 20% "Welcome to" scrolls away above the name and fades (it rises faster than the name, so
+  they never meet), and the line and the button fade where they stand below it (then take no taps) while the
+  page slides up over them, so the welcome leaves as a unit;
+- from 20% the name's inner box glides up and shrinks to the header's size with an ease-in-out
+  (cubic-bezier(0.65, 0, 0.35, 1)), so it sets off gently, travels while the page rises, and is still moving
+  as it lands instead of parking short of the bar;
+- the ring fades in over 55% to 95% of the way, so the lockup gathers around the name as it arrives;
+- over the last 6 pixels the header's own lockup, drawn in exactly the same place, fades in as the moving
+  name fades out (one crossfade over one range, so the two are never both fully drawn), and the header gets
+  `data-morphed`. Scrolling back reverses all of it.
 
 Everything is a transform or an opacity on a scroll timeline (`ScrollTimeline` with the Web Animations API),
 so the browser's compositor moves the name in the same frame as the scroll, with no script per frame and no
@@ -374,7 +383,7 @@ exactly once, neutrally, in one FAQ entry. Prices never appear.
 1. **The welcome.** On Blush with petals: the h1 "Welcome to The Venue @ NCC", where "Welcome to" is a Caslon
    Text italic line and the name is the lockup's own words (`Logo` variant `lockup-name`, with the name in
    visually hidden text) on one line at every width, in the lockup's proportions through one unit `--u`:
-   94vw wide on phones, 74vw (at most 68rem) from 46.5rem, the same shape it lands on in the header. One small Berry eyebrow line,
+   the container's width on phones, 74vw (at most 68rem) from 46.5rem, the same shape it lands on in the header. One small Berry eyebrow line,
    "Event venue in Suffolk, Virginia", closes it. Nothing else shares the first screen's Blush.
 2. **The photo band.** `grove-pines`, full bleed (the portrait file on phones), with the date checker
    floating on glass at the bottom right from 64rem and as a card under the photo below that. Every frame
@@ -408,8 +417,12 @@ the lockup with one sentence, Visit and contact, Plan your event, and the legal 
 left (the hero caption box on the page surface) holding the Plum lockup, the page title in Caslon Display in
 Plum, and one short Caslon Text line in Mauve. The home card is the exception: the rose still life
 (`share-rose-bouquet.jpg`) with no scrim, and a White panel with a Rose Mist hairline, centred on the plain
-wall to the left of the bouquet and never over it, holding the lockup, a short Rose rule, the welcome
-"Welcome to The Venue @ NCC" (the name kept on one line), and the location line.
+wall to the left of the bouquet and never over it. It mirrors the home welcome and sets the name once:
+"Welcome to" in Caslon Text italic in Mauve, then the lockup's own words (Plum, with the Berry italic "@ NCC")
+across the panel on one line, then the location line. Its og:image:alt reads "Welcome to The Venue @ NCC,
+event venue in Suffolk, Virginia" and then describes the bouquet, without repeating the name. The panel and
+the bouquet sit side by side, so a square centre crop (some small chat thumbnails) cuts both; the lead
+decides whether that matters before this is pushed.
 
 **Emails.** A Blush page with a white card: `email-lockup.png` at the top, a thin Rose rule, Berry links and
 a Berry capsule button with a serif label (white text), Plum text, Mauve secondary text, a Petal reference

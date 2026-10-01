@@ -8,7 +8,8 @@
  * for images much over that, which a lossless PNG of a photo always is.
  *
  * The home card uses the 'still' layout instead (stillTree below): a still life of roses with no scrim and
- * a White panel on its plain left side.
+ * a White panel on its plain left side that mirrors the home welcome: "Welcome to" in italic over the
+ * lockup's own words, so the name is set once, the way the page the link opens sets it.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
 import fs from 'node:fs/promises';
@@ -18,6 +19,7 @@ import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { shareCards, type ShareCard } from './_cards';
 import { site } from '../../data/site';
+import { NAME_BOX } from '../../lib/lockup';
 
 export const getStaticPaths = (() =>
   Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
@@ -48,20 +50,29 @@ const dataUri = (type: string, b: Buffer | Uint8Array) => `data:${type};base64,$
 interface Shared {
   caslonDisplay: Buffer;
   caslonText: Buffer;
+  caslonItalic: Buffer;
   lockup: string;
+  /** The lockup's words alone (no ring), cut to NAME_BOX as Logo.astro's 'lockup-name' is. */
+  name: string;
 }
 let shared: Promise<Shared> | undefined;
 function loadShared(): Promise<Shared> {
   shared ??= (async () => {
     // satori reads woff and ttf, not woff2.
-    const [caslonDisplay, caslonText, lockupSvg] = await Promise.all([
+    const [caslonDisplay, caslonText, caslonItalic, lockupSvg] = await Promise.all([
       fontFile('@fontsource/libre-caslon-display/files/libre-caslon-display-latin-400-normal.woff'),
       fontFile('@fontsource/libre-caslon-text/files/libre-caslon-text-latin-400-normal.woff'),
+      fontFile('@fontsource/libre-caslon-text/files/libre-caslon-text-latin-400-italic.woff'),
       fs.readFile(fromRoot('src/assets/brand/venue-lockup.svg'), 'utf8'),
     ]);
     // The lockup is outlined paths, so resvg draws it without fonts. Rendered at twice its size for a crisp edge.
     const lockupPng = new Resvg(lockupSvg, { fitTo: { mode: 'height', value: LOCKUP_H * 2 } }).render().asPng();
-    return { caslonDisplay, caslonText, lockup: dataUri('image/png', lockupPng) };
+    const nameSvg = lockupSvg
+      .replace(/<circle\b[^>]*\/>/g, '')
+      .replace(/<path\b(?![^>]*data-part)[^>]*\/>/g, '')
+      .replace(/viewBox="[^"]*"/, `viewBox="${NAME_BOX.x} ${NAME_BOX.y} ${NAME_BOX.width} ${NAME_BOX.height}"`);
+    const namePng = new Resvg(nameSvg, { fitTo: { mode: 'width', value: STILL_NAME_W * 2 } }).render().asPng();
+    return { caslonDisplay, caslonText, caslonItalic, lockup: dataUri('image/png', lockupPng), name: dataUri('image/png', namePng) };
   })();
   return shared;
 }
@@ -123,6 +134,7 @@ export const GET: APIRoute = async ({ props }) => {
     fonts: [
       { name: 'Libre Caslon Display', data: a.caslonDisplay, weight: 400, style: 'normal' },
       { name: 'Libre Caslon Text', data: a.caslonText, weight: 400, style: 'normal' },
+      { name: 'Libre Caslon Text', data: a.caslonItalic, weight: 400, style: 'italic' },
     ],
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
@@ -134,18 +146,27 @@ export const GET: APIRoute = async ({ props }) => {
 /**
  * The still life layout (the home card): the photo full bleed with no scrim, since a light still life needs
  * none, and a White panel centred on the plain left side, ending well before the subject (STILL_PANEL_W
- * from STILL_LEFT stays left of the bouquet's first leaves at about x 605). The title breaks before the
- * business name so the name is never split. A short Rose rule between the lockup and the title, a Rose
- * Mist hairline, and a soft Plum shadow lift the panel off the blush wall.
+ * from STILL_LEFT stays left of the bouquet's first leaves at about x 605). It mirrors the home welcome:
+ * the words before the business name ("Welcome to") in Caslon Text italic, Mauve, then the name as the
+ * lockup's own words (Plum, with the Berry italic "@ NCC") across the panel's inner width on one line, then
+ * the line. The name is set once; a Rose Mist hairline and a soft Plum shadow lift the panel off the wall.
  */
 const STILL_LEFT = 72;
 const STILL_PANEL_W = 488;
 const STILL_PAD = 40;
-const ROSE = '#B5456E';
+// The panel's inner width, less its 1px hairline on each side.
+const STILL_NAME_W = STILL_PANEL_W - 2 * STILL_PAD - 2;
+const STILL_NAME_H = Math.round((STILL_NAME_W * NAME_BOX.height) / NAME_BOX.width);
 const ROSE_MIST = '#EFC5D0';
 function stillTree(card: ShareCard, a: Shared, photo: string): Node {
   const nameAt = card.title.indexOf(site.name);
-  const lines = nameAt > 0 ? [card.title.slice(0, nameAt).trim(), card.title.slice(nameAt)] : [card.title];
+  // The name as the lockup's words when the title ends with it (after a lead such as "Welcome to"), else
+  // the title as text.
+  const asLockup = nameAt >= 0 && card.title.endsWith(site.name);
+  const lead = asLockup ? card.title.slice(0, nameAt).trim() : '';
+  const title = asLockup
+    ? h('img', { width: STILL_NAME_W, height: STILL_NAME_H, marginTop: lead ? 14 : 0 }, undefined, { src: a.name, width: STILL_NAME_W, height: STILL_NAME_H })
+    : h('div', { fontFamily: 'Libre Caslon Display', fontSize: 50, lineHeight: 1.1, color: PLUM }, card.title);
   return h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: BLUSH, fontFamily: 'Libre Caslon Text', color: PLUM }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
     h('div', { ...layer, display: 'flex', alignItems: 'center', paddingLeft: STILL_LEFT }, [
@@ -163,14 +184,11 @@ function stillTree(card: ShareCard, a: Shared, photo: string): Node {
           boxShadow: `0 18px 48px ${plum(0.1)}`,
         },
         [
-          h('img', { width: LOCKUP_W, height: LOCKUP_H }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),
-          h('div', { width: 48, height: 2, backgroundColor: ROSE, marginTop: 26, marginBottom: 24 }),
-          h(
-            'div',
-            { display: 'flex', flexDirection: 'column', fontFamily: 'Libre Caslon Display', fontSize: 50, lineHeight: 1.1, letterSpacing: -0.5, color: PLUM, whiteSpace: 'nowrap' },
-            lines.map((l) => h('div', {}, l)),
-          ),
-          h('div', { fontSize: 22, lineHeight: 1.35, color: MAUVE, marginTop: 18 }, card.line),
+          ...(lead
+            ? [h('div', { fontStyle: 'italic', fontSize: 32, lineHeight: 1.2, color: MAUVE }, lead)]
+            : []),
+          title,
+          h('div', { fontSize: 22, lineHeight: 1.35, color: MAUVE, marginTop: 22 }, card.line),
         ],
       ),
     ]),

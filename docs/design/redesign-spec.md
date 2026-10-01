@@ -98,11 +98,12 @@ be filled (the reference does this), so the old one-filled-button-per-viewport r
 `--ease-out` cubic-bezier(0.22, 1, 0.36, 1); `--dur-1` 160ms, `--dur-2` 280ms, `--dur-3` 480ms. The hero video
 loops muted. The name-to-logo morph runs over the hero's height (0 to 100svh minus the bar), transforms and
 opacity only, on the browser's scroll timeline (brand.md, "Header and the morph"). The name is the lockup's
-own words on one line and moves as one rigid shape: it holds still on the screen while the page scrolls and
-glides up and shrinks into the bar with an ease-out (1 minus (1 minus p) squared), the ring gathers around
-it, and in the last few pixels the header's own lockup takes over in exactly the same place. "Welcome to"
-scrolls away above it by 20%; the line and the button stay put below it and fade by 25%. Nothing crosses
-anything. Carousels scroll with native snap. Under `prefers-reduced-motion: reduce`: the video is hidden and
+own words on one line and moves as one rigid shape: it holds still on the screen while the page scrolls.
+"Welcome to" scrolls away above it and the line and the button fade below it over the first 20%; then the
+name glides up and shrinks into the bar with an ease-in-out (cubic-bezier(0.65, 0, 0.35, 1)), still moving
+as it lands, the ring gathers around it, and over the last 6 pixels the header's own lockup crossfades in
+exactly the same place. The client found the earlier ease-out (which bolted and then parked short of the
+bar) laggy, so this replaces fable-advice.md's "ease-out" for the morph. Nothing crosses anything. Carousels scroll with native snap. Under `prefers-reduced-motion: reduce`: the video is hidden and
 paused and its poster shows, the morph is off (the header lockup shows at once and the bar turns solid after
 8px), and every transition is instant.
 

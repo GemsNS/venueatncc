@@ -14,16 +14,17 @@
  * The morph. The welcome's name is the header lockup's own words (Logo, 'lockup-name') on one line at every
  * width, with the lockup's ring ('lockup-ring') beside it, unseen, so it has the very shape it lands on.
  * It moves as one rigid shape, so no part of it ever crosses another: an outer box holds it still on the
- * screen while the page scrolls, and an inner box glides up and shrinks into the header's lockup (ease-out)
- * while the ring gathers around it. "Welcome to" scrolls away above it (it rises faster than the name) and
- * fades by 20%; the line and the button stay put below it, fade by 25%, and the page slides up over them.
- * In the last few pixels the header's own lockup, in exactly the same place, fades in and the name fades
- * out. The morph runs over the hero's height less the bar, the same distance after which the header turns
+ * screen while the page scrolls. Over the first 20% "Welcome to" scrolls away above it (it rises faster than
+ * the name) and fades, and the line and the button fade where they stand, below it, while the page slides
+ * up over them; then an inner box glides the name up and shrinks it into the header's lockup (an
+ * ease-in-out, so it is still moving as it lands) while the ring gathers around it. Over the last 6 pixels
+ * the header's own lockup, in exactly the same place, fades in as the name fades out. The morph runs over the hero's height less the bar, the same distance after which the header turns
  * solid (Header.astro), so the name lands as the bar appears.
  *
  * Every part is a transform or an opacity on a scroll timeline, so the compositor moves the name in the
  * same frame as the scroll: no script runs per frame, nothing reads layout while scrolling, and nothing
- * animates a filter. The geometry is measured once (and on resize, font load, or a change of text size).
+ * animates a filter. The geometry is measured once, and again only when a resize, a font load, or a change
+ * of text size actually moves the hero, the bar, or the lockup (a phone's address bar does not).
  * Browsers without scroll timelines run the same tracks from a frame callback. Readers who prefer reduced
  * motion, short screens (where the bar scrolls away), and browsers without scripts get the header lockup at
  * once and a still welcome.
@@ -299,10 +300,25 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     ease: boolean;
   }
 
-  // Quadratic ease-out: the name leaves at once and settles gently into the bar. The same curve as a
-  // cubic Bezier, for the browser's own timeline.
-  const easeOut = (t: number) => 1 - (1 - t) * (1 - t);
-  const EASE_OUT = 'cubic-bezier(0.3333, 0.6667, 0.6667, 1)';
+  // An ease-in-out for the name's flight: it sets off gently once the line and the button have gone, travels
+  // while the page rises, and is still moving as it lands, so it never parks short of the bar. The browser's
+  // timeline takes the cubic Bezier; the fallback solves the same curve.
+  const BEZIER = [0.65, 0, 0.35, 1] as const;
+  const EASE = `cubic-bezier(${BEZIER.join(', ')})`;
+  const ease = (t: number) => {
+    const [x1, y1, x2, y2] = BEZIER;
+    const at = (p1: number, p2: number, u: number) => 3 * (1 - u) * (1 - u) * u * p1 + 3 * (1 - u) * u * u * p2 + u * u * u;
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (at(x1, x2, mid) < t) lo = mid;
+      else hi = mid;
+    }
+    return at(y1, y2, (lo + hi) / 2);
+  };
+  // The share of the morph over which "Welcome to", the line, and the button fade, before the name sets off.
+  const FADE = 0.2;
 
   const style = (p: Pose): Keyframe =>
     p.o !== undefined
@@ -320,6 +336,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     let gone: boolean | null = null;
     let landed: boolean | null = null;
     let ticking = false;
+    let geometry = '';
 
     /** The lockup the header shows at this width. */
     const lockup = () =>
@@ -342,7 +359,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       const y = window.scrollY;
       for (const t of tracks) {
         const raw = Math.min(1, Math.max(0, (y - t.a) / (t.b - t.a)));
-        const k = t.ease ? easeOut(raw) : raw;
+        const k = t.ease ? ease(raw) : raw;
         const mix = (f: number | undefined, to: number | undefined, d: number) => (f ?? d) + ((to ?? d) - (f ?? d)) * k;
         const p: Pose =
           t.to.o !== undefined
@@ -355,7 +372,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     /** States that only change at a threshold: the hidden button, and the name in the bar. */
     function marks() {
       const y = window.scrollY;
-      const g = y >= distance * 0.3;
+      const g = y >= distance * FADE;
       if (g !== gone) {
         gone = g;
         hero!.toggleAttribute('data-welcome-gone', g);
@@ -380,6 +397,15 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     function measure() {
       const lk = lockup();
       if (!lk) return;
+      // Nothing to do when nothing has moved: a phone's address bar showing or hiding resizes the window but
+      // not the hero (100svh), the bar, or the lockup. Rebuilding the animations then would only risk a frame
+      // with none applied.
+      const lr = lk.getBoundingClientRect();
+      const key = [window.innerWidth, hero!.offsetHeight, nav!.offsetHeight, lr.left, lr.top, lr.width, lr.height]
+        .map((n) => n.toFixed(2))
+        .join();
+      if (key === geometry) return;
+      geometry = key;
       clear();
       const y = window.scrollY;
       const r = words!.getBoundingClientRect();
@@ -394,32 +420,34 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       tracks = [
         // The name holds still on the screen while the page scrolls (the hero's video does the same)...
         { el: pin!, from: { y: 0 }, to: { y: d }, a: 0, b: d, ease: false },
-        // ...and glides up into the bar, shrinking to the header's size: one rigid shape, so no part of it
-        // ever crosses another.
-        { el: fly!, from: {}, to: { x: to.left - r.left, y: to.top - restTop, s: to.width / r.width }, a: 0, b: d, ease: true },
+        // ...and, once "Welcome to", the line, and the button have faded, glides up into the bar, shrinking to
+        // the header's size: one rigid shape, so no part of it ever crosses another.
+        { el: fly!, from: {}, to: { x: to.left - r.left, y: to.top - restTop, s: to.width / r.width }, a: d * FADE, b: d, ease: true },
         // The lockup's ring gathers around it on the way in.
-        { el: ring!, from: { o: 0 }, to: { o: 1 }, a: d * 0.45, b: d * 0.92, ease: false },
+        { el: ring!, from: { o: 0 }, to: { o: 1 }, a: d * 0.55, b: d * 0.95, ease: false },
         // "Welcome to" scrolls away above the name (faster than the name rises) and fades.
-        { el: eyebrow!, from: { o: 1 }, to: { o: 0 }, a: 0, b: d * 0.2, ease: false },
+        { el: eyebrow!, from: { o: 1 }, to: { o: 0 }, a: 0, b: d * FADE, ease: false },
         // The line and the button stay put below the name, fade, and the page slides up over them.
         { el: below!, from: { y: 0 }, to: { y: d }, a: 0, b: d, ease: false },
-        { el: below!, from: { o: 1 }, to: { o: 0 }, a: 0, b: d * 0.25, ease: false },
-        // On landing the header's own lockup, drawn in exactly the same place, takes over.
-        { el: lk, from: { o: 0 }, to: { o: 1 }, a: d - 8, b: d - 4, ease: false },
-        { el: fly!, from: { o: 1 }, to: { o: 0 }, a: d - 3, b: d, ease: false },
+        { el: below!, from: { o: 1 }, to: { o: 0 }, a: 0, b: d * FADE, ease: false },
+        // On landing the header's own lockup, drawn in exactly the same place, takes over: one crossfade over
+        // the same few pixels, so the two are never both fully drawn.
+        { el: lk, from: { o: 0 }, to: { o: 1 }, a: d - 6, b: d, ease: false },
+        { el: fly!, from: { o: 1 }, to: { o: 0 }, a: d - 6, b: d, ease: false },
       ];
+      // The same pose as inline styles: a new scroll-linked animation waits a frame before it applies, and
+      // these hold everything in place for that frame (a running animation overrides them).
+      frame();
       if (timeline) {
         anims = tracks.map((t) =>
           t.el.animate([style(t.from), style(t.to)], {
             timeline,
             rangeStart: `${t.a.toFixed(2)}px`,
             rangeEnd: `${t.b.toFixed(2)}px`,
-            easing: t.ease ? EASE_OUT : 'linear',
+            easing: t.ease ? EASE : 'linear',
             fill: 'both',
           } as KeyframeAnimationOptions),
         );
-      } else {
-        frame();
       }
       gone = null;
       landed = null;
@@ -428,6 +456,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
     function stop() {
       active = false;
+      geometry = '';
       clear();
       tracks = [];
       hero!.removeAttribute('data-welcome-gone');
@@ -477,10 +506,11 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     The first screen: "Welcome to" and the business name, the largest type on the site, centred over the
     petals. The name is the header lockup's own words on one line, at every width, so it has the very shape
     it lands on. --u is one unit of the lockup's grid in pixels: the words are 402.5 units wide (NAME_BOX in
-    src/lib/lockup.ts), so they span 94vw on phones and 74vw (at most 68rem) from 46.5rem.
+    src/lib/lockup.ts), so they span the container's width on phones (89vw at 390) and 74vw (at most 68rem)
+    from 46.5rem. The ring is drawn in the same unit, so the words must never be capped apart from it.
   */
   .welcome__inner {
-    --u: calc(min(94vw, 40rem) / 402.5);
+    --u: calc(min(100vw - 2 * var(--gutter), 40rem) / 402.5);
     display: grid;
     justify-items: center;
     gap: clamp(1.25rem, 0.75rem + 1.5vw, 2rem);

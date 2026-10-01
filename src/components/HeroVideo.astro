@@ -110,8 +110,10 @@ const poster = href('/media/hero-petals-poster.jpg');
 
   /*
     Portrait screens (phones, tall tablets) crop the 16:9 clip to its middle, where the petals are white and
-    the pink ground at the edges is cut away. A Rose multiply layer gives those frames the same blush the
-    landscape crop shows, and the veil above it is lighter so the pink comes through.
+    the pink ground at the edges is cut away. A Rose wash gives those frames the same blush the landscape
+    crop shows, and the veil above it is lighter so the pink comes through. The wash is a plain layer, not a
+    blend mode: over white petals a 0.6 Rose wash is exactly what the multiply gave, and a full-screen blend
+    over a playing video would cost the phone's compositor a pass every frame while the name flies.
   */
   .hero__tint {
     display: none;
@@ -123,7 +125,6 @@ const poster = href('/media/hero-petals-poster.jpg');
       position: absolute;
       inset: 0;
       background: #f4b6c8;
-      mix-blend-mode: multiply;
       opacity: 0.6;
     }
 
@@ -136,7 +137,7 @@ const poster = href('/media/hero-petals-poster.jpg');
 
   @media (orientation: portrait) and (prefers-color-scheme: dark) {
     .hero__tint {
-      opacity: 0.35;
+      opacity: 0.2;
     }
 
     .hero__overlay {

@@ -21,9 +21,11 @@
  * hero's height, so the name lands in the bar as the bar turns solid.
  *
  * The lockup is the bar's largest element: 40px tall on phones, 44px on tablets, 46px from 960px and 52px
- * on wider screens, in a bar 64px tall on phones, 72px on tablets and small desktops, and 80px from 1120px
- * (--nav-h in global.css). Where the room beside it runs short (a 320px phone, the first few pixels past
- * 1120px, larger text) it gives way first, never under the brand's 32px minimum, so nothing overlaps.
+ * on wider screens (in rem, so it grows with larger text like the rest of the bar), in a bar 64px tall on
+ * phones, 72px on tablets and small desktops, and 80px from 1120px (--nav-h in global.css). Where the room
+ * beside it runs short (a 320px phone, the first few pixels past 1120px, larger text) it gives way first,
+ * never under the brand's 32px minimum, so nothing overlaps. From 1200px the links, the phone, and the call
+ * to action are 17px, so they hold their own beside the 52px name.
  * The demo pill shows only where there is room for it: 480px to 959px, and from 1200px.
  */
 import Icon from './Icon.astro';
@@ -137,12 +139,20 @@ const showCta = !current(bookHref);
     const threshold = () => (hero ? Math.max(8, hero.offsetHeight - nav.offsetHeight) : 8);
     let limit = threshold();
     const onScroll = () => nav.toggleAttribute('data-solid', window.scrollY >= (nav.hasAttribute('data-morph') ? limit : 8));
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', () => {
+    const onResize = () => {
       limit = threshold();
       onScroll();
-    });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    // The hero or the bar can change height without a window resize (a late font, larger text); the morph
+    // measures again then (index.astro), and the solid bar follows, so the two stay tied together.
+    if (hero && 'ResizeObserver' in window) {
+      const ro = new ResizeObserver(onResize);
+      ro.observe(hero);
+      ro.observe(nav);
+    }
   }
 
   // The full-screen menu on compact screens.
@@ -174,20 +184,21 @@ const showCta = !current(bookHref);
 <style>
   /* Transparent at the top of the page, so the hero runs under it; solid Blush and a hairline on scroll. */
   /*
-    The lockup's height on compact screens: 40px, or less where the centre column is narrower (a 320px
-    phone, larger text), so it always fits between the two 44px round buttons (each pulled 8px into the
-    gutter): the room left is 100vw less both gutters and 76px, and the lockup is 533/100 as wide as tall.
+    The lockup's height on compact screens: 2.5rem (40px at the default text size, growing with larger text
+    like the bar and its buttons' icons), or less where the centre column is narrower (a 320px phone, larger
+    text), so it always fits between the two 44px round buttons (each pulled 8px into the gutter): the room
+    left is 100vw less both gutters and 76px, and the lockup is 533/100 as wide as tall.
   */
   .nav,
   .menu {
-    --lockup-h: clamp(32px, (100vw - 2 * var(--gutter) - 76px) * 0.1876, 40px);
+    --lockup-h: clamp(32px, (100vw - 2 * var(--gutter) - 76px) * 0.1876, 2.5rem);
   }
 
-  /* Tablets (compact, from 46.5rem): 44px. */
+  /* Tablets (compact, from 46.5rem): 2.75rem (44px). */
   @media (46.5rem <= width < 60rem) {
     .nav,
     .menu {
-      --lockup-h: 44px;
+      --lockup-h: clamp(32px, (100vw - 2 * var(--gutter) - 76px) * 0.1876, 2.75rem);
     }
   }
 
@@ -257,6 +268,15 @@ const showCta = !current(bookHref);
   */
   .nav[data-morph] .nav__lockup {
     opacity: 0;
+  }
+
+  /*
+    A keyboard reader who reaches the home link before the name has landed sees the name it leads to, not a
+    focus ring around an empty box. !important, because the scroll timeline's opacity (fill: both) outranks
+    a plain declaration and only an important one outranks it.
+  */
+  .nav[data-morph] .nav__brand:focus-visible .nav__lockup {
+    opacity: 1 !important;
   }
 
   @media (prefers-reduced-motion: reduce), (scripting: none), (max-height: 500px) {
@@ -381,7 +401,7 @@ const showCta = !current(bookHref);
   */
   @media (min-width: 60rem) {
     .nav {
-      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 46rem) * 0.1876, 52px);
+      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 46rem) * 0.1876, 3.25rem);
     }
 
     .nav__menu {
@@ -435,7 +455,7 @@ const showCta = !current(bookHref);
   */
   @media (60rem <= width < 70rem) {
     .nav {
-      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 37rem) * 0.1876, 46px);
+      --lockup-h: clamp(32px, (min(100vw - 2 * var(--gutter), var(--max)) - 37rem) * 0.1876, 2.875rem);
     }
 
     .nav__inner {
@@ -463,6 +483,18 @@ const showCta = !current(bookHref);
       overflow: hidden;
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
+    }
+  }
+
+  /*
+    Wide screens (from 1200px at the default text size): the links, the phone, and the call to action at
+    17px, a step up from 16px, so they read beside the 52px name (each side is still held to 22rem).
+  */
+  @media (min-width: 75rem) {
+    .nav__links a,
+    .nav__phone,
+    .nav__cta {
+      font-size: 1.0625rem;
     }
   }
 

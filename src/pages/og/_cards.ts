@@ -5,7 +5,7 @@
  *
  * The home card is the one exception to the photo rule (brand.md, Photography): a still life of pink and
  * white roses (share-rose-bouquet.jpg, generated, see design-archive/generated-scenes/share-bouquet/), with
- * the title in a white panel over the plain blush wall to its left. It shows no part of the property, so it
+ * the welcome in a white panel over the plain blush wall to its left, set as the home page sets it. It shows no part of the property, so it
  * is not described as one and is not used in structured data (schema.ts).
  *
  * Every other card uses a real photograph of the property, chosen by pick(). A staged event photo is never a
@@ -60,7 +60,8 @@ export const shareCards: Record<string, ShareCard> = {
     line: `Event venue in ${site.address.city}, ${site.address.regionName}`,
     photo: {
       file: 'share-rose-bouquet.jpg',
-      caption: 'A hand-tied bouquet of blush, pink, and ivory roses against a pale blush wall. Illustrative still life.',
+      caption:
+        'A hand-tied bouquet of blush, pink, and ivory roses tied with a white ribbon, on a blush table against a pale blush wall (illustrative still life).',
     },
     layout: 'still',
   },
@@ -90,8 +91,11 @@ export function shareCardAlt(key: string): string | undefined {
   const card = shareCards[key];
   if (!card) return undefined;
   const sentence = (s: string) => (/[.?]$/.test(s) ? s : `${s}.`);
+  const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
   // A still life is an image, not a photo of the venue.
   const label = card.layout === 'still' ? 'Image' : 'Photo';
   const photo = card.photo.caption ? ` ${label}: ${sentence(card.photo.caption)}` : '';
+  // A title that already names the business (the home card's "Welcome to The Venue @ NCC") is not preceded by the name again.
+  if (card.title.includes(site.name)) return `${card.title}, ${lowerFirst(sentence(card.line))}${photo}`;
   return `${site.name}. ${sentence(card.title)} ${sentence(card.line)}${photo}`;
 }
