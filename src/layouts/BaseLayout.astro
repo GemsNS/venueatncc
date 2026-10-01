@@ -101,9 +101,9 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     {/* The interface serif: nav links and buttons sit above the fold on every page. */}
     {!bare && <link rel="preload" href={caslonTextFont} as="font" type="font/woff2" crossorigin />}
 
-    <meta name="theme-color" content="#FBF1F3" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#2A151F" media="(prefers-color-scheme: dark)" />
-    <meta name="color-scheme" content="light dark" />
+    {/* Light only (brand.md, version 6): a phone set to dark mode still gets the bright, white site. */}
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="color-scheme" content="light" />
     <link rel="icon" href={href('/favicon.ico')} sizes="32x32" />
     <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
     <link rel="icon" href={href('/favicon-32.png')} type="image/png" sizes="32x32" />

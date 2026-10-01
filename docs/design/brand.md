@@ -1,10 +1,28 @@
-# The Venue @ NCC: brand and redesign spec (version 5)
+# The Venue @ NCC: brand and redesign spec (version 6)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: capsule buttons, Title Case
-button labels, sentence-case headings, 44px targets, dark mode, reduced motion, no em or en dashes anywhere
-in copy. The layout system, the section patterns, and the page plans are in `redesign-spec.md` (version 5),
-which page owners build from; the creative director's decisions in `fable-advice.md` are binding.
+button labels, sentence-case headings, 44px targets, reduced motion, no em or en dashes anywhere in copy.
+Dark mode is withdrawn in version 6: the site is light only. The layout system, the section patterns, and
+the page plans are in `redesign-spec.md` (version 5, with its version 6 colour note), which page owners
+build from; the creative director's decisions in `fable-advice.md` are binding.
+
+## Version 6 amendments (bright, white-first pastel pink, light only)
+
+On October 1, 2026 the client asked to "retheme the website to be bright as can be, pink pastels but with
+white being the main color", to "make the color scheme less dark pink more bright", and to make the cards over
+hero images transparent "so they're not blocking the image". These amendments supersede every earlier color
+rule, including version 5 amendment 4 (the Blush page and the Plum footer).
+
+1. **White is the main surface**: the page, the bar, cards, panels, the menu, and the admin. The footer is
+   Blush, a very pale pink; there is no dark block. Pastel pinks (Blush, Petal, Rose Mist) are accents and
+   quiet bands only. See Color.
+2. **Brighter pinks.** Peony `#D6336C` fills the buttons (white label 4.6:1), Cerise `#C2185B` is the hover
+   fill, the link and accent text color, the focus ring, and the lockup's "@ NCC" and ring. Berry and Berry
+   Deep are retired everywhere: tokens, logo files, icons, the manifest, share images, and emails.
+3. **Light only.** No dark-mode rules or tokens remain; `color-scheme: light` and a White `theme-color`.
+4. **See-through caption panels** over photos, tuned per photo (Color, "Caption panels over photos").
+5. **The home hero veil** is bright white with a pastel pink cast (HeroVideo, and "Motion and graphics").
 
 ## Version 5 amendments (the reference-site rebuild)
 
@@ -18,16 +36,16 @@ amendments supersede the matching version 4 rules below wherever the two differ.
 2. **Navigation.** The floating tab bar is gone, and no bottom bar replaces it (the reference has none).
    Phones get a menu button on the left, the lockup centred, the phone on the right, and a full-screen menu
    with large serif links, Check Availability, and the phone; the closing band on every page carries Check
-   Availability too. The header is transparent over the home hero and a solid Blush bar (not glass) once the
-   hero has scrolled past; inner pages start with the solid bar.
+   Availability too. The header is transparent over the home hero and a solid bar (not glass; White since version 6) once
+   the hero has scrolled past; inner pages start with the solid bar.
 3. **One serif for the interface.** Libre Caslon Text sets nav links, button labels, leads, card labels, and
    section copy; the interface stack (Inter) stays for forms, the wizard, the admin, chips, and small labels.
-4. **Surfaces.** The page is Blush; White is for cards, form panels, and caption panels; sections are divided
-   by hairlines rather than alternating bands. The footer is the one dark surface: Plum with Blush text, Pink
-   links, and the white lockup, in the shape of the reference's footer (a very large centred serif statement).
+4. **Surfaces.** (Superseded by version 6: the page is White and the footer Blush.) Sections are divided by
+   hairlines rather than alternating bands; the footer keeps the reference's shape (a very large centred
+   serif statement).
 5. **Cards.** Photo cards carry their label and capacity inside the photo over a bottom scrim, 12px radius,
    in horizontal carousels; there is no white card body under a photo.
-6. **Buttons.** One button: the Berry capsule (`.btn--filled`), a hairline outline, and a white capsule for
+6. **Buttons.** One button: the Peony capsule (`.btn--filled`, version 6), a hairline outline, and a white capsule for
    photos. The header's Check Availability is filled on every page, and an in-page primary may be filled too;
    the one-filled-button-per-viewport rule is withdrawn.
 7. **The morph** runs over the hero's height (0 to 100svh minus the bar), so the name lands in the header as
@@ -86,14 +104,14 @@ Still binding from earlier versions:
 ## Concept
 
 **The name, then the photographs, in a soft pink frame.** The home page opens on the business name alone,
-set in the lockup's own Caslon outlines on a Blush surface with petals drifting behind it, and the name
-becomes the header as the visitor scrolls. Below it the real photographs of the property lead every section,
-in white and Blush with Berry accents. Caslon headings keep the feel of a printed invitation; the interface
+set in the lockup's own Caslon outlines over pastel petals under a bright white veil, and the name becomes
+the header as the visitor scrolls. Below it the real photographs of the property lead every section, on
+White with pastel pink bands and Peony and Cerise accents (version 6). Caslon headings keep the feel of a printed invitation; the interface
 stays crisp and Apple-like.
 
 Avoid the tells of a templated site: no accent bars or rails on cards, no tinted or decorative gradients, no
 all-caps headings. The one small uppercase element is the letterspaced eyebrow above a section heading
-(`.eyebrow`, Berry), which the reference site's rhythm uses to label a section; headings themselves stay
+(`.eyebrow`, Cerise), which the reference site's rhythm uses to label a section; headings themselves stay
 sentence case. Pink, Rose Mist, and Petal appear only as surfaces, tints, chips, petals, and accents on Plum,
 never as text on a light surface.
 
@@ -131,92 +149,137 @@ Text italic. The ring frames the monogram the way a wax seal or an embossed invi
 
 | File | Colors | Use |
 |---|---|---|
-| `venue-lockup.svg` | ink Plum `#3B2430`, accent Berry `#9E2B52` | Header, footer, email, print on light surfaces |
-| `venue-lockup-white.svg` | white `#FFFFFF`, accent Pink `#E9A9BB` | Over photos and on share images |
+| `venue-lockup.svg` | ink Plum `#3B2430`, accent Cerise `#C2185B` | Header, footer, email, share images, print on light surfaces |
+| `venue-lockup-white.svg` | white `#FFFFFF`, accent Pink `#F48FB1` | Over photos (kept; no page uses it since version 6) |
 | `venue-mark.svg` / `-white.svg` | as above | Monogram alone: admin sidebar, avatars |
 | `venue-wordmark.svg` / `-white.svg` | as above | Wordmark alone |
-| `venue-word-the-venue.svg`, `venue-word-at-ncc.svg` | Plum, Berry | The two words of the lockup, each in a tight viewBox. Kept as artwork; the site no longer uses them (the home welcome is cut from the lockup itself, below) |
+| `venue-word-the-venue.svg`, `venue-word-at-ncc.svg` | Plum, Cerise | The two words of the lockup, each in a tight viewBox. Kept as artwork; the site no longer uses them (the home welcome is cut from the lockup itself, below) |
 
 In the lockup and wordmark the two word paths carry `data-part="the-venue"` and `data-part="at-ncc"`.
 `Logo` cuts two variants from the lockup for the home welcome: `lockup-name` (the words alone, with the
 viewBox cut to `NAME_BOX` in `src/lib/lockup.ts`, x 125 to 527.5 and y 23 to 77 of the lockup's 533 by 100)
 and `lockup-ring` (the ring and its V, the first 100 units). Side by side at one scale they are the lockup. `src/components/Logo.astro` recolors the SVG
-through CSS variables by matching these exact hex values (`#3B2430` ink, `#9E2B52` accent, `#FFFFFF` light
-ink, `#E9A9BB` light accent). Minimum lockup height 32px; the header sets it at 40px on phones, 44px on
+through CSS variables by matching these exact hex values (`#3B2430` ink, `#C2185B` accent, `#FFFFFF` light
+ink, `#F48FB1` light accent). Minimum lockup height 32px; the header sets it at 40px on phones, 44px on
 tablets, 46px from 960px and 52px on wider screens (Header and the morph). Icons in `public/`: favicon.ico, favicon.svg,
-favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Berry with a white
-monogram); `public/brand/email-lockup.png` is the email header.
+favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, icon-maskable-512.png (Peony with a white
+monogram), regenerated by `logo-v6.mjs` (the version 5 script with the version 6 colors);
+`public/brand/email-lockup.png` is the email header.
 
 ## Color
 
-A pastel pink palette. Light surfaces are Blush and Petal (with white cards); Berry gives buttons, links, and
-accents real contrast; Plum is the ink. Nothing else is added.
+Version 6 (October 1, 2026): **bright, white-first pastel pink, light only.** The client asked for the site
+to be "bright as can be, pink pastels but with white being the main color" and for "less dark pink, more
+bright". White is the main surface; the pastel pinks are accents and quiet bands; Peony fills the buttons,
+Cerise carries links and accent text, and Plum stays the ink. The dark raspberry Berry (#9E2B52) and Berry
+Deep (#7E1F41), the dusty Rose (#B5456E), and every dark-mode color are retired.
 
-**Light by default.** In light mode every large surface is light: White, Blush, or Petal. Plum is for text and
-photo scrims, Berry for buttons and accents; neither is a large surface. Specifically:
+**Light only.** `color-scheme: light`, one `theme-color` (#FFFFFF), and no `prefers-color-scheme: dark` rule
+anywhere (global.css, components, booking, inquiry, admin, the photo viewer, the hero). A phone set to dark
+mode gets the same bright site.
 
-- **Header (version 5):** transparent over the home hero, then a solid Blush bar with a hairline once the hero
-  has scrolled past (after 8px when the morph is off: reduced motion, short screens); inner pages start with
-  the solid bar. Links left, lockup centred, phone and Check
-  Availability right; on phones a menu button opens the full-screen menu and the phone becomes a round icon
-  button.
-- **Welcome surface (home, version 5):** the petals video under a Blush veil; Plum name, Berry "@ NCC", Mauve
-  serif "Welcome to", a Berry serif line, a filled Check Availability.
-- **Footer (version 5):** Plum, the one dark surface: Blush text, Pink column heads, white links, the white
-  lockup, a white Check Availability pill, and the large centred white statement in Caslon.
-- **Closing band (CtaBand) and the home rates band:** Petal with a top hairline, a Plum heading, a Mauve
-  sentence, and the Berry button with a white label.
-- **Alternate sections:** Blush. **Quiet panels** (rental policies, checklists, the visit request): Petal.
-- **Chips** (capacity tags, Styled Concept badge on light frames, selected rows): Petal with Plum text.
+- **Page, header bar, cards, form panels:** White. The header is transparent over the home hero and a solid
+  White bar with a hairline once the hero has scrolled past (after 8px on pages without a hero).
+- **Footer:** Blush (a very pale pink) under a hairline, with Plum text, Mauve secondary text, Cerise column
+  heads, Plum links, the Plum and Cerise lockup, the Peony Check Availability, and the large Plum statement.
+  There is no dark block on the site.
+- **Closing band (CtaBand), the home rates band, the Rates, FAQ and Book title bands, quiet panels
+  (checklists, the inquiry form's field groups), chips, and selected rows:** Petal.
+- **The photo viewer:** near-solid White with Petal round buttons and Plum icons.
+- **The admin:** the White page and cards, a Blush sidebar with a hairline, Petal for the current screen.
 
 | Token | Hex | Role |
 |---|---|---|
-| Plum | `#3B2430` | Primary text; photo scrims and the photo viewer; text on chips |
+| Plum | `#3B2430` | Primary text; photo card scrims; text on chips and on the frosted caption panels |
 | Mauve | `#6A4B57` | Secondary text |
-| Berry | `#9E2B52` | Primary button fill (white text), links, accent text, eyebrows, icons, the logo accent, selected states |
-| Berry Deep | `#7E1F41` | Hover and pressed state of primary buttons |
-| Rose | `#B5456E` | Focus ring, the email rule (non-text) |
-| Pink | `#E9A9BB` | Lockup accent on Plum and in dark mode; petals; badges on dark |
-| Rose Mist | `#EFC5D0` | Petals, hairlines on Plum, stronger tints |
-| Petal | `#F6DFE5` | Chips, panels, the closing band, the rates band, selected rows |
-| Blush | `#FBF1F3` | Alternate sections, the footer, the welcome surface, the header at the top of home |
-| White | `#FFFFFF` | Page background and cards |
+| Peony | `#D6336C` | Primary button fill (white label), the app icon field, the email rule and button |
+| Cerise | `#C2185B` | Links, accent text, eyebrows, icons, the logo accent ("@ NCC" and the ring), selected states, focus rings; the hover and pressed fill of the primary button |
+| Pink | `#F48FB1` | The lockup accent on Plum scrims and over photos (the white artwork) |
+| Rose Mist | `#F9C6D7` | Hairlines on share panels, the portrait hero wash, stronger tints |
+| Petal | `#FCE4EC` | Chips, panels, the closing band, the rates band, title bands, selected rows |
+| Blush | `#FFF4F7` | The footer, the admin sidebar, input fills in the wizard, the email page |
+| White | `#FFFFFF` | The page, the bar, cards, form panels, the menu |
 | Tertiary label (derived) | `#7E5F6B` | `--label-3`: placeholders and chevrons on White and Blush only |
 
-Contrast (checked): Plum on White 14.2:1, on Blush 12.8:1, on Petal 11.2:1, on Rose Mist 9.2:1; Mauve on
-White 7.6:1, on Blush 6.9:1, on Petal 6.0:1, on Rose Mist 4.9:1; Berry on White 7.2:1, on Blush 6.5:1, on
-Petal 5.7:1; white on Berry 7.2:1, on Berry Deep 9.7:1; Rose on White 5.2:1, on Blush 4.7:1, on Petal 4.1:1
-(non-text); the tertiary label on White 5.6:1, on Blush 5.1:1, but 4.4:1 on Petal, so it is never set on
-Petal or Rose Mist. Never set Pink, Rose Mist, or Petal as text on a light surface, and never put white text
-on Rose or lighter. A petal at its darkest (Pink at 60% over Blush) still gives Mauve 4.9:1, Plum 9.2:1, and
-Berry 4.7:1, which is why the canvas caps petal opacity at 0.6.
+**Contrast, checked (WCAG 2 relative luminance):**
 
-Dark mode, in the same family: page Mulberry Night `#2A151F`, grouped `#1F0E16`, cards `#3A1F2B`, text
-`#FBEFF2` (15.3:1 on Night), secondary `#E9C9D3` (11.2:1), tertiary `#B58FA0` (6.0:1), primary button Pink
-Bloom `#F2B7C6` with Night text (10.1:1), hover `#F8CBD6`, accent text Blossom `#F5A8BD` (9.2:1 on Night,
-8.0:1 on cards), focus ring Pink Bloom, chips and selected rows in translucent Pink, separators
-`rgba(251,239,242,0.14)`. The closing band and the rates band are the card color, a step lighter than the
-Night page, each with a hairline (`--band`); the footer and the admin sidebar are the deepest surface,
-`#1F0E16` (`--footer-bg`), so the page ends on its darkest step as it does in light mode. Photo scrims use Plum.
+| Pair | Ratio | Use |
+|---|---|---|
+| Plum on White | 14.2:1 | Text |
+| Plum on Blush | 13.2:1 | Footer text |
+| Plum on Petal | 11.8:1 | Chips, panels, bands |
+| Plum on Rose Mist | 9.5:1 | |
+| Mauve on White | 7.6:1 | Secondary text |
+| Mauve on Blush | 7.1:1 | |
+| Mauve on Petal | 6.3:1 | |
+| Mauve on Rose Mist | 5.1:1 | |
+| White on Peony | 4.6:1 | Filled button labels (AA at any size; the serif has one weight, so labels are 16px, 17px for `.btn--lg`) |
+| White on Cerise | 5.9:1 | Hover and pressed buttons |
+| Cerise on White | 5.9:1 | Links, eyebrows, accent text |
+| Cerise on Blush | 5.5:1 | Footer column heads |
+| Cerise on Petal | 4.9:1 | Eyebrows on title bands, selected rings |
+| Cerise on Rose Mist | 3.9:1 | Never text; non-text only |
+| Peony on White | 4.6:1 | Focus and UI edges where used |
+| Tertiary label on White / Blush / Petal | 5.6 / 5.2 / 4.7:1 | Kept off Petal and Rose Mist by rule |
+| White on Plum / Petal on Plum / Pink on Plum | 14.2 / 11.8 / 6.4:1 | Text over photo card scrims |
+| Plum on White at 0.94 over black | 12.4:1 | Share card panels (Mauve 6.7:1) |
+
+Never set Pink, Rose Mist, or Petal as text on a light surface, never set Cerise text on Rose Mist, and never
+put white text on Pink or lighter.
+
+### Caption panels over photos (version 6)
+
+The client asked that "the cards that cover the hero images describing the space" be "more transparent so
+they're not blocking the image", and that all such cards be transparent. `PageHero`'s caption panel (The
+Space, events, every event page, 404) is frosted glass: White at a per-photo opacity, `backdrop-filter:
+blur(12px) saturate(1.2)` (with `-webkit-`), a 70% white hairline, a soft shadow, and no Plum scrim under it.
+Every line in the panel is Plum (eyebrow, title, descriptors, fact labels and values, the styled caption):
+Cerise and Mauve would need a near-solid panel over a dark photo, and Plum lets it stay see-through.
+
+The opacity is measured, not guessed (`FROST` in `PageHero.astro`): with the panel's text hidden, each page
+is screenshotted at 390, 768, 1024 and 1440 and the composited pixels behind every text line are sampled
+(the 2nd-percentile pixel); each photo gets the lowest opacity at which every line keeps 4.5:1, plus a step
+where that was within 0.2 of the floor. Results (worst line per page, all widths):
+
+| Hero photo | Opacity (phone / wide) | Worst line |
+|---|---|---|
+| main-hall (The Space) | 0.50 / 0.60 | 5.15:1 |
+| styled-wedding-indoor-ceremony (/events/) | 0.60 | 5.19:1 |
+| styled-event-weddings | 0.55 | 5.12:1 |
+| styled-event-receptions-banquets | 0.55 | 5.07:1 |
+| styled-event-baby-bridal-showers | 0.55 | 5.27:1 |
+| styled-event-birthday-parties | 0.50 | 5.22:1 |
+| styled-event-repasts-memorials | 0.45 | 4.91:1 |
+| styled-event-meetings-trainings | 0.50 | 4.76:1 |
+| styled-event-graduations-reunions | 0.55 | 4.96:1 |
+| styled-event-community-events | 0.50 | 5.11:1 |
+| gazebo (404) | 0.45 | 5.25:1 |
+| any other photo | 0.65 | (passes over every hero measured) |
+
+Where phones stack the caption under a 3:2 staged photo (`phone="stack"`), it stays under the photo on the
+page, with the Cerise eyebrow (5.9:1) and Mauve labels. Without backdrop-filter the panel is White at 0.9;
+under reduced transparency or increased contrast it is White at 0.96 with no blur. Photo card labels
+(`PhotoCard`) keep their Plum bottom gradient with white type: they are labels in a scrim, not a box over a
+hero, and the lead may decide whether to lighten them too. The small Styled Concept badge stays near-white glass.
 
 Tokens live in `src/styles/global.css` under the palette names above (`--ink`, `--ink-rgb`, `--mauve`,
-`--berry`, `--berry-deep`, `--rose`, `--pink`, `--rose-mist`, `--petal`, `--blush`, `--white`) and the role
-tokens under them; text over photographs and scrims uses `--on-dark`, `--on-dark-2`, `--on-dark-accent`.
-The admin and booking styles use only the role tokens, so they follow.
+`--peony`, `--cerise`, `--pink`, `--rose-mist`, `--petal`, `--blush`, `--white`), the role tokens under them,
+and `--frost-blur` and `--frost-border` for the caption panels; text over photographs and scrims uses
+`--on-dark`, `--on-dark-2`, `--on-dark-accent`. The admin and booking styles use only the role tokens.
 
 ## Type
 
 Libre Caslon Display for h1, h2, display sizes from 28px, and the footer statement (`.t-statement`); Libre
 Caslon Text for serif leads, italic captions, and the welcome's "Welcome to"; the system interface stack
 (Inter elsewhere) for body, forms, buttons, tables, admin, and the small letterspaced eyebrow (`.eyebrow`,
-13px, 600, 0.14em, uppercase, Berry). Headings are sentence case; button labels Title Case. The pairing
+13px, 600, 0.14em, uppercase, Cerise). Headings are sentence case; button labels Title Case. The pairing
 follows the reference site's light serif display over a quiet sans, with our own faces.
 
 ## Header and the morph
 
 The header is a three-column grid: links (Events, The Space, Rates, FAQ), the lockup centred, then the
 phone and Check Availability; on compact screens (below 60rem) a menu button, the lockup centred, and a
-round phone button. It is sticky, transparent over the home hero, and a solid Blush bar with a hairline once
+round phone button. It is sticky, transparent over the home hero, and a solid White bar with a hairline once
 the hero has scrolled past (`data-solid`).
 
 **The lockup is the bar's largest element** (version 5.1, after the owner asked for a bigger name): 40px tall
@@ -255,8 +318,8 @@ is held in inline styles. Over the hero's height less the bar (the scroll after 
 Everything is a transform or an opacity on a scroll timeline (`ScrollTimeline` with the Web Animations API),
 so the browser's compositor moves the name in the same frame as the scroll, with no script per frame and no
 layout reads; browsers without scroll timelines run the same tracks from a frame callback. No filters animate
-(the name has no halo: over every sampled frame of the clip Plum keeps at least 8.2:1 and Berry 4.2:1, and
-in dark mode 7.6:1 and 4.5:1). Under `prefers-reduced-motion: reduce`, on short screens (where the bar
+(the name has no halo: over every sampled frame of the clip, under the version 6 white veil, Plum keeps at
+least 11.3:1 and Cerise 4.4:1). Under `prefers-reduced-motion: reduce`, on short screens (where the bar
 scrolls away), and without scripts, the header lockup shows at once, the welcome stays still and scrolls
 under the bar, and the bar turns solid after 8px.
 
@@ -264,7 +327,10 @@ under the bar, and the bar turns solid after 8px.
 
 - **The hero loop** (`src/components/HeroVideo.astro`, version 5): a royalty-free clip of white rose petals on
   a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, WebM and MP4 under 350 KB each,
-  fixed behind the welcome under a Blush overlay so the Plum name keeps at least 7:1 on its brightest frame.
+  fixed behind the welcome under a bright white veil with a pastel pink cast (version 6: White at 0.9 in the
+  centre easing to Blush at 0.52 at the edges over a 0.3 pink-white wash; on portrait screens a Rose Mist wash
+  at 0.35 under a 0.62 near-white wash). Over 12 frames at 360, 390, 768 and 1440 the Plum name keeps 11.3:1,
+  the Cerise "@ NCC" 4.4:1 (large text), "Welcome to" 6.4:1, and the line 5.0:1.
   It shows no identifiable venue, building, room, or person, never covers a real photo, and its source,
   author, and license are recorded in `public/media/CREDITS.md`. Under reduced motion the video is hidden and
   the poster shows; the script also pauses it.
@@ -383,8 +449,9 @@ exactly once, neutrally, in one FAQ entry. Prices never appear.
 1. **The welcome.** On Blush with petals: the h1 "Welcome to The Venue @ NCC", where "Welcome to" is a Caslon
    Text italic line and the name is the lockup's own words (`Logo` variant `lockup-name`, with the name in
    visually hidden text) on one line at every width, in the lockup's proportions through one unit `--u`:
-   the container's width on phones, 74vw (at most 68rem) from 46.5rem, the same shape it lands on in the header. One small Berry eyebrow line,
-   "Event venue in Suffolk, Virginia", closes it. Nothing else shares the first screen's Blush.
+   the container's width on phones, 74vw (at most 68rem) from 46.5rem, the same shape it lands on in the header. One small
+   Cerise eyebrow line (Plum on portrait screens), "Event venue in Suffolk, Virginia", and Check
+   Availability close it. Nothing else shares the first screen.
 2. **The photo band.** `grove-pines`, full bleed (the portrait file on phones), with the date checker
    floating on glass at the bottom right from 64rem and as a card under the photo below that. Every frame
    holds the whole gazebo: a frame's bottom edge never runs along a tabletop or a bench. The checker's
@@ -413,17 +480,18 @@ information instead of repeated blocks.
 **Footer.** The brand line ("Celebrate among the pines.", `site.tagline`) as a large Caslon statement, then
 the lockup with one sentence, Visit and contact, Plan your event, and the legal line.
 
-**Share images.** A real photo full bleed under a soft Plum bottom scrim, with a Blush caption panel bottom
-left (the hero caption box on the page surface) holding the Plum lockup, the page title in Caslon Display in
+**Share images.** A real photo full bleed with no scrim (version 6), with a near-solid White caption panel
+(0.94, a Rose Mist hairline; a share image has no blur, so it stays legible in small previews) bottom left
+holding the Plum and Cerise lockup, the page title in Caslon Display in
 Plum, and one short Caslon Text line in Mauve. The home card is the exception: the rose still life
 (`share-rose-bouquet.jpg`) with no scrim, and a White panel with a Rose Mist hairline, centred on the plain
 wall to the left of the bouquet and never over it. It mirrors the home welcome and sets the name once:
-"Welcome to" in Caslon Text italic in Mauve, then the lockup's own words (Plum, with the Berry italic "@ NCC")
+"Welcome to" in Caslon Text italic in Mauve, then the lockup's own words (Plum, with the Cerise italic "@ NCC")
 across the panel on one line, then the location line. Its og:image:alt reads "Welcome to The Venue @ NCC,
 event venue in Suffolk, Virginia" and then describes the bouquet, without repeating the name. The panel and
 the bouquet sit side by side, so a square centre crop (some small chat thumbnails) cuts both; the lead
 decides whether that matters before this is pushed.
 
-**Emails.** A Blush page with a white card: `email-lockup.png` at the top, a thin Rose rule, Berry links and
-a Berry capsule button with a serif label (white text), Plum text, Mauve secondary text, a Petal reference
+**Emails.** A Blush page with a white card: `email-lockup.png` at the top, a thin Peony rule, Cerise links and
+a Peony capsule button with a serif label (white text), Plum text, Mauve secondary text, a Petal reference
 box, Georgia for headings, the interface stack for body text.

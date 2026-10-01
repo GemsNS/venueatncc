@@ -14,7 +14,7 @@ the mobile menu) are in the redesign scratchpad folder `redesign2/ref/`.
 | Reference pattern | What we build |
 |---|---|
 | One serif (Canela) carries nav links, buttons, leads, captions; a sans only for small body and forms | Libre Caslon Display for headings and the footer statement, Libre Caslon Text for nav links, button labels, leads, card labels, section copy, and captions; Inter (the interface stack) only for forms, the booking wizard, the admin, chips, and small labels |
-| Header: links left, lockup centred, phone and a dark pill right; transparent over the hero, then a solid cream bar | The same, in our colours: transparent over the home hero, then a solid Blush bar with a hairline as the hero leaves. Inner pages start with the solid bar (as the reference's venue page does); a page may pass `headerOver="photo"` to the layout for white text over a photo instead |
+| Header: links left, lockup centred, phone and a dark pill right; transparent over the hero, then a solid cream bar | The same, in our colours: transparent over the home hero, then a solid White bar (version 6) with a hairline as the hero leaves. Inner pages start with the solid bar (as the reference's venue page does); a page may pass `headerOver="photo"` to the layout for white text over a photo instead |
 | Full-viewport video hero; content slides up over it; a rounded translucent caption panel bottom-left | A 100svh hero with a fixed, muted, looping petals video under a Blush overlay. On home the H1 "Welcome to The Venue @ NCC" is centred, not in a caption box, and morphs into the header lockup. Inner pages use a photo hero with a caption box bottom-left |
 | Section header: 48px light serif h2 left, half-width lead beneath, pill button plus text link with chevron aligned right; a hairline between sections; about 96px of padding | `SectionHeading` and `.section` with `--section` = 96px on desktop; `.section + .section` draws the hairline |
 | Cards: label and capacity inside the photo over a bottom scrim, 12px radius, in carousels that bleed past the viewport edge | `PhotoCard` and `Carousel` |
@@ -27,6 +27,15 @@ the mobile menu) are in the redesign scratchpad folder `redesign2/ref/`.
 ## 2. Design system
 
 ### Colour
+
+**Version 6 (October 1, 2026) supersedes this section: bright, white-first pastel pink, light only.** White
+is the page, the bar, cards, panels, and the menu; the footer is Blush (very pale pink) under a hairline, with
+no dark block; Petal is the quiet band and panel colour. Peony `#D6336C` fills buttons (white label 4.6:1),
+Cerise `#C2185B` is the hover fill, links, accent text, focus rings, and the lockup's "@ NCC"; Plum `#3B2430`
+stays the ink. Berry and Berry Deep are retired, and every dark-mode rule is removed (`color-scheme: light`).
+Hero caption panels over photos are see-through frosted White (opacity tuned per photo, Plum text, blur 12px,
+saturate 1.2, a white hairline), measured to 4.5:1 at 390, 768, 1024 and 1440. The full palette, the
+contrast list, and the per-photo opacities are in `brand.md`, Color. The text below records version 5.
 
 The version 4 pastel pink palette stays (`brand.md`, Color): Plum `#3B2430`, Mauve `#6A4B57`, Berry `#9E2B52`,
 Berry Deep `#7E1F41`, Rose `#B5456E`, Pink `#E9A9BB`, Rose Mist `#EFC5D0`, Petal `#F6DFE5`, Blush `#FBF1F3`,
@@ -107,9 +116,11 @@ bar) laggy, so this replaces fable-advice.md's "ease-out" for the morph. Nothing
 paused and its poster shows, the morph is off (the header lockup shows at once and the bar turns solid after
 8px), and every transition is instant.
 
-The hero overlay is Blush: a radial veil (0.9 at the centre, 0.62 at 70 percent, 0.45 at the edge) over a
-0.35 wash. The name carries no halo (no filter on anything that moves): measured over every sampled frame of
-the clip, Plum keeps at least 8.2:1 and Berry 4.2:1 behind the name, and in dark mode 7.6:1 and 4.5:1.
+The hero overlay (version 6) is a bright white veil with a pastel pink cast: White at 0.9 in the centre,
+Blush at 0.68 at 70 percent and 0.52 at the edge, over a 0.3 pink-white wash; portrait screens add a Rose Mist
+wash at 0.35 under a 0.62 near-white wash. The name carries no halo (no filter on anything that moves):
+measured over 12 frames of the clip at 360, 390, 768 and 1440, Plum keeps at least 11.3:1 and Cerise 4.4:1
+behind the name, "Welcome to" 6.4:1, and the line 5.0:1.
 
 ## 3. Component catalogue (`src/components/`)
 
@@ -118,7 +129,7 @@ the clip, Plum keeps at least 8.2:1 and Berry 4.2:1 behind the name, and in dark
 | `Header.astro` | Menu button (phones), links (Events, The Space, Rates, FAQ) left, lockup centred, phone and Check Availability right. `over="light"` (default) keeps Plum text; `over="photo"` uses the white lockup and white text until the bar turns solid. Solid Blush with a hairline once the hero (`[data-hero]`) has scrolled past, or after 8px on pages without one. | Three columns, 80px tall with a 52px lockup (72px and 46px from 960px to 1119px) | Menu button left, lockup centred (40px; 44px on tablets in a 72px bar; less only where a 320px screen or large text leaves less room, never under 32px), phone icon right, 64px tall |
 | The menu (inside `Header.astro`) | A native `<dialog>` that fills the screen on Blush: a close button where the menu button was, the lockup centred, then Home, Events, The Space, Rates, FAQ in Caslon Display 2.25rem with chevrons, Check Availability (filled, large), Call (outline), and the address. Escape closes it, focus starts on the close button and returns to the menu button, the page does not scroll behind it (`html.menu-open`), and any link inside closes it. | Never shown | Full screen |
 | `HeroVideo.astro` | A 100svh section (`data-hero`) whose media is fixed to the viewport: a poster `<img>` beneath a muted, looping, playsinline `<video>` (WebM then MP4) under the Blush overlay; the slot content is centred; the content after it (`.page` on the home page, with its own background) slides up over it. The section makes no stacking context, so the welcome's name can rise above the bar. Reduced motion hides the video, pauses it by script, and shows the poster. | 100svh | 100svh (the poster is cropped by `object-fit: cover`, which is fine for petals) |
-| `PageHero.astro` | Full-bleed photo (the `Photo` component, portrait file on phones) with a Plum bottom scrim and a caption panel bottom-left: eyebrow, h1, an optional line of three descriptors, and up to three fact columns (LABEL / value). | The screen under the bar (100svh minus the bar), never taller than the 3:2 photo at that width (66.67vw), so a subject that spans the photo's height (the gazebo) keeps its roof and its base; caption panel 34rem wide | 80svh, the panel spans the width minus the gutter; facts as LABEL: value lines that wrap as text |
+| `PageHero.astro` | Full-bleed photo (the `Photo` component, portrait file on phones) with a see-through frosted White caption panel bottom-left (version 6: no scrim, per-photo opacity, Plum text): eyebrow, h1, an optional line of three descriptors, and up to three fact columns (LABEL / value). | The screen under the bar (100svh minus the bar), never taller than the 3:2 photo at that width (66.67vw), so a subject that spans the photo's height (the gazebo) keeps its roof and its base; caption panel 34rem wide | 80svh, the panel spans the width minus the gutter; facts as LABEL: value lines that wrap as text |
 | `SectionHeading.astro` | Eyebrow (optional), h2, lead (optional), and actions (a slot) aligned to the right on the h2's line. | Two columns: copy left (max 44rem), actions right | Stacked; actions wrap under the lead |
 | `PhotoCard.astro` | The one card. With `href` the whole card is a link named by its label; without one it is a gallery figure whose photo opens in the viewer. The photo fills a 12px-radius frame with a bottom Plum scrim (0 to 0.72); the label (Caslon Text 1.25rem, white) and a meta line (capacity, place) sit inside the photo, bottom-left; a staged photo keeps its Styled Concept badge top-left. | Ratio 3:2, the file's own shape, so nothing is cropped | The 4:5 portrait file (`tall`, default on), so nothing is cropped |
 | `Carousel.astro` | A horizontal, scroll-snapping row of slotted cards that starts at the container's left edge and bleeds one gutter past both screen edges; beneath it a progress track of dots (the current one a bar) and round previous and next buttons. `cols` sets how many cards show at once from 46.5rem (2, 3 or 4); phones show one card at 82% width. The controls hide when the row fits; the row is focusable and the arrow keys move it; a focused card scrolls fully into view. Pass `label` for the row's name. | Row of `cols` cards, the next peeking | Swipeable, snap to start |
@@ -129,7 +140,7 @@ the clip, Plum keeps at least 8.2:1 and Berry 4.2:1 behind the name, and in dark
 | `AnchorBar.astro` | A sticky row of in-page links (`items`: id and label) under the header (the reference venue page's tab bar), horizontally scrollable on phones, the current section underlined in Berry as the page scrolls (`aria-current="location"`). Targets need `scroll-margin-top` of about the bar plus 4rem. | Sticky at `--nav-h` | Sticky, scrollable |
 | `VerticalTabs.astro` | A left list of section names (`items`) on a hairline rail, the current one marked in Berry, beside the stacked panels on the right, one named slot per item id (photo, sub-head, copy). Built as in-page anchors with `aria-current`; a small scroll listener marks the current one. | 1:2.2 columns, the list sticky | The list becomes a scrollable row above the panels |
 | `CtaBand.astro` | The closing band: a heading, one sentence, one filled Check Availability, on Petal with a hairline (the reference's dark band, kept pastel here). | Copy left, button right | Stacked, button full width |
-| `Footer.astro` | Plum surface: a two-line serif statement with a white pill (Check Availability) left and three link columns right (Explore: Events, The Space, Rates, FAQ; Plan: Check availability, Request a visit, Send an inquiry; Visit: the address with directions, the phone, the email, the contact person), then the very large centred serif statement (`site.tagline`), and a bottom row with the white lockup and the legal line. Takes `bookHref` from the layout, so event pages book with their event chosen. | Columns | Explore and Plan side by side, Visit beneath; statement still centred |
+| `Footer.astro` | Blush surface under a hairline (version 6; Plum until then): a two-line serif statement with a white pill (Check Availability) left and three link columns right (Explore: Events, The Space, Rates, FAQ; Plan: Check availability, Request a visit, Send an inquiry; Visit: the address with directions, the phone, the email, the contact person), then the very large centred serif statement (`site.tagline`), and a bottom row with the white lockup and the legal line. Takes `bookHref` from the layout, so event pages book with their event chosen. | Columns | Explore and Plan side by side, Visit beneath; statement still centred |
 | `Photo.astro` | Unchanged: responsive AVIF and WebP, the portrait file on phones, the Styled Concept badge, the tap-to-enlarge viewer. Radius now `--r-card`. |  |  |
 | `Icon.astro`, `Logo.astro`, `Breadcrumbs.astro`, `JsonLd.astro` | Unchanged. Breadcrumbs are used only on event pages, under the hero. |  |  |
 
@@ -250,7 +261,7 @@ Availability, Rates, Events) like the reference's 404.
 ### Admin (`/admin/`)
 
 The admin keeps its own interface family (Inter) and its own chrome, restyled to the tokens only: Blush
-surfaces, White cards with hairlines, Berry actions, 12px card radius, the Plum sidebar on desktop mirroring
+surfaces (White since version 6), White cards with hairlines, Peony actions, 12px card radius, the Blush sidebar on desktop mirroring
 the footer's surface, and a bottom tab row inside the app (it is an application, not the marketing site).
 
 ### Emails and share images

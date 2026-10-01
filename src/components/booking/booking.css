@@ -2,19 +2,18 @@
   Booking islands: the wizard on /book/, the date checker on the home page, and the pieces the inquiry form
   on /pricing/ borrows (fields, the choice list, the stepper, the date field and its calendar, the error
   summary, the send error, the reference). Built on the tokens, the one button, and the panel rules in
-  src/styles/global.css (docs/design/redesign-spec.md, version 5): white panels with a hairline and a 16px
-  radius on the Blush page, flat at rest; serif (Libre Caslon Text) for the step list, panel titles, space
+  src/styles/global.css (docs/design/redesign-spec.md; brand.md, version 6): white panels with a hairline
+  and a 16px radius, flat at rest; serif (Libre Caslon Text) for the step list, panel titles, space
   names, event chips, and the summary; the interface family for labels, inputs, and small text; Libre Caslon
   Display for the step title and the confirmation.
 
   How the palette marks state:
-    Berry fill, white label      the one chosen value and the primary action: the selected day, a pressed
-                                 chip, a switch that is on, and the filled buttons (7.2:1; Pink Bloom with a
-                                 Night label in dark mode).
+    Peony fill, white label      the one chosen value and the primary action: the selected day, a pressed
+                                 chip, a switch that is on, and the filled buttons (4.6:1).
     Petal surface                a selected row: a space choice, a date checker space. Its ring or radio is
-                                 Berry (--accent-text), which keeps 3:1 against the page and 5.7:1 on Petal;
-                                 Mauve secondary text keeps 6.0:1 on it. Dark mode uses translucent Pink.
-    Berry underline              the current step in the step list.
+                                 Cerise (--accent-text), which keeps 3:1 against the page and 4.9:1 on Petal;
+                                 Mauve secondary text keeps 6.3:1 on it.
+    Cerise underline             the current step in the step list.
   Status uses green and orange with an icon or text. Nothing here is glass: the phone action bar is a solid
   page-colored bar with a hairline, the reference's sticky bar.
 */
@@ -33,27 +32,13 @@
   --bk-green-text: #165826;
   --bk-orange-text: #9a2800;
   --bk-card-edge: 0 0 0 1px var(--separator);
-  /* The date field's calendar popover: a hairline edge, stronger in dark mode where shadows barely show. */
+  /* The date field's calendar popover: a hairline edge. */
   --bk-pop-edge: 0 0 0 1px var(--separator);
   /* Inputs sit on a white panel: a Blush fill with a hairline (the reference's bordered fields). */
-  --bk-input-bg: var(--bg);
+  --bk-input-bg: var(--blush);
   --bk-input-edge: var(--separator-strong);
   color: var(--label);
   font-size: var(--t-body);
-}
-
-/*
-  Dark mode: stepper buttons are Berry, raised above the card (#3A1F2B). Selected rows use the global
-  translucent Pink tokens.
-*/
-@media (prefers-color-scheme: dark) {
-  .bk,
-  .bk-app {
-    --bk-step-bg: var(--berry);
-    --bk-pop-edge: 0 0 0 1px var(--separator-strong);
-    --bk-green-text: var(--green);
-    --bk-orange-text: var(--orange);
-  }
 }
 
 /* Small buttons still get a 44px hit target. */
@@ -864,7 +849,7 @@
   background: var(--accent);
 }
 
-/* Wide screens: the steps as a serif list under a hairline, the current one underlined in Berry. */
+/* Wide screens: the steps as a serif list under a hairline, the current one underlined in Cerise. */
 .bk-progress {
   display: none;
 }
@@ -1365,7 +1350,7 @@ button.bk-progress__item:hover .bk-progress__label {
   gap: 1.25rem;
 }
 
-/* The event types as serif capsules (the site's chips): a hairline at rest, Berry with a white label chosen. */
+/* The event types as serif capsules (the site's chips): a hairline at rest, Peony with a white label chosen. */
 .bk-tiles {
   display: flex;
   flex-wrap: wrap;
@@ -1626,7 +1611,7 @@ button.bk-progress__item:hover .bk-progress__label {
   text-align: center;
 }
 
-/* A check in a Berry ring (the inquiry form's confirmation on /pricing/ uses it too). */
+/* A check in a Cerise ring (the inquiry form's confirmation on /pricing/ uses it too). */
 .bk-success__badge {
   display: grid;
   place-items: center;
@@ -1692,7 +1677,7 @@ button.bk-progress__item:hover .bk-progress__label {
   }
 }
 
-/* The numbered steps: a Berry numeral in a hairline ring. */
+/* The numbered steps: a Cerise numeral in a hairline ring. */
 .bk-next__n {
   display: grid;
   place-items: center;
@@ -1948,7 +1933,7 @@ html:not(.js) .bk-skel {
   padding-inline: 8px;
 }
 
-/* A serif capsule with a hairline; pressed, it takes the Berry fill. */
+/* A serif capsule with a hairline; pressed, it takes the Peony fill. */
 .bk-chip {
   display: inline-flex;
   align-items: center;

@@ -1,19 +1,17 @@
 /*
   Staff admin app (docs/design/redesign-spec.md, "Admin"). It keeps its own chrome and the interface family
-  (Inter) throughout, restyled to the brand tokens in src/styles/global.css only: the Blush page, white cards
-  with a hairline edge and the 12px card radius, Berry actions, the Plum sidebar on regular screens (the
-  footer's surface), and a solid tab row along the bottom of the screen on phones (this is an application,
-  not the marketing site, so the row is allowed here). No glass anywhere: the sidebar, tab row, sheets, menus,
-  and toasts are solid surfaces; the floating ones (menus, toasts) carry --shadow-2.
+  (Inter) throughout, restyled to the brand tokens in src/styles/global.css only (brand.md, version 6: bright,
+  white-first, light only): the White page, white cards with a hairline edge and the 12px card radius, Peony
+  actions, a Blush sidebar on regular screens (the footer's surface) with a hairline, and a solid tab row along
+  the bottom of the screen on phones (this is an application, not the marketing site, so the row is allowed
+  here). No glass anywhere: the sidebar, tab row, sheets, menus, and toasts are solid surfaces; the floating
+  ones (menus, toasts) carry --shadow-2.
   How the palette marks state:
-    Petal surface, Berry label         the current tab in the phone tab row, and date tiles (5.7:1 on Petal;
-                                       translucent Pink with a Blossom label in dark mode).
-    Translucent white, white label     the current screen in the Plum sidebar.
-    Pink chip, Plum label              the new-request count on Plum (11.2:1 on Pink) and in the tab row.
-    Berry fill, white label            the selected calendar day and the filled buttons (7.2:1; Pink Bloom
-                                       with a Night label in dark mode).
-    Berry                              accent text, links, and unread dots (Blossom in dark mode).
-    Rose                               focus rings (Pink Bloom in dark mode; white inside the Plum sidebar).
+    Petal surface, Cerise label        the current tab in the phone tab row, the current screen in the sidebar,
+                                       and date tiles (4.9:1 on Petal).
+    Peony fill, white label            the selected calendar day, the filled buttons, and the new-request
+                                       count (4.6:1).
+    Cerise                             accent text, links, unread dots, and focus rings (5.9:1 on White).
   Size classes: compact below 744px (the tab row), regular from 744px (the sidebar).
 */
 
@@ -42,24 +40,14 @@
   --adm-gray-tint: var(--fill-2);
   --adm-page: var(--bg);
 
-  /* The sidebar: the footer's Plum, with the same text roles (Blush, white links, Pink heads). */
+  /* The sidebar: the footer's Blush, with the same text roles (Mauve text, Plum links, Cerise accents). */
   --adm-side-bg: var(--footer-bg);
-  --adm-side-text: var(--on-dark-2);
-  --adm-side-link: var(--on-dark);
-  --adm-side-accent: var(--on-dark-accent);
-  --adm-side-fill: rgba(255, 255, 255, 0.08);
-  --adm-side-selected: rgba(255, 255, 255, 0.14);
-  --adm-side-rule: rgba(251, 241, 243, 0.18);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --adm-green-tint: rgba(48, 209, 88, 0.16);
-    --adm-orange-tint: rgba(255, 159, 10, 0.16);
-    --adm-red-tint: rgba(255, 69, 58, 0.18);
-    --adm-side-fill: rgba(255, 255, 255, 0.06);
-    --adm-side-selected: rgba(233, 169, 187, 0.18);
-  }
+  --adm-side-text: var(--label-2);
+  --adm-side-link: var(--label);
+  --adm-side-accent: var(--accent-text);
+  --adm-side-fill: var(--fill-3);
+  --adm-side-selected: var(--petal);
+  --adm-side-rule: var(--separator);
 }
 
 html:has(.adm),
@@ -207,7 +195,7 @@ body.is-bare .btn {
   left: 14px;
 }
 
-/* The new-request count: Berry with a white label on light surfaces. */
+/* The new-request count: Peony with a white label (4.6:1). */
 .adm-count {
   display: inline-grid;
   place-items: center;
@@ -257,7 +245,7 @@ body.is-bare .btn {
     display: none;
   }
 
-  /* The sidebar: the footer's Plum surface, full height, flush to the left edge. */
+  /* The sidebar: the footer's Blush surface, full height, flush to the left edge, with a hairline. */
   .adm-sidebar {
     position: fixed;
     z-index: 40;
@@ -269,13 +257,9 @@ body.is-bare .btn {
     flex-direction: column;
     padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
     background: var(--adm-side-bg);
+    border-right: 1px solid var(--adm-side-rule);
     color: var(--adm-side-text);
     overflow-y: auto;
-  }
-
-  /* On dark surfaces Rose falls under 3:1, so focus rings inside the sidebar are white. */
-  .adm-sidebar :focus-visible {
-    outline-color: var(--adm-side-link);
   }
 }
 
@@ -383,12 +367,6 @@ body.is-bare .btn {
 
 .adm-nav__label {
   flex: 1;
-}
-
-/* On Plum the count is a Pink chip with a Plum label (11.2:1); Berry would sink into the surface. */
-.adm-sidebar .adm-count {
-  background: var(--pink);
-  color: var(--ink);
 }
 
 .adm-sidebar__foot {
@@ -2134,7 +2112,7 @@ body.is-bare .btn {
   }
 }
 
-/* The monogram in the logo accent: Berry (Blossom in dark mode). */
+/* The monogram in the logo accent: Cerise. */
 .adm-signin__mark {
   width: 64px;
   height: 64px;

@@ -216,12 +216,13 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     margin: 0;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
     border: 0;
-    background: rgb(42 21 31 / 0.95);
-    color: #fff;
+    /* The viewer is bright like the site (brand.md, version 6): near-solid White, Plum controls. */
+    background: rgb(255 255 255 / 0.97);
+    color: var(--ink);
   }
 
   .lightbox::backdrop {
-    background: rgb(42 21 31 / 0.6);
+    background: rgb(255 244 247 / 0.7);
   }
 
   html.lightbox-open {
@@ -256,7 +257,7 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     font-family: var(--font-serif);
     font-style: italic;
     font-size: 1rem;
-    color: rgb(255 255 255 / 0.9);
+    color: var(--mauve);
   }
 
   .lightbox__btn {
@@ -267,8 +268,9 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     height: 48px;
     border: 0;
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.16);
-    color: #fff;
+    background: var(--petal);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(var(--ink-rgb) / 0.12);
     cursor: pointer;
   }
 
@@ -278,11 +280,11 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
   }
 
   .lightbox__btn:hover {
-    background: rgb(255 255 255 / 0.28);
+    background: var(--rose-mist);
   }
 
   .lightbox__btn:focus-visible {
-    outline: 3px solid #f2b7c6;
+    outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
   }
 
@@ -357,17 +359,7 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     object-position: var(--photo-pos, center);
   }
 
-  /* HIG: slightly dim bright imagery in dark mode. */
-  @media (prefers-color-scheme: dark) {
-    .photo__img {
-      filter: brightness(0.92);
-    }
-  }
-
-  /*
-    A small glass pill over the photo. Light mode: near-white glass with a Plum label, legible on any frame
-    (at least 10:1 even over black). Dark mode: the Plum tint with a white label.
-  */
+  /* A small glass pill over the photo: near-white glass with a Plum label, legible on any frame (at least 10:1 even over black). */
   .photo__badge {
     position: absolute;
     top: 0.75rem;
@@ -391,16 +383,6 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     font-size: var(--t-footnote);
     font-weight: 600;
     line-height: 1.2;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .photo__badge {
-      --badge-bg: rgb(var(--ink-rgb) / 0.72);
-      --badge-bg-solid: rgb(var(--ink-rgb) / 0.92);
-      border-color: rgba(255, 255, 255, 0.28);
-      box-shadow: none;
-      color: var(--on-dark);
-    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {

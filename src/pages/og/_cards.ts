@@ -29,7 +29,7 @@ export interface ShareCard {
    */
   photo: { file: string; caption?: string; region?: { left: number; top: number; width: number; height: number } };
   /**
-   * 'photo' (the default): a real photo under a Plum bottom scrim, the Blush panel bottom left.
+   * 'photo' (the default): a real photo full bleed, a near-solid White panel bottom left.
    * 'still': a light still life with plain space on its left; no scrim, a narrower White panel centred on
    * the left, clear of the subject.
    */

@@ -7,11 +7,11 @@
  * figure, labelled "Internal rate-card guide", read as estimate() wrote it: bookingDeposit is due to
  * reserve the date and the rest (total minus bookingDeposit) is the balance.
  *
- * Brand (docs/design/brand.md; redesign-spec.md, "Emails and share images"): the site's Blush page with
- * one white card (a hairline edge, 16px corners), the email lockup as a PNG header (many clients do not
- * render SVG), a thin Rose rule, Georgia at regular weight for headings and the button label in place of
- * Caslon, the system sans stack for body text, Berry links and a Berry capsule button (white label), Plum
- * text, Mauve secondary text, and a Petal reference panel. The venue is its own business: the emails name
+ * Brand (docs/design/brand.md, version 6; redesign-spec.md, "Emails and share images"): a very pale Blush
+ * page with one white card (a hairline edge, 16px corners), the email lockup as a PNG header (many clients
+ * do not render SVG), a thin Peony rule, Georgia at regular weight for headings and the button label in
+ * place of Caslon, the system sans stack for body text, Cerise links, a Peony capsule button (white label),
+ * Plum text, Mauve secondary text, and a Petal reference panel. The venue is its own business: the emails name
  * no other organization. The footer is the one place for the address, phone, email, and site, so the body
  * points to it instead of repeating them.
  */
@@ -34,21 +34,22 @@ export interface EmailContext {
 }
 
 const NL = String.fromCharCode(10);
-/** White: the card, and the button label (7.2:1 on Berry). */
+/** White: the card, and the button label (4.6:1 on Peony). */
 const WHITE = '#FFFFFF';
-/** Rose: the thin rule under the header. */
-const STEEL = '#B5456E';
-/** Berry: links, the reference number, and the button fill. 7.2:1 on white, 5.7:1 on Petal. */
-const LINK = '#9E2B52';
+/** Peony: the thin rule under the header, and the button fill. */
+const STEEL = '#D6336C';
+const BUTTON = '#D6336C';
+/** Cerise: links and the reference number. 5.9:1 on white, 4.9:1 on Petal. */
+const LINK = '#C2185B';
 /** Plum and Mauve: text and secondary text (14.2:1 and 7.6:1 on white). */
 const NAVY = '#3B2430';
 const SLATE = '#6A4B57';
 /** Hairlines: the site's separator (Plum at 12%) over white. */
 const RULE = '#E7E0E3';
 /** Blush: the page behind the card. */
-const FROST = '#FBF1F3';
-/** Petal: the reference panel (Plum 11.2:1, Mauve 6.0:1). */
-const PETAL = '#F6DFE5';
+const FROST = '#FFF4F7';
+/** Petal: the reference panel (Plum 11.8:1, Mauve 6.3:1). */
+const PETAL = '#FCE4EC';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 /** Headings and the button label: Georgia stands in for Libre Caslon, which email clients do not have. */
 const SERIF = `Georgia, 'Times New Roman', Times, serif`;
@@ -169,7 +170,7 @@ const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size
 const sectionTitle = (text: string) =>
   `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
 
-/** The reference on a Petal panel (the site's quiet panel surface), the number in Berry. */
+/** The reference on a Petal panel (the site's quiet panel surface), the number in Cerise. */
 function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${PETAL};border-radius:12px;">
@@ -208,11 +209,11 @@ function bulletList(items: string[]): string {
   return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${SLATE};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
 }
 
-/** The site's one button: a Berry capsule with a serif label in white (Georgia for Caslon Text). */
+/** The site's one button: a Peony capsule with a serif label in white (Georgia for Caslon Text). */
 function button(href: string, label: string): string {
   return `<tr><td style="padding:16px 0 8px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="border-radius:999px;background:${LINK};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 26px;font-family:${SERIF};font-size:17px;font-weight:400;line-height:20px;color:${WHITE};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
+<td style="border-radius:999px;background:${BUTTON};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 26px;font-family:${SERIF};font-size:17px;font-weight:400;line-height:20px;color:${WHITE};text-decoration:none;border-radius:999px;">${escapeHtml(label)}</a></td>
 </tr></table>
 </td></tr>`;
 }

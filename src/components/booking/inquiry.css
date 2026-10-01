@@ -3,7 +3,7 @@
   date field, error summary, send error, reference) and the brand tokens in global.css.
 
   The reference's contact form (redesign-spec.md, "/pricing/ Rates"): no card around the form; each field
-  group sits in a tinted panel (Petal, the card color in dark mode) under a serif legend, with white
+  group sits in a tinted panel (Petal) under a serif legend, with white
   hairline inputs inside it; the filled Submit sits at the right with a line of fine print beneath it.
   Fields pair up side by side only when the panel is wide enough for both at the reader's text size (the
   threshold is in rem), and stack otherwise.
@@ -57,8 +57,7 @@
 }
 
 /*
-  Inputs on the tinted panel: white (the card color in dark mode, where the panel is the same color) with a
-  hairline, so every field keeps a visible edge in both appearances.
+  Inputs on the tinted panel: white with a hairline, so every field keeps a visible edge.
 */
 .bk-iq .input {
   background: var(--bg-elevated);
@@ -111,18 +110,6 @@
 
 .bk-iq .bk-stepper__btn[aria-disabled='true'] {
   background: transparent;
-}
-
-@media (prefers-color-scheme: dark) {
-  .bk-iq .bk-stepper__btn {
-    background: var(--berry);
-    color: var(--white);
-  }
-
-  .bk-iq .bk-stepper__btn[aria-disabled='true'] {
-    background: transparent;
-    color: var(--label-3);
-  }
 }
 
 .bk-iq__pair {

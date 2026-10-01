@@ -1,10 +1,18 @@
 ---
 /**
  * The inner-page hero (redesign-spec.md, PageHero; the reference's venue page): a full-bleed photograph
- * (the 4:5 file on phones, never cropped into its subject) with a Plum bottom scrim and a rounded, translucent
- * caption panel bottom-left holding an eyebrow, the h1, an optional line of descriptors, and up to three
- * facts (LABEL / value columns; on phones LABEL: value rows, as the reference's mobile venue page sets
- * them). The photo is the page's main image and loads first. A staged photo keeps its badge.
+ * (the 4:5 file on phones, never cropped into its subject) with a rounded, see-through caption panel
+ * bottom-left holding an eyebrow, the h1, an optional line of descriptors, and up to three facts (LABEL /
+ * value columns; on phones LABEL: value rows, as the reference's mobile venue page sets them). The photo is
+ * the page's main image and loads first. A staged photo keeps its badge.
+ *
+ * The panel is frosted glass (brand.md, version 6, "Caption panels over photos"): White at `frost` opacity
+ * over the photo, blurred (12px, saturate 1.2), with a white hairline, so the photo shows through it. Every
+ * line in the panel is Plum: Cerise and Mauve need a near-solid panel to keep 4.5:1 over a dark photo, and
+ * Plum lets the panel stay see-through. The text over the composited panel is measured per photo at 390,
+ * 768, 1024 and 1440 (the panel screenshotted with its text hidden, the pixels behind each line sampled), and
+ * each page passes the lowest opacity at which every line keeps 4.5:1. Without backdrop-filter, and under reduced transparency
+ * or increased contrast, the panel is near-solid White.
  *
  * `phone="stack"` is for a photo that has no portrait file (the staged event photos, 3:2 only): cover-
  * cropping it into a tall phone frame would cut its scene off at the sides (brand.md, "No cropped
@@ -14,6 +22,31 @@
  */
 import Photo from './Photo.astro';
 import type { VenuePhoto } from '../data/photos';
+
+type Frost = { phone: number; wide: number };
+
+/**
+ * The caption panel's opacity per hero photo: the lowest that keeps every line of Plum at 4.5:1 or better
+ * over the composited panel at 390, 768, 1024 and 1440 (worst pixel at the 2nd percentile), plus a step of
+ * margin where the lowest passing value was within 0.2 of 4.5:1. Phones only see the overlay over a photo
+ * with a portrait file; the staged event photos stack their caption under the photo there. A photo not
+ * listed gets 0.65, which passes over every hero photo measured. brand.md, "Caption panels over photos",
+ * lists the measured ratios.
+ */
+const FROST: Record<string, Frost> = {
+  'main-hall': { phone: 0.5, wide: 0.6 },
+  'styled-wedding-indoor-ceremony': { phone: 0.6, wide: 0.6 },
+  'styled-event-weddings': { phone: 0.55, wide: 0.55 },
+  'styled-event-receptions-banquets': { phone: 0.55, wide: 0.55 },
+  'styled-event-baby-bridal-showers': { phone: 0.55, wide: 0.55 },
+  'styled-event-birthday-parties': { phone: 0.5, wide: 0.5 },
+  'styled-event-repasts-memorials': { phone: 0.45, wide: 0.45 },
+  'styled-event-meetings-trainings': { phone: 0.5, wide: 0.5 },
+  'styled-event-graduations-reunions': { phone: 0.55, wide: 0.55 },
+  'styled-event-community-events': { phone: 0.5, wide: 0.5 },
+  gazebo: { phone: 0.45, wide: 0.45 },
+};
+const FROST_DEFAULT: Frost = { phone: 0.65, wide: 0.65 };
 
 interface Props {
   photo: VenuePhoto;
@@ -30,6 +63,11 @@ interface Props {
   height?: string;
   /** Phones: the caption over the portrait photo (default), or the whole photo with the caption beneath. */
   phone?: 'overlay' | 'stack';
+  /**
+   * The caption panel's White opacity over the photo, below 46.5rem and from 46.5rem (phones see the
+   * portrait file). Defaults to the measured value for the photo (FROST below).
+   */
+  frost?: Frost;
   class?: string;
 }
 
@@ -42,13 +80,14 @@ const {
   facts = [],
   height = 'min(calc(100svh - var(--nav-h)), 66.67vw)',
   phone = 'overlay',
+  frost: frostProp,
   class: className,
 } = Astro.props;
+const frost = frostProp ?? FROST[photo.name] ?? FROST_DEFAULT;
 ---
-<section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`} data-phone={phone}>
+<section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}; --frost-phone: ${frost.phone}; --frost-wide: ${frost.wide}`} data-phone={phone}>
   <div class="phero__media">
     <Photo photo={photo} ratio="fill" tall rounded={false} priority sizes="100vw" caption={false} class="phero__photo" />
-    <div class="phero__scrim" aria-hidden="true"></div>
   </div>
   <div class="container phero__inner">
     <div class="phero__panel">
@@ -85,12 +124,19 @@ const {
 
 <style>
   .phero {
+    --frost-alpha: var(--frost-phone);
     position: relative;
     display: grid;
     align-items: end;
     min-height: max(28rem, var(--phero-h));
     isolation: isolate;
-    color: var(--white);
+    color: var(--label);
+  }
+
+  @media (min-width: 46.5rem) {
+    .phero {
+      --frost-alpha: var(--frost-wide);
+    }
   }
 
   .phero__media {
@@ -106,36 +152,40 @@ const {
     height: 100%;
   }
 
-  /* The Plum scrim under the panel: white type keeps 4.5:1 over any frame. */
-  .phero__scrim {
-    position: absolute;
-    inset: 30% 0 0;
-    background: linear-gradient(to bottom, rgb(var(--scrim-rgb) / 0), rgb(var(--scrim-rgb) / 0.62));
-    pointer-events: none;
-  }
-
   .phero__inner {
     position: relative;
     z-index: 1;
     padding-block: 1.25rem;
   }
 
-  /* The reference's caption box: rounded, translucent Plum, blurred behind. */
+  /*
+    The reference's caption box, made see-through: White at --frost-alpha, the photo blurred and slightly
+    saturated behind it, a white hairline, and a soft shadow so its edge reads over a light photo.
+  */
   .phero__panel {
     display: grid;
     gap: 0.75rem;
     justify-items: start;
     max-width: 34rem;
     padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    border: 1px solid var(--frost-border);
     border-radius: var(--r-xl);
-    background: rgb(var(--scrim-rgb) / 0.55);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
+    background: rgb(255 255 255 / var(--frost-alpha));
+    -webkit-backdrop-filter: var(--frost-blur);
+    backdrop-filter: var(--frost-blur);
+    box-shadow: 0 8px 32px rgb(var(--ink-rgb) / 0.08);
+  }
+
+  /* No backdrop-filter: the photo is not blurred, so the panel is near-solid White to keep the text legible. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .phero__panel {
+      background: rgb(255 255 255 / 0.9);
+    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     .phero__panel {
-      background: rgb(var(--scrim-rgb) / 0.92);
+      background: rgb(255 255 255 / 0.96);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -146,11 +196,11 @@ const {
     font-size: var(--t-footnote);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--on-dark-accent);
+    color: var(--label);
   }
 
   .phero__title {
-    color: var(--white);
+    color: var(--label);
     font-size: var(--t-large-title);
     line-height: 1.05;
   }
@@ -161,11 +211,11 @@ const {
     gap: 0.25rem 0.6rem;
     font-family: var(--font-serif);
     font-size: var(--t-headline);
-    color: var(--on-dark-2);
+    color: var(--label);
   }
 
   .phero__dot {
-    opacity: 0.7;
+    color: var(--label);
   }
 
   .phero__facts {
@@ -175,7 +225,7 @@ const {
     width: 100%;
     margin: 0.5rem 0 0;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    border-top: 1px solid var(--separator-strong);
   }
 
   .phero__fact {
@@ -188,24 +238,30 @@ const {
     font-size: var(--t-caption);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--on-dark-2);
+    color: var(--label);
   }
 
   .phero__fact dd {
     margin: 0;
     font-family: var(--font-serif);
     font-size: var(--t-headline);
-    color: var(--white);
+    color: var(--label);
   }
 
-  /* A link inside the panel takes the panel's color: white over the photo, Plum on the page. */
+  /* A link inside the panel takes the panel's Plum. */
   .phero__panel :global(.link-more) {
     color: inherit;
   }
 
   .phero__panel :global(.link-more:focus-visible) {
-    outline-color: var(--on-dark-accent);
+    outline-color: var(--focus-ring);
     outline-offset: 4px;
+  }
+
+  @media (forced-colors: active) {
+    .phero__panel {
+      border-color: CanvasText;
+    }
   }
 
   @media (width < 46.5rem) {
@@ -248,7 +304,6 @@ const {
     .phero[data-phone='stack'] {
       display: block;
       min-height: 0;
-      color: var(--label);
     }
 
     .phero[data-phone='stack'] .phero__media {
@@ -266,48 +321,33 @@ const {
       aspect-ratio: 3 / 2;
     }
 
-    .phero[data-phone='stack'] .phero__scrim {
-      display: none;
-    }
-
     .phero[data-phone='stack'] .phero__inner {
       padding-block: 1.75rem 0;
     }
 
     .phero[data-phone='stack'] .phero__panel {
       padding: 0;
+      border: 0;
       border-radius: 0;
       background: none;
+      box-shadow: none;
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
 
-    .phero[data-phone='stack'] .phero__eyebrow {
+    /* On the page the eyebrow and the fact labels take the site's Cerise and Mauve again. */
+    .phero[data-phone='stack'] .phero__eyebrow,
+    .phero[data-phone='stack'] .phero__dot {
       color: var(--accent-text);
     }
 
-    .phero[data-phone='stack'] .phero__title {
-      color: var(--label);
-    }
-
-    .phero[data-phone='stack'] .phero__descriptors {
+    .phero[data-phone='stack'] .phero__descriptors,
+    .phero[data-phone='stack'] .phero__fact dt {
       color: var(--label-2);
     }
 
     .phero[data-phone='stack'] .phero__facts {
       border-top-color: var(--separator);
-    }
-
-    .phero[data-phone='stack'] .phero__fact dt {
-      color: var(--label-2);
-    }
-
-    .phero[data-phone='stack'] .phero__fact dd {
-      color: var(--label);
-    }
-
-    .phero[data-phone='stack'] .phero__panel :global(.link-more:focus-visible) {
-      outline-color: var(--focus-ring);
     }
   }
 </style>

@@ -2,11 +2,10 @@
 /**
  * The Venue @ NCC logo, inlined from src/assets/brand/ so it follows the theme.
  *
- * tone="auto": Plum ink (#3B2430) becomes var(--logo-ink, var(--label)) and the Berry accent (#9E2B52)
- * becomes var(--logo-accent, var(--accent-icon)), so the logo is Plum and Berry on light surfaces and turns
- * the dark-mode text color and Blossom in dark mode.
- * tone="white": the light artwork, for photos and Plum. White (#FFFFFF) becomes var(--on-dark) and the Pink
- * accent (#E9A9BB) becomes var(--on-dark-accent), the same in both appearances.
+ * tone="auto": Plum ink (#3B2430) becomes var(--logo-ink, var(--label)) and the Cerise accent (#C2185B)
+ * becomes var(--logo-accent, var(--accent-icon)), so the logo is Plum and Cerise on the light surfaces.
+ * tone="white": the light artwork, for photos and Plum scrims. White (#FFFFFF) becomes var(--on-dark) and
+ * the Pink accent (#F48FB1) becomes var(--on-dark-accent).
  *
  * Two variants are cut from the lockup itself for the home page welcome: 'lockup-name' is the lockup
  * without its ring (the two words, tagged data-part, in the lockup's own coordinates, with the viewBox cut
@@ -63,11 +62,11 @@ const sources = {
 const COLORS: Record<'auto' | 'white', Record<string, string>> = {
   auto: {
     '#3B2430': 'var(--logo-ink, var(--label))',
-    '#9E2B52': 'var(--logo-accent, var(--accent-icon))',
+    '#C2185B': 'var(--logo-accent, var(--accent-icon))',
   },
   white: {
     '#FFFFFF': 'var(--logo-light-ink, var(--on-dark, #FFFFFF))',
-    '#E9A9BB': 'var(--logo-light-accent, var(--on-dark-accent, #E9A9BB))',
+    '#F48FB1': 'var(--logo-light-accent, var(--on-dark-accent, #F48FB1))',
   },
 };
 

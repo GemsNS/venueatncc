@@ -12,7 +12,7 @@
  *   100 guests (the same as the indoor limit); the amenities; building access Monday to Saturday,
  *   9:00 AM to 12:00 midnight; a reservation and a non-refundable deposit hold a date; the contact
  *   person, Faith VanDyke.
- * Palette: pastel pink, Berry, and Plum (docs/design/brand.md, version 4).
+ * Palette: bright, white-first pastel pink, light only: White, Peony, Cerise, and Plum (docs/design/brand.md, version 6).
  * Confirmed from OpenStreetMap and the US Census geocoder on 2026-09-27: address and geo coordinates.
  *
  * The venue is its own business. Nothing here, or anywhere on the site, connects it to another

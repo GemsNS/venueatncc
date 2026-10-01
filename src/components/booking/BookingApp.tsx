@@ -82,7 +82,7 @@ const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
 
 /**
  * The steps as a numbered serif list under a hairline (the reference's tab bar), the current one underlined in
- * Berry, finished ones marked with a check and clickable. Phones show a four-segment track instead.
+ * Cerise, finished ones marked with a check and clickable. Phones show a four-segment track instead.
  */
 function Progress(props: { step: Step; reached: Step; onGo: (s: Step) => void }) {
   return (

@@ -1,13 +1,13 @@
 ---
 /**
- * The footer (redesign-spec.md, Footer): the site's one dark surface, Plum, in the shape of the reference's
- * footer. Row one: a one-line statement with Check Availability on the left and three link columns on the
- * right (Explore: the main navigation; Plan: a visit and an inquiry, the two requests with no header link;
- * Visit: the address with
+ * The footer (redesign-spec.md, Footer): a very pale pink (Blush) band under a hairline, in the shape of the
+ * reference's footer (brand.md, version 6: light only, so there is no dark block). Row one: a one-line
+ * statement with Check Availability on the left and three link columns on the right (Explore: the main
+ * navigation; Plan: a visit and an inquiry, the two requests with no header link; Visit: the address with
  * directions, the phone, the email, and the contact person, the site's contact block). Row two: the very
- * large centred serif statement (the brand line). Row three: the white lockup and the legal line. The
+ * large centred serif statement (the brand line). Row three: the Plum lockup and the legal line. The
  * statement names the spaces only; what a booking includes is said on the home page and The Space
- * (brand.md, "Redundancy rules"). Blush text on Plum is 12.8:1, Pink 7.3:1, white 14.2:1.
+ * (brand.md, "Redundancy rules"). On Blush: Plum 13.2:1, Mauve 7.1:1, Cerise 5.5:1.
  */
 import Logo from './Logo.astro';
 import { site, cityState } from '../data/site';
@@ -31,7 +31,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
     <div class="footer__top">
       <div class="footer__intro">
         <p class="footer__blurb">Indoor and outdoor event rentals in {cityState}: {hall}, The Main Hall, and {grove}, on one property.</p>
-        <a class="btn btn--light" href={href(book)}>Check Availability</a>
+        <a class="btn btn--filled" href={href(book)}>Check Availability</a>
       </div>
 
       <div class="footer__cols">
@@ -69,7 +69,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
 
     <div class="footer__bottom">
       <a class="footer__home" href={href('/')} aria-label={`${site.name}, home`}>
-        <Logo variant="lockup" tone="white" height={36} decorative />
+        <Logo variant="lockup" height={36} decorative />
       </a>
       <div class="footer__legal">
         <p>Copyright © {year} {site.name}. All rights reserved.</p>
@@ -96,18 +96,19 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
 <style>
   .footer {
     background: var(--footer-bg);
-    color: var(--on-dark-2);
+    border-top: 1px solid var(--separator);
+    color: var(--label-2);
     font-size: var(--t-subhead);
     line-height: 1.5;
     padding-block: clamp(3rem, 2.5rem + 2vw, 4.5rem) calc(2rem + env(safe-area-inset-bottom));
   }
 
   .footer a {
-    color: var(--on-dark);
+    color: var(--label);
   }
 
-  .footer a.btn--light {
-    color: var(--ink);
+  .footer a.btn--filled {
+    color: var(--on-accent);
   }
 
   .footer__top {
@@ -128,13 +129,13 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
     justify-items: start;
   }
 
-  /* The statement, in the serif at 18px, Blush on Plum. */
+  /* The statement, in the serif at 18px, Plum on Blush. */
   .footer__blurb {
     max-width: 28rem;
     font-family: var(--font-serif);
     font-size: 1.125rem;
     line-height: 1.5;
-    color: var(--on-dark);
+    color: var(--label);
   }
 
   /* Phones: Explore and Plan side by side, Visit beneath at full width, so the email never breaks. */
@@ -158,7 +159,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
     }
   }
 
-  /* The column heads: small letterspaced serif, Pink. */
+  /* The column heads: small letterspaced serif, Cerise (5.5:1 on Blush). */
   .footer__head {
     margin-bottom: 0.6rem;
     font-family: var(--font-serif);
@@ -166,7 +167,7 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
     font-weight: 400;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--on-dark-accent);
+    color: var(--accent-text);
   }
 
   .footer ul {
@@ -221,21 +222,21 @@ const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
     padding-block: 5px;
     font-family: var(--font-serif);
     font-size: var(--t-ui);
-    color: var(--on-dark-2);
+    color: var(--label-2);
   }
 
-  /* The brand line: very large, centred, white. */
+  /* The brand line: very large, centred, Plum. */
   .footer__statement {
     margin-block: clamp(3.5rem, 2.5rem + 4vw, 6rem);
     text-align: center;
-    color: var(--on-dark);
+    color: var(--label);
   }
 
   .footer__bottom {
     display: grid;
     gap: 1.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(251, 241, 243, 0.18);
+    border-top: 1px solid var(--separator);
   }
 
   @media (min-width: 48rem) {

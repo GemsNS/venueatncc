@@ -2,7 +2,7 @@
 /**
  * The home page hero (redesign-spec.md, HeroVideo; brand.md, Motion): a full-viewport section over a fixed,
  * muted, looping clip of white rose petals on a pink ground (public/media/hero-petals.*, credited in
- * public/media/CREDITS.md), under a Blush overlay that keeps the Plum name legible on the brightest frame.
+ * public/media/CREDITS.md), under a bright white veil that keeps the Plum name legible on every frame.
  * The page's content slides up over it, as on the reference. The poster is an image beneath the video, so
  * there is no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the
  * poster shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
@@ -88,32 +88,24 @@ const poster = href('/media/hero-petals-poster.jpg');
   }
 
   /*
-    A Blush veil, stronger toward the centre. Measured over every sampled frame of the clip (the darkest pink
-    behind the name): Plum keeps at least 7.0:1 and Berry at least 3.5:1 (large text); the name has no halo
-    of its own (index.astro).
+    A bright white veil, stronger toward the centre, so the petals read as an airy pastel pink behind the
+    name (brand.md, version 6). Over 12 frames of the clip (360, 390, 768 and 1440, worst pixel at the 2nd
+    percentile) the Plum name keeps 11.3:1, the Cerise "@ NCC" 4.4:1 (large), "Welcome to" 6.4:1, and the
+    line 5.0:1.
   */
   .hero__overlay {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(251, 241, 243, 0.9), rgba(251, 241, 243, 0.62) 70%, rgba(251, 241, 243, 0.45)),
-      linear-gradient(rgba(251, 241, 243, 0.35), rgba(251, 241, 243, 0.35));
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .hero__overlay {
-      background:
-        radial-gradient(ellipse 80% 65% at 50% 50%, rgba(42, 21, 31, 0.8), rgba(42, 21, 31, 0.56) 70%, rgba(42, 21, 31, 0.45)),
-        linear-gradient(rgba(42, 21, 31, 0.35), rgba(42, 21, 31, 0.35));
-    }
+      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(255, 255, 255, 0.9), rgba(255, 246, 249, 0.68) 70%, rgba(255, 244, 247, 0.52)),
+      linear-gradient(rgba(255, 240, 245, 0.3), rgba(255, 240, 245, 0.3));
   }
 
   /*
     Portrait screens (phones, tall tablets) crop the 16:9 clip to its middle, where the petals are white and
-    the pink ground at the edges is cut away. A Rose wash gives those frames the same blush the landscape
-    crop shows, and the veil above it is lighter so the pink comes through. The wash is a plain layer, not a
-    blend mode: over white petals a 0.6 Rose wash is exactly what the multiply gave, and a full-screen blend
-    over a playing video would cost the phone's compositor a pass every frame while the name flies.
+    the pink ground at the edges is cut away. A pastel Rose Mist wash gives those frames the blush the
+    landscape crop shows, and the white veil above it keeps the centre bright. The wash is a plain layer, not
+    a blend mode, so a playing video costs the phone's compositor no extra pass while the name flies.
   */
   .hero__tint {
     display: none;
@@ -124,30 +116,14 @@ const poster = href('/media/hero-petals-poster.jpg');
       display: block;
       position: absolute;
       inset: 0;
-      background: #f4b6c8;
-      opacity: 0.6;
+      background: #f9c6d7;
+      opacity: 0.35;
     }
 
     .hero__overlay {
       background:
-        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(251, 241, 243, 0.55), rgba(251, 241, 243, 0) 80%),
-        linear-gradient(rgba(252, 226, 234, 0.6), rgba(252, 226, 234, 0.6));
-    }
-  }
-
-  /*
-    Dark mode: a plain wash lightens the frame under the light text, so it is weaker here (0.2) than the
-    multiply was; over 12 frames at 360, 390 and 768 the eyebrow keeps 5.2:1, the line 6.2:1, and the name
-    7.8:1 (ink) and 6.0:1 (accent).
-  */
-  @media (orientation: portrait) and (prefers-color-scheme: dark) {
-    .hero__tint {
-      opacity: 0.2;
-    }
-
-    .hero__overlay {
-      background:
-        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(42, 21, 31, 0.72), rgba(42, 21, 31, 0.5) 75%, rgba(42, 21, 31, 0.4));
+        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0) 80%),
+        linear-gradient(rgba(255, 248, 250, 0.62), rgba(255, 248, 250, 0.62));
     }
   }
 

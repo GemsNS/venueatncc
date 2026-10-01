@@ -1,9 +1,11 @@
 /**
  * Share images (Open Graph and Twitter cards), one per page, rendered at build time with satori and resvg.
  * 1200 x 630 JPEG in the shape of the site's inner-page hero (redesign-spec.md, "Emails and share images"):
- * a real photo of the property, full bleed, under a soft Plum bottom scrim; a Blush caption panel bottom-left
- * (the hero's caption box, on the page surface) holding the Plum lockup, the page title in Libre Caslon
- * Display in Plum, and one short line in Libre Caslon Text in Mauve (12.8:1 and 6.9:1 on Blush). What each
+ * a real photo of the property, full bleed with no scrim (brand.md, version 6: bright and white-first); a
+ * near-solid White caption panel bottom-left with a Rose Mist hairline (the hero's frosted caption box; a
+ * share image has no backdrop blur, so the panel stays near-solid for small previews) holding the Plum and
+ * Cerise lockup, the page title in Libre Caslon Display in Plum, and one short line in Libre Caslon Text in
+ * Mauve (at least 12.4:1 and 6.7:1 on the panel even over black). What each
  * card shows lives in _cards.ts. JPEG keeps each card well under 300 KB: some messengers skip link previews
  * for images much over that, which a lossless PNG of a photo always is.
  *
@@ -35,12 +37,14 @@ const PANEL_MAX_W = 780;
 const LOCKUP_H = 40;
 const LOCKUP_W = Math.round((LOCKUP_H * 534) / 100);
 
-/** The palette (brand.md, Color). Plum as channels for the scrim's stops. */
+/** The palette (brand.md, Color). Plum as channels for the panel's shadow. */
 const PLUM_RGB = '59, 36, 48';
 const plum = (alpha: number) => `rgba(${PLUM_RGB}, ${alpha})`;
 const PLUM = '#3B2430';
 const MAUVE = '#6A4B57';
-const BLUSH = '#FBF1F3';
+const BLUSH = '#FFF4F7';
+/** The caption panel: White at 0.94 over the photo (Plum keeps 12.4:1 and Mauve 6.7:1 even over black). */
+const PANEL_BG = 'rgba(255, 255, 255, 0.94)';
 
 const root = process.cwd();
 const fromRoot = (...p: string[]) => path.join(root, ...p);
@@ -138,7 +142,7 @@ export const GET: APIRoute = async ({ props }) => {
     ],
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
-  // Full-resolution color (4:4:4) keeps the serif edges crisp on the Blush panel.
+  // Full-resolution color (4:4:4) keeps the serif edges crisp on the White panel.
   const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
   return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
 };
@@ -148,7 +152,7 @@ export const GET: APIRoute = async ({ props }) => {
  * none, and a White panel centred on the plain left side, ending well before the subject (STILL_PANEL_W
  * from STILL_LEFT stays left of the bouquet's first leaves at about x 605). It mirrors the home welcome:
  * the words before the business name ("Welcome to") in Caslon Text italic, Mauve, then the name as the
- * lockup's own words (Plum, with the Berry italic "@ NCC") across the panel's inner width on one line, then
+ * lockup's own words (Plum, with the Cerise italic "@ NCC") across the panel's inner width on one line, then
  * the line. The name is set once; a Rose Mist hairline and a soft Plum shadow lift the panel off the wall.
  */
 const STILL_LEFT = 72;
@@ -157,7 +161,7 @@ const STILL_PAD = 40;
 // The panel's inner width, less its 1px hairline on each side.
 const STILL_NAME_W = STILL_PANEL_W - 2 * STILL_PAD - 2;
 const STILL_NAME_H = Math.round((STILL_NAME_W * NAME_BOX.height) / NAME_BOX.width);
-const ROSE_MIST = '#EFC5D0';
+const ROSE_MIST = '#F9C6D7';
 function stillTree(card: ShareCard, a: Shared, photo: string): Node {
   const nameAt = card.title.indexOf(site.name);
   // The name as the lockup's words when the title ends with it (after a lead such as "Welcome to"), else
@@ -179,7 +183,7 @@ function stillTree(card: ShareCard, a: Shared, photo: string): Node {
           width: STILL_PANEL_W,
           padding: STILL_PAD,
           borderRadius: PANEL_RADIUS,
-          backgroundColor: 'rgba(255, 255, 255, 0.94)',
+          backgroundColor: PANEL_BG,
           border: `1px solid ${ROSE_MIST}`,
           boxShadow: `0 18px 48px ${plum(0.1)}`,
         },
@@ -195,12 +199,10 @@ function stillTree(card: ShareCard, a: Shared, photo: string): Node {
   ]);
 }
 
-/** The default layout: a real photo under the hero's Plum bottom scrim, the Blush panel bottom left. */
+/** The default layout: a real photo full bleed with no scrim, the White panel bottom left. */
 function photoTree(card: ShareCard, a: Shared, photo: string, size: number): Node {
-  return h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: PLUM, fontFamily: 'Libre Caslon Text', color: PLUM }, [
+  return h('div', { display: 'flex', position: 'relative', width: W, height: H, backgroundColor: BLUSH, fontFamily: 'Libre Caslon Text', color: PLUM }, [
     h('img', { ...layer, objectFit: 'cover' }, undefined, { src: photo, width: W, height: H }),
-    // The hero's bottom scrim: the panel sits on it, and the photo's lower edge settles under the type.
-    h('div', { ...layer, backgroundImage: `linear-gradient(180deg, ${plum(0)} 0%, ${plum(0)} 42%, ${plum(0.22)} 70%, ${plum(0.5)} 100%)` }),
     h('div', { ...layer, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-start', padding: PAD }, [
       h(
         'div',
@@ -212,7 +214,9 @@ function photoTree(card: ShareCard, a: Shared, photo: string, size: number): Nod
           maxWidth: PANEL_MAX_W,
           padding: PANEL_PAD,
           borderRadius: PANEL_RADIUS,
-          backgroundColor: BLUSH,
+          backgroundColor: PANEL_BG,
+          border: `1px solid ${ROSE_MIST}`,
+          boxShadow: `0 18px 48px ${plum(0.12)}`,
         },
         [
           h('img', { width: LOCKUP_W, height: LOCKUP_H, marginBottom: 6 }, undefined, { src: a.lockup, width: LOCKUP_W, height: LOCKUP_H }),

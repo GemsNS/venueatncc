@@ -1,4 +1,4 @@
-/** App chrome: the Plum sidebar at 744px and wider (the footer's surface), a solid tab row along the bottom on phones. */
+/** App chrome: the Blush sidebar at 744px and wider (the footer's surface), a solid tab row along the bottom on phones. */
 import type { ComponentChildren } from 'preact';
 import { SHOW_DEMO } from './demo-tools';
 import type { AdminStats, AdminUser } from '../../shared/types';
