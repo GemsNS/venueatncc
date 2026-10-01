@@ -22,14 +22,28 @@ interface Props {
   eyebrow?: string;
   descriptors?: string[];
   facts?: { label: string; value: string }[];
-  /** Height of the band on regular screens, as a CSS length. */
+  /**
+   * Height of the band on regular screens, as a CSS length. The default fills the screen under the bar, as
+   * the reference's venue page does, but never exceeds the 3:2 photo's own height at that width, so a photo
+   * whose subject spans its height (the gazebo) keeps its roof and its base on a 1440 x 900 screen.
+   */
   height?: string;
   /** Phones: the caption over the portrait photo (default), or the whole photo with the caption beneath. */
   phone?: 'overlay' | 'stack';
   class?: string;
 }
 
-const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh', phone = 'overlay', class: className } = Astro.props;
+const {
+  photo,
+  id,
+  title,
+  eyebrow,
+  descriptors = [],
+  facts = [],
+  height = 'min(calc(100svh - var(--nav-h)), 66.67vw)',
+  phone = 'overlay',
+  class: className,
+} = Astro.props;
 ---
 <section class:list={['phero', className]} aria-labelledby={id} style={`--phero-h: ${height}`} data-phone={phone}>
   <div class="phero__media">
@@ -204,21 +218,29 @@ const { photo, id, title, eyebrow, descriptors = [], facts = [], height = '72svh
       width: 100%;
     }
 
-    /* Facts as LABEL: value rows, so three fit without the panel climbing over the photo. */
+    /*
+      Facts as LABEL: value rows, so three fit without the panel climbing over the photo. The label and the
+      value run on as one line of text, so a long value ("Nine to twelve months") wraps under the label
+      instead of hanging in a second column.
+    */
     .phero__facts {
       grid-template-columns: minmax(0, 1fr);
       gap: 0.5rem;
     }
 
     .phero__fact {
-      grid-template-columns: max-content minmax(0, 1fr);
-      align-items: baseline;
-      gap: 0.6rem;
+      display: block;
+    }
+
+    .phero__fact dt,
+    .phero__fact dd {
+      display: inline;
     }
 
     .phero__fact dt::after {
       content: ':';
       letter-spacing: 0;
+      margin-right: 0.4em;
     }
 
     /* ---------- phone="stack": the photo whole, then the caption on the page ---------- */
