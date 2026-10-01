@@ -17,8 +17,9 @@ interface Props {
   /** Rendered width at each breakpoint, e.g. "(min-width: 64rem) 40vw, 100vw". */
   sizes?: string;
   /**
-   * Rendered width of the portrait file on phones. Default "100vw". A frame taller than 4:5 (a phone hero)
-   * crops the sides off, so the file is drawn wider than the screen; say how wide, or phones get a soft file.
+   * Rendered width of the portrait file on phones. Defaults to `sizes`, whose last entry is the phone width
+   * (the portrait source only applies below 46.5rem, so the wider entries never match). A frame taller than
+   * 4:5 (a phone hero) crops the sides off, so the file is drawn wider than the screen; say how wide.
    */
   tallSizes?: string;
   /** The page's main image: loads eagerly with high fetch priority. */
@@ -43,7 +44,7 @@ interface Props {
 const {
   photo,
   sizes = '(min-width: 75rem) 1200px, 100vw',
-  tallSizes = '100vw',
+  tallSizes = sizes,
   priority = false,
   ratio = '3 / 2',
   tall = false,
@@ -69,8 +70,8 @@ const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400, 2880, 3840];
 
 /*
   Encoder quality. Sharp's defaults (AVIF 50, WebP 80) smear wall texture, foliage and petals into flat
-  patches on a large screen; these keep that detail for about 1.4 to 1.5 times the bytes
-  (src/assets/venue/README.md).
+  patches on a large screen; these keep that detail (src/assets/venue/README.md, Resolution, gives the
+  measured page weights).
 */
 const AVIF_QUALITY = 60;
 const WEBP_QUALITY = 82;
@@ -94,9 +95,16 @@ async function sources(img: ImageMetadata) {
 const main = await sources(photo.src);
 const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
 const style = [`--photo-ratio: ${fill ? 'auto' : ratio}`, crop ? `--photo-pos: ${crop}` : ''].filter(Boolean).join('; ');
-// The viewer shows the whole landscape file, uncropped, up to 1600 CSS px wide: 3200px covers that at 2x.
-// It loads only when a visitor opens the viewer.
-const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.width, 3200), format: 'webp', quality: WEBP_QUALITY }) : null;
+/*
+  The viewer shows the whole landscape file, uncropped, up to 1600 CSS px wide. It offers 1600, 2400 and
+  3200 wide files (3200 covers 1600 at 2x) and the browser picks by the screen, so a phone fetches the 1600
+  file, not the 3200 one. It loads only when a visitor opens the viewer.
+*/
+const viewerMax = Math.min(photo.src.width, 3200);
+const viewerWidths = [...[1600, 2400].filter((w) => w < viewerMax), viewerMax];
+const full = zoom
+  ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: WEBP_QUALITY })
+  : null;
 ---
 <figure class:list={['photo', { 'photo--rounded': rounded, 'photo--fill': fill, 'photo--tall': portrait }, className]} style={style}>
   <div class="photo__frame">
@@ -104,8 +112,8 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
       {
         portrait && (
           <>
-            <source media="(width < 46.5rem)" type="image/avif" srcset={portrait.avif} sizes={tallSizes} width={portrait.width} height={portrait.height} />
-            <source media="(width < 46.5rem)" type="image/webp" srcset={portrait.webp} sizes={tallSizes} width={portrait.width} height={portrait.height} />
+            <source media="(max-width: 46.49rem)" type="image/avif" srcset={portrait.avif} sizes={tallSizes} width={portrait.width} height={portrait.height} />
+            <source media="(max-width: 46.49rem)" type="image/webp" srcset={portrait.webp} sizes={tallSizes} width={portrait.width} height={portrait.height} />
           </>
         )
       }
@@ -130,6 +138,7 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
           type="button"
           class="photo__zoom"
           data-zoom-src={full.src}
+          data-zoom-srcset={full.srcSet.attribute}
           data-zoom-alt={photo.alt}
           data-zoom-caption={captionText ?? (badgeText ? `${badgeText}. Décor is not included.` : '')}
           aria-label={`Enlarge photo: ${photo.alt}`}
@@ -202,6 +211,9 @@ const full = zoom ? await getImage({ src: photo.src, width: Math.min(photo.src.w
     index = (i + list.length) % list.length;
     const b = list[index];
     const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
+    // sizes before srcset, so the browser chooses with the right width.
+    img.sizes = 'min(100vw - 2rem, 1600px)';
+    img.srcset = b.dataset.zoomSrcset ?? '';
     img.src = b.dataset.zoomSrc ?? '';
     img.alt = b.dataset.zoomAlt ?? '';
     const cap = dialog.querySelector<HTMLElement>('.lightbox__caption')!;

@@ -34,8 +34,10 @@ no dark block; Petal is the quiet band and panel colour. Peony `#D6336C` fills b
 Cerise `#C2185B` is the hover fill, links, accent text, focus rings, and the lockup's "@ NCC"; Plum `#3B2430`
 stays the ink. Berry and Berry Deep are retired, and every dark-mode rule is removed (`color-scheme: light`).
 Hero caption panels over photos are see-through frosted White (opacity tuned per photo, Plum text, blur 12px,
-saturate 1.2, a white hairline), measured to 4.5:1 at 390, 768, 1024 and 1440. The full palette, the
-contrast list, and the per-photo opacities are in `brand.md`, Color. The text below records version 5.
+saturate 1.2, a white hairline), measured to 4.5:1 at 390, 768, 1024 and 1440 and on the common phone
+screens, with an appearance floor of 0.62. Photo card labels sit on a frosted White strip (Plum label, Mauve
+meta) instead of a Plum bottom scrim with white type. The full palette, the contrast list, and the per-photo
+opacities are in `brand.md`, Color. The text below records version 5.
 
 The version 4 pastel pink palette stays (`brand.md`, Color): Plum `#3B2430`, Mauve `#6A4B57`, Berry `#9E2B52`,
 Berry Deep `#7E1F41`, Rose `#B5456E`, Pink `#E9A9BB`, Rose Mist `#EFC5D0`, Petal `#F6DFE5`, Blush `#FBF1F3`,

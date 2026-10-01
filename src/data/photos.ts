@@ -75,6 +75,8 @@ export const STYLED_CAPTION = 'Styled concept. Décor is not included.';
 const STYLED_ALT_PREFIX = 'Styled concept:';
 
 export const photoDetails: Record<string, PhotoDetail> = {
+  // Shown on no page since the home share card became a still life of roses (brand.md, Real photos); kept
+  // for reference.
   'exterior-dusk.jpg': {
     alt: 'The venue building at dusk: tan stucco walls, a lit covered entry, arched windows, and a white cross on the front gable, with tall pines behind',
     caption: 'The building at blue hour',
@@ -200,14 +202,15 @@ export const photoDetails: Record<string, PhotoDetail> = {
     styledOf: 'grove-path.jpg',
     event: 'community-events',
   },
-  // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white
-  // runner): The Main Hall, staged.
-  // Arrival styled for a wedding day, shown on the weddings page.
+  // The drive styled for a wedding day. Kept in the set but shown on no page: the building's cross is front
+  // and centre in it (brand.md, Separation, and "Staged event photos").
   'styled-driveway-petals.jpg': {
     alt: 'Styled concept: the drive to the venue lined on both edges with bright pink and white rose petals and clusters of roses, leading to the building among tall pines',
     styledOf: 'driveway.jpg',
     space: 'grounds',
   },
+  // An indoor ceremony option for the weddings page, requested by the owner (white and pink flowers, a white
+  // runner): The Main Hall, staged.
   'styled-wedding-indoor-ceremony.jpg': {
     alt: 'Styled concept: a wedding ceremony in The Main Hall, with a white aisle runner between the rows of red chairs, pink and white roses on every row end, and a pink and white floral backdrop and arch on the stage',
     styledOf: 'main-hall.jpg',

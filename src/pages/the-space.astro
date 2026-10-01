@@ -164,7 +164,8 @@ const gallerySchema =
     : [];
 
 const PANEL_SIZES = '(min-width: 81.25rem) 840px, (min-width: 60rem) 62vw, 100vw';
-const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw';
+/* Carousel cards: one at 82 percent on phones, two across on tablets, three from 60rem (Carousel). */
+const CARD_SIZES = '(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw';
 ---
 <BaseLayout title={title} description={description} og="the-space" venueDetails schema={[breadcrumbs(crumbs), ...gallerySchema]}>
   {

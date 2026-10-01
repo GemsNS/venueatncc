@@ -69,7 +69,7 @@ const spaceCards: SpaceCard[] = [
 ];
 
 /* The events: every tile is that event's staged photo with its badge, or the list is text (photos.ts). */
-const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), 'approach-dusk'].filter((n): n is string => Boolean(n)));
+const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), 'driveway'].filter((n): n is string => Boolean(n)));
 const eventCards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
 const eventsWithPhotos = eventsStaged && eventCards.every((c) => c.photo?.styledOf !== undefined && !pagePhotos.has(c.photo.name));
 
@@ -97,7 +97,8 @@ const features: { icon: IconName; name: string; text: string }[] = [
   },
 ];
 
-const arrival = photoByName('approach-dusk');
+/* The arrival: the drive and lot in daylight, so the page's last photo is as bright as the rest (brand.md, Home). */
+const arrival = photoByName('driveway');
 
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
 const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
@@ -148,7 +149,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
                     label={card.name}
                     meta={card.capacity ? `Up to ${card.capacity} guests` : undefined}
                     href={card.href}
-                    sizes="(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw"
+                    sizes="(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw"
                   />
                 ),
             )
@@ -190,7 +191,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
                       photo={c.photo}
                       label={c.event.name}
                       href={`/events/${c.event.slug}/`}
-                      sizes="(min-width: 75rem) 300px, (min-width: 46.5rem) 23vw, 82vw"
+                      sizes="(min-width: 75rem) 300px, (min-width: 60rem) 23vw, (min-width: 46.5rem) 46vw, 82vw"
                     />
                   ),
               )}

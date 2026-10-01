@@ -33,7 +33,7 @@
   --adm-green: var(--green);
   --adm-green-tint: rgba(52, 199, 89, 0.16);
   --adm-orange: var(--orange);
-  --adm-orange-tint: rgba(255, 149, 0, 0.16);
+  --adm-orange-tint: rgba(181, 47, 0, 0.07);
   --adm-red: var(--red);
   --adm-red-tint: rgba(255, 59, 48, 0.12);
   --adm-gray: var(--label-2);
@@ -1061,12 +1061,12 @@ body.is-bare .btn {
   padding-right: 48px;
   border-radius: var(--r-full);
   background: var(--bg-elevated);
-  border-color: var(--separator);
+  border-color: var(--input-edge);
 }
 
 .adm-search__input.input:hover {
   background: var(--bg-elevated);
-  border-color: var(--separator-strong);
+  border-color: var(--label-3);
 }
 
 .adm-search__input::-webkit-search-cancel-button {
@@ -1307,7 +1307,7 @@ body.is-bare .btn {
   min-height: 44px;
   padding: 0 40px 0 14px;
   border-radius: var(--r-full);
-  border-color: var(--separator);
+  border-color: var(--input-edge);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -1763,10 +1763,10 @@ body.is-bare .btn {
 .adm-sheet::backdrop,
 .adm-alert::backdrop {
   /*
-    A dim tinted toward Plum. A literal, not var(--ink-rgb): ::backdrop does not inherit custom
-    properties in browsers from before 2024, where the dim would disappear.
+    A light Blush veil, as behind the photo viewer (brand.md, version 6: no dark surface). A literal, not a
+    token: ::backdrop does not inherit custom properties in browsers from before 2024, where it would vanish.
   */
-  background: rgba(59, 36, 48, 0.45);
+  background: rgba(255, 244, 247, 0.7);
 }
 
 /* Phones: a sheet rising from the bottom edge, its top corners rounded. */
@@ -1967,7 +1967,7 @@ body.is-bare .btn {
 /* Fields inside the Petal panel are white, so they read as fields. */
 .adm-blockform .input {
   background: var(--bg-elevated);
-  border-color: var(--separator);
+  border-color: var(--input-edge);
 }
 
 .adm-blockform__submit {

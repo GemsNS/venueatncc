@@ -57,11 +57,17 @@
 }
 
 /*
-  Inputs on the tinted panel: white with a hairline, so every field keeps a visible edge.
+  Inputs on the tinted panel: white with a 3:1 edge (--input-edge), so every field keeps a visible edge.
 */
 .bk-iq .input {
   background: var(--bg-elevated);
-  border-color: var(--separator-strong);
+  border-color: var(--input-edge);
+}
+
+/* The Email / Phone / Text track on the Petal panel: White with a hairline, not a grey capsule. */
+.bk-iq__group .segmented {
+  background: var(--white);
+  box-shadow: 0 0 0 1px var(--separator);
 }
 
 .bk-iq .input:hover {

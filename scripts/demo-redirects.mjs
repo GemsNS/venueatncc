@@ -13,8 +13,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * The redirect page. Its colors are the site's page colors (White and Plum, or the dark page and its
- * label color), so it does not flash a different color in either appearance.
+ * The redirect page. Its colors are the site's (brand.md, version 6: light only): a White page, Plum text
+ * and a Cerise link, with no dark appearance, so a phone in dark mode sees the same bright page as the site.
  * @param {string} to The new address as served, with the base, e.g. '/venueatncc/the-space/'.
  * @param {string} canonical The new address in full.
  */
@@ -30,13 +30,9 @@ export function redirectPage(to, canonical) {
 <link rel="canonical" href="${escapeHtml(canonical)}">
 <title>This page has moved</title>
 <style>
-:root { color-scheme: light dark; }
-body { margin: 0; padding: 24px 16px; font: 17px/1.5 system-ui, sans-serif; background: #ffffff; color: #3b2430; }
-a { color: #9e2b52; }
-@media (prefers-color-scheme: dark) {
-  body { background: #2a151f; color: #fbeff2; }
-  a { color: #f5a8bd; }
-}
+:root { color-scheme: light; }
+body { margin: 0; padding: 24px 16px; font: 17px/1.5 system-ui, sans-serif; background: #FFFFFF; color: #3B2430; }
+a { color: #C2185B; }
 </style>
 </head>
 <body>

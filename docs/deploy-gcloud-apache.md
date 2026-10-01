@@ -357,6 +357,13 @@ Continue with Path A only if the `available` column shows **at least 2500 MB**. 
 converts every venue photo to AVIF and WebP with sharp and can use 1 to 2 GiB and both CPUs for
 several minutes. Build one thing at a time; never run two builds at once on this server.
 
+**Size of the build.** Since the photos were re-exported at full resolution (October 1, 2026) `dist/` is
+about 160 MB, up from about 70 MB: about 116 MB of AVIF and WebP variants and about 38 MB of the source
+JPEGs, which Astro copies into `dist/_astro/` beside their variants. Visitors never fetch those JPEGs, but
+the disk and the transfer carry them. Allow about 350 MB on `/` for a deploy (the new `dist/` beside the
+old one while it is swapped, plus the tarball in Path B), and check `df -h /` before unpacking. The
+tarball in Path B is about 150 MB, so `scp` takes a few minutes on a slow link.
+
 ### 5.2 Path A: build on the server
 
 Install everything, including devDependencies (Astro, esbuild, sharp, tsx), which the build needs,

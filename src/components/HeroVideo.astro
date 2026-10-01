@@ -17,11 +17,20 @@ interface Props {
 }
 
 const { labelledby, class: className } = Astro.props;
+/*
+  The clip and its poster are 2560 x 1440 (cut from the 4K source; public/media/CREDITS.md). Portrait screens
+  get their own poster, the middle of the 4K first frame at 9:16 (1216 x 2160), which is the part the cover
+  crop shows there, so a phone's still frame is drawn from a file as tall as its screen.
+*/
 const poster = href('/media/hero-petals-poster.jpg');
+const posterPortrait = href('/media/hero-petals-poster-portrait.jpg');
 ---
 <section class:list={['hero', className]} data-hero aria-labelledby={labelledby}>
   <div class="hero__media" aria-hidden="true">
-    <img class="hero__poster" src={poster} alt="" width="1280" height="720" decoding="async" fetchpriority="high" />
+    <picture>
+      <source media="(orientation: portrait)" srcset={posterPortrait} width="1216" height="2160" />
+      <img class="hero__poster" src={poster} alt="" width="2560" height="1440" decoding="async" fetchpriority="high" />
+    </picture>
     <video class="hero__video" muted autoplay loop playsinline preload="auto" poster={poster} tabindex="-1" data-hero-video>
       <source src={href('/media/hero-petals.webm')} type="video/webm" />
       <source src={href('/media/hero-petals.mp4')} type="video/mp4" />
@@ -88,17 +97,17 @@ const poster = href('/media/hero-petals-poster.jpg');
   }
 
   /*
-    A bright white veil, stronger toward the centre, so the petals read as an airy pastel pink behind the
-    name (brand.md, version 6). Over 12 frames of the clip (360, 390, 768 and 1440, worst pixel at the 2nd
-    percentile) the Plum name keeps 11.3:1, the Cerise "@ NCC" 4.4:1 (large), "Welcome to" 6.4:1, and the
-    line 5.0:1.
+    A bright white veil, strongest in the centre, so the first screen is the brightest surface on the site
+    with the petals' pink still showing at its edges (brand.md, version 6): mean luminance 0.90 or more at 390
+    and 1440. A brighter veil only raises the contrast of the Plum name, the Cerise "@ NCC", "Welcome to" and
+    the line over every frame of the clip (brand.md, "Header and the morph", gives the floors).
   */
   .hero__overlay {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(255, 255, 255, 0.9), rgba(255, 246, 249, 0.68) 70%, rgba(255, 244, 247, 0.52)),
-      linear-gradient(rgba(255, 240, 245, 0.3), rgba(255, 240, 245, 0.3));
+      radial-gradient(ellipse 80% 65% at 50% 50%, rgba(255, 255, 255, 0.96), rgba(255, 246, 249, 0.84) 70%, rgba(255, 244, 247, 0.74)),
+      linear-gradient(rgba(255, 240, 245, 0.4), rgba(255, 240, 245, 0.4));
   }
 
   /*
@@ -117,13 +126,13 @@ const poster = href('/media/hero-petals-poster.jpg');
       position: absolute;
       inset: 0;
       background: #f9c6d7;
-      opacity: 0.35;
+      opacity: 0.3;
     }
 
     .hero__overlay {
       background:
-        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0) 80%),
-        linear-gradient(rgba(255, 248, 250, 0.62), rgba(255, 248, 250, 0.62));
+        radial-gradient(ellipse 90% 45% at 50% 50%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 80%),
+        linear-gradient(rgba(255, 248, 250, 0.82), rgba(255, 248, 250, 0.82));
     }
   }
 

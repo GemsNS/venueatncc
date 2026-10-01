@@ -37,17 +37,17 @@ const NL = String.fromCharCode(10);
 /** White: the card, and the button label (4.6:1 on Peony). */
 const WHITE = '#FFFFFF';
 /** Peony: the thin rule under the header, and the button fill. */
-const STEEL = '#D6336C';
-const BUTTON = '#D6336C';
+const PEONY = '#D6336C';
+const BUTTON = PEONY;
 /** Cerise: links and the reference number. 5.9:1 on white, 4.9:1 on Petal. */
 const LINK = '#C2185B';
 /** Plum and Mauve: text and secondary text (14.2:1 and 7.6:1 on white). */
-const NAVY = '#3B2430';
-const SLATE = '#6A4B57';
+const PLUM = '#3B2430';
+const MAUVE = '#6A4B57';
 /** Hairlines: the site's separator (Plum at 12%) over white. */
 const RULE = '#E7E0E3';
 /** Blush: the page behind the card. */
-const FROST = '#FFF4F7';
+const BLUSH = '#FFF4F7';
 /** Petal: the reference panel (Plum 11.8:1, Mauve 6.3:1). */
 const PETAL = '#FCE4EC';
 const FONT = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
@@ -130,19 +130,19 @@ function layout(opts: { preheader: string; body: string; origin: string }): stri
 <meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(site.name)}</title>
 </head>
-<body style="margin:0;padding:0;background:${FROST};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${FROST};">${escapeHtml(opts.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${FROST};">
+<body style="margin:0;padding:0;background:${BLUSH};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${BLUSH};">${escapeHtml(opts.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BLUSH};">
 <tr><td align="center" style="padding:32px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:${WHITE};border:1px solid ${RULE};border-radius:16px;font-family:${FONT};color:${NAVY};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:${WHITE};border:1px solid ${RULE};border-radius:16px;font-family:${FONT};color:${PLUM};">
 <tr><td style="padding:28px 28px 0 28px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding:0 0 20px 0;">
 <a href="${escapeHtml(opts.origin)}/" style="text-decoration:none;"><img src="${LOCKUP.src}" width="${LOCKUP.width}" height="${LOCKUP.height}" alt="${escapeHtml(site.name)}" style="display:block;width:${LOCKUP.width}px;height:${LOCKUP.height}px;border:0;outline:none;text-decoration:none;font-family:${SERIF};font-size:22px;line-height:48px;color:${LINK};"></a>
 </td></tr>
-<tr><td height="1" style="height:1px;padding:0;background:${STEEL};font-size:1px;line-height:1px;">&nbsp;</td></tr>
+<tr><td height="1" style="height:1px;padding:0;background:${PEONY};font-size:1px;line-height:1px;">&nbsp;</td></tr>
 ${opts.body}
-<tr><td style="padding:24px 0 32px 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${SLATE};">
+<tr><td style="padding:24px 0 32px 0;border-top:1px solid ${RULE};font-size:13px;line-height:20px;color:${MAUVE};">
 ${escapeHtml(site.name)}<br>
 ${escapeHtml(fullAddress)}<br>
 <a href="tel:${site.contact.phoneE164}" style="color:${LINK};text-decoration:none;">${escapeHtml(site.contact.phone)}</a>
@@ -162,19 +162,19 @@ ${escapeHtml(fullAddress)}<br>
 
 /** The page title: Georgia, regular weight, like the site's Caslon titles (never bold). */
 const heading = (text: string) =>
-  `<tr><td style="padding:28px 0 10px 0;font-family:${SERIF};font-size:28px;line-height:34px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:28px 0 10px 0;font-family:${SERIF};font-size:28px;line-height:34px;font-weight:400;color:${PLUM};">${escapeHtml(text)}</td></tr>`;
 
-const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size:16px;line-height:24px;color:${NAVY};">${html}</td></tr>`;
+const paragraph = (html: string) => `<tr><td style="padding:0 0 12px 0;font-size:16px;line-height:24px;color:${PLUM};">${html}</td></tr>`;
 
 /** Section headings in sentence case, never all caps. */
 const sectionTitle = (text: string) =>
-  `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${NAVY};">${escapeHtml(text)}</td></tr>`;
+  `<tr><td style="padding:24px 0 8px 0;font-family:${SERIF};font-size:19px;line-height:26px;font-weight:400;color:${PLUM};">${escapeHtml(text)}</td></tr>`;
 
 /** The reference on a Petal panel (the site's quiet panel surface), the number in Cerise. */
 function referenceBox(reference: string): string {
   return `<tr><td style="padding:8px 0 12px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:${PETAL};border-radius:12px;">
-<tr><td style="padding:14px 20px;font-size:14px;line-height:20px;color:${SLATE};">Reference<br>
+<tr><td style="padding:14px 20px;font-size:14px;line-height:20px;color:${MAUVE};">Reference<br>
 <span style="font-size:22px;line-height:30px;font-weight:700;letter-spacing:1px;color:${LINK};">${escapeHtml(reference)}</span></td></tr>
 </table>
 </td></tr>`;
@@ -185,8 +185,8 @@ function detailTable(rows: [string, string][]): string {
   const trs = rows
     .map(
       ([label, value]) =>
-        `<tr><td valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:14px;line-height:20px;color:${SLATE};width:38%;">${escapeHtml(label)}</td>` +
-        `<td valign="top" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};">${value}</td></tr>`,
+        `<tr><td valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:14px;line-height:20px;color:${MAUVE};width:38%;">${escapeHtml(label)}</td>` +
+        `<td valign="top" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${PLUM};">${value}</td></tr>`,
     )
     .join(NL);
   return `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${trs}</table></td></tr>`;
@@ -194,8 +194,8 @@ function detailTable(rows: [string, string][]): string {
 
 function estimateTable(est: Estimate): string {
   const line = (label: string, amount: string, strong = false) =>
-    `<tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};${strong ? 'font-weight:700;' : ''}">${escapeHtml(label)}</td>` +
-    `<td align="right" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${NAVY};white-space:nowrap;${strong ? 'font-weight:700;' : ''}">${escapeHtml(amount)}</td></tr>`;
+    `<tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${PLUM};${strong ? 'font-weight:700;' : ''}">${escapeHtml(label)}</td>` +
+    `<td align="right" style="padding:8px 0;border-bottom:1px solid ${RULE};font-size:15px;line-height:22px;color:${PLUM};white-space:nowrap;${strong ? 'font-weight:700;' : ''}">${escapeHtml(amount)}</td></tr>`;
   const rows = [
     ...est.lines.map((l) => line(l.label, formatUSD(l.amount))),
     line('Estimated total', formatUSD(est.total), true),
@@ -206,7 +206,7 @@ function estimateTable(est: Estimate): string {
 
 function bulletList(items: string[]): string {
   const lis = items.map((t) => `<li style="margin:0 0 6px 0;">${escapeHtml(t)}</li>`).join('');
-  return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${SLATE};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
+  return `<tr><td style="padding:4px 0 8px 0;font-size:14px;line-height:21px;color:${MAUVE};"><ul style="margin:0;padding:0 0 0 20px;">${lis}</ul></td></tr>`;
 }
 
 /** The site's one button: a Peony capsule with a serif label in white (Georgia for Caslon Text). */
@@ -292,7 +292,7 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     i.message ? sectionTitle('Message') : '',
     i.message ? paragraph(multiline(i.message)) : '',
     sectionTitle('Internal rate-card guide'),
-    paragraph(`<span style="color:${SLATE};font-size:14px;">For the team only. The guest was not shown an amount.</span>`),
+    paragraph(`<span style="color:${MAUVE};font-size:14px;">For the team only. The guest was not shown an amount.</span>`),
     estimateTable(est),
     bulletList(est.notes),
     button(`${ctx.origin}/admin/`, 'Open Admin'),
@@ -351,11 +351,11 @@ export function guestConfirmationEmail(i: Inquiry, _est: Estimate, ctx: EmailCon
     heading(thanks),
     paragraph(escapeHtml(intro)),
     referenceBox(i.reference),
-    paragraph(`<span style="color:${SLATE};font-size:14px;">Mention this reference when you call or write to us.</span>`),
+    paragraph(`<span style="color:${MAUVE};font-size:14px;">Mention this reference when you call or write to us.</span>`),
     sectionTitle('Your request'),
     detailTable(eventRows(i, 'guest').map(([k, v]) => [k, escapeHtml(v)])),
     sectionTitle('What happens next'),
-    `<tr><td style="padding:0 0 8px 0;font-size:16px;line-height:24px;color:${NAVY};"><ol style="margin:0;padding:0 0 0 22px;">${steps
+    `<tr><td style="padding:0 0 8px 0;font-size:16px;line-height:24px;color:${PLUM};"><ol style="margin:0;padding:0 0 0 22px;">${steps
       .map((s) => `<li style="margin:0 0 8px 0;">${escapeHtml(s)}</li>`)
       .join('')}</ol></td></tr>`,
     sectionTitle('Questions'),

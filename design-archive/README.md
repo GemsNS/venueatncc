@@ -25,3 +25,14 @@ The 32 photos the site used until 2026-10-01 (real photos at 2400 x 1600 and 160
 1800 x 1200), kept when they were replaced by sharper files: the real photos re-cut from the camera
 originals at full resolution with the same framing and grade, the staged photos upscaled with Real-ESRGAN.
 `src/assets/venue/README.md` (Resolution) says how. `grove-pines` and `share-rose-bouquet` did not change.
+
+## staged-blend50
+
+`styled-wedding-indoor-ceremony.jpg` and `styled-event-repasts-memorials.jpg` as first upscaled on 2026-10-01
+(Real-ESRGAN and Lanczos half and half), replaced the same day by a one quarter Real-ESRGAN mix because the
+ceremony's flower walls still looked waxy at 1:1 (`src/assets/venue/README.md`, Resolution).
+
+## hero-petals-1280
+
+The home hero clip and poster at 1280 x 720 as used until 2026-10-01, replaced by 2560 x 1440 files cut from
+the source's 4K rendition (`public/media/CREDITS.md`).

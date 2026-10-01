@@ -58,16 +58,35 @@ file by image registration (scale, rotation and position), the earlier grade rea
 checked against the earlier file: below 1.2 levels of mean difference once fine detail is blurred out.
 
 The staged photos have no larger source (Gemini returned 1024 x 682). They are upscaled with Real-ESRGAN
-x4plus (the official xinntao release) and mixed half and half with a Lanczos resize with a gentle unsharp
-mask: pure Real-ESRGAN turned dense flowers into smooth, waxy blobs. They are 2880 x 1920 (1440 wide at
-2x). The ESRGAN outputs are kept in `C:\NoOnedrive\venue\Generated scenes\upscaled-esrgan-x4`.
+x4plus (the official xinntao release) and mixed with a Lanczos resize with a gentle unsharp mask: pure
+Real-ESRGAN turned dense flowers into smooth, waxy blobs. Most are mixed half and half. The two with dense
+flower walls, `styled-wedding-indoor-ceremony` and `styled-event-repasts-memorials`, are one quarter
+Real-ESRGAN and three quarters Lanczos: at half and half the small roses and carnations of the ceremony
+backdrop still lost their petal structure at 1:1, and at one quarter they keep it as the earlier 1800 file
+did (the half and half files are kept in `design-archive/staged-blend50/`). They are 2880 x 1920 (1440 wide
+at 2x). The ESRGAN outputs are kept in `C:\NoOnedrive\venue\Generated scenes\upscaled-esrgan-x4`.
 
 The files they replace are kept in `design-archive/photos-before-upscale/`. `share-rose-bouquet.jpg` is
 unchanged: it only feeds a 1200 wide share card.
 
 `Photo.astro` serves widths up to 3840 and encodes AVIF at quality 60 and WebP at 82 (sharp's defaults, 50
-and 80, smeared texture). Pages weigh about 1.4 to 1.5 times what they did, more where a hero now gets the
-larger file it needs.
+and 80, smeared texture).
+
+Page weight, measured fully scrolled in Chrome (AVIF) against the earlier files and code, on the commit that
+re-exported the photos: 1.34 times overall, from 1.19 to 1.88 times by page and screen. The largest rises are
+the phone 404 at 390 x 844 at 3x (477 to 899 KB; its gazebo hero alone is about 0.7 MB), the community events
+page at 1440 at 2x (638 to 1093 KB, 1.71 times), graduations and reunions (732 to 1167 KB, 1.59 times) and The
+Space at 1920 at 2x (1078 to 1726 KB, 1.60 times). Since then the portrait file on phones is chosen by the
+card's real width (`tallSizes` defaults to `sizes`, so a carousel card fetches the 960 file, not 1280), the
+carousels on tablets ask for files that match their cards, and the photo viewer offers 1600, 2400 and 3200
+wide files instead of one 3200 file, so a phone's tap to enlarge fetches the 1600 file.
+
+## Files shown on no page
+
+`exterior-dusk.jpg` and `exterior-dusk-tall.jpg` (not used since the home share card became a still life)
+and `styled-driveway-petals.jpg` (the building's cross is front and centre in it) are kept in the set but
+placed on no page, so their re-export adds about 2.4 MB to the repository without a visible gain. They stay
+for reference; take them out of this folder only by moving them to `design-archive/`.
 
 ## Describing a photo
 

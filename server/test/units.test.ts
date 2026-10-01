@@ -36,6 +36,7 @@ import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
 import { capacityError } from '../../src/shared/capacity';
 import { SPACE_NAMES, type CalendarBlock, type Inquiry } from '../../src/shared/types';
 import { silentLog } from './helpers';
+import { redirectPage } from '../../scripts/demo-redirects.mjs';
 
 describe('passwords', () => {
   test('new hashes use OWASP scrypt parameters (N=2^17, r=8, p=1) and verify', async () => {
@@ -737,5 +738,19 @@ describe('demo backend wording matches the server', () => {
     for (const [space, requested] of [['both', 'both'], ['outdoor', 'both'], ['indoor', 'indoor']] as const) {
       assert.equal(timelineText.booked.added('2027-01-09', space, requested), bookingText.added('2027-01-09', space, requested));
     }
+  });
+});
+
+describe('demo redirect pages', () => {
+  test('use the version 6 colors, light only, with no retired color and no dark appearance', () => {
+    const html = redirectPage('/venueatncc/the-space/', 'https://example.github.io/venueatncc/the-space/');
+    assert.ok(html.includes('color-scheme: light;'), 'light only');
+    assert.ok(!html.includes('prefers-color-scheme'), 'no dark appearance');
+    assert.ok(html.includes('#C2185B') && html.includes('#3B2430') && html.includes('#FFFFFF'), 'Cerise link, Plum text, White page');
+    for (const retired of ['#9E2B52', '#7E1F41', '#B5456E', '#F5A8BD', '#2A151F', '#FBEFF2', '#012A4A', '#01497C', '#2A6F97']) {
+      assert.ok(!html.toUpperCase().includes(retired), `no retired color ${retired}`);
+    }
+    assert.ok(html.includes('<link rel="canonical" href="https://example.github.io/venueatncc/the-space/">'));
+    assert.ok(!html.includes(String.fromCharCode(8212)) && !html.includes(String.fromCharCode(8211)), 'no em or en dash');
   });
 });

@@ -23,6 +23,9 @@ rule, including version 5 amendment 4 (the Blush page and the Plum footer).
 3. **Light only.** No dark-mode rules or tokens remain; `color-scheme: light` and a White `theme-color`.
 4. **See-through caption panels** over photos, tuned per photo (Color, "Caption panels over photos").
 5. **The home hero veil** is bright white with a pastel pink cast (HeroVideo, and "Motion and graphics").
+6. **Photo card labels on frosted White** (amended October 1, 2026, for the lead to confirm): the Plum bottom
+   gradient with white type is gone; the label and meta line sit on a frosted White strip, Plum and Mauve
+   (Color, "Photo card labels"). The dark gradient failed 4.5:1 over the bright staged photos.
 
 ## Version 5 amendments (the reference-site rebuild)
 
@@ -43,7 +46,7 @@ amendments supersede the matching version 4 rules below wherever the two differ.
 4. **Surfaces.** (Superseded by version 6: the page is White and the footer Blush.) Sections are divided by
    hairlines rather than alternating bands; the footer keeps the reference's shape (a very large centred
    serif statement).
-5. **Cards.** Photo cards carry their label and capacity inside the photo over a bottom scrim, 12px radius,
+5. **Cards.** Photo cards carry their label and capacity inside the photo (on a frosted White strip since version 6), 12px radius,
    in horizontal carousels; there is no white card body under a photo.
 6. **Buttons.** One button: the Peony capsule (`.btn--filled`, version 6), a hairline outline, and a white capsule for
    photos. The header's Check Availability is filled on every page, and an in-page primary may be filled too;
@@ -190,11 +193,11 @@ mode gets the same bright site.
 
 | Token | Hex | Role |
 |---|---|---|
-| Plum | `#3B2430` | Primary text; photo card scrims; text on chips and on the frosted caption panels |
+| Plum | `#3B2430` | Primary text; text on chips, on the frosted caption panels, and on the photo card strips |
 | Mauve | `#6A4B57` | Secondary text |
 | Peony | `#D6336C` | Primary button fill (white label), the app icon field, the email rule and button |
 | Cerise | `#C2185B` | Links, accent text, eyebrows, icons, the logo accent ("@ NCC" and the ring), selected states, focus rings; the hover and pressed fill of the primary button |
-| Pink | `#F48FB1` | The lockup accent on Plum scrims and over photos (the white artwork) |
+| Pink | `#F48FB1` | The accent of the white lockup artwork (kept; no page shows it since version 6) |
 | Rose Mist | `#F9C6D7` | Hairlines on share panels, the portrait hero wash, stronger tints |
 | Petal | `#FCE4EC` | Chips, panels, the closing band, the rates band, title bands, selected rows |
 | Blush | `#FFF4F7` | The footer, the admin sidebar, input fills in the wizard, the email page |
@@ -221,7 +224,8 @@ mode gets the same bright site.
 | Cerise on Rose Mist | 3.9:1 | Never text; non-text only |
 | Peony on White | 4.6:1 | Focus and UI edges where used |
 | Tertiary label on White / Blush / Petal | 5.6 / 5.2 / 4.7:1 | Kept off Petal and Rose Mist by rule |
-| White on Plum / Petal on Plum / Pink on Plum | 14.2 / 11.8 / 6.4:1 | Text over photo card scrims |
+| Plum / Mauve on the photo card strip (White 0.78 over the photo) | 8.6 / 4.66:1 or better, measured | Photo card labels and meta lines |
+| Text field edge `#8C7681` on White / Blush / Petal | 4.2 / 3.9 / 3.5:1 | The boundary of every text field (`--input-edge`, WCAG 1.4.11) |
 | Plum on White at 0.94 over black | 12.4:1 | Share card panels (Mauve 6.7:1) |
 
 Never set Pink, Rose Mist, or Petal as text on a light surface, never set Cerise text on Rose Mist, and never
@@ -236,36 +240,58 @@ blur(12px) saturate(1.2)` (with `-webkit-`), a 70% white hairline, a soft shadow
 Every line in the panel is Plum (eyebrow, title, descriptors, fact labels and values, the styled caption):
 Cerise and Mauve would need a near-solid panel over a dark photo, and Plum lets it stay see-through.
 
-The opacity is measured, not guessed (`FROST` in `PageHero.astro`): with the panel's text hidden, each page
-is screenshotted at 390, 768, 1024 and 1440 and the composited pixels behind every text line are sampled
-(the 2nd-percentile pixel); each photo gets the lowest opacity at which every line keeps 4.5:1, plus a step
-where that was within 0.2 of the floor. Results (worst line per page, all widths):
+The opacity is measured, not guessed (`FROST` in `PageHero.astro`), and two floors apply; each photo takes
+the higher:
+
+- **Legibility.** With the panel's text hidden, each page is screenshotted at 390 x 844, 768, 1024, 1366,
+  1440, 1920 and 2560 wide and on the common phone screens 320 x 568, 360 x 640, 375 x 667 and 412 x 915 (the
+  4:5 cover crop shifts with screen height, so 390 x 844 alone is not enough), and the composited pixels
+  behind every text line are sampled (the 2nd-percentile pixel); the lowest opacity at which every line keeps
+  4.5:1, plus a step where that was within 0.2 of the floor.
+- **Appearance: 0.62.** Below it, over a dark photo (the outdoor scenes, the gazebo, The Main Hall), the panel
+  composites to a grey or khaki box (HSL lightness 62 to 66) rather than glass. At 0.62 or more it still
+  lets the photo through and reads as frosted White (lightness 78 or more on every hero at 390 and 1440).
+  This is what delivers the client's "transparent and bright", not a reversal of it. Bright rooms clear both
+  floors lower and keep their lower values.
+
+Results (worst line per page over all the screens above, October 1, 2026):
 
 | Hero photo | Opacity (phone / wide) | Worst line |
 |---|---|---|
-| main-hall (The Space) | 0.50 / 0.60 | 5.15:1 |
-| styled-wedding-indoor-ceremony (/events/) | 0.60 | 5.19:1 |
-| styled-event-weddings | 0.55 | 5.12:1 |
-| styled-event-receptions-banquets | 0.55 | 5.07:1 |
-| styled-event-baby-bridal-showers | 0.55 | 5.27:1 |
-| styled-event-birthday-parties | 0.50 | 5.22:1 |
-| styled-event-repasts-memorials | 0.45 | 4.91:1 |
-| styled-event-meetings-trainings | 0.50 | 4.76:1 |
-| styled-event-graduations-reunions | 0.55 | 4.96:1 |
-| styled-event-community-events | 0.50 | 5.11:1 |
-| gazebo (404) | 0.45 | 5.25:1 |
+| main-hall (The Space) | 0.65 / 0.65 | 5.88:1 |
+| styled-wedding-indoor-ceremony (/events/) | 0.60 | 5.21:1 |
+| styled-event-weddings | 0.62 (appearance) | 6.19:1 |
+| styled-event-receptions-banquets | 0.55 | 5.08:1 |
+| styled-event-baby-bridal-showers | 0.55 | 5.14:1 |
+| styled-event-birthday-parties | 0.50 | 4.88:1 |
+| styled-event-repasts-memorials | 0.45 | 4.88:1 |
+| styled-event-meetings-trainings | 0.55 | 5.16:1 |
+| styled-event-graduations-reunions | 0.65 (appearance) | 6.52:1 |
+| styled-event-community-events | 0.65 (appearance) | 6.90:1 |
+| gazebo (404) | 0.65 (appearance) | 7.58:1 |
 | any other photo | 0.65 | (passes over every hero measured) |
 
 Where phones stack the caption under a 3:2 staged photo (`phone="stack"`), it stays under the photo on the
 page, with the Cerise eyebrow (5.9:1) and Mauve labels. Without backdrop-filter the panel is White at 0.9;
-under reduced transparency or increased contrast it is White at 0.96 with no blur. Photo card labels
-(`PhotoCard`) keep their Plum bottom gradient with white type: they are labels in a scrim, not a box over a
-hero, and the lead may decide whether to lighten them too. The small Styled Concept badge stays near-white glass.
+under reduced transparency or increased contrast it is White at 0.96 with no blur. The small Styled Concept
+badge stays near-white glass.
+
+### Photo card labels (version 6, amended October 1, 2026)
+
+`PhotoCard` labels sit on a frosted White strip along the bottom of the photo, the same glass as the caption
+panels: White at 0.78, `--frost-blur`, a white hairline on top, a Plum label and a Mauve meta line. The Plum
+gradient with white type that the reference uses failed 4.5:1 over the bright staged photos (as low as 1.1:1
+on the /events/ tiles), and it was the one dark band left on the site. At 0.78 the strip is bright enough over
+any photo that it needs no tuning per photo: measured on home, The Space, /events/ and an event page at 320,
+390, 768, 1440 and 1920, the label keeps 8.6:1 or more and the meta line 4.66:1 or more. Without
+backdrop-filter the strip is White at 0.9, and under reduced transparency or increased contrast 0.96. On a
+gallery card the enlarge icon sits at the strip's right end and the text stops short of it.
 
 Tokens live in `src/styles/global.css` under the palette names above (`--ink`, `--ink-rgb`, `--mauve`,
 `--peony`, `--cerise`, `--pink`, `--rose-mist`, `--petal`, `--blush`, `--white`), the role tokens under them,
-and `--frost-blur` and `--frost-border` for the caption panels; text over photographs and scrims uses
-`--on-dark`, `--on-dark-2`, `--on-dark-accent`. The admin and booking styles use only the role tokens.
+and `--frost-blur` and `--frost-border` for the caption panels and card strips; `--on-dark` and
+`--on-dark-accent` remain only for the white lockup artwork. The admin and booking styles use only the role
+tokens; text fields take `--input-edge`.
 
 ## Type
 
@@ -319,18 +345,25 @@ Everything is a transform or an opacity on a scroll timeline (`ScrollTimeline` w
 so the browser's compositor moves the name in the same frame as the scroll, with no script per frame and no
 layout reads; browsers without scroll timelines run the same tracks from a frame callback. No filters animate
 (the name has no halo: over every sampled frame of the clip, under the version 6 white veil, Plum keeps at
-least 11.3:1 and Cerise 4.4:1). Under `prefers-reduced-motion: reduce`, on short screens (where the bar
+least 11.3:1 and Cerise 4.4:1, measured under the earlier, dimmer veil; the brighter veil of October 1 only
+raises both). Under `prefers-reduced-motion: reduce`, on short screens (where the bar
 scrolls away), and without scripts, the header lockup shows at once, the welcome stays still and scrolls
 under the bar, and the bar turns solid after 8px.
 
 ## Motion and graphics
 
 - **The hero loop** (`src/components/HeroVideo.astro`, version 5): a royalty-free clip of white rose petals on
-  a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, WebM and MP4 under 350 KB each,
-  fixed behind the welcome under a bright white veil with a pastel pink cast (version 6: White at 0.9 in the
-  centre easing to Blush at 0.52 at the edges over a 0.3 pink-white wash; on portrait screens a Rose Mist wash
-  at 0.35 under a 0.62 near-white wash). Over 12 frames at 360, 390, 768 and 1440 the Plum name keeps 11.3:1,
-  the Cerise "@ NCC" 4.4:1 (large text), "Welcome to" 6.4:1, and the line 5.0:1.
+  a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, fixed behind the welcome under a
+  bright white veil with a pastel pink cast. Since October 1, 2026 the clip and its poster are 2560 x 1440, cut
+  from the source's 4K rendition (the 1280 x 720 files were the softest image on the site and are kept in
+  `design-archive/hero-petals-1280/`): WebM 177 KB, MP4 652 KB (the 350 KB cap of version 5 is withdrawn for
+  the MP4, which only browsers without WebM fetch), and portrait screens get their own 1216 x 2160 poster. The
+  veil (October 1): White at 0.96 in the centre easing to Blush at 0.74 at the edges over a 0.4 pink-white
+  wash; on portrait screens a Rose Mist wash at 0.3 under a 0.82 near-white wash with a white 0.8 centre. The
+  first screen's mean lightness is about 95 (HSL) at 390 and 1440, the brightest surface on the site, with the
+  pink still showing at the edges. Under the earlier, dimmer veil, over 12 frames at 360, 390, 768 and 1440,
+  the Plum name kept 11.3:1, the Cerise "@ NCC" 4.4:1 (large text), "Welcome to" 6.4:1, and the line 5.0:1;
+  the brighter veil only raises these.
   It shows no identifiable venue, building, room, or person, never covers a real photo, and its source,
   author, and license are recorded in `public/media/CREDITS.md`. Under reduced motion the video is hidden and
   the poster shows; the script also pauses it.
@@ -368,8 +401,8 @@ under the bar, and the bar turns solid after 8px.
 |---|---|---|
 | `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3500 x 2532) for full-bleed screens, and `grove-pines-tall` is 7:10 | The home photo band; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
 | `exterior-dusk` | The building at blue hour, lit entry, pines behind | Not used since the home share card became a still life of roses (October 1, 2026); kept for reference |
-| `approach-dusk` | The long drive and lawn toward the building at dusk | Arrival band, The grounds |
-| `driveway` | The paved drive and lot in daylight | Parking, The grounds |
+| `approach-dusk` | The long drive and lawn toward the building at dusk | The grounds (The Space), the Book share card |
+| `driveway` | The paved drive and lot in daylight | The home arrival band (since October 1, 2026: the dusk frame was the one cool, dark image on the bright home page); The Space gallery |
 | `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
 | `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall gallery |
 | `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | The Hall gallery |
@@ -462,7 +495,7 @@ exactly once, neutrally, in one FAQ entry. Prices never appear.
    staged tiles.
 5. **The feature strip:** three icon rows (Indoors and outdoors, Full-day access, On-site parking).
 6. **Our special rates** (Petal): the approved wording, the Call button, and "Or send an inquiry".
-7. **Find us in north Suffolk:** the drive at dusk, the address, Get Directions.
+7. **Find us in north Suffolk:** the drive and lot in daylight (`driveway`), the address, Get Directions.
 
 The date checker lists the three spaces as one row each (name, what it is, the day's status, a radio), so
 the full names never wrap.

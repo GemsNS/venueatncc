@@ -225,7 +225,7 @@ const schema = [
               {relatedCards.map(
                 (c) =>
                   c.photo && (
-                    <PhotoCard photo={c.photo} label={c.event.name} meta={c.event.summary} href={`/events/${c.event.slug}/`} sizes="(min-width: 75rem) 410px, (min-width: 46.5rem) 31vw, 82vw" />
+                    <PhotoCard photo={c.photo} label={c.event.name} meta={c.event.summary} href={`/events/${c.event.slug}/`} sizes="(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw" />
                   ),
               )}
             </Carousel>

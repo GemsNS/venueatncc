@@ -15,6 +15,13 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
   they're not blocking the image". This supersedes three points below: the solid bar is White (not cream or blush); the footer is a very
   pale Blush band under a hairline (not a contrasting dark surface); and hero caption panels are see-through frosted White at 0.45 to 0.6
   with Plum text, tuned per photo to 4.5:1 (not Blush glass at 0.85). The site is light only. Details in brand.md, version 6.
+- **Bright retheme, second pass (amended October 1, 2026, for the lead to confirm).** After a review found the photo card
+  labels below 4.5:1 and the hero and dark-photo panels dull: photo card labels moved from the reference's Plum gradient
+  with white type to a frosted White strip with Plum and Mauve type (this departs from point 5 below, "over a bottom
+  gradient scrim", for legibility and for the client's bright direction); hero caption panels have an appearance floor
+  of 0.62 so they read as white glass over dark photos; the home veil is brighter; the hero clip and poster are 2560 x
+  1440 from the 4K source; the home arrival band shows the drive in daylight; the admin sheet backdrop is Blush, not a
+  Plum dim; the warning notices lost their peach fill; text fields have a 3:1 edge. Details in brand.md, version 6.
 
 ## What makes Wedgewood feel like Wedgewood (must capture)
 

@@ -161,11 +161,11 @@
   color: var(--label-2);
 }
 
-/* Inputs on a panel: a Blush fill with a hairline edge. The focus ring comes from global .input. */
+/* Inputs on a panel: a Blush fill with a 3:1 edge (--input-edge). The focus ring comes from global .input. */
 .bk .input,
 .bk-app .input {
   background: var(--bk-input-bg);
-  border-color: var(--bk-input-edge);
+  border-color: var(--input-edge);
 }
 
 .bk .input:hover,
