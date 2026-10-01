@@ -190,8 +190,11 @@
   --section: clamp(3.5rem, 2.5rem + 4vw, 6rem);
   /* The space from a section head to its content. */
   --section-head: clamp(2rem, 1.5rem + 2vw, 3rem);
-  /* 60px at default text size (72px from 46.5rem); grows with larger text so the bar never clips its links. */
-  --nav-h: 3.75rem;
+  /*
+    64px at default text size (72px from 46.5rem, 80px from 70rem), room for the header's lockup (40px,
+    44px, 52px; Header.astro); grows with larger text so the bar never clips its links.
+  */
+  --nav-h: 4rem;
   /*
     Size classes (HIG): compact below 60rem (960px at default text size) shows the menu button and
     the full-screen menu; regular shows the top nav. The chrome queries are in rem so larger text moves
@@ -210,6 +213,12 @@
 @media (min-width: 46.5rem) {
   :root {
     --nav-h: 4.5rem;
+  }
+}
+
+@media (min-width: 70rem) {
+  :root {
+    --nav-h: 5rem;
   }
 }
 

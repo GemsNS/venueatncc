@@ -8,9 +8,11 @@
  * tone="white": the light artwork, for photos and Plum. White (#FFFFFF) becomes var(--on-dark) and the Pink
  * accent (#E9A9BB) becomes var(--on-dark-accent), the same in both appearances.
  *
- * The two word variants ('word-the-venue', 'word-at-ncc') are the lockup's own word outlines, each in a
- * tight viewBox, for the home page welcome: the same shapes the header lockup carries (tagged data-part),
- * so the welcome can morph into the header on scroll.
+ * Two variants are cut from the lockup itself for the home page welcome: 'lockup-name' is the lockup
+ * without its ring (the two words, tagged data-part, in the lockup's own coordinates, with the viewBox cut
+ * to NAME_BOX in src/lib/lockup.ts) and 'lockup-ring' is the ring and its V alone. Set side by side at one
+ * scale they are the lockup, so the welcome's name is the very shape the header carries and can fly into
+ * it and land exactly (src/pages/index.astro, "The morph").
  *
  * Accessible as an image named "The Venue @ NCC", or hidden with `decorative` when it sits inside a link
  * that already carries the name.
@@ -21,11 +23,10 @@ import mark from '../assets/brand/venue-mark.svg?raw';
 import markWhite from '../assets/brand/venue-mark-white.svg?raw';
 import wordmark from '../assets/brand/venue-wordmark.svg?raw';
 import wordmarkWhite from '../assets/brand/venue-wordmark-white.svg?raw';
-import wordTheVenue from '../assets/brand/venue-word-the-venue.svg?raw';
-import wordAtNcc from '../assets/brand/venue-word-at-ncc.svg?raw';
+import { NAME_BOX, RING_BOX } from '../lib/lockup';
 
 interface Props {
-  variant?: 'lockup' | 'mark' | 'wordmark' | 'word-the-venue' | 'word-at-ncc';
+  variant?: 'lockup' | 'mark' | 'wordmark' | 'lockup-name' | 'lockup-ring';
   tone?: 'auto' | 'white';
   /** Rendered height: a number of pixels or any CSS length. Minimum 32px for the lockup. */
   height?: number | string;
@@ -40,12 +41,22 @@ interface Props {
 
 const { variant = 'lockup', tone = 'auto', height = 36, class: className, title = 'The Venue @ NCC', decorative = false, ...rest } = Astro.props;
 
+/** The lockup's words alone (its ring removed), or its ring alone (its words removed), with the viewBox cut to match. */
+const box = (b: { x: number; y: number; width: number; height: number }) => `viewBox="${b.x} ${b.y} ${b.width} ${b.height}"`;
+const cut = (svg: string, keep: 'name' | 'ring') =>
+  keep === 'name'
+    ? svg
+        .replace(/<circle\b[^>]*\/>/g, '')
+        .replace(/<path\b(?![^>]*data-part)[^>]*\/>/g, '')
+        .replace(/viewBox="[^"]*"/, box(NAME_BOX))
+    : svg.replace(/<path\b[^>]*data-part[^>]*\/>/g, '').replace(/viewBox="[^"]*"/, box(RING_BOX));
+
 const sources = {
   lockup: { auto: lockup, white: lockupWhite },
   mark: { auto: mark, white: markWhite },
   wordmark: { auto: wordmark, white: wordmarkWhite },
-  'word-the-venue': { auto: wordTheVenue, white: wordTheVenue },
-  'word-at-ncc': { auto: wordAtNcc, white: wordAtNcc },
+  'lockup-name': { auto: cut(lockup, 'name'), white: cut(lockupWhite, 'name') },
+  'lockup-ring': { auto: cut(lockup, 'ring'), white: cut(lockupWhite, 'ring') },
 } as const;
 
 /** The artwork's colors (brand.md, Logo) and the theme variables that replace them. */
@@ -57,9 +68,6 @@ const COLORS: Record<'auto' | 'white', Record<string, string>> = {
   white: {
     '#FFFFFF': 'var(--logo-light-ink, var(--on-dark, #FFFFFF))',
     '#E9A9BB': 'var(--logo-light-accent, var(--on-dark-accent, #E9A9BB))',
-    // The word variants carry the dark artwork; in the white tone they take the light colors.
-    '#3B2430': 'var(--logo-light-ink, var(--on-dark, #FFFFFF))',
-    '#9E2B52': 'var(--logo-light-accent, var(--on-dark-accent, #E9A9BB))',
   },
 };
 
