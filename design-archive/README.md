@@ -36,3 +36,9 @@ ceremony's flower walls still looked waxy at 1:1 (`src/assets/venue/README.md`, 
 
 The home hero clip and poster at 1280 x 720 as used until 2026-10-01, replaced by 2560 x 1440 files cut from
 the source's 4K rendition (`public/media/CREDITS.md`).
+
+## hero-petals
+
+The home hero clip of white rose petals on a pink ground (Mixkit item 3733) and its two posters at
+2560 x 1440, as used until 2026-10-01, when the client asked for pink roses instead because the petals did
+not read as flower petals. The rose clip that replaced them is credited in `public/media/CREDITS.md`.
