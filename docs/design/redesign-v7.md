@@ -21,7 +21,9 @@ disclosure under the photo), the rose hero, and the name morph stays.
    no event sub-list.
 3. **Events is one page.** Each of the eight occasions (`src/data/events.ts`) is a compact block with its
    slug as its id: one staged photo with its disclosure caption, the name, one or two sentences, and the
-   spaces that suit it (links to The Space). No planning guides, checklists, per-event questions, related
+   spaces that suit it (links to The Space). Weddings spans the full width with two staged photos side by
+   side, the gazebo ceremony and the indoor ceremony in The Main Hall (`styled-wedding-indoor-ceremony`),
+   since its copy offers both. No planning guides, checklists, per-event questions, related
    links, or breadcrumbs. One closing line for any other occasion, with Check Availability.
 4. **Rates & FAQ is one page.** The approved rates wording with Call (the page's one filled button) and a
    text link to the booking page; the booking details (what is included, holding your date, the hours), the

@@ -8,7 +8,8 @@
  *
  * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
  * staged set is complete (eventsStaged) each block shows its event's staged photo, whose caption begins with
- * the disclosure, "Styled concept. Décor is not included." (Figure.astro). Without the staged set the
+ * the disclosure, "Styled concept. Décor is not included." (Figure.astro); Weddings adds the indoor
+ * ceremony in The Main Hall beside its gazebo ceremony (SECOND_PHOTO, below). Without the staged set the
  * blocks carry no photo: eight events cannot map to eight distinct real photos.
  *
  * Capacities, rates, parking, and visits have their homes elsewhere and are not written here.
@@ -16,7 +17,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Figure from '../../components/Figure.astro';
 import { events } from '../../data/events';
-import { STAGED_SCENES, eventPhoto, eventsStaged } from '../../data/photos';
+import { STAGED_SCENES, eventPhoto, eventsStaged, photoByName, type VenuePhoto } from '../../data/photos';
 import { site, type SpaceId } from '../../data/site';
 import { bookHref } from '../../data/nav';
 import { abs } from '../../lib/schema';
@@ -45,9 +46,18 @@ const spaceLinks = (ids: SpaceId[]) =>
     .filter((s) => s !== undefined)
     .map((s) => ({ label: s.name, href: href(`/the-space/#${SPACE_ANCHORS[s.id]}`) }));
 
+/*
+  Weddings has a second staged photo, the indoor option its copy names: a ceremony in The Main Hall
+  (styled-wedding-indoor-ceremony; brand.md, "Staged event photos"). Its block spans the full width with
+  the outdoor and indoor ceremonies side by side, so neither photo is shrunk and no photo repeats.
+*/
+const SECOND_PHOTO: Record<string, string> = { weddings: 'styled-wedding-indoor-ceremony' };
+
+const staged = (p: VenuePhoto | null) => (p?.styledOf !== undefined ? p : null);
 const blocks = events.map((e) => {
-  const photo = eventsStaged ? eventPhoto(e.slug) : null;
-  return { event: e, photo: photo?.styledOf !== undefined ? photo : null, spaces: spaceLinks(e.spaces) };
+  const photo = staged(eventsStaged ? eventPhoto(e.slug) : null);
+  const second = photo && SECOND_PHOTO[e.slug] ? staged(photoByName(SECOND_PHOTO[e.slug])) : null;
+  return { event: e, photos: [photo, second].filter((p): p is VenuePhoto => p !== null), spaces: spaceLinks(e.spaces) };
 });
 
 const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
@@ -65,8 +75,17 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
       <ul class="ev-list">
         {
           blocks.map((b) => (
-            <li class="ev" id={b.event.slug}>
-              {b.photo && <Figure photo={b.photo} caption={STAGED_SCENES[b.photo.name] ?? false} tall={false} sizes={SIZES} />}
+            <li class:list={['ev', { 'ev--pair': b.photos.length > 1 }]} id={b.event.slug}>
+              {b.photos.length === 1 && (
+                <Figure photo={b.photos[0]} caption={STAGED_SCENES[b.photos[0].name] ?? false} tall={false} sizes={SIZES} />
+              )}
+              {b.photos.length > 1 && (
+                <div class="ev__photos">
+                  {b.photos.map((p) => (
+                    <Figure photo={p} caption={STAGED_SCENES[p.name] ?? false} tall={false} sizes={SIZES} />
+                  ))}
+                </div>
+              )}
               <div class="ev__text">
                 <h2 id={`${b.event.slug}-heading`} class="ev__name">{b.event.name}</h2>
                 <p class="ev__copy">{b.event.summary}</p>
@@ -125,6 +144,28 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
   .ev__text {
     display: grid;
     gap: 0.5rem;
+  }
+
+  .ev__photos {
+    display: grid;
+    gap: 1.5rem;
+    min-width: 0;
+  }
+
+  /* Weddings: both ceremonies, outdoor and indoor, across the full width, with the text under them. */
+  @media (min-width: 48rem) {
+    .ev--pair {
+      grid-column: 1 / -1;
+    }
+
+    .ev__photos {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem;
+    }
+
+    .ev--pair .ev__text {
+      max-width: 40rem;
+    }
   }
 
   .ev__name {

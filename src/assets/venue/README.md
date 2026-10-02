@@ -115,6 +115,8 @@ Add an entry in `photoDetails` in `src/data/photos.ts`:
   src/pages/og/_cards.ts. brand.md (Photography) records why the two differ.
 - `eventPhoto(slug)`: the photo that leads each event page (and its tile, when staged): the staged photo
   when `eventsStaged`, otherwise the real photo named by its `styledOf`.
+- `styled-wedding-indoor-ceremony`: the indoor ceremony beside the gazebo ceremony in the Weddings block on
+  /events/ (`SECOND_PHOTO` in src/pages/events/index.astro).
 - `realPhoto(photo)`: the real photo behind a staged one, for share images and structured data.
 - `photoByName('approach-dusk')`: any single photo by name.
 

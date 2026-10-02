@@ -8,6 +8,10 @@
  * "Styled concept. Décor is not included.", at the start of its caption, even when the page passes none,
  * so every staged image declares itself on the image itself.
  *
+ * The viewer zooms and pans (pinch, drag, double tap or double click, the wheel, the Zoom in, Zoom out and
+ * Reset zoom buttons, and + - 0 and the arrow keys), up to the photo's real detail and no further
+ * (detailWidth; brand.md, "The client's rules of October 1, 2026", rule 3).
+ *
  * `zoom={false}` leaves out both buttons (a figure inside a link, FigureCard).
  */
 import { getImage } from 'astro:assets';
@@ -48,6 +52,16 @@ const viewerWidths = [...[1600, 2400].filter((w) => w < viewerMax), viewerMax];
 const full = zoom
   ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: 82 })
   : null;
+/*
+  Zooming in swaps in one file at the photo's full real detail: the source width for a real photo (up to
+  3840), 1600 for a staged one (the same file as the viewer's largest). The viewer never zooms past it.
+*/
+const zoomMax = detailWidth(photo);
+const deep = full
+  ? zoomMax === viewerMax
+    ? { src: full.src }
+    : await getImage({ src: photo.src, width: zoomMax, format: 'webp', quality: 82 })
+  : null;
 ---
 <figure
   class:list={['figure', className]}
@@ -55,6 +69,9 @@ const full = zoom
   data-zoom-srcset={full?.srcSet.attribute}
   data-zoom-alt={full ? photo.alt : undefined}
   data-zoom-detail={full ? viewerMax : undefined}
+  data-zoom-full={deep?.src}
+  data-zoom-max={full ? zoomMax : undefined}
+  data-zoom-ratio={full ? photo.src.width / photo.src.height : undefined}
   data-zoom-caption={full ? (captionText ?? '') : undefined}
 >
   <Photo photo={photo} sizes={sizes} tall={tall} priority={priority} frame={full ? 'button' : 'div'} label={`Enlarge photo: ${photo.alt}`} />
@@ -73,77 +90,389 @@ const full = zoom
 </figure>
 
 <script>
-  // One full-screen viewer for every enlargeable figure on the page: the whole photo, uncropped.
+  /*
+    One full-screen viewer for every enlargeable figure on the page: the whole photo, uncropped, with zoom
+    and pan.
+
+    Layout: a bar of controls at the top (Zoom in, Zoom out, Reset zoom, Close), the stage, the caption,
+    and the previous and next arrows beside the stage (under it on phones). Nothing is drawn over the photo.
+
+    The photo is fitted into the stage (never wider than 1600 CSS px, nor than its viewer detail at this
+    screen's pixel ratio) and zoomed with a CSS transform only. Phones: pinch, drag when zoomed, double tap,
+    swipe to change photo when not zoomed. Desktop: wheel or trackpad pinch toward the pointer, drag,
+    double click. Keys: + and - zoom, 0 resets, arrows pan when zoomed (else Left and Right change photo),
+    Escape closes. Panning is clamped so the photo never leaves the stage.
+  */
   const figures = () => [...document.querySelectorAll<HTMLElement>('figure[data-zoom-src]')];
+  const STEP = 1.6;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
   let dialog: HTMLDialogElement | null = null;
+  let stage: HTMLElement;
+  let img: HTMLImageElement;
+  let status: HTMLElement;
   let index = 0;
   let opener: HTMLElement | null = null;
+  let current: HTMLElement | null = null;
+
+  // Zoom state: scale s (1 = fitted), translation (tx, ty) in CSS px from the centred position.
+  let s = 1;
+  let tx = 0;
+  let ty = 0;
+  let maxS = 1;
+  let fitW = 0;
+  let fitH = 0;
+  let stageW = 0;
+  let stageH = 0;
+  let deepLoaded = false;
+  let token = 0;
+
+  const icon = (d: string) =>
+    `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
 
   function build(): HTMLDialogElement {
     const d = document.createElement('dialog');
     d.className = 'lightbox';
     d.setAttribute('aria-label', 'Photo viewer');
     d.innerHTML = `
-      <figure class="lightbox__figure">
-        <img class="lightbox__img" alt="" />
-        <figcaption class="lightbox__caption"></figcaption>
-      </figure>
-      <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-      <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button type="button" class="lightbox__btn lightbox__next" aria-label="Next photo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>`;
+      <div class="lightbox__bar">
+        <div class="lightbox__zoom" role="group" aria-label="Zoom">
+          <button type="button" class="lightbox__btn" data-zoom="in" aria-label="Zoom in" aria-keyshortcuts="+">${icon('M12 5v14M5 12h14')}</button>
+          <button type="button" class="lightbox__btn" data-zoom="out" aria-label="Zoom out" aria-keyshortcuts="-">${icon('M5 12h14')}</button>
+          <button type="button" class="lightbox__btn" data-zoom="reset" aria-label="Reset zoom" aria-keyshortcuts="0">${icon('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5')}</button>
+        </div>
+        <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">${icon('M6 6l12 12M18 6L6 18')}</button>
+      </div>
+      <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">${icon('M15 18l-6-6 6-6')}</button>
+      <div class="lightbox__stage"><img class="lightbox__img" alt="" draggable="false" /></div>
+      <button type="button" class="lightbox__btn lightbox__next" aria-label="Next photo">${icon('M9 18l6-6-6-6')}</button>
+      <p class="lightbox__caption"></p>
+      <p class="visually-hidden" aria-live="polite"></p>`;
     document.body.append(d);
+    stage = d.querySelector<HTMLElement>('.lightbox__stage')!;
+    img = d.querySelector<HTMLImageElement>('.lightbox__img')!;
+    status = d.querySelector<HTMLElement>('[aria-live]')!;
+
     d.querySelector('.lightbox__close')!.addEventListener('click', () => d.close());
     d.querySelector('.lightbox__prev')!.addEventListener('click', () => show(index - 1));
     d.querySelector('.lightbox__next')!.addEventListener('click', () => show(index + 1));
-    // A tap on the dark backdrop (outside the photo) closes the viewer.
-    d.addEventListener('click', (e) => {
-      if (e.target === d) d.close();
-    });
-    d.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') show(index - 1);
-      if (e.key === 'ArrowRight') show(index + 1);
-    });
+    d.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) =>
+      b.addEventListener('click', () => {
+        if (b.getAttribute('aria-disabled') === 'true') return;
+        const kind = b.dataset.zoom;
+        if (kind === 'reset') zoomTo(1, null, true);
+        else zoomTo(kind === 'in' ? s * STEP : s / STEP, null, true);
+      }),
+    );
+
+    d.addEventListener('keydown', onKey);
     d.addEventListener('close', () => {
       document.documentElement.classList.remove('lightbox-open');
+      reset();
       opener?.focus();
     });
-    // Swipe left or right on phones.
-    let x0: number | null = null;
-    d.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
-    d.addEventListener('touchend', (e) => {
-      if (x0 === null) return;
-      const dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
-      x0 = null;
+
+    stage.addEventListener('pointerdown', onDown);
+    stage.addEventListener('pointermove', onMove);
+    stage.addEventListener('pointerup', onUp);
+    stage.addEventListener('pointercancel', onUp);
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    stage.addEventListener('dblclick', (e) => {
+      // Touch double taps are handled in onUp; this is the mouse.
+      if (lastType === 'touch') return;
+      toggleAt(e.clientX, e.clientY);
+    });
+    window.addEventListener('resize', () => {
+      if (d.open) layout();
     });
     return d;
   }
+
+  /* ---------- Geometry ---------- */
+
+  function layout() {
+    if (!current) return;
+    const r = stage.getBoundingClientRect();
+    stageW = r.width;
+    stageH = r.height;
+    const dpr = window.devicePixelRatio || 1;
+    const ratio = Number(current.dataset.zoomRatio) || 1.5;
+    // Fitted: the whole photo, at most 1600 CSS px wide and never wider than its viewer file's detail.
+    const fitCap = Number(current.dataset.zoomDetail || 3200) / dpr;
+    fitW = Math.max(1, Math.min(stageW, stageH * ratio, 1600, fitCap));
+    fitH = fitW / ratio;
+    /*
+      The zoom cap: one pixel of real detail never covers more than one device pixel. Real detail is the
+      largest file's width (data-zoom-max): the source width for a real photo (3000 to 3840 px), about
+      1600 px for a staged styled-*.jpg (STAGED_DETAIL_PX: an upscaled Gemini output). So the maximum zoom
+      is that width over the fitted width in device px, and never below 1 (the fitted photo).
+    */
+    maxS = Math.max(1, Number(current.dataset.zoomMax || 1600) / (fitW * dpr));
+    img.style.width = `${fitW}px`;
+    img.style.height = `${fitH}px`;
+    img.style.left = `${(stageW - fitW) / 2}px`;
+    img.style.top = `${(stageH - fitH) / 2}px`;
+    s = Math.min(s, maxS);
+    apply();
+  }
+
+  function clamp() {
+    if (s < 1.001) {
+      s = 1;
+      tx = 0;
+      ty = 0;
+      return;
+    }
+    const mx = Math.max(0, (fitW * s - stageW) / 2);
+    const my = Math.max(0, (fitH * s - stageH) / 2);
+    tx = Math.min(mx, Math.max(-mx, tx));
+    ty = Math.min(my, Math.max(-my, ty));
+  }
+
+  function apply() {
+    clamp();
+    img.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    stage.classList.toggle('is-zoomed', s > 1);
+    const set = (kind: string, off: boolean) =>
+      dialog!.querySelector(`[data-zoom="${kind}"]`)!.setAttribute('aria-disabled', String(off));
+    set('in', s >= maxS - 0.001);
+    set('out', s <= 1);
+    set('reset', s <= 1);
+    if (s > 1) loadDeep();
+  }
+
+  /** Zoom to scale `to`, keeping the photo point under (cx, cy) in place (the stage centre when null). */
+  function zoomTo(to: number, at: { x: number; y: number } | null, animate: boolean) {
+    const next = Math.min(maxS, Math.max(1, to));
+    const r = stage.getBoundingClientRect();
+    const qx = at ? at.x - r.left - r.width / 2 : 0;
+    const qy = at ? at.y - r.top - r.height / 2 : 0;
+    tx = qx - ((qx - tx) * next) / s;
+    ty = qy - ((qy - ty) * next) / s;
+    s = next;
+    img.classList.toggle('is-animating', animate && !reduceMotion.matches);
+    apply();
+    status.textContent = s > 1 ? `Zoom ${Math.round(s * 100)} percent` : 'Zoom reset';
+  }
+
+  function toggleAt(x: number, y: number) {
+    if (s > 1) zoomTo(1, null, true);
+    else zoomTo(Math.min(maxS, 2.5), { x, y }, true);
+  }
+
+  function pan(dx: number, dy: number, animate: boolean) {
+    tx += dx;
+    ty += dy;
+    img.classList.toggle('is-animating', animate && !reduceMotion.matches);
+    apply();
+  }
+
+  /** Once zoomed, swap in the file at the photo's full detail, after it has loaded, so the box never blinks. */
+  function loadDeep() {
+    if (deepLoaded || !current?.dataset.zoomFull) return;
+    deepLoaded = true;
+    const want = token;
+    const src = current.dataset.zoomFull;
+    if (img.currentSrc.endsWith(src)) return;
+    const pre = new Image();
+    pre.src = src;
+    pre
+      .decode()
+      .then(() => {
+        if (want !== token) return;
+        img.removeAttribute('srcset');
+        img.removeAttribute('sizes');
+        img.src = src;
+      })
+      .catch(() => {});
+  }
+
+  function reset() {
+    s = 1;
+    tx = 0;
+    ty = 0;
+    deepLoaded = false;
+    token++;
+    pts.clear();
+    if (img) {
+      img.classList.remove('is-animating');
+      img.style.transform = '';
+    }
+  }
+
+  /* ---------- Pointers: drag, pinch, swipe, double tap ---------- */
+
+  const pts = new Map<number, { x: number; y: number }>();
+  let lastType = 'mouse';
+  let start = { x: 0, y: 0, tx: 0, ty: 0 };
+  let pinch = { d: 1, mx: 0, my: 0, s: 1, tx: 0, ty: 0 };
+  let moved = false;
+  let pinched = false;
+  let downOnPhoto = false;
+  let lastTap = { t: 0, x: 0, y: 0 };
+
+  function beginSingle(p: { x: number; y: number }) {
+    start = { x: p.x, y: p.y, tx, ty };
+  }
+
+  function beginPinch() {
+    const [a, b] = [...pts.values()];
+    pinch = { d: Math.hypot(b.x - a.x, b.y - a.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, s, tx, ty };
+  }
+
+  function onDown(e: PointerEvent) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    lastType = e.pointerType;
+    stage.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    img.classList.remove('is-animating');
+    if (pts.size === 1) {
+      moved = false;
+      pinched = false;
+      downOnPhoto = e.target === img;
+      beginSingle({ x: e.clientX, y: e.clientY });
+      stage.classList.add('is-dragging');
+    } else if (pts.size === 2) {
+      pinched = true;
+      moved = true;
+      beginPinch();
+    }
+  }
+
+  function onMove(e: PointerEvent) {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size >= 2) {
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const r = stage.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const next = Math.min(maxS, Math.max(1, (pinch.s * d) / pinch.d));
+      // Keep the photo point that was under the fingers' first midpoint under their current midpoint.
+      tx = mx - cx - ((pinch.mx - cx - pinch.tx) * next) / pinch.s;
+      ty = my - cy - ((pinch.my - cy - pinch.ty) * next) / pinch.s;
+      s = next;
+      apply();
+      return;
+    }
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) > 6) moved = true;
+    if (s > 1) {
+      tx = start.tx + dx;
+      ty = start.ty + dy;
+      apply();
+    }
+  }
+
+  function onUp(e: PointerEvent) {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pts.size === 1) {
+      // One finger left after a pinch: it carries on panning from here.
+      beginSingle([...pts.values()][0]);
+      return;
+    }
+    if (pts.size > 0) return;
+    stage.classList.remove('is-dragging');
+    if (pinched) {
+      if (s > 1) status.textContent = `Zoom ${Math.round(s * 100)} percent`;
+      return;
+    }
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    // A swipe changes the photo, but only while the photo is not zoomed.
+    if (s === 1 && e.pointerType !== 'mouse' && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      show(index + (dx < 0 ? 1 : -1));
+      return;
+    }
+    if (moved) return;
+    if (e.pointerType === 'touch') {
+      const now = performance.now();
+      if (now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 40) {
+        lastTap.t = 0;
+        toggleAt(e.clientX, e.clientY);
+        return;
+      }
+      lastTap = { t: now, x: e.clientX, y: e.clientY };
+    }
+    // A tap on the empty stage around the whole photo closes the viewer, as a tap on a backdrop would.
+    if (!downOnPhoto && s === 1) dialog?.close();
+  }
+
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    if (maxS <= 1.01) return;
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? stageH : 1;
+    // ctrlKey is a trackpad pinch: small deltas, so a stronger rate.
+    const rate = e.ctrlKey ? 0.01 : 0.002;
+    zoomTo(s * Math.exp(-e.deltaY * unit * rate), { x: e.clientX, y: e.clientY }, false);
+  }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.altKey || e.metaKey || (e.ctrlKey && e.key !== '+' && e.key !== '-' && e.key !== '=')) return;
+    const nudge = Math.max(40, stageW * 0.12);
+    const zoomed = s > 1;
+    let done = true;
+    switch (e.key) {
+      case '+':
+      case '=':
+        zoomTo(s * STEP, null, true);
+        break;
+      case '-':
+      case '_':
+        zoomTo(s / STEP, null, true);
+        break;
+      case '0':
+        zoomTo(1, null, true);
+        break;
+      case 'ArrowLeft':
+        if (zoomed) pan(nudge, 0, true);
+        else show(index - 1);
+        break;
+      case 'ArrowRight':
+        if (zoomed) pan(-nudge, 0, true);
+        else show(index + 1);
+        break;
+      case 'ArrowUp':
+        if (zoomed) pan(0, nudge, true);
+        else done = false;
+        break;
+      case 'ArrowDown':
+        if (zoomed) pan(0, -nudge, true);
+        else done = false;
+        break;
+      default:
+        done = false;
+    }
+    if (done) e.preventDefault();
+  }
+
+  /* ---------- Showing a photo ---------- */
 
   function show(i: number) {
     const list = figures();
     if (!dialog || list.length === 0) return;
     index = (i + list.length) % list.length;
     const f = list[index];
-    const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
-    // Never wider than the photo's real detail at this screen's pixel ratio (data-zoom-detail, device px).
-    const widthCap = Math.round(Number(f.dataset.zoomDetail || 3200) / (window.devicePixelRatio || 1));
-    img.style.setProperty('--zoom-cap', `${widthCap}px`);
-    // sizes before srcset, so the browser chooses with the right width.
-    img.sizes = `min(100vw - 2rem, 1600px, ${widthCap}px)`;
-    img.srcset = f.dataset.zoomSrcset ?? '';
-    img.src = f.dataset.zoomSrc ?? '';
-    img.alt = f.dataset.zoomAlt ?? '';
+    current = f;
+    reset();
     const cap = dialog.querySelector<HTMLElement>('.lightbox__caption')!;
     cap.textContent = f.dataset.zoomCaption ?? '';
     cap.hidden = !cap.textContent;
     const many = list.length > 1;
     dialog.querySelectorAll<HTMLElement>('.lightbox__prev, .lightbox__next').forEach((el) => (el.hidden = !many));
+    status.textContent = '';
+    // After the caption and arrows, which set the stage's height.
+    layout();
+    // sizes before srcset, so the browser chooses with the fitted width.
+    img.sizes = `${Math.round(fitW)}px`;
+    img.srcset = f.dataset.zoomSrcset ?? '';
+    img.src = f.dataset.zoomSrc ?? '';
+    img.alt = f.dataset.zoomAlt ?? '';
   }
 
   // The frame and the caption's Enlarge button both open the viewer on their figure.
@@ -154,9 +483,10 @@ const full = zoom
     e.preventDefault();
     dialog ??= build();
     opener = b;
-    show(figures().indexOf(f));
     document.documentElement.classList.add('lightbox-open');
     dialog.showModal();
+    // After showModal, so the stage has its size.
+    show(figures().indexOf(f));
     dialog.querySelector<HTMLElement>('.lightbox__close')!.focus();
   });
 </script>
@@ -170,9 +500,24 @@ const full = zoom
     margin: 0;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
     border: 0;
-    /* The viewer is bright like the site (brand.md, version 6): near-solid White, Plum controls. */
-    background: rgb(255 255 255 / 0.97);
+    /* The viewer is bright like the site (brand.md, version 6): solid White, so no page text shows behind the controls, and Plum controls. */
+    background: rgb(255 255 255);
     color: var(--ink);
+    /* Pinches and drags inside the viewer never scroll or zoom the page behind it. */
+    touch-action: none;
+    overscroll-behavior: contain;
+  }
+
+  /* Bar, stage, caption; the arrows beside the stage, so nothing ever covers the photo. */
+  .lightbox[open] {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'bar bar bar'
+      'prev stage next'
+      '. cap .';
+    gap: 1rem;
   }
 
   .lightbox::backdrop {
@@ -183,29 +528,55 @@ const full = zoom
     overflow: hidden;
   }
 
-  .lightbox__figure {
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 0.75rem;
-    height: 100%;
-    margin: 0;
-    pointer-events: none;
+  .lightbox__bar {
+    grid-area: bar;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
   }
 
-  /* The whole photo, never cropped: it fits inside the screen at its own shape. */
+  .lightbox__zoom {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .lightbox__stage {
+    grid-area: stage;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .lightbox__stage.is-zoomed {
+    cursor: grab;
+  }
+
+  .lightbox__stage.is-zoomed.is-dragging {
+    cursor: grabbing;
+  }
+
+  /* The whole photo, never cropped: sized and centred by the script, zoomed by transform only. */
   .lightbox__img {
+    position: absolute;
     display: block;
-    max-width: min(100%, 1600px, var(--zoom-cap, 1600px));
-    max-height: calc(100dvh - 9rem);
-    width: auto;
-    height: auto;
-    object-fit: contain;
+    max-width: none;
     border-radius: 12px;
-    pointer-events: auto;
+    transform-origin: 50% 50%;
+    -webkit-user-drag: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lightbox__img.is-animating {
+      transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
+    }
   }
 
   .lightbox__caption {
+    grid-area: cap;
+    justify-self: center;
     max-width: 44rem;
     text-align: center;
     font-family: var(--font-serif);
@@ -215,7 +586,6 @@ const full = zoom
   }
 
   .lightbox__btn {
-    position: absolute;
     display: grid;
     place-items: center;
     width: 48px;
@@ -237,44 +607,44 @@ const full = zoom
     background: var(--rose-mist);
   }
 
+  .lightbox__btn[aria-disabled='true'] {
+    cursor: default;
+    opacity: 0.45;
+  }
+
+  .lightbox__btn[aria-disabled='true']:hover {
+    background: var(--petal);
+  }
+
   .lightbox__btn:focus-visible {
     outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
   }
 
-  .lightbox__close {
-    top: max(1rem, env(safe-area-inset-top));
-    right: 1rem;
-  }
-
-  .lightbox__prev,
-  .lightbox__next {
-    top: 50%;
-    transform: translateY(-50%);
+  .lightbox__btn[hidden] {
+    display: none;
   }
 
   .lightbox__prev {
-    left: 1rem;
+    grid-area: prev;
+    align-self: center;
   }
 
   .lightbox__next {
-    right: 1rem;
+    grid-area: next;
+    align-self: center;
   }
 
-  /* Wider screens: the photo stops short of the arrows at its sides, so no control covers it. */
-  @media (width >= 46.5rem) {
-    .lightbox__img {
-      max-width: min(100% - 8rem, 1600px, var(--zoom-cap, 1600px));
-    }
-  }
-
-  /* Phones: arrows sit at the bottom so they never cover the photo. */
+  /* Phones: the stage takes the full width, and the arrows sit in a row under the caption. */
   @media (width < 46.5rem) {
-    .lightbox__prev,
-    .lightbox__next {
-      top: auto;
-      bottom: max(1rem, env(safe-area-inset-bottom));
-      transform: none;
+    .lightbox[open] {
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        'bar bar bar'
+        'stage stage stage'
+        'cap cap cap'
+        'prev . next';
+      gap: 0.75rem;
     }
   }
 </style>

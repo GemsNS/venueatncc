@@ -32,9 +32,11 @@ file, and doc that feeds the site:
    `styled-*.jpg` (each is an upscale of a Gemini output of about 1024 px; `STAGED_DETAIL_PX` and
    `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
    than that detail; the viewer (Figure.astro) caps its image at the detail divided by
-   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen; the booking summary's
+   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen, and its zoom (pinch,
+   wheel, double tap, the Zoom in button) stops where one pixel of that detail fills one device pixel:
+   the largest file's width for a real photo, 1600 px for a staged one; the booking summary's
    photo has 960 and 1280 px files for its 360 px frame, so it stays within its file at 3x; the home share card (the bouquet) is written at 1024 x 538.
-   No hover or CSS transform scales a photo up. Where a frame would be too big, cap the frame (max-width) or
+   No hover or CSS transform scales a photo up, except the viewer's zoom within that cap. Where a frame would be too big, cap the frame (max-width) or
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
    2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
    not a photo of the property, and is measured against the same rule and meets it: see "The hero loop".
@@ -287,7 +289,8 @@ mode gets the same bright site.
   There is no dark block on the site.
 - **Closing band (CtaBand), the home rates band, the Rates, FAQ and Book title bands, quiet panels
   (checklists, the inquiry form's field groups), chips, and selected rows:** Petal.
-- **The photo viewer:** near-solid White with Petal round buttons and Plum icons.
+- **The photo viewer:** solid White with Petal round buttons and Plum icons (Zoom in, Zoom out, Reset zoom and
+  Close in a bar above the photo; the arrows beside it, under it on phones).
 - **The admin:** the White page and cards, a Blush sidebar with a hairline, Petal for the current screen.
 
 | Token | Hex | Role |
@@ -599,9 +602,9 @@ archive earlier ones.
 | `community-events` | grove-path | An outdoor community gathering on the lawn |
 
 Two more staged photos sit outside the event set. `styled-wedding-indoor-ceremony.jpg`, a ceremony in The
-Main Hall (`styledOf: 'main-hall.jpg'`), is the /events/ hero (a wedding scene that is no event's own tile,
-so all eight events can be cards without a repeat) and the second view on the weddings page, under its own
-caption. `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
+Main Hall (`styledOf: 'main-hall.jpg'`), is the indoor ceremony in the Weddings block on /events/ (version 8):
+that block spans the full width with the gazebo ceremony and the Main Hall ceremony side by side, each under
+its own caption, "Styled concept. Décor is not included. A ceremony in The Main Hall." `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
 set but is not placed on any page: the building's cross is front and centre in it (Separation).
 
 ## Redundancy rules
