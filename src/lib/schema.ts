@@ -92,7 +92,6 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     '@type': ['EventVenue', 'LocalBusiness'],
     '@id': venueId,
     name: site.name,
-    alternateName: 'The Venue at NCC',
     slogan: site.tagline,
     description: site.description,
     url: `${site.url}/`,
@@ -142,7 +141,6 @@ export function website() {
     '@id': websiteId,
     url: `${site.url}/`,
     name: site.name,
-    alternateName: 'The Venue at NCC',
     inLanguage: 'en-US',
     publisher: { '@id': venueId },
   };

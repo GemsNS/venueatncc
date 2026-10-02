@@ -760,6 +760,9 @@ describe('moved pages (version 8: five public pages)', () => {
   test('every old event page and the FAQ move to their section, in one hop', () => {
     for (const e of eventTypes) assert.equal(movedTo(`/events/${e.slug}/`), `/events/#${e.slug}`);
     assert.equal(movedTo('/faq'), '/pricing/#faq');
+    assert.equal(movedTo('/faq/index.html'), '/pricing/#faq');
+    assert.equal(movedTo('/events/weddings/index.html'), '/events/#weddings');
+    assert.equal(movedTo('/pricing/index.html'), null);
     assert.equal(movedTo('/events/church-community-events/'), '/events/#community-events');
     const live = new Set(['/', '/the-space/', '/events/', '/pricing/', '/book/']);
     for (const [from, to] of MOVED_PAGES) {

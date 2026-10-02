@@ -22,7 +22,6 @@ import { photoByName } from '../data/photos';
 import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
 import { faqPage } from '../lib/schema';
-import { SETUP_CLEANUP_RULE } from '../shared/booking-rules';
 
 const title = 'Rates & FAQ | The Venue @ NCC, Suffolk, VA';
 const description = `Rates at ${site.name} in ${site.address.city}, VA vary with the season and the day of the week. What the rental includes, how to hold your date, our hours, and answers to common questions.`;
@@ -37,7 +36,7 @@ const included = site.included.map(lowerFirst);
 const details = [
   { id: 'included', title: 'Included', text: `Every rental includes ${included.slice(0, -1).join(', ')}, and ${included[included.length - 1]}.` },
   { id: 'hold', title: 'Holding your date', text: site.depositPolicy },
-  { id: 'hours', title: 'Hours', text: `Events can be booked ${site.access.days}, ${site.access.hours}. ${SETUP_CLEANUP_RULE}` },
+  { id: 'hours', title: 'Hours', text: `Events can be booked ${site.access.days}, ${site.access.hours}.` },
 ];
 
 const hallPhoto = photoByName('hall-fireplace');

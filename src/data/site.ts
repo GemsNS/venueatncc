@@ -101,7 +101,7 @@ export const site = {
       id: 'main',
       name: 'The Main Hall',
       short: 'Main Hall',
-      description: 'A high-capacity, multi-purpose auditorium with stage seating, a raised stage, and a vaulted ceiling.',
+      description: 'A multi-purpose auditorium with stage seating, a raised stage, and a vaulted ceiling.',
       capacity: 100,
     },
     {

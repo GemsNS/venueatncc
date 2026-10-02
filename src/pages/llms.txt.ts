@@ -11,13 +11,6 @@ import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
-import { OPEN_DAY_TYPES, dayTypes, minimumHours } from '../shared/booking-rules';
-
-/**
- * Minimum hours are a booking rule, not a price, so they are stated, for the days the building is open
- * (never Sunday). The venue publishes no prices.
- */
-const DAY_TYPES = OPEN_DAY_TYPES;
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -56,7 +49,7 @@ export const GET: APIRoute = () => {
     '',
     `> ${site.description}`,
     '',
-    `We rent three distinct spaces by the hour on fully renovated grounds on Godwin Boulevard in north ${site.address.city}, for weddings, receptions, conferences, banquets, memorials, and community gatherings, and we confirm every booking personally.`,
+    `We rent three spaces in ${site.address.city}, VA, for weddings, receptions, conferences, banquets, memorials, and community gatherings, and we confirm every booking personally.`,
     '',
     '## The spaces',
     '',
@@ -73,7 +66,6 @@ export const GET: APIRoute = () => {
     `- ${RATES_WORDING}`,
     `- Deposits: ${site.depositPolicy}`,
     `- Rates, what is included, and answers to common questions: ${u('/pricing/')}`,
-    `- Minimum hours: ${DAY_TYPES.map((d) => `${dayTypes[d].label} ${minimumHours[d]}`).join(', ')}`,
     '',
     '## Booking',
     '',

@@ -48,9 +48,10 @@ export const MOVED_PAGES: ReadonlyMap<string, string> = new Map([
   ['/about/', '/the-space/'],
 ]);
 
-/** Where a moved page lives now, with or without the trailing slash, or null if it did not move. */
+/** Where a moved page lives now, with or without the trailing slash or index.html, or null if it did not move. */
 export function movedTo(urlPath: string): string | null {
-  return MOVED_PAGES.get(urlPath.endsWith('/') ? urlPath : `${urlPath}/`) ?? null;
+  const p = urlPath.endsWith('/index.html') ? urlPath.slice(0, -'index.html'.length) : urlPath;
+  return MOVED_PAGES.get(p.endsWith('/') ? p : `${p}/`) ?? null;
 }
 
 /** A moved page's new address with the request's query string, which goes before any fragment. */

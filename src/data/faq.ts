@@ -58,7 +58,7 @@ export const faqs: Faq[] = [
   },
   {
     q: 'What if it rains on an outdoor event?',
-    a: `Reserve ${hall?.name} with ${grove?.name} and ${hall?.name} is ready for your guests if the weather turns. If your guest list is larger than ${hall?.name} holds, we will talk through a weather plan with you before you book.`,
+    a: `Reserve ${hall?.name} with ${grove?.name}, and ${hall?.name} is ready for your guests if the weather turns. If your guest list is larger than ${hall?.name} holds, we will talk through a weather plan with you before you book.`,
   },
   {
     q: 'Can you help with room setup?',
@@ -66,7 +66,7 @@ export const faqs: Faq[] = [
   },
   {
     q: 'Is catering provided?',
-    a: 'Catering is not included in the rental. You arrange food service separately, and banquet arrangements include kitchen access.',
+    a: 'Catering is not included in the rental. You arrange food service separately.',
   },
   // To answer, then publish:
   { q: 'Can I decorate, and when can I start setting up?', a: null },

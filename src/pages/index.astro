@@ -153,11 +153,11 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             <ImageTextSplit
               photo={eventsPhoto}
               id="events-heading"
-              heading="Events we host"
+              heading="Events"
               caption={STAGED_SCENES[eventsPhoto.name] ?? false}
               sizes="(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw"
             >
-              <ul class="event-links" aria-label="Events we host">
+              <ul class="event-links" aria-label="Events">
                 {events.map((e) => (
                   <li>
                     <a class="event-link" href={href(`/events/#${e.slug}`)}>{e.name}</a>
@@ -168,12 +168,12 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             </ImageTextSplit>
           ) : (
             <>
-              <SectionHeading id="events-heading" heading="Events we host">
+              <SectionHeading id="events-heading" heading="Events">
                 <Fragment slot="actions">
                   <a class="link-more" href={href('/events/')}>See Events <Icon name="chevron-right" /></a>
                 </Fragment>
               </SectionHeading>
-              <ul class="event-links" aria-label="Events we host">
+              <ul class="event-links" aria-label="Events">
                 {events.map((e) => (
                   <li>
                     <a class="event-link" href={href(`/events/#${e.slug}`)}>{e.name}</a>
@@ -614,8 +614,9 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
   @media (min-width: 60rem) {
     .checker {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
-      justify-content: space-between;
+      /* The card sits beside the heading, not across an empty gap at the far edge. */
+      grid-template-columns: minmax(0, 24rem) minmax(0, 28rem);
+      justify-content: center;
     }
 
     /* The eyebrow lines up with the panel's first label, as in every other two-column section. */

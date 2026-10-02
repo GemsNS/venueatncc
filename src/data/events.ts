@@ -63,7 +63,7 @@ export const events: EventType[] = [
     slug: 'meetings-trainings',
     name: 'Meetings & workshops',
     summary: 'Board meetings, trainings, and workshops in one open room with daylight, or a presentation facing the stage.',
-    spaces: ['indoor', 'main', 'outdoor'],
+    spaces: ['indoor', 'main'],
   },
   {
     slug: 'graduations-reunions',
@@ -75,6 +75,6 @@ export const events: EventType[] = [
     slug: 'community-events',
     name: 'Community events',
     summary: 'Conferences, civic forums, and neighborhood days, with rows of seating facing the stage or a picnic under the pines.',
-    spaces: ['main', 'indoor', 'outdoor'],
+    spaces: ['main', 'outdoor'],
   },
 ];

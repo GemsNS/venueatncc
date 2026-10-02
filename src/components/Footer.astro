@@ -1,7 +1,7 @@
 ---
 /**
  * The footer (docs/design/redesign-v7.md, "Version 8"): one short block on a very pale pink (Blush) band
- * under a hairline. The lockup, the three page links and Check availability, then the address with
+ * under a hairline. The lockup, the three page links and Check Availability, then the address with
  * directions, the phone, and the email, then the legal line. No event list, no repeated navigation groups.
  * Booking is a text link here, not a button: the header carries the button. On Blush: Plum 13.2:1,
  * Mauve 7.1:1, Cerise 5.5:1.
@@ -14,7 +14,7 @@ import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
 
 interface Props {
-  /** Where Check availability goes, base-relative. */
+  /** Where Check Availability goes, base-relative. */
   bookHref?: string;
 }
 
@@ -31,7 +31,7 @@ const year = new Date().getFullYear();
       <nav class="footer__nav" aria-label="Footer">
         <ul>
           {mainNav.map((item) => <li><a href={href(item.href)}>{item.label}</a></li>)}
-          <li><a href={href(book)}>Check availability</a></li>
+          <li><a href={href(book)}>Check Availability</a></li>
         </ul>
       </nav>
 
