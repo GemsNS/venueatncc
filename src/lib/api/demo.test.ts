@@ -331,8 +331,8 @@ test('createBlock rejects a date whose space is already blocked', async () => {
   const sameSpace = await api.admin.createBlock({ date: quietWednesday, space: 'outdoor', kind: 'held', label: '' });
   assert.ok(isError(sameSpace));
   const otherSpace = ok(await api.admin.createBlock({ date: quietWednesday, space: 'indoor', kind: 'held', label: '' }));
-  assert.equal(ok(await api.availability(quietWednesday, quietWednesday)).days[0].status, 'partial', 'The Main Hall is still open');
-  // The Main Hall is its own space: The Hall and The Grove do not block it, and it does not block them.
+  assert.equal(ok(await api.availability(quietWednesday, quietWednesday)).days[0].status, 'partial', 'The Stage Hall is still open');
+  // The Stage Hall is its own space: The Fireside Room and The Pine Garden do not block it, and it does not block them.
   const mainHall = ok(await api.admin.createBlock({ date: quietWednesday, space: 'main', kind: 'held', label: '' }));
 
   const day = ok(await api.availability(quietWednesday, quietWednesday)).days[0];

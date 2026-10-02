@@ -6,6 +6,12 @@ of the property belong here, plus the staged event photos made from them and the
 
 ## The rule (docs/design/brand.md, Photography)
 
+- **One real photo per subject (version 9).** The client: "no redundant images, like multiple angles of the
+  gazebo, choose the best one (for raw image)". The site shows exactly four real photos, one per subject
+  (`SUBJECT_PHOTO` in `src/data/photos.ts`): `hall-windows` (The Fireside Room), `main-hall-stage` (The
+  Stage Hall), `grove-tables` (The Pine Garden and its gazebo), and `driveway` (the building and the drive).
+  Every other real photo here is marked `unused` in `photoDetails`, with the reason it lost, and is never
+  shown; see "Unused real photos" below. Never delete one.
 - **Real photographs show the spaces**: the home hero, the space cards, The Space, the arrival band, share
   images (except the home card), and structured data.
 - **The home share card is a still life**: `share-rose-bouquet.jpg`, a generated bouquet of pink and white
@@ -59,7 +65,7 @@ area they share). The earlier full-width framing is in `design-archive/driveway-
 The client found the photos soft. Every real photo except `grove-pines` (already at the original's width) is
 re-cut from its camera original at the original's own resolution, with the same framing, leveling and grade
 as before: the HEIC files in `C:\NoOnedrive\venue\Venue` (IMG_4899, 4906, 4908, 4922, 4932, 4933, 4946,
-5154, 5159) and, for The Main Hall, the full-size JPEG copies of IMG_4937 and IMG_4940 its earlier files
+5154, 5159) and, for The Stage Hall, the full-size JPEG copies of IMG_4937 and IMG_4940 its earlier files
 were cut from (IMG_4940 has no HEIC in that folder). Each framing was matched to the earlier
 file by image registration (scale, rotation and position), the earlier grade reapplied, and the result
 checked against the earlier file: below 1.2 levels of mean difference once fine detail is blurred out.
@@ -90,10 +96,34 @@ wide files instead of one 3200 file, so a phone's tap to enlarge fetches the 160
 
 ## Files shown on no page
 
-`exterior-dusk.jpg` and `exterior-dusk-tall.jpg` (not used since the home share card became a still life)
-and `styled-driveway-petals.jpg` (the building's cross is front and centre in it) are kept in the set but
-placed on no page, so their re-export adds about 2.4 MB to the repository without a visible gain. They stay
-for reference; take them out of this folder only by moving them to `design-archive/`.
+`styled-driveway-petals.jpg` (the building's cross is front and centre in it) is kept in the set but placed
+on no page. The unused real photos (below) are also shown nowhere. They stay for reference; take them out of
+this folder only by moving them to `design-archive/`.
+
+## The picks, and the unused real photos (version 9)
+
+Each real photo was viewed whole and at 100%, and its 4:5 file at phone size.
+
+| Subject | In use | Why |
+|---|---|---|
+| The Fireside Room | `hall-windows` | The only frame with both features the room is named for, the arched windows and the fireplace wall; level, evenly lit, and its 4:5 crop reads on a phone |
+| The Stage Hall | `main-hall-stage` | Brighter and cleaner than `main-hall`; the red seats lead to the raised stage, and its 4:5 crop holds the whole stage wall |
+| The Pine Garden and the gazebo | `grove-tables` | The gazebo, the patio, the tables, the lawn, and the pines in one evenly lit frame, with the gazebo at its centre |
+| The building and the drive | `driveway` | Daylight, the paved lot that shows the parking, the building small and incidental |
+
+| Unused | Why |
+|---|---|
+| `hall-fireplace` | Mostly empty floor, slightly tilted, the fireplace cut by the right edge |
+| `hall-doors` | Leads with a blank wall-mounted screen and shows no fireplace |
+| `main-hall` | Dim, mostly ceiling, a lectern and palms at the centre of a small stage (still the base of `styled-wedding-indoor-ceremony`) |
+| `gazebo` | A close-up whose largest subject is the roof, with none of the garden around it |
+| `grove-path` | A foreground trunk and leaves down the right side; the gazebo sits small |
+| `grove-pines` | Another crop of `grove-path`, with the same trunk |
+| `approach-dusk` | Dim blue-hour light and a small building |
+| `exterior-dusk` | The cross on the gable is the subject of the frame |
+
+A staged photo made from an unused angle is still shown (staged photos are one per event); its real photo
+for share cards (`realPhoto()`) is the one photo in use of the space it shows.
 
 ## Describing a photo
 
@@ -103,22 +133,25 @@ Add an entry in `photoDetails` in `src/data/photos.ts`:
   kitchen, sound system, stage, bridal suite, rentable tables and chairs, or anything else not confirmed.
   A staged photo's alt text starts with "Styled concept:".
 - `caption`: a short caption, shown where a page asks for one.
-- `space`: `'hall'`, `'grove'`, or `'grounds'`. `photosFor('hall')` returns The Hall's real photos.
+- `space`: `'hall'`, `'main'`, `'grove'`, or `'grounds'`. `spacePhoto('hall')` returns The Fireside Room's one photo in use.
+- `unused`: for a real photo that is not its subject's pick, the reason. It is then never shown.
 - `tags`: `hero` for the photo `heroPhoto()` returns (the first match wins), plus any labels pages look up with `photosTagged()`.
 - `crop`: optional CSS object-position, such as `'center 70%'`, for frames whose ratio differs from the file.
 
 ## Where photos appear
 
-- `heroPhoto()`: `grove-pines`, tagged `hero`: the venue's image in structured data on every page and the
-  fallback share image. The home page names `grove-pines` directly, since its frames are fitted to it.
-- The home share card: `exterior-dusk`, its left 80% (without the gable cross), named in
-  src/pages/og/_cards.ts. brand.md (Photography) records why the two differ.
-- `eventPhoto(slug)`: the photo that leads each event page (and its tile, when staged): the staged photo
-  when `eventsStaged`, otherwise the real photo named by its `styledOf`.
+- `spacePhoto(space)`: the one real photo of a subject: the home cards and "Find us", The Space, Rates &
+  FAQ, the 404, the Book thumbnails, and the share cards.
+- `heroPhoto()`: `grove-tables`, tagged `hero`: the venue's image in structured data on every page and the
+  fallback share image.
+- The home share card: `share-rose-bouquet.jpg`, a still life, named in src/pages/og/_cards.ts.
+- `eventPhoto(slug)`: the photo that leads each event block (and its tile, when staged): the staged photo
+  when `eventsStaged`, otherwise the one real photo of the space it shows.
 - `styled-wedding-indoor-ceremony`: the indoor ceremony beside the gazebo ceremony in the Weddings block on
   /events/ (`SECOND_PHOTO` in src/pages/events/index.astro).
-- `realPhoto(photo)`: the real photo behind a staged one, for share images and structured data.
-- `photoByName('approach-dusk')`: any single photo by name.
+- `realPhoto(photo)`: the real photo behind a staged one (the one photo in use of its space), for share
+  images and structured data.
+- `photoByName('driveway')`: any single photo in use, or any staged photo, by name. Unused photos return null.
 
 Photos render through `src/components/Photo.astro`, which serves responsive AVIF and WebP at widths up to the
 source width, crops with CSS to the frame's ratio, and swaps in the tall file on phones when asked.
@@ -127,18 +160,18 @@ source width, crops with CSS to the frame's ratio, and swaps in the tall file on
 
 | File | Space | Subject |
 |---|---|---|
-| `grove-pines` | (none) | The gazebo under tall pines, picnic tables in front: the home hero. Another framing of the `grove-path` original, so it has no space and is not in The Space gallery |
-| `exterior-dusk` | grounds | The building at blue hour, lit entry, pines behind: the home share card |
-| `approach-dusk` | grounds | Long paved drive and lawn toward the building at dusk |
-| `driveway` | grounds | Wide paved drive and lot in daylight |
-| `hall-windows` | hall | Arched windows, fireplace feature wall, wood-look floor |
-| `hall-fireplace` | hall | Toward the windows and the fireplace wall |
-| `hall-doors` | hall | Double doors, wall-mounted screen, arched windows |
-| `main-hall` | main | The Main Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
-| `main-hall-stage` | main | The raised stage up close, the screen, the front rows (owner's IMG_4940) |
-| `grove-tables` | grove | Gazebo and picnic tables on a paved patio under pines |
-| `gazebo` | grove | Timber gazebo |
-| `grove-path` | grove | Paved path to the gazebo through the trees |
+| `hall-windows` | hall | **In use.** Arched windows, fireplace feature wall, wood-look floor |
+| `main-hall-stage` | main | **In use.** Red seats facing the raised stage, the screen above (owner's IMG_4940) |
+| `grove-tables` | grove | **In use.** Gazebo and picnic tables on a paved patio under pines |
+| `driveway` | grounds | **In use.** Wide paved drive and lot in daylight, the building beyond |
+| `hall-fireplace` | hall | Unused. Toward the windows and the fireplace wall |
+| `hall-doors` | hall | Unused. Double doors, wall-mounted screen, arched windows |
+| `main-hall` | main | Unused. The Stage Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
+| `gazebo` | grove | Unused. Timber gazebo |
+| `grove-path` | grove | Unused. Paved path to the gazebo through the trees |
+| `grove-pines` | (none) | Unused. The gazebo under tall pines, picnic tables in front; another framing of the `grove-path` original |
+| `approach-dusk` | grounds | Unused. Long paved drive and lawn toward the building at dusk |
+| `exterior-dusk` | grounds | Unused. The building at blue hour, lit entry, pines behind |
 
 Use descriptive file names. Search engines read them, and they become the fallback alt text when a photo has
 no entry.

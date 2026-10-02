@@ -46,7 +46,7 @@ Reference and live screenshots: C:/Users/bytec/AppData/Local/Temp/claude/C--User
    past the viewport edge. No white card body under the photo.
    *Withdrawn by version 7: the label and meta sit under the photo on the page surface (FigureCard).*
 6. Venue page pattern (use for The Space): full-bleed hero with a caption box (name, three adjectives, LOCATION / TYPE / CAPACITY facts), a
-   sticky in-page anchor bar, then a left vertical tab list (The Hall, The Main Hall, The Grove) with image and copy on the right.
+   sticky in-page anchor bar, then a left vertical tab list (The Fireside Room, The Stage Hall, The Pine Garden) with image and copy on the right.
    *Withdrawn by version 7: no in-page bars; The Space is a page intro and three editorial splits.*
 7. Footer: a large centred serif statement, three link columns, a contact row, on a contrasting surface.
 8. Mobile: everything stacks in the same order, carousels stay horizontal and swipeable, buttons keep the pill shape, type stays large.

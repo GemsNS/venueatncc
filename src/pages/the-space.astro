@@ -1,32 +1,35 @@
 ---
 /**
- * The Space (docs/design/redesign-v7.md, "Version 8"): the title band, one block per space (its photo whole
- * with the caption under it, beside two or three sentences, the capacity, and the key features), a small
- * gallery of further views, and the amenities as one compact list. No page intro photo, no jump links, no
- * visit or "included" sections: the visit request lives on Book, and what the rental includes on Rates & FAQ.
+ * The Space (docs/design/redesign-v7.md, "Version 9"): the title band, one block per space (its one photo
+ * whole with the caption under it, beside two sentences, the capacity, and the key features), and the
+ * amenities as one compact list. No gallery: the client asked for one real photo per subject, so each space
+ * shows only its chosen photo (SUBJECT_PHOTO in src/data/photos.ts). No visit or "included" sections: the
+ * visit request lives on Book, and what the rental includes on the home page.
  *
- * Real photos only, each shown once on the page: hall-windows, main-hall, and grove-tables lead the
- * blocks; hall-doors, gazebo, grove-path, and approach-dusk make the gallery. This page is the one home of
- * the features and the amenities; the capacities appear here and on the home page's space cards.
+ * Each block's id is the space's name (#fireside-room, #stage-hall, #pine-garden). The version 8 ids (#hall,
+ * #main-hall, #grove) are kept as empty anchors at the top of the same blocks, so old links still land on
+ * the right space. This page is the one home of the features and the amenities; the capacities appear here
+ * and on the home page's space cards.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Figure from '../components/Figure.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
 import { site } from '../data/site';
-import { photoByName, type VenuePhoto } from '../data/photos';
+import { spacePhoto, type VenuePhoto } from '../data/photos';
 import { abs } from '../lib/schema';
 import { withoutBase } from '../lib/paths';
 
-const hall = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
-const mainHall = site.spaces.find((s) => s.id === 'main') ?? site.spaces[1];
-const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
+const fireside = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
+const stageHall = site.spaces.find((s) => s.id === 'main') ?? site.spaces[1];
+const pineGarden = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
 
 const title = 'Event spaces in Suffolk, VA | The Venue @ NCC';
-const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See each space, its features, and the amenities.`;
+const description = `${fireside.name} and ${stageHall.name} for up to ${fireside.capacity} guests each, and ${pineGarden.name} for up to ${pineGarden.capacity}, at The Venue @ NCC in Suffolk, VA. See each space, its features, and the amenities.`;
 
 interface SpaceBlock {
-  id: 'hall' | 'main-hall' | 'grove';
+  id: 'fireside-room' | 'stage-hall' | 'pine-garden';
+  /** The version 8 anchor, kept so old links land here. */
+  oldId: 'hall' | 'main-hall' | 'grove';
   name: string;
   lead: string;
   capacity: number;
@@ -37,44 +40,39 @@ interface SpaceBlock {
 
 const spaces: SpaceBlock[] = [
   {
-    id: 'hall',
-    name: hall.name,
-    lead: 'A bright indoor room for receptions, dinners, showers, and meetings. Arched windows bring in daylight, the fireplace wall is a natural focal point, and the open floor takes round tables, a long table, or rows of seats.',
-    capacity: hall.capacity,
+    id: 'fireside-room',
+    oldId: 'hall',
+    name: fireside.name,
+    lead: 'A bright indoor room for receptions, dinners, showers, and meetings. Daylight comes through the arched windows, the fireplace wall is a natural focal point, and the open floor takes round tables, a long table, or rows of seats.',
+    capacity: fireside.capacity,
     features: 'Arched windows, a fireplace feature wall, wood-look floors, recessed lighting, a wall-mounted screen, and double doors',
-    photo: photoByName('hall-windows'),
+    photo: spacePhoto('hall'),
     caption: 'The arched windows and the fireplace wall',
   },
   {
-    id: 'main-hall',
-    name: mainHall.name,
-    lead: 'A multi-purpose auditorium for ceremonies, conferences, and celebrations. Rows of upholstered chairs face a raised stage, so every seat has a clear view.',
-    capacity: mainHall.capacity,
-    features: 'A raised stage, rows of upholstered chairs, a vaulted ceiling, and a wall-mounted screen',
-    photo: photoByName('main-hall'),
-    caption: 'Stage seating under the vaulted ceiling',
+    id: 'stage-hall',
+    oldId: 'main-hall',
+    name: stageHall.name,
+    lead: 'A multi-purpose auditorium for ceremonies, conferences, and celebrations, where every seat has a clear view of the stage.',
+    capacity: stageHall.capacity,
+    features: 'A raised stage, rows of red upholstered chairs, a vaulted ceiling, and a wall-mounted screen',
+    photo: spacePhoto('main'),
+    caption: 'Red seats facing the raised stage',
   },
   {
-    id: 'grove',
-    name: grove.name,
-    lead: 'Our outdoor setting for ceremonies, reunions, and gatherings in the open air, with a timber gazebo at its heart and tall pines on every side.',
-    capacity: grove.capacity,
+    id: 'pine-garden',
+    oldId: 'grove',
+    name: pineGarden.name,
+    lead: 'Our outdoor setting for ceremonies, reunions, and gatherings in the open air, with tall pines on every side.',
+    capacity: pineGarden.capacity,
     features: 'A timber gazebo, picnic tables on a patio, open lawn, and paths through the trees',
-    photo: photoByName('grove-tables'),
-    caption: 'Picnic tables and the gazebo',
+    photo: spacePhoto('grove'),
+    caption: 'The gazebo, the patio, and the picnic tables',
   },
 ];
 
-/* Further views, each shown once. */
-const gallery = [
-  { photo: photoByName('hall-doors'), caption: `${hall.name}: the double doors and the screen` },
-  { photo: photoByName('gazebo'), caption: `The gazebo in ${grove.name}` },
-  { photo: photoByName('grove-path'), caption: 'The path to the gazebo' },
-  { photo: photoByName('approach-dusk'), caption: 'The drive at dusk' },
-].filter((g): g is { photo: VenuePhoto; caption: string } => g.photo !== null);
-
 // Structured data lists the photos on this page.
-const pagePhotos = [...spaces.map((s) => s.photo), ...gallery.map((g) => g.photo)].filter((p): p is VenuePhoto => p !== null);
+const pagePhotos = spaces.map((s) => s.photo).filter((p): p is VenuePhoto => p !== null);
 const fullImages = await Promise.all(
   pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
 );
@@ -95,19 +93,19 @@ const gallerySchema =
     : [];
 
 const SPLIT_SIZES = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw';
-const GALLERY_SIZES = '(min-width: 75rem) 584px, (min-width: 46.5rem) 46vw, 100vw';
 ---
 <BaseLayout title={title} description={description} og="the-space" venueDetails schema={gallerySchema}>
   <section class="title-band" aria-labelledby="page-title">
     <div class="container title-band__inner">
       <h1 id="page-title">The Space</h1>
-      <p class="t-lead">Two indoor rooms and an outdoor grove among the pines.</p>
+      <p class="t-lead">Two indoor rooms and an outdoor garden among the pines.</p>
     </div>
   </section>
 
   {
     spaces.map((s, i) => (
-      <section id={s.id} class="section sp-target" aria-labelledby={`${s.id}-heading`}>
+      <section id={s.id} class="section sp-target sp-space" aria-labelledby={`${s.id}-heading`}>
+        <span id={s.oldId} class="sp-target sp-alias" aria-hidden="true" />
         <div class="container">
           {s.photo ? (
             <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} heading={s.name} lead={s.lead} caption={s.caption} flip={i % 2 === 1} sizes={SPLIT_SIZES}>
@@ -131,19 +129,6 @@ const GALLERY_SIZES = '(min-width: 75rem) 584px, (min-width: 46.5rem) 46vw, 100v
         </div>
       </section>
     ))
-  }
-
-  {
-    gallery.length > 0 && (
-      <section id="gallery" class="section sp-target" aria-labelledby="gallery-heading">
-        <div class="container">
-          <h2 id="gallery-heading" class="sp-head">A closer look</h2>
-          <div class="sp-gallery">
-            {gallery.map((g) => <Figure photo={g.photo} caption={g.caption} tall={false} sizes={GALLERY_SIZES} />)}
-          </div>
-        </div>
-      </section>
-    )
   }
 
   {
@@ -218,16 +203,20 @@ const GALLERY_SIZES = '(min-width: 75rem) 584px, (min-width: 46.5rem) 46vw, 100v
     color: var(--label);
   }
 
-  /* The gallery: two across from 46.5rem, stacked on phones. */
-  .sp-gallery {
-    display: grid;
-    gap: 2rem 1.5rem;
+  /*
+    The version 8 anchor (#hall, #main-hall, #grove): an empty box at the very top of its block, so a link to
+    it scrolls exactly as far as the block's own id does.
+  */
+  .sp-space {
+    position: relative;
   }
 
-  @media (min-width: 46.5rem) {
-    .sp-gallery {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .sp-alias {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
   }
 
   /* The amenities: three short items on hairlines, in a row from 48rem. */

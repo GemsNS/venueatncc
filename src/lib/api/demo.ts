@@ -238,7 +238,7 @@ const adminUser = (): AdminUser => ({ id: 1, email: DEMO_ADMIN_EMAIL, name: DEMO
 
 const blank = (value: string | undefined): string | undefined => (value && value.trim() !== '' ? value : undefined);
 
-/** Whether two space choices share any ground ('both' is The Hall and The Grove, not The Main Hall). */
+/** Whether two space choices share any ground ('both' is The Fireside Room and The Pine Garden, not The Stage Hall). */
 const overlaps = spacesOverlap;
 
 /** The part of the venue two overlapping choices share. */

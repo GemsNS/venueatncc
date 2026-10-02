@@ -1,8 +1,8 @@
 /**
  * Structured data (JSON-LD) builders. Everything is derived from src/data/site.ts, so a fact changed
  * there changes the search-engine markup too.
- * Brand rules (docs/design/brand.md): spaces go by their public names, The Hall, The Main Hall, and The
- * Grove. Structured
+ * Brand rules (docs/design/brand.md): spaces go by their public names, The Fireside Room, The Stage Hall,
+ * and The Pine Garden (version 9). Structured
  * data never mentions alcohol or catering, and the venue is a stand-alone business with no parent
  * organization. The venue does not publish prices, so no node carries priceRange, a price, or an
  * OfferCatalog of rates.
@@ -15,7 +15,7 @@ const venueId = `${site.url}/#venue`;
 const websiteId = `${site.url}/#website`;
 
 /**
- * Share images that stand for the venue as a whole: The Hall (the-space). The home card is a still life of
+ * Share images that stand for the venue as a whole: The Fireside Room (the-space). The home card is a still life of
  * roses, not a photo of the property, so it is left out.
  * Fixed paths rather than hashed assets, so the URLs in structured data stay stable between builds.
  */
@@ -49,7 +49,7 @@ function warnOnce(message: string) {
   console.warn(message);
 }
 
-/** The public name of a space choice: The Hall, The Main Hall, The Grove, or The Hall and The Grove. */
+/** The public name of a space choice: The Fireside Room, The Stage Hall, The Pine Garden, or The Fireside Room and The Pine Garden. */
 export function spaceName(choice: SpaceChoice): string {
   return SPACE_NAMES[choice];
 }
@@ -85,7 +85,7 @@ const feature = (name: string, value: boolean | string = true) => ({
  * The venue as a local business and event venue. Emitted on every page and referenced by @id.
  * Capacity and parking facts are shown on the home page and The Space, and describe the venue as a whole,
  * so they are included here; room details (containsPlace) only where a page asks for them.
- * imageUrls are absolute URLs of real photos of the property; the venue's share image of The Hall follows them.
+ * imageUrls are absolute URLs of real photos of the property; the venue's share image of The Fireside Room follows them.
  */
 export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}) {
   const data: Record<string, unknown> = {

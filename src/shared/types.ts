@@ -6,11 +6,11 @@
 
 /**
  * The bookable spaces: three single spaces, plus one combined choice.
- *   indoor  The Hall (indoor, up to 100 guests)
- *   main    The Main Hall (the indoor auditorium with stage seating, up to 100 guests)
- *   outdoor The Grove (outdoor, up to 150 guests)
- *   both    The Hall and The Grove together (the slug predates The Main Hall and is kept)
- * The Main Hall is booked on its own; it is not part of 'both'.
+ *   indoor  The Fireside Room (indoor, up to 100 guests)
+ *   main    The Stage Hall (the indoor auditorium with stage seating, up to 100 guests)
+ *   outdoor The Pine Garden (outdoor, up to 150 guests)
+ *   both    The Fireside Room and The Pine Garden together (the slug predates The Stage Hall and is kept)
+ * The Stage Hall is booked on its own; it is not part of 'both'.
  */
 export type SpaceChoice = 'indoor' | 'main' | 'outdoor' | 'both';
 
@@ -27,23 +27,23 @@ export const isSpaceChoice = (v: unknown): v is SpaceChoice => typeof v === 'str
 
 /**
  * The public names of the spaces (docs/design/brand.md). The data slugs stay indoor, outdoor,
- * and both; The Main Hall is main. Every label the booking app, the admin, the emails, and the
+ * and both; The Stage Hall is main. Every label the booking app, the admin, the emails, and the
  * CSV export show for a space comes from here, so the names read the same everywhere.
  */
 export const SPACE_NAMES: Record<SpaceChoice, string> = {
-  indoor: 'The Hall',
-  main: 'The Main Hall',
-  outdoor: 'The Grove',
-  both: 'The Hall and The Grove',
+  indoor: 'The Fireside Room',
+  main: 'The Stage Hall',
+  outdoor: 'The Pine Garden',
+  both: 'The Fireside Room and The Pine Garden',
 };
 
-/** The single spaces a choice occupies: 'both' is The Hall and The Grove. */
+/** The single spaces a choice occupies: 'both' is The Fireside Room and The Pine Garden. */
 export function spaceParts(space: SpaceChoice): SingleSpace[] {
   return space === 'both' ? ['indoor', 'outdoor'] : [space];
 }
 
 /**
- * The choice that occupies exactly these single spaces, or null when none does (The Main Hall with
+ * The choice that occupies exactly these single spaces, or null when none does (The Stage Hall with
  * another space is not one choice; the admin books those as separate blocks).
  */
 export function spaceFromParts(parts: SingleSpace[]): SpaceChoice | null {

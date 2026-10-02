@@ -60,12 +60,12 @@ export function unavailableMessage(date: DateKey, status: CalStatus): string {
 export const SPACES: SpaceChoice[] = [...SPACE_CHOICES];
 export const SINGLE_SPACES: SingleSpace[] = SINGLE_SPACE_IDS;
 
-/** The public name: The Hall, The Main Hall, The Grove, or The Hall and The Grove. */
+/** The public name: The Fireside Room, The Stage Hall, The Pine Garden, or The Fireside Room and The Pine Garden. */
 export function spaceLabel(space: SpaceChoice): string {
   return SPACE_NAMES[space];
 }
 
-/** Names joined for a sentence: "The Hall", "The Hall and The Grove", "The Hall, The Main Hall, and The Grove". */
+/** Names joined for a sentence: "The Fireside Room", "The Fireside Room and The Pine Garden", "The Fireside Room, The Stage Hall, and The Pine Garden". */
 export function listSpaces(spaces: SpaceChoice[]): string {
   const names = spaces.map(spaceLabel);
   if (names.length <= 2) return names.join(' and ');
@@ -73,8 +73,8 @@ export function listSpaces(spaces: SpaceChoice[]): string {
 }
 
 /**
- * One sentence on which single spaces are open on a day where some are booked, e.g. "The Hall is booked
- * on Sat, Oct 17. The Main Hall and The Grove are open." Empty when all are open or all are booked.
+ * One sentence on which single spaces are open on a day where some are booked, e.g. "The Fireside Room is booked
+ * on Sat, Oct 17. The Stage Hall and The Pine Garden are open." Empty when all are open or all are booked.
  */
 export function partlyBookedNote(taken: SingleSpace[], dateLabel: string): string {
   const open = SINGLE_SPACES.filter((s) => !taken.includes(s));

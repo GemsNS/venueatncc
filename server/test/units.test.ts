@@ -244,10 +244,10 @@ describe('database', () => {
     }
   });
 
-  test('migration 4 (The Main Hall) keeps every inquiry, note, event, block, and link, and accepts the new space', () => {
+  test('migration 4 (The Stage Hall) keeps every inquiry, note, event, block, and link, and accepts the new space', () => {
     const db = new Database(':memory:');
     db.pragma('foreign_keys = ON');
-    // A database as it stood before The Main Hall: migrations 1 to 3.
+    // A database as it stood before The Stage Hall: migrations 1 to 3.
     db.transaction(() => {
       for (const m of MIGRATIONS.slice(0, 3)) db.exec(m as string);
       db.pragma('user_version = 3');
@@ -279,7 +279,7 @@ describe('database', () => {
     const indexes = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'inquiries_%' OR name LIKE 'blocks_%' ORDER BY name").all() as { name: string }[]).map((i) => i.name);
     assert.deepEqual(indexes, ['blocks_date', 'blocks_inquiry', 'inquiries_created', 'inquiries_date', 'inquiries_ip', 'inquiries_status']);
 
-    // The Main Hall is accepted now; anything else is still refused.
+    // The Stage Hall is accepted now; anything else is still refused.
     db.prepare(`INSERT INTO blocks (date, space, kind, label, created_at) VALUES ('2026-11-14', 'main', 'booked', '', ?)`).run(now);
     assert.throws(() => db.prepare(`INSERT INTO blocks (date, space, kind, label, created_at) VALUES ('2026-11-14', 'annex', 'booked', '', ?)`).run(now), /CHECK/);
     // Deleting the inquiry still cascades to its notes, as before.
@@ -289,8 +289,8 @@ describe('database', () => {
   });
 });
 
-describe('spaces: The Hall, The Main Hall, The Grove, and The Hall and The Grove', () => {
-  test('The Main Hall is its own space: it never overlaps The Hall, The Grove, or the pair', () => {
+describe('spaces: The Fireside Room, The Stage Hall, The Pine Garden, and The Fireside Room and The Pine Garden', () => {
+  test('The Stage Hall is its own space: it never overlaps The Fireside Room, The Pine Garden, or the pair', () => {
     assert.equal(spacesOverlap('main', 'main'), true);
     for (const other of ['indoor', 'outdoor', 'both'] as const) {
       assert.equal(spacesOverlap('main', other), false, other);
@@ -314,13 +314,13 @@ describe('spaces: The Hall, The Main Hall, The Grove, and The Hall and The Grove
     assert.equal(spaceIsFree(sunday, 'indoor'), false);
   });
 
-  test('The Main Hall holds up to 100 guests, the same as The Hall', () => {
+  test('The Stage Hall holds up to 100 guests, the same as The Fireside Room', () => {
     assert.equal(capacityError('main', 100), null);
-    assert.equal(capacityError('main', 101), 'The Main Hall holds up to 100 guests. The Grove holds up to 150.');
-    assert.equal(SPACE_NAMES.main, 'The Main Hall');
+    assert.equal(capacityError('main', 101), 'The Stage Hall holds up to 100 guests. The Pine Garden holds up to 150.');
+    assert.equal(SPACE_NAMES.main, 'The Stage Hall');
   });
 
-  test('planBooking books The Main Hall on its own', () => {
+  test('planBooking books The Stage Hall on its own', () => {
     const hallBlock: CalendarBlock = { id: 1, date: '2027-01-09', space: 'both', kind: 'booked', label: '', inquiryId: null, createdAt: '2026-10-01T00:00:00.000Z' };
     assert.deepEqual(planBooking({ date: '2027-01-09', space: 'main' }, [], [hallBlock]), { ok: true, upgrade: [], add: 'main' });
   });

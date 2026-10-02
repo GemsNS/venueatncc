@@ -11,7 +11,10 @@ export interface SpacePhoto {
   alt: string;
 }
 
-/** One photo per single space, and two more for The Hall and The Grove together. */
+/**
+ * One photo per single space. bothA and bothB would show the combined choice as a pair; since version 9 (one
+ * real photo per subject, no repeats on a page) /book/ passes null for both, and that row has no photo.
+ */
 export interface SpacePhotos {
   indoor: SpacePhoto | null;
   main: SpacePhoto | null;

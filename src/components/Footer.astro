@@ -2,7 +2,8 @@
 /**
  * The footer (docs/design/redesign-v7.md, "Version 8"): one short block on a very pale pink (Blush) band
  * under a hairline. The lockup, the three page links and Check Availability, then the address with
- * directions, the phone, and the email, then the legal line. No event list, no repeated navigation groups.
+ * directions, the phone, and the email (left out on the home page, whose "Find us" section states them just
+ * above; version 9), then the legal line. No event list, no repeated navigation groups.
  * Booking is a text link here, not a button: the header carries the button. On Blush: Plum 13.2:1,
  * Mauve 7.1:1, Cerise 5.5:1.
  */
@@ -16,9 +17,11 @@ import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentia
 interface Props {
   /** Where Check Availability goes, base-relative. */
   bookHref?: string;
+  /** The address, phone, and email. The home page leaves them out: its "Find us" section states them. */
+  contact?: boolean;
 }
 
-const { bookHref: book = bookHref } = Astro.props;
+const { bookHref: book = bookHref, contact = true } = Astro.props;
 const year = new Date().getFullYear();
 ---
 <footer class="footer">
@@ -35,14 +38,18 @@ const year = new Date().getFullYear();
         </ul>
       </nav>
 
-      <address class="footer__contact">
-        <a href={site.address.directionsUrl} rel="noopener" target="_blank">
-          {site.address.street}, {site.address.city}, {site.address.region} {site.address.postalCode}
-          <span class="visually-hidden">, directions open in a new tab</span>
-        </a>
-        <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
-        <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
-      </address>
+      {
+        contact && (
+          <address class="footer__contact">
+            <a href={site.address.directionsUrl} rel="noopener" target="_blank">
+              {site.address.street}, {site.address.city}, {site.address.region} {site.address.postalCode}
+              <span class="visually-hidden">, directions open in a new tab</span>
+            </a>
+            <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+            <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+          </address>
+        )
+      }
     </div>
 
     <div class="footer__legal">

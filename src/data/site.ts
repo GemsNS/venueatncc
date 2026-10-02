@@ -7,8 +7,11 @@
  * Confirmed by the venue team on 2026-09-28:
  *   phone, email (assumed domain, see contact.email), indoor capacity 100, outdoor capacity 150,
  *   open to anyone, catering not included (the rental is the space and parking), parking included.
- * Space names confirmed for the brand on 2026-09-28: The Hall (indoor) and The Grove (outdoor).
- * From the owner's copy, 2026-09-30: The Main Hall, a multi-purpose auditorium with stage seating, up to
+ * Space names chosen by the client on 2026-10-02 (version 9): The Fireside Room (indoor, was The Hall), The
+ *   Stage Hall (the auditorium, was The Main Hall), and The Pine Garden (outdoor, was The Grove). The gazebo
+ *   is a structure inside The Pine Garden, not a space name. The ids stay indoor, main, and outdoor, so
+ *   stored bookings keep working.
+ * From the owner's copy, 2026-09-30: the auditorium with stage seating, up to
  *   100 guests (the same as the indoor limit); the amenities; building access Monday to Saturday,
  *   9:00 AM to 12:00 midnight; a reservation and a non-refundable deposit hold a date; the contact
  *   person, Faith VanDyke.
@@ -24,14 +27,14 @@
  */
 import { ACCESS_DAYS, ACCESS_TIMES } from '../shared/booking-rules';
 
-/** A single bookable space. The combined choice, The Hall and The Grove, is 'both' in src/shared/types.ts. */
+/** A single bookable space. The combined choice, The Fireside Room and The Pine Garden together, is 'both' in src/shared/types.ts. */
 export type SpaceId = 'indoor' | 'main' | 'outdoor';
 
 export interface Space {
   id: SpaceId;
-  /** Public name, e.g. 'The Hall'. */
+  /** Public name, e.g. 'The Fireside Room'. */
   name: string;
-  /** Name without the article, for tight labels, e.g. 'Hall'. */
+  /** Name without the article, for tight labels, e.g. 'Fireside Room'. */
   short: string;
   /** One plain sentence. Do not describe finishes or features that are not confirmed. */
   description: string;
@@ -49,14 +52,14 @@ export const site = {
 
   /** Default description used when a page does not set its own. */
   description:
-    'The Venue @ NCC in Suffolk, Virginia, offers indoor and outdoor event rentals: The Hall and The Main Hall for up to 100 guests each, and The Grove for up to 150.',
+    'The Venue @ NCC in Suffolk, Virginia, offers indoor and outdoor event rentals: The Fireside Room and The Stage Hall for up to 100 guests each, and The Pine Garden for up to 150.',
 
   contact: {
     phone: '(948) 205-2934',
     phoneE164: '+19482052934',
     /** ASSUMPTION: the user wrote "faith@domain"; the venue domain is venueatncc.org. Change here if different. */
     email: 'faith@venueatncc.org',
-    /** The contact person, named on /pricing/ (Rates & FAQ) and in the guest email. */
+    /** The contact person, named on the home page (#contact) and in the guest email. */
     contactName: 'Faith VanDyke',
   },
 
@@ -86,29 +89,29 @@ export const site = {
   ] as { name: string; type: 'City' | 'AdministrativeArea' }[],
 
   /**
-   * The bookable spaces, in the order the site lists them. The Hall and The Grove can also be requested
-   * together ('both'); the team confirms availability.
+   * The bookable spaces, in the order the site lists them. The Fireside Room and The Pine Garden can also be
+   * requested together ('both'); the team confirms availability.
    */
   spaces: [
     {
       id: 'indoor',
-      name: 'The Hall',
-      short: 'Hall',
+      name: 'The Fireside Room',
+      short: 'Fireside Room',
       description: 'An indoor room with arched windows, a fireplace feature wall, and dark wood-look floors.',
       capacity: 100,
     },
     {
       id: 'main',
-      name: 'The Main Hall',
-      short: 'Main Hall',
-      description: 'A multi-purpose auditorium with stage seating, a raised stage, and a vaulted ceiling.',
+      name: 'The Stage Hall',
+      short: 'Stage Hall',
+      description: 'A multi-purpose auditorium with rows of red seats facing a raised stage, under a vaulted ceiling.',
       capacity: 100,
     },
     {
       id: 'outdoor',
-      name: 'The Grove',
-      short: 'Grove',
-      description: 'An outdoor setting among tall pines, with a timber gazebo and picnic tables on a patio.',
+      name: 'The Pine Garden',
+      short: 'Pine Garden',
+      description: 'An outdoor setting among tall pines, with a timber gazebo, picnic tables on a patio, and open lawn.',
       capacity: 150,
     },
   ] as Space[],
@@ -148,11 +151,11 @@ export const site = {
 
   /**
    * Building access for events, confirmed by the owner. The booking rules that enforce it live in
-   * src/shared/booking-rules.ts. Stated once, on /pricing/ (Rates & FAQ, #hours).
+   * src/shared/booking-rules.ts. Stated once, on the home page (#essentials).
    */
   access: { days: ACCESS_DAYS, hours: ACCESS_TIMES },
 
-  /** How a date is held. No amount is published (brand.md, owner decision 5). */
+  /** How a date is held, stated once, on the home page (#essentials). No amount is published (brand.md, owner decision 5). */
   depositPolicy: 'A reservation and a non-refundable deposit are required to hold your date.',
 
   /**

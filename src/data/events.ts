@@ -32,13 +32,13 @@ export const events: EventType[] = [
     slug: 'weddings',
     name: 'Weddings & receptions',
     summary:
-      'Say your vows at the timber gazebo in The Grove or facing the stage in The Main Hall, and hold the reception in The Hall or outdoors among the pines.',
+      'Say your vows at the timber gazebo in The Pine Garden or at the front of The Stage Hall, and hold the reception in The Fireside Room or outdoors among the pines.',
     spaces: ['outdoor', 'indoor', 'main'],
   },
   {
     slug: 'receptions-banquets',
     name: 'Banquets & anniversaries',
-    summary: 'Anniversary dinners, awards banquets, and formal evenings, with the fireplace wall of The Hall behind the head table.',
+    summary: 'Anniversary dinners, awards banquets, and formal evenings, with the fireplace wall of The Fireside Room behind the head table.',
     spaces: ['indoor', 'outdoor'],
   },
   {

@@ -324,7 +324,7 @@ describe('public API', () => {
       assert.equal((await submitInquiry(h, { space: 'both', guests: 151 })).status, 400);
     });
 
-    test('The Main Hall is bookable on its own, up to 100 guests, and a Hall and Grove block does not conflict with it', async () => {
+    test('The Stage Hall is bookable on its own, up to 100 guests, and a Fireside Room and Pine Garden block does not conflict with it', async () => {
       const date = openDay(addDays(today(), 47));
       h.ctx.repo.insertBlock({ date, space: 'both', kind: 'booked', label: 'Other party', inquiryId: null, createdBy: null }, new Date(h.clock.now).toISOString());
       const res = await submitInquiry(h, { date, space: 'main', guests: 100 });

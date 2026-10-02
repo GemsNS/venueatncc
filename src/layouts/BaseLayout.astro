@@ -43,6 +43,11 @@ interface Props {
   bookPath?: string;
   /** Home only: the header lockup waits for the welcome's name to morph into it (Header.astro). */
   morphLogo?: boolean;
+  /**
+   * Home only: leave the address, phone, and email out of the footer, since the page's own "Find us"
+   * section states them just above it (each fact once on the page, version 9).
+   */
+  footerContact?: boolean;
 }
 
 const path = withoutBase(Astro.url.pathname);
@@ -59,6 +64,7 @@ const {
   bare = false,
   bookPath = bookHref,
   morphLogo = false,
+  footerContact = true,
 } = Astro.props;
 
 // Canonical URLs point at the real domain. The demo and noindex pages (404, admin) carry none:
@@ -140,6 +146,6 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {!bare && <Footer bookHref={bookPath} />}
+    {!bare && <Footer bookHref={bookPath} contact={footerContact} />}
   </body>
 </html>

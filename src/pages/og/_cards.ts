@@ -8,14 +8,14 @@
  * the welcome in a white panel over the plain blush wall to its left, set as the home page sets it. It shows no part of the property, so it
  * is not described as one and is not used in structured data (schema.ts).
  *
- * Every other card uses a real photograph of the property, chosen by pick(). A staged event photo is never a
- * share image, so pick() uses the real photo it was made from (realPhoto), and the hero photo when there is
- * none. pick() never returns a share still. Version 8 has five public pages and so five cards: the event
+ * Every other card uses one of the four real photographs in use (one per subject, version 9), chosen by
+ * pick(). A staged event photo is never a share image, so pick() uses the one real photo of the space it
+ * shows (realPhoto), and the hero photo when there is none. pick() never returns a share still. Version 8 has five public pages and so five cards: the event
  * pages, the FAQ page, and their cards are gone.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
-import { photoByName, eventPhoto, heroPhoto, realPhoto, type VenuePhoto } from '../../data/photos';
+import { spacePhoto, eventPhoto, heroPhoto, realPhoto, type PhotoSpace, type VenuePhoto } from '../../data/photos';
 
 export interface ShareCard {
   /** The page title, set in Libre Caslon Display. Sentence case. */
@@ -41,11 +41,11 @@ function pick(photo: VenuePhoto | null): ShareCard['photo'] {
   return { file: real.file, caption: real.caption };
 }
 
-const byName = (name: string) => pick(photoByName(name));
+const bySpace = (space: PhotoSpace) => pick(spacePhoto(space));
 const capacity = (id: 'indoor' | 'main' | 'outdoor') => site.spaces.find((s) => s.id === id)?.capacity;
-const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Hall';
-const mainHall = site.spaces.find((s) => s.id === 'main')?.name ?? 'The Main Hall';
-const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
+const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Fireside Room';
+const mainHall = site.spaces.find((s) => s.id === 'main')?.name ?? 'The Stage Hall';
+const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Pine Garden';
 const spacesLine = `${hall} and ${mainHall} up to ${capacity('indoor')} guests each, ${grove} up to ${capacity('outdoor')}`;
 
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
@@ -63,11 +63,11 @@ export const shareCards: Record<string, ShareCard> = {
     },
     layout: 'still',
   },
-  'the-space': { title: 'The Space', line: spacesLine, photo: byName('hall-windows') },
+  'the-space': { title: 'The Space', line: spacesLine, photo: bySpace('hall') },
   pricing: {
     title: 'Rates & FAQ',
     line: 'Rates vary with the season and the day of the week. Call us for pricing',
-    photo: byName('hall-fireplace'),
+    photo: bySpace('main'),
   },
   // The events index leads with the photo of the first event on the list.
   events: {
@@ -75,7 +75,7 @@ export const shareCards: Record<string, ShareCard> = {
     line: 'Celebrations, gatherings, and meetings, and the spaces that suit each one',
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
-  book: { title: 'Check availability', line: 'Choose a date and a space, and send your request', photo: byName('approach-dusk') },
+  book: { title: 'Check availability', line: 'Choose a date and a space, and send your request', photo: bySpace('grounds') },
 };
 /** og:image:alt for a card: what the image shows, in reading order. */
 export function shareCardAlt(key: string): string | undefined {

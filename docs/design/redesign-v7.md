@@ -1,10 +1,43 @@
-# The Venue @ NCC: redesign specification, version 7 (image first), with the version 8 amendments
+# The Venue @ NCC: redesign specification, version 7 (image first), with the version 8 and 9 amendments
 
 Written October 1, 2026 by the lead designer after auditing every route of the version 6 build at 390 and
 1440 (captures in the redesign scratchpad folder `v7/shots/`). This document is binding for everyone who
 builds, reviews, or amends the site. It applies on top of `brand.md` (version 6) and `redesign-spec.md`
 (version 5) and overrides both wherever they disagree; the overridden rules are listed in section 0 so no
 page owner follows a dead rule by accident. `fable-advice.md` stays binding except where section 0 names it.
+
+## Version 9 amendments (the client's names, the main info on home, one photo per subject, October 2, 2026)
+
+Binding on top of version 8; `brand.md`, "Version 9 amendments", has the client's words and the photo
+picks with their reasons. In short:
+
+1. **Names.** The Fireside Room (was The Hall), The Stage Hall (was The Main Hall), The Pine Garden (was The
+   Grove). The gazebo is inside The Pine Garden. Ids unchanged (`indoor`, `main`, `outdoor`, `both`).
+   The Space anchors are `#fireside-room`, `#stage-hall`, `#pine-garden`, with `#hall`, `#main-hall`,
+   and `#grove` kept as empty anchors at the top of the same blocks.
+2. **Home holds the main info, each fact once on the page:**
+   1. the rose welcome, with Check Availability;
+   2. the three spaces: the one photo, the name, one line, and the capacity, each card a link to its block
+      on The Space;
+   3. the essentials (`#essentials`): Included (tables and chairs, on-site parking), Hours (Monday to
+      Saturday, 9:00 AM to 12:00 midnight), Holding your date (a reservation and a non-refundable deposit),
+      and Rates (the approved wording, shortened, with Call);
+   4. check a date (the date checker);
+   5. the events: the weddings staged photo beside the eight names, each a link to `/events/#<slug>`;
+   6. find us (`#location`, `#contact`): the drive, the address with Get Directions, and Faith VanDyke,
+      the phone, and the email.
+3. **What moved off other pages.** Rates & FAQ no longer states what is included, the hours, the deposit
+   rule, the rates sentence, or the contact person: it has "Your quote" (what to have ready when you call
+   and what a quote covers, with Call and a link to the booking page), "How booking works" (check your
+   date, get your quote, hold the date), and the questions. The FAQ "How do I check if my date is
+   available?" is cut (the booking steps answer it). The Space loses its gallery ("A closer look": four
+   further angles). Its blocks keep the fuller lead, capacity, and features, the amenities stay, and no
+   lead repeats a home card's line.
+4. **One real photo per subject** across the site: `hall-windows`, `main-hall-stage`, `grove-tables`,
+   `driveway` (`SUBJECT_PHOTO` in `src/data/photos.ts`). Rates & FAQ shows The Stage Hall's photo; the
+   404 shows The Pine Garden's; Book's three space rows show their space's photo and the combined row none;
+   the share cards use only these four (and the home card's rose still life). Staged event photos are
+   unchanged.
 
 ## Version 8 amendments (fewer pages, straightforward, October 2, 2026)
 
@@ -22,7 +55,7 @@ disclosure under the photo), the rose hero, and the name morph stays.
 3. **Events is one page.** Each of the eight occasions (`src/data/events.ts`) is a compact block with its
    slug as its id: one staged photo with its disclosure caption, the name, one or two sentences, and the
    spaces that suit it (links to The Space). Weddings spans the full width with two staged photos side by
-   side, the gazebo ceremony and the indoor ceremony in The Main Hall (`styled-wedding-indoor-ceremony`),
+   side, the gazebo ceremony and the indoor ceremony in The Stage Hall (`styled-wedding-indoor-ceremony`),
    since its copy offers both. No planning guides, checklists, per-event questions, related
    links, or breadcrumbs. One closing line for any other occasion, with Check Availability.
 4. **Rates & FAQ is one page.** The approved rates wording with Call (the page's one filled button) and a
@@ -117,7 +150,7 @@ file, and doc that feeds the site:
   cards, The Space header, The Space panels, every event hero, and the event prose. What the rental includes
   appears on home (the feature strip), The Space (the checklist), Rates (a panel), and the FAQ. The address
   appears in the menu, home, The Space, the FAQ, and the footer.
-- Several lazily loaded photos rendered as grey boxes in the full-page captures (The Grove panel, the home
+- Several lazily loaded photos rendered as grey boxes in the full-page captures (The Pine Garden panel, the home
   arrival photo, most event cards). This is a capture-timing artifact, but it will mislead the lead's review
   if it recurs, so the acceptance captures wait for every image to decode (section 7).
 
@@ -163,7 +196,7 @@ remains is the booking wizard's 76px thumbnails, which are 3:2 files in 3:2 fram
 | **Figure** and **figure card** (`Figure`, `FigureCard`) | The photo, then under it on the page surface the label (Caslon Text 1.25rem, Plum), a meta line (Caslon Text, Mauve), and an italic caption where there is one | The same, stacked | Space cards, event cards, gallery figures, extra views in a section |
 
 **Captions.** Every caption is Caslon Text italic 1rem, Mauve, 0.75rem under the frame, left-aligned to the
-frame's edge. Captions say what the photo shows ("The Hall, toward the fireplace wall"), and on a staged
+frame's edge. Captions say what the photo shows ("The Fireside Room, toward the fireplace wall"), and on a staged
 photo they begin with the disclosure (section 2).
 
 **Rhythm.** Sections keep `--section` padding and the hairline between them. Because photos are no longer
@@ -233,7 +266,7 @@ somewhere on the page. In version 7 the declaration is text under the photo, nev
 
 - A single staged photo (a page intro, an editorial split, a figure) carries the full line in its caption:
   "Styled concept. Décor is not included." followed by what the photo shows where that helps ("Styled
-  concept. Décor is not included. A ceremony in The Main Hall.").
+  concept. Décor is not included. A ceremony in The Stage Hall.").
 - In a grid or row of staged cards (the /events/ grid, the home events figure), each card's meta line
   begins "Styled concept" (two words, Mauve) and the full sentence appears once in the section's lead
   (`EVENTS_STYLED_NOTE`). So a visitor who scans one card still sees the disclosure on that card, and the
@@ -325,7 +358,7 @@ however long the list runs. On regular screens the footer's Events column lists 
 event). No other page is deep enough to need them; structured data keeps the breadcrumb lists it has.
 
 **In-page navigation:** none. No AnchorBar, no VerticalTabs, no sticky second bar. The Space's intro has
-three descriptor links (The Hall, The Main Hall, The Grove) that jump to the sections; that is the only
+three descriptor links (The Fireside Room, The Stage Hall, The Pine Garden) that jump to the sections; that is the only
 in-page jump list on the site, and it scrolls away with the intro.
 
 ### One primary action per page
@@ -413,7 +446,7 @@ venue's structured data and in llms.txt's own sections.
 - Cut the hero's facts (Location, Capacity) and descriptors; the intro's lead says it in a sentence.
 - Cut the AnchorBar and the VerticalTabs; keep the three sections with their ids.
 - Cut the "Rates: Ask about rates" fact from each of the three panels (three repeats on one page).
-- Cut the intro paragraph's repeat of "Book one space, or The Hall and The Grove together" where the lead
+- Cut the intro paragraph's repeat of "Book one space, or The Fireside Room and The Pine Garden together" where the lead
   already says it; say it once.
 - Merge the gallery into the sections: each space's extra views sit under its split as figures; the
   Gallery section and its carousel go.
@@ -469,13 +502,13 @@ band (Petal). "Split" means `ImageTextSplit`; "intro" means `PageIntro`.
    row from 48rem, never a peeking scroller): eyebrow "The spaces", h2 "Two halls and a grove" (not The
    Space's h1), a one-sentence lead about the spaces themselves (the occasions live in Events we host),
    Explore The Space (outline) on the right.
-   Cards: hall-windows "The Hall" / main-hall "The Main Hall" / grove-tables "The Grove", meta "Up to N
+   Cards: hall-windows "The Fireside Room" / main-hall "The Stage Hall" / grove-tables "The Pine Garden", meta "Up to N
    guests", each linking to its section on The Space.
 3. **Check a date** (`SectionHeading` beside the `DateChecker` island, both top-aligned): lead "See which
    spaces are open on your day." (the checker shows no idle hint, so the sentence appears once). The
    checker's Continue to Booking is the in-page primary.
 4. **Events we host** (split, photo left: the weddings staged figure, caption "Styled concept. Décor is not
-   included. A ceremony at the gazebo in The Grove."): eyebrow "Occasions", h2 "Events we host", a lead that
+   included. A ceremony at the gazebo in The Pine Garden."): eyebrow "Occasions", h2 "Events we host", a lead that
    invites other occasions (the caption already carries the disclosure, so the lead does not repeat it), then the eight event names as Caslon Text links in two columns, and See All Events
    (text link). Weddings is the one event whose photo appears on home, so the weddings link in the list is
    still listed (the list is complete).
@@ -485,18 +518,18 @@ band (Petal). "Split" means `ImageTextSplit`; "intro" means `PageIntro`.
 
 ### `/the-space/`
 
-1. **Intro** (hall-windows, caption "The Hall, with its arched windows and fireplace wall"; the two Main
-   Hall photos are the same view down the aisle, so the intro shows The Hall): eyebrow "The Space", h1
+1. **Intro** (hall-windows, caption "The Fireside Room, with its arched windows and fireplace wall"; the two Stage
+   Hall photos are the same view down the aisle, so the intro shows The Fireside Room): eyebrow "The Space", h1
    "Three spaces, indoors and out", lead "Well-maintained indoor and outdoor spaces surrounded by nature,
-   with bright natural light and a dedicated stage area. Book one space, or The Hall and The Grove
-   together.", links The Hall / The Main Hall / The Grove (to the sections), no action.
-2. **The Hall** (`#hall`, split, hall-doors left, the opposite end of the room from the intro, caption
+   with bright natural light and a dedicated stage area. Book one space, or The Fireside Room and The Pine Garden
+   together.", links The Fireside Room / The Stage Hall / The Pine Garden (to the sections), no action.
+2. **The Fireside Room** (`#hall`, split, hall-doors left, the opposite end of the room from the intro, caption
    "The double doors and the wall-mounted screen"; `copyFirst`, so on phones the copy comes between the two
-   photos): eyebrow "The Hall", h2 "A bright, open room", the lead, fact row Capacity / Features. No extra
+   photos): eyebrow "The Fireside Room", h2 "A bright, open room", the lead, fact row Capacity / Features. No extra
    figures.
-3. **The Main Hall** (`#main-hall`, split, flip, main-hall-stage right, caption "The raised stage"):
+3. **The Stage Hall** (`#main-hall`, split, flip, main-hall-stage right, caption "The raised stage"):
    eyebrow, h2 "Stage seating under a vaulted ceiling", the lead, fact row. No extra figures.
-4. **The Grove** (`#grove`, split, grove-tables left, caption "Picnic tables and the gazebo"): eyebrow, h2
+4. **The Pine Garden** (`#grove`, split, grove-tables left, caption "Picnic tables and the gazebo"): eyebrow, h2
    "Among the pines", the lead, fact row; under it two figures: gazebo ("The gazebo") and grove-path ("The
    path to the gazebo").
 5. **Premium amenities** (`SectionHeading` + `FeatureStrip`): `site.amenities`.
@@ -507,8 +540,8 @@ band (Petal). "Split" means `ImageTextSplit`; "intro" means `PageIntro`.
    (948) 205-2934" (text link).
 9. Footer.
 
-Photo map, each real photo once: main-hall (intro), hall-windows, hall-fireplace, hall-doors (The Hall),
-main-hall-stage (The Main Hall), grove-tables, gazebo, grove-path (The Grove), approach-dusk (the grounds).
+Photo map, each real photo once: main-hall (intro), hall-windows, hall-fireplace, hall-doors (The Fireside Room),
+main-hall-stage (The Stage Hall), grove-tables, gazebo, grove-path (The Pine Garden), approach-dusk (the grounds).
 driveway is the home arrival photo and is not on this page. grove-pines is on no page (it is the venue's
 image in structured data, and it is cut from the same original as grove-path, so it never shares a page with
 it); exterior-dusk stays unused.
@@ -516,7 +549,7 @@ it); exterior-dusk stays unused.
 ### `/events/`
 
 1. **Intro** (styled-wedding-indoor-ceremony, caption "Styled concept. Décor is not included. A ceremony in
-   The Main Hall."): eyebrow "Events", h1 "Weddings, celebrations, and gatherings in Suffolk", lead "Each
+   The Stage Hall."): eyebrow "Events", h1 "Weddings, celebrations, and gatherings in Suffolk", lead "Each
    occasion has its own planning guide, the space that suits it, and a practical checklist. For another kind
    of event, describe it in your request and we will confirm which space suits it.", no links, no action.
 2. **Every occasion we host** (`SectionHeading` with the lead `EVENTS_STYLED_NOTE`, then a grid of eight
@@ -547,9 +580,9 @@ becomes the text list, as the all-or-nothing rule already provides.
 ### `/pricing/` Rates
 
 1. **Title band** (Petal): eyebrow "Rates", h1 "Rates and inquiries".
-2. **Our special rates** (split, hall-fireplace, caption "The Hall"): eyebrow "By phone", h2, the approved
+2. **Our special rates** (split, hall-fireplace, caption "The Fireside Room"): eyebrow "By phone", h2, the approved
    wording, Call (filled, large), "Ask for Faith VanDyke, or email faith@venueatncc.org."
-3. **Send an inquiry** (the gazebo portrait figure beside the form, caption "The gazebo in The Grove";
+3. **Send an inquiry** (the gazebo portrait figure beside the form, caption "The gazebo in The Pine Garden";
    sticky on desktop as now): eyebrow "Contact us", h2, lead, the `InquiryForm` island, then under the form
    a small Petal panel "Before you send" with the deposit sentence and the building hours, and the line "What
    the rental includes is listed on The Space." as a link.
@@ -572,7 +605,7 @@ becomes the text list, as the all-or-nothing rule already provides.
 
 ### `/404`
 
-1. **Intro** (gazebo, caption "The gazebo in The Grove"): eyebrow "Page not found", h1 "This page could not
+1. **Intro** (gazebo, caption "The gazebo in The Pine Garden"): eyebrow "Page not found", h1 "This page could not
    be found", lead "The link may be out of date, or the address may have a typo. These pages can help.",
    then the link list (Home, Check Availability, The Space, Events, Rates) and "Or call us at
    (948) 205-2934." in the text column. noindex, no structured data, as now.

@@ -1,16 +1,18 @@
 ---
 /**
- * Rates & FAQ (docs/design/redesign-v7.md, "Version 8"). The URL stays /pricing/ so existing links keep
+ * Rates & FAQ (docs/design/redesign-v7.md, "Version 9"). The URL stays /pricing/ so existing links keep
  * working; the old /faq/ answers 301 to #faq.
  *
- * In order: the title band; the rates (the approved wording beside a real photo of The Hall, shown whole
- * with its caption under it, the Call button, and the contact person and email); the booking details, the
- * one home of what the rental includes (#included), how a date is held (#hold), and the hours (#hours);
- * then the questions (#faq), one accordion with no groups, and the FAQPage structured data.
+ * The home page states the essentials once: what is included, the hours, how a date is held, and rates by
+ * phone (the approved wording, shortened). This page complements it and never restates those sentences. In
+ * order: the title band; your quote (#rates: what to have ready when you call and what the quote covers,
+ * beside the one photo of The Stage Hall, with Call); how booking works (#booking: three steps, from the
+ * request to the held date); then the questions (#faq), one accordion with no groups, and the FAQPage
+ * structured data.
  *
  * Call is the page's one filled button. A date request has one home, the booking page, so there is no
  * second form here: a text link points to it. The venue does not publish prices: no amounts, packages,
- * fees, or estimates appear here, and no price in structured data. The phone appears once, on the button.
+ * fees, or estimates appear here, and no price in structured data.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
@@ -18,28 +20,26 @@ import ImageTextSplit from '../components/ImageTextSplit.astro';
 import FaqAccordion from '../components/FaqAccordion.astro';
 import { site } from '../data/site';
 import { href } from '../lib/paths';
-import { photoByName } from '../data/photos';
+import { spacePhoto } from '../data/photos';
 import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
 import { faqPage } from '../lib/schema';
 
 const title = 'Rates & FAQ | The Venue @ NCC, Suffolk, VA';
-const description = `Rates at ${site.name} in ${site.address.city}, VA vary with the season and the day of the week. What the rental includes, how to hold your date, our hours, and answers to common questions.`;
+const description = `How to get a quote from ${site.name} in ${site.address.city}, VA, how booking works, and answers to common questions.`;
 
-/* The approved wording (brand.md, "No published prices"), without the number: the Call button carries it. */
-const ratesLead =
-  'Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us and we will be happy to help you.';
+/* What a quote needs and covers. The rates sentence itself is on the home page (#essentials). */
+const quoteLead =
+  'Every quote is for a specific date. Call with your date, the space, your guest count, and the hours you need, and we will give you the rate for that day and any special offer that applies.';
 
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-const included = site.included.map(lowerFirst);
-
-const details = [
-  { id: 'included', title: 'Included', text: `Every rental includes ${included.slice(0, -1).join(', ')}, and ${included[included.length - 1]}.` },
-  { id: 'hold', title: 'Holding your date', text: site.depositPolicy },
-  { id: 'hours', title: 'Hours', text: `Events can be booked ${site.access.days}, ${site.access.hours}.` },
+/* How booking works, from the request to the held date. The deposit rule itself is on the home page. */
+const steps = [
+  { title: 'Check your date', text: 'Choose a date on the booking page to see which spaces are open, and send your request with the details of your event.' },
+  { title: 'Get your quote', text: 'We confirm availability personally and send your quote, with the payment terms for your date.' },
+  { title: 'Hold the date', text: 'Return the signed reservation with your deposit, and the date is yours.' },
 ];
 
-const hallPhoto = photoByName('hall-fireplace');
+const photo = spacePhoto('main');
 ---
 <BaseLayout title={title} description={description} og="pricing" pageType="ContactPage" schema={[faqPage(publishedFaqs)]}>
   <section class="title-band" aria-labelledby="page-title">
@@ -51,23 +51,22 @@ const hallPhoto = photoByName('hall-fireplace');
   <section id="rates" class="section pr-target" aria-labelledby="rates-heading">
     <div class="container">
       {
-        hallPhoto ? (
-          <ImageTextSplit photo={hallPhoto} id="rates-heading" heading="Rates by phone" lead={ratesLead} caption="The Hall">
+        photo ? (
+          <ImageTextSplit photo={photo} id="rates-heading" heading="Your quote" lead={quoteLead} caption="The Stage Hall">
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
                 Call {site.contact.phone}
               </a>
               <p class="rates__contact secondary">
-                Ask for {site.contact.contactName}, email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>, or{' '}
-                <a href={href(bookHref)}>send a request online</a>.
+                Or <a href={href(bookHref)}>send the same details with a date request</a>.
               </p>
             </Fragment>
           </ImageTextSplit>
         ) : (
           <div class="section-head">
-            <h2 id="rates-heading">Rates by phone</h2>
-            <p class="t-lead">{ratesLead}</p>
+            <h2 id="rates-heading">Your quote</h2>
+            <p class="t-lead">{quoteLead}</p>
             <div class="btn-row">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -80,19 +79,20 @@ const hallPhoto = photoByName('hall-fireplace');
     </div>
   </section>
 
-  <section id="details" class="section pr-target" aria-labelledby="details-heading">
+  <section id="booking" class="section pr-target" aria-labelledby="booking-heading">
     <div class="container">
-      <h2 id="details-heading" class="pr-head">Booking details</h2>
-      <dl class="pr-details">
+      <h2 id="booking-heading" class="pr-head">How booking works</h2>
+      <ol class="pr-steps">
         {
-          details.map((d) => (
-            <div class="pr-detail pr-target" id={d.id}>
-              <dt>{d.title}</dt>
-              <dd>{d.text}</dd>
-            </div>
+          steps.map((s, i) => (
+            <li class="pr-step">
+              <span class="pr-step__n" aria-hidden="true">{i + 1}</span>
+              <h3 class="pr-step__title">{s.title}</h3>
+              <p class="pr-step__text">{s.text}</p>
+            </li>
           ))
         }
-      </dl>
+      </ol>
     </div>
   </section>
 
@@ -115,7 +115,7 @@ const hallPhoto = photoByName('hall-fireplace');
     line-height: 1.08;
   }
 
-  /* The contact line takes the row under the Call button. */
+  /* The request link takes the row under the Call button. */
   .rates__contact {
     flex-basis: 100%;
     font-family: var(--font-serif);
@@ -125,21 +125,23 @@ const hallPhoto = photoByName('hall-fireplace');
     color: var(--accent-text);
   }
 
-  /* ---------- Booking details: three short facts, stacked on phones, in a row from 48rem ---------- */
+  /* ---------- How booking works: three numbered steps, stacked on phones, in a row from 48rem ---------- */
 
-  .pr-details {
+  .pr-steps {
     display: grid;
     gap: 1.75rem 2.5rem;
     margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   @media (min-width: 48rem) {
-    .pr-details {
+    .pr-steps {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
-  .pr-detail {
+  .pr-step {
     display: grid;
     gap: 0.5rem;
     align-content: start;
@@ -147,7 +149,7 @@ const hallPhoto = photoByName('hall-fireplace');
     border-top: 1px solid var(--separator);
   }
 
-  .pr-detail dt {
+  .pr-step__n {
     font-family: var(--font-serif);
     font-size: var(--t-caption);
     letter-spacing: 0.14em;
@@ -155,8 +157,14 @@ const hallPhoto = photoByName('hall-fireplace');
     color: var(--label-2);
   }
 
-  .pr-detail dd {
-    margin: 0;
+  .pr-step__title {
+    font-weight: 400;
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    line-height: 1.25;
+  }
+
+  .pr-step__text {
     font-family: var(--font-serif);
     font-size: var(--t-headline);
     line-height: 1.45;

@@ -1,16 +1,18 @@
 ---
 /**
  * Check availability (docs/design/redesign-v7.md, "Version 8"): the title band (global.css), then the
- * booking wizard, which also carries the visit request (?visit=1). The island gets one small real photo of each space (the file's own 3:2
- * shape, so nothing is cropped) for the space rows and the summary card. No two rows share a photo, and the
- * summary shows the chosen space's photo only on the steps where the rows are not on screen, so no image
- * appears twice on the page (brand.md, "No repeats").
+ * booking wizard, which also carries the visit request (?visit=1). The island gets the one real photo of each
+ * space (SUBJECT_PHOTO in src/data/photos.ts; the file's own 3:2 shape, so nothing is cropped) for the space
+ * rows and the summary card. The combined choice (The Fireside Room and The Pine Garden together) has no
+ * photo of its own: the site keeps one real photo per subject (version 9), and showing the two rooms' photos
+ * again on that row would repeat them on the page (brand.md, "No repeats"). The summary shows the chosen
+ * space's photo only on the steps where the rows are not on screen.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookingApp, { type SpacePhoto, type SpacePhotos } from '../components/booking/BookingApp';
 import { site } from '../data/site';
-import { photoByName, type VenuePhoto } from '../data/photos';
+import { spacePhoto, type VenuePhoto } from '../data/photos';
 
 const title = 'Check availability | Book The Venue @ NCC, Suffolk, VA';
 const description =
@@ -28,13 +30,13 @@ async function thumb(photo: VenuePhoto | null): Promise<SpacePhoto | null> {
   return { src: files[0].src, srcset: files.map((f, i) => `${f.src} ${widths[i]}w`).join(', '), alt: photo.alt };
 }
 
-/* The Hall, The Main Hall, and The Grove each get their own photo; the combined choice shows two others. */
+/* The Fireside Room, The Stage Hall, and The Pine Garden each get their one photo; the combined choice shows none. */
 const spacePhotos: SpacePhotos = {
-  indoor: await thumb(photoByName('hall-windows')),
-  main: await thumb(photoByName('main-hall')),
-  outdoor: await thumb(photoByName('grove-tables')),
-  bothA: await thumb(photoByName('hall-doors')),
-  bothB: await thumb(photoByName('gazebo')),
+  indoor: await thumb(spacePhoto('hall')),
+  main: await thumb(spacePhoto('main')),
+  outdoor: await thumb(spacePhoto('grove')),
+  bothA: null,
+  bothB: null,
 };
 ---
 <BaseLayout title={title} description={description} og="book" pageType="ContactPage">

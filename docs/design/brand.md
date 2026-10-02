@@ -1,4 +1,4 @@
-# The Venue @ NCC: brand and redesign spec (version 8)
+# The Venue @ NCC: brand and redesign spec (version 9)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: capsule buttons, Title Case
@@ -33,7 +33,7 @@ file, and doc that feeds the site:
    upscale of a Gemini output of about 1024 px whose blend was tuned and checked at 1:1 so petals keep their
    structure there (`src/assets/venue/README.md`, Resolution); `share-rose-bouquet.jpg` counts as 1024 px.
    (Until October 2 a staged photo was held to about 1600 px, which left the client's request "MAKE A WAY
-   TO ZOOM ON ENLARGED IMAGES" with no zoom at all on a 2x screen for the staged photos, the Main Hall
+   TO ZOOM ON ENLARGED IMAGES" with no zoom at all on a 2x screen for the staged photos, the Stage Hall
    ceremony among them.) Photo.astro ships no file wider than that detail; the viewer (Figure.astro) caps
    its image at the detail divided by `devicePixelRatio` (a staged photo opens at most 1440 CSS px wide on
    a 2x screen), and its zoom (pinch, wheel, double tap, the Zoom in button) stops where one pixel of that
@@ -44,6 +44,45 @@ file, and doc that feeds the site:
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
    2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
    not a photo of the property, and is measured against the same rule and meets it: see "The hero loop".
+
+## Version 9 amendments (the client's names, the main info on home, one photo per subject, October 2, 2026)
+
+Three requests from the client, binding, on top of version 8:
+
+1. **New space names, chosen by the client.** The indoor room is **The Fireside Room** (was The Hall: arched
+   windows, the fireplace wall, up to 100). The auditorium is **The Stage Hall** (was The Main Hall: red
+   seats facing the stage, up to 100). The outdoor space is **The Pine Garden** (was The Grove: the gazebo,
+   the patio, and the lawn among the pines, up to 150). The gazebo is a structure inside The Pine Garden,
+   never a space name. Combined phrases read naturally ("The Fireside Room and The Pine Garden together").
+   The data ids stay `indoor`, `main`, `outdoor`, and `both`, so stored bookings keep working. The Space's
+   blocks are `#fireside-room`, `#stage-hall`, and `#pine-garden`; the old `#hall`, `#main-hall`, and
+   `#grove` are kept as empty anchors at the top of the same blocks. The old names appear only in the version 9
+   notes (here, `redesign-v7.md`) and in `site.ts`'s history comment.
+2. **"MAKE SURE ALL THE MAIN INFO IS ON THE HOME PAGE".** Home holds, short and each once: the welcome; the
+   three spaces (the one photo, name, one line, capacity); the essentials (`#essentials`: what is included,
+   the hours, holding your date, rates by phone with Call); check a date; the events (links to
+   `/events/#<slug>`); and find us (`#location`, `#contact`: the address with Get Directions, the contact
+   person, phone, and email). Other pages keep fuller detail of their own topic and never restate home's
+   sentences: The Space has the features and the amenities; Rates & FAQ has how a quote works, how booking
+   works (three steps), and the questions; Events the occasions. The footer stays as site chrome.
+3. **"NO REDUNDANT IMAGES, LIKE MULTIPLE ANGLES OF THE GAZEBO, CHOOSE THE BEST ONE (FOR RAW IMAGE)".** One real
+   photograph per subject across the whole site (`SUBJECT_PHOTO` in `src/data/photos.ts`):
+   - The Fireside Room: `hall-windows`, the only frame with both features the room is named for, the arched
+     windows and the fireplace wall, level and evenly lit; it holds up as a 4:5 crop on a phone.
+   - The Stage Hall: `main-hall-stage`, brighter and cleaner than `main-hall`, the red seats leading to the
+     raised stage that names the room; its 4:5 crop holds the whole stage wall on a phone. `main-hall` is
+     dim, gives most of the frame to the ceiling, and centres a lectern, which reads as a pulpit.
+   - The Pine Garden and the gazebo: `grove-tables`, the gazebo, the patio, the tables, the lawn, and the
+     pines in one evenly lit frame. `gazebo` is a roof-dominant close-up (rule 1 of October 1), and
+     `grove-path` and `grove-pines` have a foreground trunk down the right side.
+   - The building and the drive: `driveway`, daylight, the paved lot that shows the parking, the building
+     small and incidental. `exterior-dusk` makes the cross the subject; `approach-dusk` is dim.
+   The other eight real photos (`hall-fireplace`, `hall-doors`, `main-hall`, `gazebo`, `grove-path`,
+   `grove-pines`, `approach-dusk`, `exterior-dusk`) stay in `src/assets/venue/`, marked `unused` with
+   their reason in `photoDetails`; they are never shown, and never deleted. The Space's gallery is gone.
+   The staged event photos stay, one per event (and the indoor ceremony on Weddings); a staged photo's
+   real photo (`realPhoto()`, used by the share cards) is the one photo of the space it shows. On Book, the
+   combined choice has no thumbnail: its two rooms' photos are already on the page.
 
 ## Version 8 amendments (fewer pages, straightforward, October 2, 2026)
 
@@ -198,7 +237,7 @@ Still binding from earlier versions:
   button, the rental information panel, and an inquiry form that posts to the site's own inquiry API. No
   third-party form services.
 - **The owner's official copy (September 30, 2026)** is the source of truth for facts and tone: three
-  spaces (The Hall 100, The Main Hall 100, The Grove 150); the welcome text (versatile indoor and outdoor
+  spaces (The Fireside Room 100, The Stage Hall 100, The Pine Garden 150); the welcome text (versatile indoor and outdoor
   event rentals in Suffolk, tailored for any occasion, with elegant backdrops, flexible layouts, and full-day
   access; fully renovated grounds, never "campus"), which the home spaces section carries; the amenities
   (Ballroom seating, Hospitality areas, Flexible layouts), stated once on The Space and in structured data;
@@ -227,10 +266,11 @@ never as text on a light surface.
 | Thing | Public name | Notes |
 |---|---|---|
 | The business | The Venue @ NCC | Stand-alone business. Never "NCC Spaces" or "NCC Venues". |
-| Indoor space | The Hall | Up to 100 guests. Data slug stays `indoor`. |
-| Auditorium | The Main Hall | Up to 100 guests, stage seating. Data slug `main`. Booked on its own. |
-| Outdoor space | The Grove | Up to 150 guests. Data slug stays `outdoor`. |
-| Both | The Hall and The Grove | Data slug stays `both`. Never includes The Main Hall. |
+| Indoor space | The Fireside Room | Up to 100 guests. Data slug stays `indoor`. |
+| Auditorium | The Stage Hall | Up to 100 guests, stage seating. Data slug `main`. Booked on its own. |
+| Outdoor space | The Pine Garden | Up to 150 guests. Data slug stays `outdoor`. |
+| Both | The Fireside Room and The Pine Garden | Data slug stays `both`. Never includes The Stage Hall. |
+| The gazebo | The gazebo, or the timber gazebo | A structure inside The Pine Garden, never a space name. Its roof is never described. |
 | The land around them | The grounds | Replaces "campus", which reads as a church campus. |
 
 ## Separation from New Community Church
@@ -361,7 +401,7 @@ the higher:
   4:5 cover crop shifts with screen height, so 390 x 844 alone is not enough), and the composited pixels
   behind every text line are sampled (the 2nd-percentile pixel); the lowest opacity at which every line keeps
   4.5:1, plus a step where that was within 0.2 of the floor.
-- **Appearance: 0.62.** Below it, over a dark photo (the outdoor scenes, the gazebo, The Main Hall), the panel
+- **Appearance: 0.62.** Below it, over a dark photo (the outdoor scenes, the gazebo, The Stage Hall), the panel
   composites to a grey or khaki box (HSL lightness 62 to 66) rather than glass. At 0.62 or more it still
   lets the photo through and reads as frosted White (lightness 78 or more on every hero at 390 and 1440).
   This is what delivers the client's "transparent and bright", not a reversal of it. Bright rooms clear both
@@ -548,6 +588,9 @@ under the bar, and the bar turns solid after 8px.
   shows the real photo its staged image is made from, with no badge or caption, event tiles show no photo, and
   the one-line note is hidden. This is computed in `src/data/photos.ts` from which files exist.
 - **No toggles.** The As Photographed / Styled Concept switches are removed everywhere.
+- **One real photo per subject (version 9).** One real photograph each for The Fireside Room, The Stage
+  Hall, The Pine Garden (with its gazebo), and the building and drive, across the whole site
+  (`SUBJECT_PHOTO` in `src/data/photos.ts`). Every other real photo is marked `unused` and never shown.
 - **No repeats.** No image appears twice on the same page.
 - **No cropped subjects.** Since version 7 every frame has the file's own ratio, so nothing is cropped at
   all; the tap-to-enlarge viewer (`src/components/Figure.astro`) shows every photo larger.
@@ -556,35 +599,35 @@ under the bar, and the bar turns solid after 8px.
 
 | File | Subject | Uses |
 |---|---|---|
-| `grove-pines` | The gazebo under tall pines, picnic tables in front. The one exception to the file sizes: the original's full width (3500 x 2532) for full-bleed screens, and `grove-pines-tall` is 7:10 | The home photo band; the venue's image in structured data (tagged `hero`, so `heroPhoto()` returns it) |
-| `exterior-dusk` | The building at blue hour, lit entry, pines behind | Not used since the home share card became a still life of roses (October 1, 2026); kept for reference |
-| `approach-dusk` | The long drive and lawn toward the building at dusk | The grounds (The Space), the Book share card |
-| `driveway` | The paved drive and lot in daylight | The home arrival band (since October 1, 2026: the dusk frame was the one cool, dark image on the bright home page); The Space gallery |
-| `hall-windows` | The Hall: arched windows, fireplace wall, wood-look floor | The Hall primary |
-| `hall-fireplace` | The Hall toward the windows and fireplace wall | The Hall gallery |
-| `hall-doors` | The Hall: double doors, wall-mounted screen, arched windows | The Hall gallery |
-| `main-hall` | The Main Hall down its aisle: red upholstered chairs in rows, the vaulted ceiling, the raised stage | Home Main Hall card; The Space hero |
-| `main-hall-stage` | The raised stage up close, with the screen and the front rows | The Main Hall gallery |
-| `grove-tables` | The Grove: gazebo and picnic tables on the patio | The Grove primary |
-| `gazebo` | The timber gazebo on open lawn | The Grove gallery |
-| `grove-path` | The paved path to the gazebo through the trees | The Grove gallery |
+In use (version 9, one per subject):
 
-The photo band and structured data show The Grove, not the building: it is what a client rents, and it keeps
-the gable cross out of the first screens and out of search results. The home share card is the rose still
-life (above), not a photo of the property, and is left out of structured data.
-Keep this split on purpose; move the `hero` tag only with this paragraph.
+| File | Subject | Uses |
+|---|---|---|
+| `hall-windows` | The Fireside Room: arched windows, fireplace wall, wood-look floor | Home card, The Space, Book thumbnail, The Space share card |
+| `main-hall-stage` | The Stage Hall: red seats facing the raised stage, the screen above | Home card, The Space, Rates & FAQ, Book thumbnail, Rates share card |
+| `grove-tables` | The Pine Garden: the gazebo, picnic tables on the patio, lawn, pines | Home card, The Space, Book thumbnail, the 404, the Events share card, the venue's image in structured data (tagged `hero`) |
+| `driveway` | The building and the paved drive and lot in daylight | Home "Find us", the Book share card |
+
+Unused, kept for reference (each with its reason in `photoDetails`): `hall-fireplace`, `hall-doors`,
+`main-hall`, `gazebo`, `grove-path`, `grove-pines` (the original's full width, 3500 x 2532, with a 7:10
+tall file), `approach-dusk`, and `exterior-dusk`.
+
+Structured data shows The Pine Garden, not the building: it is what a client rents, and it keeps the gable
+cross out of search results. The home share card is the rose still life (above), not a photo of the
+property, and is left out of structured data. Keep this split on purpose; move the `hero` tag only with
+this paragraph.
 
 `grove-pines` and the staged `community-events` tile (made from `grove-path`) come from the same original,
 IMG_4906, in different framings. The no-repeat rule is checked by file name (the events pages compare
 photo names), on purpose: matching by original would, under the all-or-nothing rule, turn every event tile
 into text.
 
-Describe only what the photos and the owner's copy confirm. The owner confirmed The Main Hall's stage and
+Describe only what the photos and the owner's copy confirm. The owner confirmed The Stage Hall's stage and
 stage seating, kitchen access with banquet arrangements, private hospitality rooms, and that the rental
 includes tables and chairs (which clients may use if they wish); state each once, in its place (The Space for
 the amenities and the inclusions, with the inclusions also on Rates, in the FAQ, in llms.txt, and in
 `amenityFeature`). Do not claim a sound system, bridal suite, Wi-Fi, or AV unless phrased as "ask us". The
-Main Hall photos show equipment on the stage; describe the room, not the equipment.
+Stage Hall photos show equipment on the stage; describe the room, not the equipment.
 
 ### Staged event photos
 
@@ -606,9 +649,9 @@ archive earlier ones.
 | `community-events` | grove-path | An outdoor community gathering on the lawn |
 
 Two more staged photos sit outside the event set. `styled-wedding-indoor-ceremony.jpg`, a ceremony in The
-Main Hall (`styledOf: 'main-hall.jpg'`), is the indoor ceremony in the Weddings block on /events/ (version 8):
-that block spans the full width, its heading, copy and spaces above the gazebo ceremony and the Main Hall
-ceremony side by side, each under its own caption, "Styled concept. Décor is not included. A ceremony in The Main Hall." `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
+Stage Hall (`styledOf: 'main-hall.jpg'`), is the indoor ceremony in the Weddings block on /events/ (version 8):
+that block spans the full width, its heading, copy and spaces above the gazebo ceremony and the Stage Hall
+ceremony side by side, each under its own caption, "Styled concept. Décor is not included. A ceremony in The Stage Hall." `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
 set but is not placed on any page: the building's cross is front and centre in it (Separation).
 
 ## Redundancy rules
@@ -660,7 +703,7 @@ or plan a date, and none describes the gazebo's roof (the client's rules of Octo
 The date checker lists the three spaces as one row each (name, what it is, the day's status, a radio), so
 the full names never wrap.
 
-**The Space.** Real photos only. A hero of the three spaces, then The Hall, The Main Hall, The Grove, the
+**The Space.** Real photos only. A hero of the three spaces, then The Fireside Room, The Stage Hall, The Pine Garden, the
 Premium amenities list, The grounds, What the rental includes (`site.included`), and the Schedule a visit
 request, then the closing band.
 

@@ -2,18 +2,19 @@
 /**
  * The 404 page (docs/design/redesign-v7.md, section 5, "/404"): the page intro with the text beside the
  * gazebo, never over it: the eyebrow, the h1, the lead, a plain list of serif links (Home, Check
- * Availability, The Space, Events, Rates & FAQ), and the phone line. The gazebo is the one photo. The page is
+ * Availability, The Space, Events, Rates & FAQ), and the phone line. The one photo is The Pine Garden's
+ * (SUBJECT_PHOTO in src/data/photos.ts), with the gazebo at its centre. The page is
  * noindex and carries no structured data.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageIntro from '../components/PageIntro.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
-import { photoByName } from '../data/photos';
+import { spacePhoto } from '../data/photos';
 import { bookHref, pricingHref } from '../data/nav';
 import { href } from '../lib/paths';
 
-const photo = photoByName('gazebo');
+const photo = spacePhoto('grove');
 const links = [
   { label: 'Home', href: '/' },
   { label: 'Check Availability', href: bookHref },
@@ -32,7 +33,7 @@ const links = [
     title="This page could not be found"
     lead="The link may be out of date, or the address may have a typo. These pages can help."
     photo={photo}
-    caption="The gazebo in The Grove"
+    caption="The gazebo and the patio in The Pine Garden"
   >
     <ul class="nf__links" aria-label="Helpful pages">
       {

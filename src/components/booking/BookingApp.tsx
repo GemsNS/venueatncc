@@ -256,7 +256,7 @@ export default function BookingApp(props: { spacePhotos?: SpacePhotos }) {
   useEffect(() => {
     if (!d.date || !day || day.status === 'past' || day.status === 'booked' || day.status === 'closed') return;
     if (spaceIsFree(day, d.space)) return;
-    // The Hall and The Grove first; The Main Hall, a room for seating in rows, only when neither is free.
+    // The Fireside Room and The Pine Garden first; The Stage Hall, a room for seating in rows, only when neither is free.
     const singles: SpaceChoice[] = ['indoor', 'outdoor', 'main'];
     const free = singles.filter((s) => spaceIsFree(day, s));
     const alt = free.find((s) => !capacityError(s, d.guests)) ?? free[0];

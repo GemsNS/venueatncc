@@ -72,7 +72,7 @@ confirmation emails, and the structured data all update.
 
 - The email is assumed to be `faith@venueatncc.org`.
 - Catering is not included. The site says so only in one FAQ entry.
-- "Request a visit" and "The Hall and The Grove" together are offered as requests that the team confirms.
+- "Request a visit", and The Fireside Room and The Pine Garden booked together, are offered as requests that the team confirms.
 - Rates are **recommended** from a study of 59 Hampton Roads venues. Confirm them before launch.
 - Unanswered in `faq.ts`: tables and chairs, decorating and setup times, accessibility, cancellation,
   insurance.
@@ -83,7 +83,8 @@ Every image in `src/assets/venue/` is published, so keep reference-only images e
 Use originals at least 1600px on the long edge, and describe each one in `photoDetails` in
 `src/data/photos.ts` (see `src/assets/venue/README.md`).
 
-One rule, enforced in code (`docs/design/brand.md`, Photography): real photographs show the spaces,
+One rule, enforced in code (`docs/design/brand.md`, Photography): real photographs show the spaces, one
+photograph per subject (`SUBJECT_PHOTO` in `src/data/photos.ts`; the other real photos are kept but marked unused),
 and staged photographs show events. The event blocks on /events/ use `styled-event-<slug>.jpg`
 only when all eight staged files are present (`eventsStaged`); otherwise they show no photo. Photos are cropped to their frames and converted to AVIF and WebP at build time.
 

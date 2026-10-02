@@ -1,20 +1,29 @@
 ---
 /**
- * Home (docs/design/redesign-v7.md, "Version 8"), in this order: the video hero with the welcome
- * over the pink rose clip (the business name as the first screen's one dominant element, which morphs into
- * the header lockup on scroll), the three spaces as figure cards (name, one line, capacity), the date
- * checker, the events we host (one staged figure beside the eight names, each a link to its block on
- * /events/), and getting here. Each section is a heading and at most one line; no eyebrows.
+ * Home (docs/design/redesign-v7.md, "Version 9"): all the main information, short, each fact once on the
+ * page (the client, October 2, 2026: "make sure all the main info is on the home page"). In this order:
+ *   1. the video hero with the welcome over the pink rose clip (the business name morphs into the header
+ *      lockup on scroll) and Check Availability;
+ *   2. the three spaces as figure cards (the one photo of each, its name, one line, its capacity);
+ *   3. the essentials (#essentials): what is included, the hours, holding your date, and rates by phone
+ *      with Call;
+ *   4. check a date (the date checker);
+ *   5. the events we host (one staged figure beside the eight names, each a link to its block on /events/);
+ *   6. find us (#location, #contact): the drive and lot, the address with Get Directions, and the contact
+ *      person, phone, and email.
+ * Each section is a heading and short copy; no eyebrows.
  *
  * Nothing sits on any photo: the cards show each photo whole with the name and the capacity under it, and
  * the splits put their captions under the photo. The welcome over the rose video is the one exception: it
  * is footage, not a photograph of the property.
  *
- * Each fact has one home (redesign-v7.md, section 4): the capacities appear here only on the space cards,
- * which link to their sections on The Space; what the rental includes and the rates are on Rates & FAQ,
- * the address here once beside Get Directions (arrival), and in the footer. Booking is the welcome's button
- * and the date checker. Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces
- * and the arrival, one staged photo with its disclosure for the events. No image appears twice.
+ * Each fact has one home on this page. Other pages keep fuller detail of their own topic but never restate
+ * these sentences: The Space has each room's features and the amenities, Rates & FAQ how a quote and a
+ * booking work and the questions, Events the occasions. The footer repeats the address, phone, and email
+ * on every other page; the home footer leaves them out, since "Find us" sits just above it. The phone
+ * number is written once, under Find us; the Rates Call button dials it without repeating it. Photos
+ * follow the one photo rule (src/data/photos.ts): the one real photo of each space
+ * and of the drive, and one staged photo with its disclosure for the events. No image appears twice.
  *
  * The morph. The welcome's name is the header lockup's own words (Logo, 'lockup-name') on one line at every
  * width, with the lockup's ring ('lockup-ring') beside it, unseen, so it has the very shape it lands on.
@@ -45,46 +54,51 @@ import ImageTextSplit from '../components/ImageTextSplit.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site, cityState, fullAddress } from '../data/site';
 import { events } from '../data/events';
-import { STAGED_SCENES, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { STAGED_SCENES, eventPhoto, eventsStaged, spacePhoto, type VenuePhoto } from '../data/photos';
 import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 
-const hall = site.spaces.find((s) => s.id === 'indoor');
-const mainHall = site.spaces.find((s) => s.id === 'main');
-const grove = site.spaces.find((s) => s.id === 'outdoor');
-const hallName = hall?.name ?? 'The Hall';
-const mainHallName = mainHall?.name ?? 'The Main Hall';
-const groveName = grove?.name ?? 'The Grove';
+const fireside = site.spaces.find((s) => s.id === 'indoor');
+const stageHall = site.spaces.find((s) => s.id === 'main');
+const pineGarden = site.spaces.find((s) => s.id === 'outdoor');
 
-/* The three spaces: each card shows its space's primary real photo, one line, and its capacity (the only capacity on this page). */
+/* The three spaces: each card shows the one real photo of its space, one line, and its capacity (the only capacity on this page). */
 interface SpaceCard {
   name: string;
   capacity: number | undefined;
   line: string;
-  photo: VenuePhoto | undefined;
+  photo: VenuePhoto | null;
   href: string;
 }
 const spaceCards: SpaceCard[] = [
-  { name: hallName, capacity: hall?.capacity, line: 'A bright indoor room', photo: photosFor('hall')[0], href: '/the-space/#hall' },
-  { name: mainHallName, capacity: mainHall?.capacity, line: 'An auditorium with a stage', photo: photosFor('main')[0], href: '/the-space/#main-hall' },
-  { name: groveName, capacity: grove?.capacity, line: 'Outdoors among the pines', photo: photosFor('grove')[0], href: '/the-space/#grove' },
+  { name: fireside?.name ?? '', capacity: fireside?.capacity, line: 'Indoors, with arched windows and a fireplace wall', photo: spacePhoto('hall'), href: '/the-space/#fireside-room' },
+  { name: stageHall?.name ?? '', capacity: stageHall?.capacity, line: 'Indoors, with red seats facing a stage', photo: spacePhoto('main'), href: '/the-space/#stage-hall' },
+  { name: pineGarden?.name ?? '', capacity: pineGarden?.capacity, line: 'Outdoors: a gazebo, patio, and lawn among the pines', photo: spacePhoto('grove'), href: '/the-space/#pine-garden' },
 ];
+
+/*
+  The essentials, each stated once on the site's pages: what is included, the hours, how a date is held,
+  and rates by phone (the owner's approved wording, shortened; brand.md, "No published prices").
+*/
+const included = 'Tables and chairs, and on-site parking, with every rental.';
+const hours = `${site.access.days}, ${site.access.hours}.`;
+const ratesShort = 'Our affordable rates vary with peak season, holidays, and the day of the week. Call us for pricing and special offers.';
 
 /*
   The events: the weddings staged photo, with its disclosure, beside the eight event names. Without the
   staged set the list stands alone (photos.ts: a staged image or none).
 */
-const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), 'driveway'].filter((n): n is string => Boolean(n)));
+/* The arrival: the one photo of the building and the drive, in daylight. */
+const arrival = spacePhoto('grounds');
+
+const pagePhotos = new Set([...spaceCards.map((c) => c.photo?.name), arrival?.name].filter((n): n is string => Boolean(n)));
 const weddingsPhoto = eventsStaged ? eventPhoto('weddings') : null;
 const eventsPhoto = weddingsPhoto?.styledOf !== undefined && !pagePhotos.has(weddingsPhoto.name) ? weddingsPhoto : null;
 
-/* The arrival: the drive and lot in daylight. */
-const arrival = photoByName('driveway');
-
 const title = 'Event venue in Suffolk, VA | The Venue @ NCC';
-const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virginia: ${hallName} and ${mainHallName} for up to ${hall?.capacity} guests each, ${groveName} for up to ${grove?.capacity}. Check your date online.`;
+const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virginia: ${fireside?.name} and ${stageHall?.name} for up to ${fireside?.capacity} guests each, ${pineGarden?.name} for up to ${pineGarden?.capacity}. Check your date online.`;
 ---
-<BaseLayout title={title} description={description} og="home" venueDetails morphLogo>
+<BaseLayout title={title} description={description} og="home" venueDetails morphLogo footerContact={false}>
   <HeroVideo labelledby="hero-title" class="welcome">
     <div class="welcome__inner">
       <h1 id="hero-title" class="welcome__h1">
@@ -132,6 +146,38 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             )
           }
         </ul>
+      </div>
+    </section>
+
+    <section id="essentials" class="section essentials-section" aria-labelledby="essentials-heading">
+      <div class="container">
+        <SectionHeading id="essentials-heading" heading="The essentials" />
+        <dl class="essentials">
+          <div class="essential">
+            <dt>Included</dt>
+            <dd>{included}</dd>
+          </div>
+          <div class="essential">
+            <dt>Hours</dt>
+            <dd>{hours}</dd>
+          </div>
+          <div class="essential">
+            <dt>Holding your date</dt>
+            <dd>{site.depositPolicy}</dd>
+          </div>
+          <div class="essential">
+            <dt>Rates</dt>
+            <dd>
+              {ratesShort}
+              <span class="essential__action">
+                <a class="btn btn--filled" href={`tel:${site.contact.phoneE164}`}>
+                  <Icon name="phone" />
+                  Call for Pricing
+                </a>
+              </span>
+            </dd>
+          </div>
+        </dl>
       </div>
     </section>
 
@@ -193,10 +239,17 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             <ImageTextSplit
               photo={arrival}
               id="location-heading"
-              heading="Getting here"
+              heading="Find us"
               lead={`${fullAddress}.`}
               caption="The drive and the parking lot"
             >
+              <div class="contact" id="contact">
+                <p class="contact__name">Ask for {site.contact.contactName}</p>
+                <p class="contact__lines">
+                  <a href={`tel:${site.contact.phoneE164}`}>{site.contact.phone}</a>
+                  <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+                </p>
+              </div>
               <Fragment slot="actions">
                 <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
                   Get Directions<span class="visually-hidden">, opens in a new tab</span>
@@ -599,9 +652,90 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     }
   }
 
-  /* Links from the FAQ land under the bar. */
-  .location-section {
+  /* Links from other pages land under the bar. */
+  .location-section,
+  .essentials-section,
+  .contact {
     scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+
+  /* ---------- The essentials: four short facts on hairlines, two across from 36rem, four from 64rem ---------- */
+
+  .essentials {
+    display: grid;
+    gap: 1.75rem 2.5rem;
+    margin: 0;
+  }
+
+  @media (min-width: 36rem) {
+    .essentials {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .essentials {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .essential {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .essential dt {
+    font-family: var(--font-serif);
+    font-size: var(--t-caption);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--label-2);
+  }
+
+  .essential dd {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: var(--t-headline);
+    line-height: 1.45;
+    color: var(--label);
+  }
+
+  .essential__action {
+    display: flex;
+    margin-top: 1rem;
+  }
+
+  /* ---------- Find us: the contact person, phone, and email under the address ---------- */
+
+  .contact {
+    display: grid;
+    gap: 0.35rem;
+    font-family: var(--font-serif);
+  }
+
+  .contact__name {
+    font-size: var(--t-headline);
+    color: var(--label);
+  }
+
+  .contact__lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    font-size: var(--t-headline);
+  }
+
+  .contact__lines a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
   }
 
   /* ---------- Check a date ---------- */

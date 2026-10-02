@@ -213,7 +213,7 @@ Built by the foundation, in this order:
 1. `PageHero` with `main-hall` (portrait file on phones): eyebrow "The Space", h1 "Three spaces, indoors and
    out", descriptors "Indoor · Outdoor · Renovated grounds", facts LOCATION Suffolk, VA / CAPACITY up to 150
    (the title already counts the spaces).
-2. `AnchorBar`: The Hall, The Main Hall, The Grove, Gallery, Amenities, The grounds, Included, Visit.
+2. `AnchorBar`: The Fireside Room, The Stage Hall, The Pine Garden, Gallery, Amenities, The grounds, Included, Visit.
 3. **Spaces** (`VerticalTabs`, one panel per space): the primary photo, the name (`--t-title-2`), the lead,
    a spec list (Capacity, Features, Rates: Ask about rates linking to /pricing/). Photos: the primaries
    brand.md names, hall-windows, main-hall-stage, grove-tables (the hero already shows main-hall).

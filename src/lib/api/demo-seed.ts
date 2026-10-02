@@ -29,7 +29,7 @@ import { DEMO_ADMIN_NAME } from './demo-credentials';
 /**
  * Bumped whenever stored demo data must not survive: version 2 retired an inquiry field, and
  * version 3 renamed an event type to community-events and rewrote the calendar labels, and
- * version 4 added The Main Hall and moved everything off Sundays (the venue is closed), so a
+ * version 4 added The Stage Hall and moved everything off Sundays (the venue is closed), so a
  * browser holding an older copy gets a fresh seed.
  */
 export const DEMO_DB_VERSION = 4;
@@ -229,7 +229,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         email: 'danielle.greene@example.com',
         phone: '(757) 555-0118',
         contactPreference: 'phone',
-        message: 'We would love the ceremony at the gazebo in The Grove, then the reception in The Hall.',
+        message: 'We would love the ceremony at the gazebo in The Pine Garden, then the reception in The Fireside Room.',
         wantsVisit: true,
         visitNotes: 'Saturday mornings are easiest for us.',
       },
@@ -237,7 +237,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
         {
           h: 20,
           status: 'contacted',
-          note: 'Called Danielle. She wants to see The Grove before deciding and asked about time to set up the day before.',
+          note: 'Called Danielle. She wants to see The Pine Garden before deciding and asked about time to set up the day before.',
         },
       ],
     },
@@ -330,7 +330,7 @@ export function buildSeed(now: Date = new Date()): DemoDb {
       },
       steps: [
         { h: 26, status: 'contacted' },
-        { h: 75, status: 'visit', note: 'Toured The Grove with Anthony and two board members.' },
+        { h: 75, status: 'visit', note: 'Toured The Pine Garden with Anthony and two board members.' },
         { h: 122, status: 'quoted' },
         { h: 170, status: 'booked', block: 'booked', note: 'Payment received. Guest count confirmed.' },
       ],

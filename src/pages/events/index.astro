@@ -1,6 +1,6 @@
 ---
 /**
- * Events (docs/design/redesign-v7.md, "Version 8"): the one page for every occasion. The title band, then
+ * Events (docs/design/redesign-v7.md, "Version 8", with the space names of version 9): the one page for every occasion. The title band, then
  * each occasion in src/data/events.ts as a compact block with its slug as its id (the old event pages,
  * /events/<slug>/, answer 301 to /events/#<slug>): one photo shown whole with its caption under it, the
  * name, one or two sentences, and the spaces that suit it, each a link to its section on The Space. Then
@@ -9,10 +9,10 @@
  * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
  * staged set is complete (eventsStaged) each block shows its event's staged photo, whose caption begins with
  * the disclosure, "Styled concept. Décor is not included." (Figure.astro); Weddings adds the indoor
- * ceremony in The Main Hall beside its gazebo ceremony (SECOND_PHOTO, below). Without the staged set the
+ * ceremony in The Stage Hall beside its gazebo ceremony (SECOND_PHOTO, below). Without the staged set the
  * blocks carry no photo: eight events cannot map to eight distinct real photos.
  *
- * Capacities, rates, parking, and visits have their homes elsewhere and are not written here.
+ * Capacities, rates, parking, hours, and visits have their homes elsewhere and are not written here.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Figure from '../../components/Figure.astro';
@@ -39,7 +39,7 @@ const itemList = {
 };
 
 /* Each space's section on The Space. */
-const SPACE_ANCHORS: Record<SpaceId, string> = { indoor: 'hall', main: 'main-hall', outdoor: 'grove' };
+const SPACE_ANCHORS: Record<SpaceId, string> = { indoor: 'fireside-room', main: 'stage-hall', outdoor: 'pine-garden' };
 const spaceLinks = (ids: SpaceId[]) =>
   ids
     .map((id) => site.spaces.find((s) => s.id === id))
@@ -47,7 +47,7 @@ const spaceLinks = (ids: SpaceId[]) =>
     .map((s) => ({ label: s.name, href: href(`/the-space/#${SPACE_ANCHORS[s.id]}`) }));
 
 /*
-  Weddings has a second staged photo, the indoor option its copy names: a ceremony in The Main Hall
+  Weddings has a second staged photo, the indoor option its copy names: a ceremony in The Stage Hall
   (styled-wedding-indoor-ceremony; brand.md, "Staged event photos"). Its block spans the full width with
   the outdoor and indoor ceremonies side by side, so neither photo is shrunk and no photo repeats.
 */

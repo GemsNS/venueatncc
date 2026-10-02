@@ -27,7 +27,6 @@ function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => s
  * matches and appears under questions and answers again, which repeats a fact but never drops one.
  */
 const COVERED_QUESTIONS = new Set([
-  'How do I check if my date is available?', // Booking
   'Who can book the venue?', // Booking
   'Can I see the venue before I book?', // Booking
   `Can I book ${spaceName('both')} together?`, // The spaces

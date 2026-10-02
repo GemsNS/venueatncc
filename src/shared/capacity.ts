@@ -1,10 +1,10 @@
 /**
  * Capacity rules shared by the wizard, the demo backend, and the API server.
  *
- * Confirmed: The Hall (the indoor space, slug 'indoor') holds up to 100 guests; The Main Hall (the indoor
- * auditorium, slug 'main') up to 100, the same as the indoor limit; and The Grove (the outdoor space, slug
+ * Confirmed: The Fireside Room (the indoor space, slug 'indoor') holds up to 100 guests; The Stage Hall (the indoor
+ * auditorium, slug 'main') up to 100, the same as the indoor limit; and The Pine Garden (the outdoor space, slug
  * 'outdoor') up to 150.
- * NOT confirmed: any combined figure. When a host books The Hall and The Grove together ('both'), the
+ * NOT confirmed: any combined figure. When a host books The Fireside Room and The Pine Garden together ('both'), the
  * guest count still cannot exceed the larger space (150), and copy must describe each space's own limit
  * rather than a single number for the pair.
  */
@@ -14,7 +14,7 @@ export const CAPACITY: Record<SpaceChoice, number> = { indoor: 100, main: 100, o
 
 /**
  * Public names for each space choice, as in src/data/site.ts and docs/design/brand.md.
- * The slugs stay 'indoor', 'outdoor', and 'both'; The Main Hall is 'main'.
+ * The slugs stay 'indoor', 'outdoor', and 'both'; The Stage Hall is 'main'.
  */
 export const SPACE_NAME: Record<SpaceChoice, string> = SPACE_NAMES;
 const NAME = SPACE_NAME;
@@ -43,8 +43,8 @@ export function capacityError(space: SpaceChoice, guests: number): string | null
 }
 
 /**
- * The space that fits a guest count, or null when nothing fits. It suggests The Hall, then The Grove.
- * The Main Hall is offered beside them but never chosen automatically: it suits a different kind of
+ * The space that fits a guest count, or null when nothing fits. It suggests The Fireside Room, then The Pine Garden.
+ * The Stage Hall is offered beside them but never chosen automatically: it suits a different kind of
  * event (seating in rows facing the stage), so the person picks it.
  */
 export function suggestSpace(guests: number): SpaceChoice | null {

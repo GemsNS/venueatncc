@@ -13,9 +13,9 @@ import Database from 'better-sqlite3';
 export type Db = Database.Database;
 
 const STATUS_CHECK = `CHECK (status IN ('new','contacted','visit','quoted','booked','declined','archived'))`;
-/** The space constraint as migration 1 shipped it. Migration 4 widened it for The Main Hall. */
+/** The space constraint as migration 1 shipped it. Migration 4 widened it for The Stage Hall. */
 const SPACE_CHECK = `CHECK (space IN ('indoor','outdoor','both'))`;
-/** The Hall ('indoor'), The Main Hall ('main'), The Grove ('outdoor'), and The Hall and The Grove ('both'). */
+/** The Fireside Room ('indoor'), The Stage Hall ('main'), The Pine Garden ('outdoor'), and The Fireside Room and The Pine Garden ('both'). */
 const SPACE_CHECK_V4 = `CHECK (space IN ('indoor','main','outdoor','both'))`;
 
 export type Migration = string | { rebuild: string };
@@ -139,7 +139,7 @@ export const MIGRATIONS: Migration[] = [
   `
   UPDATE inquiries SET event_type = 'community-events' WHERE event_type = 'church-community-events';
   `,
-  // 4: The Main Hall ('main') is a third bookable space. Rebuild inquiries and blocks with the wider
+  // 4: The Stage Hall ('main') is a third bookable space. Rebuild inquiries and blocks with the wider
   // space constraint; every row, note, event, email log entry, and link is kept.
   {
     rebuild: `

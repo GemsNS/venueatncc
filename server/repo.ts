@@ -22,7 +22,7 @@ import { INQUIRY_STATUSES, spacesOverlap } from '../src/shared/types';
 /** Open statuses: still in the pipeline. */
 export const OPEN_STATUSES: InquiryStatus[] = ['new', 'contacted', 'visit', 'quoted'];
 
-/** Whether two space choices share any ground ('both' is The Hall and The Grove, not The Main Hall). */
+/** Whether two space choices share any ground ('both' is The Fireside Room and The Pine Garden, not The Stage Hall). */
 export { spacesOverlap };
 
 // ---------------------------------------------------------------- rows
