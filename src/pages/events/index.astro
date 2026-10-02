@@ -2,8 +2,9 @@
 /**
  * Events (docs/design/redesign-v7.md, "Version 8", with the space names of version 9): the one page for every occasion. The title band, then
  * each occasion in src/data/events.ts as a compact block with its slug as its id (the old event pages,
- * /events/<slug>/, answer 301 to /events/#<slug>): one photo shown whole with its caption under it, the
- * name, one or two sentences, and the spaces that suit it, each a link to its section on The Space. Then
+ * /events/<slug>/, answer 301 to /events/#<slug>): the name, one or two sentences, and the spaces that
+ * suit it (each a link to its section on The Space), then one photo shown whole with its caption under it.
+ * Every block leads with its name, so on phones each photo sits under its own heading. Then
  * one closing line for any other occasion, with Check Availability, the page's one action.
  *
  * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
@@ -76,16 +77,6 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
         {
           blocks.map((b) => (
             <li class:list={['ev', { 'ev--pair': b.photos.length > 1 }]} id={b.event.slug}>
-              {b.photos.length === 1 && (
-                <Figure photo={b.photos[0]} caption={STAGED_SCENES[b.photos[0].name] ?? false} tall={false} sizes={SIZES} />
-              )}
-              {b.photos.length > 1 && (
-                <div class="ev__photos">
-                  {b.photos.map((p) => (
-                    <Figure photo={p} caption={STAGED_SCENES[p.name] ?? false} tall={false} sizes={SIZES} />
-                  ))}
-                </div>
-              )}
               <div class="ev__text">
                 <h2 id={`${b.event.slug}-heading`} class="ev__name">{b.event.name}</h2>
                 <p class="ev__copy">{b.event.summary}</p>
@@ -99,6 +90,16 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
                   ))}
                 </p>
               </div>
+              {b.photos.length === 1 && (
+                <Figure photo={b.photos[0]} caption={STAGED_SCENES[b.photos[0].name] ?? false} tall={false} sizes={SIZES} />
+              )}
+              {b.photos.length > 1 && (
+                <div class="ev__photos">
+                  {b.photos.map((p) => (
+                    <Figure photo={p} caption={STAGED_SCENES[p.name] ?? false} tall={false} sizes={SIZES} />
+                  ))}
+                </div>
+              )}
             </li>
           ))
         }
@@ -118,7 +119,11 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
 </BaseLayout>
 
 <style>
-  /* Two blocks across from 48rem, one on phones; every block lands under the bar when linked to. */
+  /*
+    Two blocks across from 48rem, one on phones; every block lands under the bar when linked to. Every block
+    reads the same way: its name, copy and spaces, then its photo. From 48rem each block spans two rows of
+    the list (subgrid), so the photos in a row start at the same height whatever the length of the copy.
+  */
   .ev-list {
     display: grid;
     gap: clamp(2.5rem, 2rem + 2vw, 3.5rem) 2rem;
@@ -130,6 +135,14 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
   @media (min-width: 48rem) {
     .ev-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 0;
+    }
+
+    .ev {
+      grid-row: span 2;
+      grid-template-rows: subgrid;
+      row-gap: 1rem;
+      padding-bottom: clamp(2.5rem, 2rem + 2vw, 3.5rem);
     }
   }
 
@@ -146,21 +159,13 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
     gap: 0.5rem;
   }
 
-  /* Weddings at every width: its heading leads, so neither ceremony photo stands alone without one. */
-  .ev--pair .ev__text {
-    order: -1;
-  }
-
   .ev__photos {
     display: grid;
     gap: 1.5rem;
     min-width: 0;
   }
 
-  /*
-    Weddings: both ceremonies, outdoor and indoor, across the full width. The heading, copy and spaces lead
-    the block, above the pair, so both photos read as Weddings and neither sits alone without a heading.
-  */
+  /* Weddings: both ceremonies, outdoor and indoor, side by side across the full width, under its heading. */
   @media (min-width: 48rem) {
     .ev--pair {
       grid-column: 1 / -1;

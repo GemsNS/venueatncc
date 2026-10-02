@@ -5,7 +5,7 @@
  *   1. the video hero with the welcome over the pink rose clip (the business name morphs into the header
  *      lockup on scroll) and Check Availability;
  *   2. the three spaces as figure cards (the one photo of each, its name, one line, its capacity);
- *   3. the essentials (#essentials): what is included, the hours, holding your date, and rates by phone
+ *   3. the essentials (#essentials): who can book and what is included, the hours, holding your date, and rates by phone
  *      with Call;
  *   4. check a date (the date checker);
  *   5. the events we host (one staged figure beside the eight names, each a link to its block on /events/);
@@ -77,10 +77,11 @@ const spaceCards: SpaceCard[] = [
 ];
 
 /*
-  The essentials, each stated once on the site's pages: what is included, the hours, how a date is held,
-  and rates by phone (the owner's approved wording, shortened; brand.md, "No published prices").
+  The essentials, each stated once on the site's pages: who can book and what is included, the hours, how
+  a date is held, and rates by phone (the owner's approved wording, shortened; brand.md, "No published
+  prices"). "Open to the public" lives here only; the FAQ no longer asks it.
 */
-const included = 'Tables and chairs, and on-site parking, with every rental.';
+const included = 'Open to the public. Tables, chairs, and on-site parking come with every rental.';
 const hours = `${site.access.days}, ${site.access.hours}.`;
 const ratesShort = 'Our affordable rates vary with peak season, holidays, and the day of the week. Call us for pricing and special offers.';
 
@@ -154,7 +155,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         <SectionHeading id="essentials-heading" heading="The essentials" />
         <dl class="essentials">
           <div class="essential">
-            <dt>Included</dt>
+            <dt>The basics</dt>
             <dd>{included}</dd>
           </div>
           <div class="essential">

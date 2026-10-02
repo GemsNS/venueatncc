@@ -559,6 +559,11 @@
   }
 }
 
+/* The space a photo takes, left empty on the row that has none (the combined choice), so the titles line up. */
+.bk-thumb--none {
+  align-self: stretch;
+}
+
 .bk-thumb__img {
   display: block;
   width: 100%;
@@ -1572,16 +1577,10 @@ button.bk-progress__item:hover .bk-progress__label {
   text-align: right;
 }
 
-.bk-summary__note {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--separator);
-  font-size: var(--t-subhead);
-  color: var(--label-2);
-}
 
 /*
   The card earns its place only beside the wizard with its rows. On phones the action bar carries the date,
-  and on the review step the review shows every row and the same note, so the card is left out there.
+  and on the review step the review shows every row and the fine print, so the card is left out there.
 */
 @media (max-width: 59.98rem) {
   .bk-aside {
@@ -1928,9 +1927,11 @@ html:not(.js) .bk-skel {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr));
 }
 
+/* Each date on one line, so the three chips always match. */
 .bk-dc__sats .bk-chip {
   justify-content: center;
   padding-inline: 8px;
+  white-space: nowrap;
 }
 
 /* A serif capsule with a hairline; pressed, it takes the Peony fill. */

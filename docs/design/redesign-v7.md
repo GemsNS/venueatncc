@@ -19,7 +19,8 @@ picks with their reasons. In short:
    1. the rose welcome, with Check Availability;
    2. the three spaces: the one photo, the name, one line, and the capacity, each card a link to its block
       on The Space;
-   3. the essentials (`#essentials`): Included (tables and chairs, on-site parking), Hours (Monday to
+   3. the essentials (`#essentials`): The basics (open to the public; tables, chairs, and on-site parking
+      come with every rental; the FAQ no longer asks "Who can book the venue?"), Hours (Monday to
       Saturday, 9:00 AM to 12:00 midnight), Holding your date (a reservation and a non-refundable deposit),
       and Rates (the approved wording, shortened, with Call);
    4. check a date (the date checker);
@@ -27,17 +28,22 @@ picks with their reasons. In short:
    6. find us (`#location`, `#contact`): the drive, the address with Get Directions, and Faith VanDyke,
       the phone, and the email.
 3. **What moved off other pages.** Rates & FAQ no longer states what is included, the hours, the deposit
-   rule, the rates sentence, or the contact person: it has "Your quote" (what to have ready when you call
-   and what a quote covers, with Call and a link to the booking page), "How booking works" (check your
-   date, get your quote, hold the date), and the questions. The FAQ "How do I check if my date is
+   rule, the rates sentence, or the contact person: it has "Your rate" (every rate is quoted for a specific
+   date; what to have ready when you call, with Call and a link to the booking page), "How booking works"
+   (check your date, get your quote, sign the reservation; the deposit is named on home only), and the
+   questions. The FAQ "How do I check if my date is
    available?" is cut (the booking steps answer it). The Space loses its gallery ("A closer look": four
-   further angles). Its blocks keep the fuller lead, capacity, and features, the amenities stay, and no
-   lead repeats a home card's line.
+   further angles). Each block is the space's one photo (no caption: the name beside it says what it
+   shows, and the Enlarge button stays), its name, a lead that does not restate the features, the
+   capacity, and the features; the amenities stay.
 4. **One real photo per subject** across the site: `hall-windows`, `main-hall-stage`, `grove-tables`,
    `driveway` (`SUBJECT_PHOTO` in `src/data/photos.ts`). Rates & FAQ shows The Stage Hall's photo; the
    404 shows The Pine Garden's; Book's three space rows show their space's photo and the combined row none;
    the share cards use only these four (and the home card's rose still life). Staged event photos are
-   unchanged.
+   unchanged. The unused real photos and `styled-driveway-petals` live in `design-archive/venue-unused/`,
+   so they are not built or published.
+5. **Events.** Every block leads with its name, copy, and spaces, then its photo, so on phones each photo
+   sits under its own heading (Weddings included, with its two ceremonies).
 
 ## Version 8 amendments (fewer pages, straightforward, October 2, 2026)
 
@@ -218,7 +224,7 @@ its label-in-photo cards, or its tab bars.
 |---|---|---|
 | `PageHero.astro` | `PageIntro.astro` | The `FROST` table, `phone="stack"`, `PHONE_SIZES`, `height`, `descriptors` as plain text, and `facts` go with it. |
 | `PhotoCard.astro` | `FigureCard.astro` | No strip, no text inside the frame. |
-| `AnchorBar.astro` | nothing | No in-page sticky bar on any page. `scroll-margin-top` on sections stays at `var(--nav-h) + 1rem` for links from elsewhere (the home space cards link to `/the-space/#hall` and so on). |
+| `AnchorBar.astro` | nothing | No in-page sticky bar on any page. `scroll-margin-top` on sections stays at `var(--nav-h) + 1rem` for links from elsewhere (the home space cards link to `/the-space/#fireside-room` and so on). |
 | `VerticalTabs.astro` | plain sections | The Space is three editorial splits in a row, each with an `id`. |
 | `CtaBand.astro` | the footer's Plan column and each page's one primary action | The closing band's sentence ("Choose a date and a space ...") survives only as the /book/ lead. |
 | The `badge` prop and `.photo__badge` in `Photo.astro` | the caption | Also removed from `Photo`: `ratio="fill"` (nothing fills a band any more), `tallSizes` (no frame is taller than the 4:5 file). |
@@ -227,7 +233,7 @@ its label-in-photo cards, or its tab bars.
 ### `PageIntro.astro` (new)
 
 Props: `id`, `eyebrow`, `title` (the h1), `lead`, `links` (an array of `{ label, href }` rendered as a row
-of Caslon Text links with chevrons, used for an event's spaces linking to `/the-space/#hall` and so on; on
+of Caslon Text links with chevrons, used for an event's spaces linking to `/the-space/#fireside-room` and so on; on
 The Space they are the three space anchors), an `actions` slot (one button, or none), `photo`, `caption`
 (string; on a staged photo the component prepends the disclosure itself), and `breadcrumbs` (optional; event
 pages pass them and they render above the eyebrow, in the text column). Desktop: a 5:7 grid, the text column
@@ -490,6 +496,11 @@ venue's structured data and in llms.txt's own sections.
 - Cut the blurb and the button; move the statement to the top; add Check availability to Plan.
 
 ## 5. Page-by-page section order
+
+**Superseded.** The page plans below are version 7's and describe pages and photos that no longer exist
+(the intro and gallery figures on The Space, the grounds and visit sections, "Find us in north Suffolk",
+the event pages). The current pages are those of "Version 8 amendments" and "Version 9 amendments" at the
+top of this file. The plans are kept as a record only.
 
 Every section is `section.section > .container` with the hairline between sections, unless marked as a
 band (Petal). "Split" means `ImageTextSplit`; "intro" means `PageIntro`.

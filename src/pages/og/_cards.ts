@@ -41,7 +41,7 @@ function pick(photo: VenuePhoto | null): ShareCard['photo'] {
   return { file: real.file, caption: real.caption };
 }
 
-const bySpace = (space: PhotoSpace) => pick(spacePhoto(space));
+const bySpace = (space: PhotoSpace, region?: ShareCard['photo']['region']) => ({ ...pick(spacePhoto(space)), ...(region ? { region } : {}) });
 const capacity = (id: 'indoor' | 'main' | 'outdoor') => site.spaces.find((s) => s.id === id)?.capacity;
 const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Fireside Room';
 const mainHall = site.spaces.find((s) => s.id === 'main')?.name ?? 'The Stage Hall';
@@ -64,10 +64,13 @@ export const shareCards: Record<string, ShareCard> = {
     layout: 'still',
   },
   'the-space': { title: 'The Space', line: spacesLine, photo: bySpace('hall') },
+  // The Stage Hall from the seats: the lower left of the photo, rows of red chairs and the stage step, so the
+  // card leads with the room rather than the screen and the instruments on the stage. 2381 x 1249 of the
+  // 3840 x 2560 file, so the 1200 x 630 card is never drawn past its detail.
   pricing: {
     title: 'Rates & FAQ',
     line: 'Rates vary with the season and the day of the week. Call us for pricing',
-    photo: bySpace('main'),
+    photo: bySpace('main', { left: 0, top: 0.5, width: 0.62, height: 0.488 }),
   },
   // The events index leads with the photo of the first event on the list.
   events: {
@@ -75,7 +78,13 @@ export const shareCards: Record<string, ShareCard> = {
     line: 'Celebrations, gatherings, and meetings, and the spaces that suit each one',
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
-  book: { title: 'Check availability', line: 'Choose a date and a space, and send your request', photo: bySpace('grounds') },
+  // The drive, the lot, and the pines, framed so the panel sits over the front gable (brand.md, Separation:
+  // no feature of the building that reads as a church leads a share image). 2304 x 1208 of the file.
+  book: {
+    title: 'Check availability',
+    line: 'Choose a date and a space, and send your request',
+    photo: bySpace('grounds', { left: 0.36, top: 0.15, width: 0.6, height: 0.472 }),
+  },
 };
 /** og:image:alt for a card: what the image shows, in reading order. */
 export function shareCardAlt(key: string): string | undefined {

@@ -1,8 +1,8 @@
 /**
  * The live summary: the request so far, in a white panel that sits beside the wizard on wide screens. With
  * `spacePhotos` it opens with the chosen space's photo (steps 2 and 3, where the space rows are off screen,
- * so no photo appears twice). The venue does not publish prices, so the card shows no amounts: we confirm
- * availability and send each quote personally.
+ * so no photo appears twice). The venue does not publish prices, so the card shows no amounts. How a quote
+ * comes is said once in the flow, in the fine print of the review step (StepReview), so the card has no note.
  */
 import { eventTypeName } from '../../data/event-types';
 import { formatEndTime, formatTime } from '../../shared/dates';
@@ -35,7 +35,6 @@ export function SummaryCard(props: { d: Draft; spacePhotos?: SpacePhotos }) {
             </div>
           ))}
         </dl>
-        <p class="bk-summary__note">We confirm availability and send your quote personally.</p>
       </div>
     </div>
   );

@@ -140,6 +140,8 @@ export function ChoiceList<T extends string>(props: {
   const { id, options, value, onChange } = props;
   const { refs, onKeyDown } = useRadioKeys(options, onChange);
   const tabIdx = tabIndexOf(options, value);
+  /* When some rows have a photo, a row without one keeps the same empty space, so every title lines up. */
+  const anyMedia = options.some((o) => o.media);
 
   return (
     <div
@@ -173,7 +175,7 @@ export function ChoiceList<T extends string>(props: {
             }}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
-            {o.media}
+            {o.media ?? (anyMedia && <span class="bk-thumb bk-thumb--none" aria-hidden="true" />)}
             <span class="bk-choice__text">
               <span class="bk-choice__title" id={`${base}-t`}>
                 {o.title}

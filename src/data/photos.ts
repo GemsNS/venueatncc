@@ -4,9 +4,11 @@
  *   One real photograph per subject, across the whole site (the client, October 2, 2026: "no redundant
  *   images, like multiple angles of the gazebo, choose the best one"). The four in use (SUBJECT_PHOTO,
  *   below) are hall-windows (The Fireside Room), main-hall-stage (The Stage Hall), grove-tables (The Pine
- *   Garden and its gazebo), and driveway (the building and the drive). Every other real photo stays in
- *   src/assets/venue/ with an `unused` reason in photoDetails: it is never in `photos`, photoByName() never
- *   returns it, and no page, share card, or structured data shows it. The files are never deleted.
+ *   Garden and its gazebo), and driveway (the building and the drive). Every other real photo keeps its
+ *   photoDetails entry with an `unused` reason, and its file (with its -tall version) lives in
+ *   design-archive/venue-unused/, so it is not built or published at all. It is never in `photos`,
+ *   photoByName() never returns it, and no page, share card, or structured data shows it. The files are
+ *   never deleted; a staged photo may still name an archived photo as the one it was made from (styledOf).
  *
  *   Real photographs show the spaces. The space cards, The Space, the arrival band, the booking thumbnails,
  *   the 404, share images, and structured data use real photos only. The one exception is the home page's
@@ -19,10 +21,9 @@
  *
  * FILES IN src/assets/venue/ (every file there is published on the site)
  *   <name>.jpg                   3:2 landscape, up to 3840px wide where the camera original allows. One entry in
- *                                `photos` unless photoDetails marks it unused. grove-pines.jpg (unused since
- *                                version 9; the home hero is the rose clip) is nearly its original's full width,
- *                                3500px after leveling by 2.5 degrees, at its own ratio.
- *   <name>-tall.jpg              4:5 portrait, 2000px wide (grove-pines-tall.jpg is 1600px at 7:10). Attached to
+ *                                `photos`. An unused photo is moved to design-archive/venue-unused/ with its
+ *                                -tall file; its photoDetails entry stays, marked unused.
+ *   <name>-tall.jpg              4:5 portrait, 2000px wide. Attached to
  *                                <name>.jpg as `tall` for art direction on phones. Never listed on its own.
  *   styled-event-<slug>.jpg      The staged photo of one event (virtual staging: furniture, linens, florals,
  *                                and lighting added; architecture, fixtures, and trees unchanged). Its
@@ -58,7 +59,7 @@ export interface PhotoDetail {
   event?: string;
   /**
    * For a real photo that is not the one chosen for its subject: why it lost (version 9, one real photo per
-   * subject). The file stays in src/assets/venue/ and is never shown.
+   * subject). The file lives in design-archive/venue-unused/ and is never built or shown.
    */
   unused?: string;
 }
@@ -115,7 +116,7 @@ export const STAGED_SCENES: Record<string, string> = {
 };
 
 export const photoDetails: Record<string, PhotoDetail> = {
-  // UNUSED (version 9). Every real photo below that has `unused` is kept for reference and shown nowhere.
+  // UNUSED (version 9). Every photo below that has `unused` is kept in design-archive/venue-unused/ and shown nowhere.
   'exterior-dusk.jpg': {
     unused: 'The cross on the gable is the subject of the frame (brand.md, Separation); driveway shows the building instead.',
     alt: 'The venue building at dusk: tan stucco walls, a lit covered entry, arched windows, and a white cross on the front gable, with tall pines behind',
@@ -259,6 +260,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
   // The drive styled for a wedding day. Kept in the set but shown on no page: the building's cross is front
   // and centre in it (brand.md, Separation, and "Staged event photos").
   'styled-driveway-petals.jpg': {
+    unused: 'The cross on the building is front and centre (brand.md, Separation). Kept in design-archive/venue-unused/.',
     alt: 'Styled concept: the drive to the venue lined on both edges with bright pink and white rose petals and clusters of roses, leading to the building among tall pines',
     styledOf: 'driveway.jpg',
     space: 'grounds',
@@ -377,8 +379,11 @@ const allReal = all.filter((p) => !staged.includes(p)).sort(byDetailOrder);
  */
 export const photos: VenuePhoto[] = allReal.filter((p) => !isUnused(p));
 
-/** The real photographs kept in src/assets/venue/ but shown nowhere, each with its reason in photoDetails. */
+/** Real photographs marked unused but still in src/assets/venue/ (none once each is moved to design-archive/venue-unused/). */
 export const unusedPhotos: VenuePhoto[] = allReal.filter(isUnused);
+for (const p of unusedPhotos) {
+  console.warn(`[photos] ${p.file} is marked unused but is still in src/assets/venue/, so it is published. Move it and its -tall file to design-archive/venue-unused/.`);
+}
 
 for (const [space, name] of Object.entries(SUBJECT_PHOTO)) {
   const p = photos.find((x) => x.name === name);
@@ -393,7 +398,7 @@ for (const p of photos) {
 for (const s of staged) {
   if (!s.styledOf) {
     console.warn(`[photos] ${s.file} looks like a staged photo but has no styledOf in photoDetails, so it is not shown. Add styledOf: '<base>.jpg'.`);
-  } else if (!allReal.some((p) => p.file === s.styledOf)) {
+  } else if (!allReal.some((p) => p.file === s.styledOf) && !photoDetails[s.styledOf]?.unused) {
     console.warn(`[photos] ${s.file} is a staged photo of ${s.styledOf}, but that photo is not in src/assets/venue/.`);
   }
 }
@@ -411,7 +416,7 @@ for (const stem of tallByStem.keys()) {
 }
 // Staged entries are registered before their files exist, so only real photos are checked here.
 for (const [file, detail] of Object.entries(photoDetails)) {
-  if (!detail.event && !all.some((p) => p.file === file)) console.warn(`[photos] photoDetails lists ${file}, but no such file is in src/assets/venue/.`);
+  if (!detail.event && !detail.unused && !all.some((p) => p.file === file)) console.warn(`[photos] photoDetails lists ${file}, but no such file is in src/assets/venue/.`);
 }
 for (const e of eventTypes) {
   if (!photoDetails[`${stagedName(e.slug)}.jpg`]?.styledOf) {

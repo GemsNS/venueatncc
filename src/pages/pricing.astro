@@ -5,7 +5,7 @@
  *
  * The home page states the essentials once: what is included, the hours, how a date is held, and rates by
  * phone (the approved wording, shortened). This page complements it and never restates those sentences. In
- * order: the title band; your quote (#rates: what to have ready when you call and what the quote covers,
+ * order: the title band; your rate (#rates: what to have ready when you call and what the quote covers,
  * beside the one photo of The Stage Hall, with Call); how booking works (#booking: three steps, from the
  * request to the held date); then the questions (#faq), one accordion with no groups, and the FAQPage
  * structured data.
@@ -30,13 +30,13 @@ const description = `How to get a quote from ${site.name} in ${site.address.city
 
 /* What a quote needs and covers. The rates sentence itself is on the home page (#essentials). */
 const quoteLead =
-  'Every quote is for a specific date. Call with your date, the space, your guest count, and the hours you need, and we will give you the rate for that day and any special offer that applies.';
+  'Every rate is quoted for a specific date. Call with your date, the space, your guest count, and the hours you need, and we will give you the rate for that day and any special offer that applies.';
 
-/* How booking works, from the request to the held date. The deposit rule itself is on the home page. */
+/* How booking works, from the request to the held date. The deposit rule itself is on the home page (#essentials), so step 3 does not name it. */
 const steps = [
   { title: 'Check your date', text: 'Choose a date on the booking page to see which spaces are open, and send your request with the details of your event.' },
-  { title: 'Get your quote', text: 'We confirm availability personally and send your quote, with the payment terms for your date.' },
-  { title: 'Hold the date', text: 'Return the signed reservation with your deposit, and the date is yours.' },
+  { title: 'Get your quote', text: 'We check the calendar and your details and send your quote.' },
+  { title: 'Hold the date', text: 'Sign the reservation, and the date is yours.' },
 ];
 
 const photo = spacePhoto('main');
@@ -52,7 +52,7 @@ const photo = spacePhoto('main');
     <div class="container">
       {
         photo ? (
-          <ImageTextSplit photo={photo} id="rates-heading" heading="Your quote" lead={quoteLead} caption="The Stage Hall">
+          <ImageTextSplit photo={photo} id="rates-heading" heading="Your rate" lead={quoteLead} caption="The Stage Hall">
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -65,7 +65,7 @@ const photo = spacePhoto('main');
           </ImageTextSplit>
         ) : (
           <div class="section-head">
-            <h2 id="rates-heading">Your quote</h2>
+            <h2 id="rates-heading">Your rate</h2>
             <p class="t-lead">{quoteLead}</p>
             <div class="btn-row">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>

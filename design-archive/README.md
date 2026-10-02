@@ -19,6 +19,16 @@ of `src/assets/venue/`, never by deleting it here.
 
 The same set is also kept next to the original photos in `C:\NoOnedrive\venue\Generated scenes`.
 
+## venue-unused
+
+The real photos that lost to the one photo per subject rule of version 9 (the client, October 2, 2026: "no
+redundant images, like multiple angles of the gazebo, choose the best one"), with their -tall files:
+`approach-dusk`, `exterior-dusk`, `gazebo`, `grove-path`, `grove-pines`, `hall-doors`, `hall-fireplace`, and
+`main-hall`; and `styled-driveway-petals.jpg`, kept in the staged set but shown on no page (the building's
+cross is front and centre in it). Moved out of `src/assets/venue/` so they are not published at hashed URLs.
+Their entries in `photoDetails` (src/data/photos.ts) stay, marked `unused`, with the reason for each; five
+staged photos name one of them as their base. `src/assets/venue/README.md` has the picks.
+
 ## photos-before-upscale
 
 The 32 photos the site used until 2026-10-01 (real photos at 2400 x 1600 and 1600 x 2000, staged photos at

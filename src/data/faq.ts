@@ -5,7 +5,7 @@
  * Only questions with an answer are published (on /pricing/, in llms.txt, and as FAQPage structured data).
  * Questions with `a: null` are a to-do list for the venue team.
  *
- * One home per fact: what is included, the hours, holding a date, the rates, the contact person, and the
+ * One home per fact: who can book (open to the public), what is included, the hours, holding a date, the rates, the contact person, and the
  * address are stated on the home page; how a quote and a booking work in the sections above the FAQ on the
  * same page (so "How do I check if my date is available?" is no longer a question here); the capacities and
  * features on The Space; and the occasions on Events. None of them is a question here. An answer whose fact
@@ -35,10 +35,6 @@ const pineGarden = site.spaces.find((s) => s.id === 'outdoor');
 export const RATES_WORDING = `Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us at ${phone} and we will be happy to help you.`;
 
 export const faqs: Faq[] = [
-  {
-    q: 'Who can book the venue?',
-    a: 'The Venue @ NCC is open to the public. Families, businesses, nonprofits, and community groups can all book.',
-  },
   {
     q: 'Can I see the venue before I book?',
     a: 'Yes. Ask for a tour when you send your request, or call us, and we will arrange a time to walk through the space with you.',

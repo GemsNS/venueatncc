@@ -10,18 +10,19 @@ of the property belong here, plus the staged event photos made from them and the
   gazebo, choose the best one (for raw image)". The site shows exactly four real photos, one per subject
   (`SUBJECT_PHOTO` in `src/data/photos.ts`): `hall-windows` (The Fireside Room), `main-hall-stage` (The
   Stage Hall), `grove-tables` (The Pine Garden and its gazebo), and `driveway` (the building and the drive).
-  Every other real photo here is marked `unused` in `photoDetails`, with the reason it lost, and is never
-  shown; see "Unused real photos" below. Never delete one.
-- **Real photographs show the spaces**: the home hero, the space cards, The Space, the arrival band, share
+  Every other real photo is marked `unused` in `photoDetails`, with the reason it lost, and its files are
+  in `design-archive/venue-unused/`, so they are not published; see "The picks, and the unused real
+  photos" below. Never delete one.
+- **Real photographs show the spaces**: the space cards, The Space, the arrival band, share
   images (except the home card), and structured data.
 - **The home share card is a still life**: `share-rose-bouquet.jpg`, a generated bouquet of pink and white
   roses, is the home page's link preview only (`src/pages/og/_cards.ts`). Files named `share-*` are never
   listed in `photos`, never shown in a gallery, and never used in structured data.
-- **Staged photographs show events**: every event tile and event page hero, all eight in one décor style,
-  each with the "Styled Concept" badge.
+- **Staged photographs show events**: every event block on /events/ and the home events split, all eight
+  in one décor style, each with the disclosure ("Styled concept. Décor is not included.") at the start of
+  its caption.
 - **All or nothing**: `eventsStaged` in `src/data/photos.ts` is true only when all eight staged files are
-  here. Until then each event page hero shows the real photo its staged file is made from (no badge, no
-  caption), event tiles are text only, and the styled-photo note is hidden, so a half-staged grid never
+  here. Until then each event block shows no photo (no disclosure, no caption), event tiles are text only, and the styled-photo note is hidden, so a half-staged grid never
   ships and no real photo repeats in a grid.
 - **No toggles, no repeats**: there is no As Photographed / Styled Concept switch, and no image appears
   twice on a page.
@@ -30,25 +31,24 @@ of the property belong here, plus the staged event photos made from them and the
 
 | Pattern | What it is | How the site uses it |
 |---|---|---|
-| `name.jpg` | 3:2 landscape, as wide as the camera original allows up to 3840px (3840 for most; `grove-path` 3600, `gazebo` 3000, `exterior-dusk` 2880) | One photo in `photos` (src/data/photos.ts). |
+| `name.jpg` | 3:2 landscape, as wide as the camera original allows up to 3840px (all four in use are 3840) | One photo in `photos` (src/data/photos.ts). |
 | `name-tall.jpg` | 4:5 portrait, 2000px wide (a phone hero draws it about 1800px wide at 3x) | Attached to `name.jpg` as `tall`. Shown instead of the landscape file on phones (below 46.5rem) wherever a page asks for the tall crop. Never listed on its own. |
-| `grove-pines.jpg`, `grove-pines-tall.jpg` | The home hero, the one exception: both are cut from the original after leveling it by 2.5 degrees (the camera was slightly rotated); the landscape file is nearly its full width (3500 x 2532) for full-bleed screens, and the portrait file is 7:10 | The hero's frames in src/pages/index.astro are fitted to these two framings (the roof, the gazebo, and the cut through the front table's legs). Re-measure them there if either file changes. |
-| `styled-event-<slug>.jpg` | The staged photo of one event: furniture, linens, florals, and lighting added; architecture, fixtures, and trees unchanged | Its `photoDetails` entry (already registered) names the real photo it was made from (`styledOf`) and the event (`event`). Shown only through `eventPhoto()`, with the badge, and on the event page with the caption "Styled concept. Décor is not included." |
+| `styled-event-<slug>.jpg` | The staged photo of one event: furniture, linens, florals, and lighting added; architecture, fixtures, and trees unchanged | Its `photoDetails` entry (already registered) names the real photo it was made from (`styledOf`) and the event (`event`). Shown only through `eventPhoto()`, always with the disclosure, "Styled concept. Décor is not included.", at the start of its caption. |
 | `share-<name>.jpg` | A still life for a share card, not a photo of the property. Today only `share-rose-bouquet.jpg`: Gemini's 1024 x 572 output (variant 4 of 4, all kept in `design-archive/generated-scenes/share-bouquet/`) upscaled to 1920 wide | Read from disk by `src/pages/og/[key].jpg.ts` for the home card. Skipped by `src/data/photos.ts`. |
 
-The eight staged files and the real photo each is made from:
+The staged files and the real photo each is made from (a base marked "archived" is unused and kept in `design-archive/venue-unused/`):
 
 | File | Made from |
 |---|---|
-| `styled-event-weddings.jpg` | `gazebo.jpg` |
+| `styled-event-weddings.jpg` | `gazebo.jpg` (archived) |
 | `styled-event-receptions-banquets.jpg` | `hall-windows.jpg` |
-| `styled-event-baby-bridal-showers.jpg` | `hall-fireplace.jpg` |
+| `styled-event-baby-bridal-showers.jpg` | `hall-fireplace.jpg` (archived) |
 | `styled-event-birthday-parties.jpg` | `hall-windows.jpg` (fireplace corner crop) |
-| `styled-event-repasts-memorials.jpg` | `hall-doors.jpg` (window corner crop) |
-| `styled-event-meetings-trainings.jpg` | `hall-doors.jpg` |
+| `styled-event-repasts-memorials.jpg` | `hall-doors.jpg` (archived; window corner crop) |
+| `styled-event-meetings-trainings.jpg` | `hall-doors.jpg` (archived) |
 | `styled-event-graduations-reunions.jpg` | `grove-tables.jpg` |
-| `styled-event-community-events.jpg` | `grove-path.jpg` |
-| `styled-wedding-indoor-ceremony.jpg` | `main-hall.jpg` (outside the event set: the weddings page's indoor ceremony) |
+| `styled-event-community-events.jpg` | `grove-path.jpg` (archived) |
+| `styled-wedding-indoor-ceremony.jpg` | `main-hall.jpg` (archived; outside the event set: the weddings page's indoor ceremony) |
 
 Use originals at least 1600px on the long edge. The build prints a warning for smaller files, for files with
 no `photoDetails` entry, and for real photos listed with no file.
@@ -96,9 +96,11 @@ wide files instead of one 3200 file, so a phone's tap to enlarge fetches the 160
 
 ## Files shown on no page
 
-`styled-driveway-petals.jpg` (the building's cross is front and centre in it) is kept in the set but placed
-on no page. The unused real photos (below) are also shown nowhere. They stay for reference; take them out of
-this folder only by moving them to `design-archive/`.
+None are in this folder: every file here is published, so a photo shown on no page does not stay here.
+`styled-driveway-petals.jpg` (the building's cross is front and centre in it) and the unused real photos
+(below), with their -tall files, are in `design-archive/venue-unused/`. Their `photoDetails` entries stay,
+marked `unused`, so a staged photo can still name its base. The build warns if a photo marked unused is
+back in this folder.
 
 ## The picks, and the unused real photos (version 9)
 
@@ -164,14 +166,14 @@ source width, crops with CSS to the frame's ratio, and swaps in the tall file on
 | `main-hall-stage` | main | **In use.** Red seats facing the raised stage, the screen above (owner's IMG_4940) |
 | `grove-tables` | grove | **In use.** Gazebo and picnic tables on a paved patio under pines |
 | `driveway` | grounds | **In use.** Wide paved drive and lot in daylight, the building beyond |
-| `hall-fireplace` | hall | Unused. Toward the windows and the fireplace wall |
-| `hall-doors` | hall | Unused. Double doors, wall-mounted screen, arched windows |
-| `main-hall` | main | Unused. The Stage Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
-| `gazebo` | grove | Unused. Timber gazebo |
-| `grove-path` | grove | Unused. Paved path to the gazebo through the trees |
-| `grove-pines` | (none) | Unused. The gazebo under tall pines, picnic tables in front; another framing of the `grove-path` original |
-| `approach-dusk` | grounds | Unused. Long paved drive and lawn toward the building at dusk |
-| `exterior-dusk` | grounds | Unused. The building at blue hour, lit entry, pines behind |
+| `hall-fireplace` | hall | Unused (archived). Toward the windows and the fireplace wall |
+| `hall-doors` | hall | Unused (archived). Double doors, wall-mounted screen, arched windows |
+| `main-hall` | main | Unused (archived). The Stage Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
+| `gazebo` | grove | Unused (archived). Timber gazebo |
+| `grove-path` | grove | Unused (archived). Paved path to the gazebo through the trees |
+| `grove-pines` | (none) | Unused (archived; the home hero is the rose clip). The gazebo under tall pines, picnic tables in front; another framing of the `grove-path` original |
+| `approach-dusk` | grounds | Unused (archived). Long paved drive and lawn toward the building at dusk |
+| `exterior-dusk` | grounds | Unused (archived). The building at blue hour, lit entry, pines behind |
 
 Use descriptive file names. Search engines read them, and they become the fallback alt text when a photo has
 no entry.

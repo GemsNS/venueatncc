@@ -1,7 +1,7 @@
 ---
 /**
  * The Space (docs/design/redesign-v7.md, "Version 9"): the title band, one block per space (its one photo
- * whole with the caption under it, beside two sentences, the capacity, and the key features), and the
+ * whole, beside its name, a sentence or two, the capacity, and the key features), and the
  * amenities as one compact list. No gallery: the client asked for one real photo per subject, so each space
  * shows only its chosen photo (SUBJECT_PHOTO in src/data/photos.ts). No visit or "included" sections: the
  * visit request lives on Book, and what the rental includes on the home page.
@@ -35,7 +35,6 @@ interface SpaceBlock {
   capacity: number;
   features: string;
   photo: VenuePhoto | null;
-  caption: string;
 }
 
 const spaces: SpaceBlock[] = [
@@ -43,11 +42,10 @@ const spaces: SpaceBlock[] = [
     id: 'fireside-room',
     oldId: 'hall',
     name: fireside.name,
-    lead: 'A bright indoor room for receptions, dinners, showers, and meetings. Daylight comes through the arched windows, the fireplace wall is a natural focal point, and the open floor takes round tables, a long table, or rows of seats.',
+    lead: 'A bright indoor room for receptions, dinners, showers, and meetings. The open floor takes round tables, a long table, or rows of seats.',
     capacity: fireside.capacity,
     features: 'Arched windows, a fireplace feature wall, wood-look floors, recessed lighting, a wall-mounted screen, and double doors',
     photo: spacePhoto('hall'),
-    caption: 'The arched windows and the fireplace wall',
   },
   {
     id: 'stage-hall',
@@ -57,17 +55,15 @@ const spaces: SpaceBlock[] = [
     capacity: stageHall.capacity,
     features: 'A raised stage, rows of red upholstered chairs, a vaulted ceiling, and a wall-mounted screen',
     photo: spacePhoto('main'),
-    caption: 'Red seats facing the raised stage',
   },
   {
     id: 'pine-garden',
     oldId: 'grove',
     name: pineGarden.name,
-    lead: 'Our outdoor setting for ceremonies, reunions, and gatherings in the open air, with tall pines on every side.',
+    lead: 'Our outdoor setting for ceremonies, reunions, and gatherings in the open air.',
     capacity: pineGarden.capacity,
     features: 'A timber gazebo, picnic tables on a patio, open lawn, and paths through the trees',
     photo: spacePhoto('grove'),
-    caption: 'The gazebo, the patio, and the picnic tables',
   },
 ];
 
@@ -108,7 +104,7 @@ const SPLIT_SIZES = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw';
         <span id={s.oldId} class="sp-target sp-alias" aria-hidden="true" />
         <div class="container">
           {s.photo ? (
-            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} heading={s.name} lead={s.lead} caption={s.caption} flip={i % 2 === 1} sizes={SPLIT_SIZES}>
+            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} heading={s.name} lead={s.lead} caption={false} flip={i % 2 === 1} sizes={SPLIT_SIZES}>
               <dl class="sp-facts">
                 <div class="sp-fact">
                   <dt>Capacity</dt>
