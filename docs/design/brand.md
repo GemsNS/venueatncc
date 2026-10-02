@@ -1,4 +1,4 @@
-# The Venue @ NCC: brand and redesign spec (version 7)
+# The Venue @ NCC: brand and redesign spec (version 8)
 
 This document is the source of truth for the brand. It supersedes the visual parts of `hig-web-spec.md`
 (colors, type, imagery). The interaction model from that spec still applies: capsule buttons, Title Case
@@ -38,6 +38,45 @@ file, and doc that feeds the site:
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
    2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
    not a photo of the property, and is measured against the same rule and meets it: see "The hero loop".
+
+## Version 8 amendments (fewer pages, straightforward, October 2, 2026)
+
+The client, verbatim and binding: "REMOVE THE MENTION OF 'WITHOUT RETURNING TO THEIR CARS', MAKE DESIGN MORE
+SIMPLE LESS REPETITIVE LESS PAGES MORE STRAIGHTFORWARD". Version 8 applies on top of version 7 and overrides
+it where they differ. Everything in version 7 about photos (nothing on a photo, photos whole, the
+disclosure under the photo), the rose hero, and the name morph stays.
+
+1. **No walking to cars.** No copy describes guests walking between spaces, to their cars, or "without
+   returning to their cars". The sentence is gone from the weddings copy and must not come back anywhere.
+2. **Five public pages.** Home (`/`), The Space (`/the-space/`), Events (`/events/`), Rates & FAQ
+   (`/pricing/`), and Book (`/book/`), plus the 404 and the admin. The navigation is The Space, Events,
+   Rates & FAQ, then the phone and Check Availability; the phone menu is the same list with Home first and
+   no event sub-list.
+3. **Events is one page.** Each of the eight occasions (`src/data/events.ts`) is a compact block with its
+   slug as its id: one staged photo with its disclosure caption, the name, one or two sentences, and the
+   spaces that suit it (links to The Space). No planning guides, checklists, per-event questions, related
+   links, or breadcrumbs. One closing line for any other occasion, with Check Availability.
+4. **Rates & FAQ is one page.** The approved rates wording with Call (the page's one filled button) and a
+   text link to the booking page; the booking details (what is included, holding your date, the hours), the
+   one home of those facts; then the questions (`#faq`), one accordion, with the FAQPage structured data. No
+   question repeats a fact stated above it on the page. There is no second request form: a date request
+   has one home, Book, whose wizard also carries the visit request (`?visit=1`).
+5. **The Space** is a title band, one block per space (photo whole, two or three sentences, capacity,
+   features), a small gallery of four further views, and the amenities as one compact list. No intro photo,
+   no jump links, no grounds, "included", or visit sections.
+6. **Home** is the rose welcome, the three spaces (photo, name, one line, capacity), Check a date, the
+   events list (links to `/events/#<slug>`), and Getting here. Each section has a heading and at most a
+   one-line lead; no eyebrows.
+7. **Footer** is one short block: the lockup, The Space, Events, Rates & FAQ, Check availability, the
+   address (directions), the phone, the email, and the legal line. No event list, no repeated groups.
+8. **One look for inner pages.** Events, Rates & FAQ, Book, and The Space open with the same Petal title band
+   (`.title-band` in `global.css`): the h1 and at most one line. Eyebrows are kept only where they label a
+   state (the 404, the booking wizard's step).
+9. **Old addresses.** Every removed URL answers 301 from the server (`MOVED_PAGES` in `server/static.ts`),
+   with the query string kept before the fragment, and the demo build publishes a redirect page at each:
+   `/events/<slug>/` to `/events/#<slug>` (all eight), `/events/church-community-events/` to
+   `/events/#community-events`, `/faq/` to `/pricing/#faq`, and `/about/` to `/the-space/`. The sitemap
+   lists the five pages; the share cards are home, the-space, events, pricing, and book.
 
 ## Version 7 amendments (image first, October 1, 2026)
 

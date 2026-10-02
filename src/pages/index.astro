@@ -1,16 +1,17 @@
 ---
 /**
- * Home (docs/design/redesign-v7.md, section 5, "/ Home"), in this order: the video hero with the welcome
+ * Home (docs/design/redesign-v7.md, "Version 8"), in this order: the video hero with the welcome
  * over the pink rose clip (the business name as the first screen's one dominant element, which morphs into
- * the header lockup on scroll), the three spaces as figure cards, the date checker beside its copy, the
- * events we host (one staged figure beside the eight event names), and where to find us.
+ * the header lockup on scroll), the three spaces as figure cards (name, one line, capacity), the date
+ * checker, the events we host (one staged figure beside the eight names, each a link to its block on
+ * /events/), and getting here. Each section is a heading and at most one line; no eyebrows.
  *
  * Nothing sits on any photo: the cards show each photo whole with the name and the capacity under it, and
  * the splits put their captions under the photo. The welcome over the rose video is the one exception: it
  * is footage, not a photograph of the property.
  *
  * Each fact has one home (redesign-v7.md, section 4): the capacities appear here only on the space cards,
- * which link to their sections on The Space; what the rental includes is on The Space, the rates on Rates,
+ * which link to their sections on The Space; what the rental includes and the rates are on Rates & FAQ,
  * the address here once beside Get Directions (arrival), and in the footer. Booking is the welcome's button
  * and the date checker. Photos follow the one photo rule (src/data/photos.ts): real photos for the spaces
  * and the arrival, one staged photo with its disclosure for the events. No image appears twice.
@@ -55,17 +56,18 @@ const hallName = hall?.name ?? 'The Hall';
 const mainHallName = mainHall?.name ?? 'The Main Hall';
 const groveName = grove?.name ?? 'The Grove';
 
-/* The three spaces: each card shows its space's primary real photo and its capacity (the only capacity on this page). */
+/* The three spaces: each card shows its space's primary real photo, one line, and its capacity (the only capacity on this page). */
 interface SpaceCard {
   name: string;
   capacity: number | undefined;
+  line: string;
   photo: VenuePhoto | undefined;
   href: string;
 }
 const spaceCards: SpaceCard[] = [
-  { name: hallName, capacity: hall?.capacity, photo: photosFor('hall')[0], href: '/the-space/#hall' },
-  { name: mainHallName, capacity: mainHall?.capacity, photo: photosFor('main')[0], href: '/the-space/#main-hall' },
-  { name: groveName, capacity: grove?.capacity, photo: photosFor('grove')[0], href: '/the-space/#grove' },
+  { name: hallName, capacity: hall?.capacity, line: 'A bright indoor room', photo: photosFor('hall')[0], href: '/the-space/#hall' },
+  { name: mainHallName, capacity: mainHall?.capacity, line: 'An auditorium with a stage', photo: photosFor('main')[0], href: '/the-space/#main-hall' },
+  { name: groveName, capacity: grove?.capacity, line: 'Outdoors among the pines', photo: photosFor('grove')[0], href: '/the-space/#grove' },
 ];
 
 /*
@@ -107,14 +109,9 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
   <div class="page">
     <section class="section" aria-labelledby="spaces-heading">
       <div class="container">
-        <SectionHeading
-          id="spaces-heading"
-          eyebrow="The spaces"
-          heading="Two halls and a grove"
-          lead="A fully renovated property with two indoor rooms and an outdoor grove among the pines, each with its own setting and flexible layouts."
-        >
+        <SectionHeading id="spaces-heading" heading="Three spaces">
           <Fragment slot="actions">
-            <a class="btn btn--outline" href={href('/the-space/')}>Explore The Space</a>
+            <a class="link-more" href={href('/the-space/')}>See The Space <Icon name="chevron-right" /></a>
           </Fragment>
         </SectionHeading>
         <ul class="space-cards" aria-label="The spaces">
@@ -126,7 +123,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
                   <FigureCard
                     photo={card.photo}
                     label={card.name}
-                    meta={card.capacity ? `Up to ${card.capacity} guests` : undefined}
+                    meta={card.capacity ? `${card.line}, up to ${card.capacity} guests` : card.line}
                     href={card.href}
                     sizes="(min-width: 75rem) 410px, (min-width: 48rem) 31vw, 100vw"
                   />
@@ -141,7 +138,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     <section class="section" aria-labelledby="date-heading">
       <div class="container checker">
         <div class="checker__copy">
-          <SectionHeading id="date-heading" eyebrow="Availability" heading="Check a date" lead="See which spaces are open on your day." />
+          <SectionHeading id="date-heading" heading="Check a date" lead="See which spaces are open on your day." />
         </div>
         <div class="checker__panel">
           <DateChecker client:load bookHref={href(bookHref)} />
@@ -156,32 +153,30 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             <ImageTextSplit
               photo={eventsPhoto}
               id="events-heading"
-              eyebrow="Occasions"
               heading="Events we host"
-              lead="For an occasion not listed here, describe it in your request and we will confirm which space suits it."
               caption={STAGED_SCENES[eventsPhoto.name] ?? false}
               sizes="(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw"
             >
               <ul class="event-links" aria-label="Events we host">
                 {events.map((e) => (
                   <li>
-                    <a class="event-link" href={href(`/events/${e.slug}/`)}>{e.name}</a>
+                    <a class="event-link" href={href(`/events/#${e.slug}`)}>{e.name}</a>
                   </li>
                 ))}
               </ul>
-              <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+              <a class="link-more" href={href('/events/')}>See Events <Icon name="chevron-right" /></a>
             </ImageTextSplit>
           ) : (
             <>
-              <SectionHeading id="events-heading" eyebrow="Occasions" heading="Events we host">
+              <SectionHeading id="events-heading" heading="Events we host">
                 <Fragment slot="actions">
-                  <a class="link-more" href={href('/events/')}>See All Events <Icon name="chevron-right" /></a>
+                  <a class="link-more" href={href('/events/')}>See Events <Icon name="chevron-right" /></a>
                 </Fragment>
               </SectionHeading>
               <ul class="event-links" aria-label="Events we host">
                 {events.map((e) => (
                   <li>
-                    <a class="event-link" href={href(`/events/${e.slug}/`)}>{e.name}</a>
+                    <a class="event-link" href={href(`/events/#${e.slug}`)}>{e.name}</a>
                   </li>
                 ))}
               </ul>
@@ -198,8 +193,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
             <ImageTextSplit
               photo={arrival}
               id="location-heading"
-              eyebrow="Getting here"
-              heading="Find us in north Suffolk"
+              heading="Getting here"
               lead={`${fullAddress}.`}
               caption="The drive and the parking lot"
             >

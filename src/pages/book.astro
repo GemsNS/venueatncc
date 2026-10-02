@@ -1,7 +1,7 @@
 ---
 /**
- * Check availability (redesign-spec.md, "/book/"; the reference's contact and tour page): a serif title band
- * on Petal, then the booking wizard. The island gets one small real photo of each space (the file's own 3:2
+ * Check availability (docs/design/redesign-v7.md, "Version 8"): the title band (global.css), then the
+ * booking wizard, which also carries the visit request (?visit=1). The island gets one small real photo of each space (the file's own 3:2
  * shape, so nothing is cropped) for the space rows and the summary card. No two rows share a photo, and the
  * summary shows the chosen space's photo only on the steps where the rows are not on screen, so no image
  * appears twice on the page (brand.md, "No repeats").
@@ -11,15 +11,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import BookingApp, { type SpacePhoto, type SpacePhotos } from '../components/booking/BookingApp';
 import { site } from '../data/site';
 import { photoByName, type VenuePhoto } from '../data/photos';
-import { breadcrumbs } from '../lib/schema';
 
 const title = 'Check availability | Book The Venue @ NCC, Suffolk, VA';
 const description =
   'Check open dates at The Venue @ NCC in Suffolk, VA. Choose a date and a space and send your booking request in about two minutes. We confirm availability and send your quote personally.';
-const crumbs = [
-  { name: 'Home', path: '/' },
-  { name: 'Check availability', path: '/book/' },
-];
 
 /**
  * A responsive rendering of one real photo for the island (WebP). 240 and 480 serve the 76px space rows;
@@ -42,12 +37,11 @@ const spacePhotos: SpacePhotos = {
   bothB: await thumb(photoByName('gazebo')),
 };
 ---
-<BaseLayout title={title} description={description} og="book" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
-  <section class="book-title">
-    <div class="container book-title__inner">
-      <p class="eyebrow" data-visit-eyebrow>Availability</p>
+<BaseLayout title={title} description={description} og="book" pageType="ContactPage">
+  <section class="title-band">
+    <div class="container title-band__inner">
       <h1 data-visit-title>Check availability</h1>
-      <p class="t-lead book-title__lead" data-visit-lead>Choose a date and a space, and send your request in about two minutes.</p>
+      <p class="t-lead" data-visit-lead>Choose a date and a space, and send your request in about two minutes.</p>
     </div>
   </section>
   <script is:inline>
@@ -61,7 +55,6 @@ const spacePhotos: SpacePhotos = {
         var el = document.querySelector(sel);
         if (el) el.textContent = text;
       };
-      set('[data-visit-eyebrow]', 'Visit');
       set('[data-visit-title]', 'Request a visit');
       set('[data-visit-lead]', 'Choose the date and the space you are considering, and we will arrange a time for you to see it before you book. Or call us to set up a tour.');
       document.title = 'Request a visit | The Venue @ NCC, Suffolk, VA';
@@ -86,22 +79,6 @@ const spacePhotos: SpacePhotos = {
 </BaseLayout>
 
 <style>
-  /* The reference's contact page opens with a title band: the serif h1 alone on a warm surface. */
-  .book-title {
-    background: var(--band);
-    padding-block: clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
-  }
-
-  .book-title__inner {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .book-title__lead {
-    max-width: 38rem;
-    color: var(--label-2);
-  }
-
   .book-app {
     padding-top: clamp(2.5rem, 1.75rem + 3vw, 4rem);
   }

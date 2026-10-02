@@ -17,8 +17,8 @@
  *
  * The venue is its own business. Nothing here, or anywhere on the site, connects it to another
  * organization (brand.md, "Separation").
- * The tagline is the brand line from docs/design/brand.md: the slogan in structured data and the footer's
- * statement. The home page headline is the welcome, "Welcome to The Venue @ NCC" (version 4).
+ * The tagline is the brand line from docs/design/brand.md: the slogan in structured data (the footer no
+ * longer shows it). The home page headline is the welcome, "Welcome to The Venue @ NCC" (version 4).
  *
  * Rates live in src/shared/pricing.ts.
  */
@@ -56,7 +56,7 @@ export const site = {
     phoneE164: '+19482052934',
     /** ASSUMPTION: the user wrote "faith@domain"; the venue domain is venueatncc.org. Change here if different. */
     email: 'faith@venueatncc.org',
-    /** The contact person, named in the footer, on /pricing/, and in the guest email. */
+    /** The contact person, named on /pricing/ (Rates & FAQ) and in the guest email. */
     contactName: 'Faith VanDyke',
   },
 
@@ -130,7 +130,7 @@ export const site = {
    * use them if they wish (owner, September 30, 2026). Catering is not listed as an exclusion here: brand.md
    * allows it only in one neutral FAQ entry.
    */
-  included: ['The space you book', 'Tables and chairs, which you may use if you wish', 'On-site parking'],
+  included: ['The space you book', 'Tables and chairs to use as you wish', 'On-site parking'],
 
   /**
    * The owner's premium amenities, shown once, on The Space, and in structured data (amenityFeature).
@@ -148,7 +148,7 @@ export const site = {
 
   /**
    * Building access for events, confirmed by the owner. The booking rules that enforce it live in
-   * src/shared/booking-rules.ts. Stated on /pricing/ and in one FAQ entry.
+   * src/shared/booking-rules.ts. Stated once, on /pricing/ (Rates & FAQ, #hours).
    */
   access: { days: ACCESS_DAYS, hours: ACCESS_TIMES },
 

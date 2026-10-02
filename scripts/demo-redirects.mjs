@@ -46,7 +46,7 @@ a { color: #C2185B; }
  * Writes one redirect page per moved page when the build is done. A real page at an old address is an
  * error: the build stops rather than overwrite it.
  * @param {{ moved: ReadonlyMap<string, string>, base: string, site: string }} options
- *   moved: old path to new path, both base-relative with slashes at each end, e.g. '/about/' to '/the-space/'.
+ *   moved: old path to new path, both base-relative, e.g. '/about/' to '/the-space/' or '/faq/' to '/pricing/#faq'.
  * @returns {import('astro').AstroIntegration}
  */
 export function demoRedirects({ moved, base, site }) {
@@ -61,7 +61,10 @@ export function demoRedirects({ moved, base, site }) {
             const served = `${root}${trim(to)}`;
             const folder = new URL(trim(from), dir);
             await mkdir(folder, { recursive: true });
-            await writeFile(new URL('index.html', folder), redirectPage(served, new URL(served, site).href), { flag: 'wx' });
+            // The canonical names the page, not the section: a canonical URL carries no fragment.
+            const canonical = new URL(served, site);
+            canonical.hash = '';
+            await writeFile(new URL('index.html', folder), redirectPage(served, canonical.href), { flag: 'wx' });
           }),
         );
       },

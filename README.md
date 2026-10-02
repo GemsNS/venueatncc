@@ -56,8 +56,8 @@ Preact islands:                        Hono API  /api/*  ───────�
 | --- | --- |
 | Every venue fact (phone, email, capacity, policies, what is included) | `src/data/site.ts` |
 | Rates, packages, fees, deposits, discounts, founding offer | `src/shared/pricing.ts` |
-| Event landing pages | `src/data/events.ts` |
-| Questions and answers (answer the `a: null` ones to publish them) | `src/data/faq.ts` |
+| Events (one block each on /events/) | `src/data/events.ts` |
+| Questions and answers on Rates & FAQ (answer the `a: null` ones to publish them) | `src/data/faq.ts` |
 | Photos | `src/assets/venue/` plus `src/data/photos.ts` |
 | Design tokens (colors, type, radii, glass) | `src/styles/global.css` |
 | Brand: palette, logo, photo rule, voice (binding) | `docs/design/brand.md` |
@@ -84,9 +84,8 @@ Use originals at least 1600px on the long edge, and describe each one in `photoD
 `src/data/photos.ts` (see `src/assets/venue/README.md`).
 
 One rule, enforced in code (`docs/design/brand.md`, Photography): real photographs show the spaces,
-and staged photographs show events. Event tiles and event page heroes use `styled-event-<slug>.jpg`
-only when all eight staged files are present (`eventsStaged`); otherwise every event uses a real
-photo. Photos are cropped to their frames and converted to AVIF and WebP at build time.
+and staged photographs show events. The event blocks on /events/ use `styled-event-<slug>.jpg`
+only when all eight staged files are present (`eventsStaged`); otherwise they show no photo. Photos are cropped to their frames and converted to AVIF and WebP at build time.
 
 ## Before launch
 

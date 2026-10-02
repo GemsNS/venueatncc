@@ -10,13 +10,12 @@
  *
  * Every other card uses a real photograph of the property, chosen by pick(). A staged event photo is never a
  * share image, so pick() uses the real photo it was made from (realPhoto), and the hero photo when there is
- * none. An event card therefore shows the real base of its staged hero, or the page's own real hero while
- * the event photos are not staged. pick() never returns a share still.
+ * none. pick() never returns a share still. Version 8 has five public pages and so five cards: the event
+ * pages, the FAQ page, and their cards are gone.
  */
 import { site } from '../../data/site';
 import { events } from '../../data/events';
 import { photoByName, eventPhoto, heroPhoto, realPhoto, type VenuePhoto } from '../../data/photos';
-import { offBrandPhrase } from '../../lib/schema';
 
 export interface ShareCard {
   /** The page title, set in Libre Caslon Display. Sentence case. */
@@ -48,7 +47,6 @@ const hall = site.spaces.find((s) => s.id === 'indoor')?.name ?? 'The Hall';
 const mainHall = site.spaces.find((s) => s.id === 'main')?.name ?? 'The Main Hall';
 const grove = site.spaces.find((s) => s.id === 'outdoor')?.name ?? 'The Grove';
 const spacesLine = `${hall} and ${mainHall} up to ${capacity('indoor')} guests each, ${grove} up to ${capacity('outdoor')}`;
-const withoutPeriod = (s: string) => s.trim().replace(/[.]+$/, '');
 
 // Each page's card carries that page's H1, so the preview matches the page it opens; an event card carries the
 // event's name. Keep them in step when a heading changes.
@@ -65,27 +63,20 @@ export const shareCards: Record<string, ShareCard> = {
     },
     layout: 'still',
   },
-  'the-space': { title: 'Three spaces, indoors and out', line: spacesLine, photo: byName('hall-windows') },
+  'the-space': { title: 'The Space', line: spacesLine, photo: byName('hall-windows') },
   pricing: {
-    title: 'Rates and inquiries',
-    line: 'Rates vary with the season and the day of the week. Call or send an inquiry for pricing',
+    title: 'Rates & FAQ',
+    line: 'Rates vary with the season and the day of the week. Call us for pricing',
     photo: byName('hall-fireplace'),
   },
   // The events index leads with the photo of the first event on the list.
   events: {
-    title: `Weddings, celebrations, and gatherings in ${site.address.city}`,
-    line: 'A planning guide and a checklist for each occasion',
+    title: 'Events we host',
+    line: 'Celebrations, gatherings, and meetings, and the spaces that suit each one',
     photo: pick(eventPhoto(events[0]?.slug ?? '')),
   },
-  faq: { title: 'Frequently asked questions', line: 'Booking, the spaces, rates, and visits', photo: byName('grove-tables') },
   book: { title: 'Check availability', line: 'Choose a date and a space, and send your request', photo: byName('approach-dusk') },
 };
-// Each event card: its name and its one-line summary, or the capacities if the summary is off-brand.
-for (const e of events) {
-  const line = offBrandPhrase(e.summary) ? spacesLine : withoutPeriod(e.summary);
-  shareCards[e.slug] = { title: e.name, line, photo: pick(eventPhoto(e.slug)) };
-}
-
 /** og:image:alt for a card: what the image shows, in reading order. */
 export function shareCardAlt(key: string): string | undefined {
   const card = shareCards[key];

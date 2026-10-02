@@ -12,6 +12,7 @@ import type { Hono, MiddlewareHandler } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import type { AppContextT, AppEnv } from './context';
 import { buildCsp, CONTENT_SECURITY_POLICY } from './middleware';
+import { eventTypes } from '../src/data/event-types';
 
 const BACKSLASH = String.fromCharCode(92);
 const NUL = String.fromCharCode(0);
@@ -34,10 +35,15 @@ const isApi = (p: string) => p === '/api' || p.startsWith('/api/');
  * Pages that moved, old path to new path, so links and bookmarks to the old address still land.
  * The server answers them with a 301. The GitHub Pages demo cannot send one, so its build publishes a small
  * redirect page at each old path instead (scripts/demo-redirects.mjs, wired in astro.config.mjs).
+ * A new path may end in a fragment (/events/#weddings); the request's query string goes before it.
  */
 export const MOVED_PAGES: ReadonlyMap<string, string> = new Map([
+  // Version 8: the eight event pages became blocks on the one events page, each with its slug as its id.
+  ...eventTypes.map((e): [string, string] => [`/events/${e.slug}/`, `/events/#${e.slug}`]),
   // The event page was renamed (docs/design/brand.md, "Separation"); server/db.ts migrates stored inquiries.
-  ['/events/church-community-events/', '/events/community-events/'],
+  ['/events/church-community-events/', '/events/#community-events'],
+  // Version 8: the FAQ is the last section of Rates & FAQ.
+  ['/faq/', '/pricing/#faq'],
   // The About page was removed; The Space describes the venue.
   ['/about/', '/the-space/'],
 ]);
@@ -45,6 +51,12 @@ export const MOVED_PAGES: ReadonlyMap<string, string> = new Map([
 /** Where a moved page lives now, with or without the trailing slash, or null if it did not move. */
 export function movedTo(urlPath: string): string | null {
   return MOVED_PAGES.get(urlPath.endsWith('/') ? urlPath : `${urlPath}/`) ?? null;
+}
+
+/** A moved page's new address with the request's query string, which goes before any fragment. */
+export function withQuery(to: string, search: string): string {
+  const hash = to.indexOf('#');
+  return hash === -1 ? `${to}${search}` : `${to.slice(0, hash)}${search}${to.slice(hash)}`;
 }
 
 function isFile(p: string): boolean {
@@ -146,7 +158,7 @@ export function mountStatic(app: Hono<AppEnv>, siteDir: string): boolean {
   const movedPages: MiddlewareHandler<AppEnv> = async (c, next) => {
     const to = movedTo(c.req.path);
     if (!to) return next();
-    return c.redirect(`${to}${new URL(c.req.url).search}`, 301);
+    return c.redirect(withQuery(to, new URL(c.req.url).search), 301);
   };
 
   const trailingSlash: MiddlewareHandler<AppEnv> = async (c, next) => {

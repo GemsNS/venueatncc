@@ -27,7 +27,8 @@ import {
   useFastPasswordHashingForTests,
   verifyPassword,
 } from '../security';
-import { inlineScriptHashes } from '../static';
+import { MOVED_PAGES, inlineScriptHashes, movedTo, withQuery } from '../static';
+import { eventTypes } from '../../src/data/event-types';
 import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
 import { estimate } from '../../src/shared/pricing';
@@ -752,5 +753,31 @@ describe('demo redirect pages', () => {
     }
     assert.ok(html.includes('<link rel="canonical" href="https://example.github.io/venueatncc/the-space/">'));
     assert.ok(!html.includes(String.fromCharCode(8212)) && !html.includes(String.fromCharCode(8211)), 'no em or en dash');
+  });
+});
+
+describe('moved pages (version 8: five public pages)', () => {
+  test('every old event page and the FAQ move to their section, in one hop', () => {
+    for (const e of eventTypes) assert.equal(movedTo(`/events/${e.slug}/`), `/events/#${e.slug}`);
+    assert.equal(movedTo('/faq'), '/pricing/#faq');
+    assert.equal(movedTo('/events/church-community-events/'), '/events/#community-events');
+    const live = new Set(['/', '/the-space/', '/events/', '/pricing/', '/book/']);
+    for (const [from, to] of MOVED_PAGES) {
+      const page = to.split('#')[0];
+      assert.ok(live.has(page), `${from} lands on a live page, not ${page}`);
+      assert.equal(MOVED_PAGES.get(page), undefined, `${from} is not a redirect chain`);
+    }
+  });
+
+  test('the query string goes before the fragment', () => {
+    assert.equal(withQuery('/events/#weddings', '?utm_source=flyer'), '/events/?utm_source=flyer#weddings');
+    assert.equal(withQuery('/the-space/', '?a=1'), '/the-space/?a=1');
+    assert.equal(withQuery('/pricing/#faq', ''), '/pricing/#faq');
+  });
+
+  test('a demo redirect page keeps the fragment in its refresh and its link', () => {
+    const html = redirectPage('/venueatncc/events/#weddings', 'https://example.github.io/venueatncc/events/');
+    assert.ok(html.includes('content="0; url=/venueatncc/events/#weddings"'));
+    assert.ok(html.includes('href="/venueatncc/events/#weddings"'));
   });
 });

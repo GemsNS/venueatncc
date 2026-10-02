@@ -1057,21 +1057,27 @@ sits on disk until removed.
 
 ```sh
 BASE=https://venueatncc.org
-for p in / /the-space/ /pricing/ /faq/ /events/ /events/weddings/ /book/ /admin/ /sitemap-index.xml /robots.txt; do
+for p in / /the-space/ /events/ /pricing/ /book/ /admin/ /sitemap-index.xml /robots.txt /llms.txt; do
   printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$BASE$p")" "$p"
 done
 curl -s "$BASE/api/health"; echo                                                    # {"ok":true,...}
 curl -s -o /dev/null -w '%{http_code}\n' "$BASE/no-such-page/"                      # 404 (the site's own 404 page)
 curl -sI "$BASE/about/" | grep -iE '^(HTTP|location)'                               # 301, location: /the-space/
-curl -sI "$BASE/events/church-community-events/" | grep -iE '^(HTTP|location)'      # 301, location: /events/community-events/
+curl -sI "$BASE/events/church-community-events/" | grep -iE '^(HTTP|location)'      # 301, location: /events/#community-events
+curl -sI "$BASE/events/weddings/" | grep -iE '^(HTTP|location)'                     # 301, location: /events/#weddings (each old event page)
+curl -sI "$BASE/events/weddings/?utm_source=flyer" | grep -iE '^(HTTP|location)'    # 301, location: /events/?utm_source=flyer#weddings
+curl -sI "$BASE/faq/" | grep -iE '^(HTTP|location)'                                 # 301, location: /pricing/#faq
 curl -sI "$BASE/pricing" | grep -iE '^(HTTP|location)'                              # 301, location: /pricing/
 curl -sI "$BASE/" | grep -iE '^(content-security-policy|x-frame-options|strict-transport-security)'
 ```
 
 If a page path in the first loop answers 404, check the real route names with
 `ls /var/www/venueatncc.org/app/dist/`; the redirects and the 404 must behave as shown.
-The two moved-page redirects are answered by the app itself (`server/static.ts:38-48`), so they
-only exist on this server, not in the GitHub Pages demo.
+The moved-page redirects (`MOVED_PAGES` in `server/static.ts`: `/about/`, `/faq/`, the eight old
+`/events/<slug>/` pages, and `/events/church-community-events/`) are answered by the app itself, so
+Apache needs no rule for them. The GitHub Pages demo publishes a small redirect page at each old path
+instead. Since version 8 the site has five public pages: `/`, `/the-space/`, `/events/`, `/pricing/`
+(Rates & FAQ), and `/book/`.
 
 ### 10.3 Smoke test: a booking request
 
@@ -1443,7 +1449,9 @@ df -h /
 
 # 11. App behaviour (from section 10)
 curl -sI https://venueatncc.org/about/ | grep -i '^location'                         # /the-space/
-curl -sI https://venueatncc.org/events/church-community-events/ | grep -i '^location' # /events/community-events/
+curl -sI https://venueatncc.org/events/church-community-events/ | grep -i '^location' # /events/#community-events
+curl -sI https://venueatncc.org/events/weddings/ | grep -i '^location'                # /events/#weddings
+curl -sI https://venueatncc.org/faq/ | grep -i '^location'                            # /pricing/#faq
 sudo -H -u mvandykeanthony bash -c 'ls -la /var/www/venueatncc.org/data /var/www/venueatncc.org/data/backups'
 
 # 12. Nothing sensitive is reachable over the web

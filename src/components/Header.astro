@@ -10,11 +10,9 @@
  * call to action; compact screens show a menu button on the left, the lockup centred, and a round phone
  * button on the right. The menu button opens the full-screen menu (a native dialog: focus trapped, Escape
  * closes, focus returns to the button, the page does not scroll behind it) with large serif links, the
- * filled Check Availability, and the phone. There is no bottom bar. The eight event pages are listed, always
- * open, under the menu's Events row, so every page is one tap from the menu (docs/design/redesign-v7.md,
- * section 3), and the two actions stay pinned to the foot of the menu, so they are on screen however long
- * the list is. On regular screens the footer lists the eight events. No photo ever sits under the bar, so
- * its text is always Plum.
+ * filled Check Availability, and the phone. There is no bottom bar. The menu holds the same short list as
+ * the bar, with Home first (docs/design/redesign-v7.md, "Version 8"), and the two actions stay pinned to its
+ * foot. No photo ever sits under the bar, so its text is always Plum.
  *
  * On the home page (`morph`) the lockup is hidden until the welcome's large name has flown into its place
  * (src/pages/index.astro, "The morph"), then fades in beneath it on the same scroll timeline and the page's
@@ -33,7 +31,6 @@
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import { site } from '../data/site';
-import { events } from '../data/events';
 import { mainNav, menuNav, bookHref } from '../data/nav';
 import { href, withoutBase } from '../lib/paths';
 import { isDemo } from '../lib/env';
@@ -107,17 +104,6 @@ const showCta = !current(bookHref);
               {item.label}
               <Icon name="chevron-right" />
             </a>
-            {item.href === '/events/' && (
-              <ul class="menu__sub" aria-label="Event pages">
-                {events.map((e) => (
-                  <li>
-                    <a class="menu__sublink" href={href(`/events/${e.slug}/`)} aria-current={path === `/events/${e.slug}/` ? 'page' : undefined}>
-                      {e.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
           </li>
         ))
       }
@@ -603,29 +589,6 @@ const showCta = !current(bookHref);
     padding: 1rem var(--gutter) max(1rem, env(safe-area-inset-bottom));
     border-top: 1px solid var(--separator);
     background: var(--bg);
-  }
-
-  /* The eight event pages, always open under the Events row: a secondary list of 44px rows. */
-  .menu__sub {
-    display: grid;
-    margin: -0.25rem 0 0.5rem;
-    padding: 0 0 0 1rem;
-    border-left: 1px solid var(--separator-strong);
-    list-style: none;
-  }
-
-  .menu__sublink {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    color: var(--label);
-    font-family: var(--font-serif);
-    font-size: 1.125rem;
-    text-decoration: none;
-  }
-
-  .menu__sublink[aria-current] {
-    color: var(--accent-text);
   }
 
   @media (min-width: 60rem) {

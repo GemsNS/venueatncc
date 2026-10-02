@@ -2,7 +2,7 @@
 /**
  * The 404 page (docs/design/redesign-v7.md, section 5, "/404"): the page intro with the text beside the
  * gazebo, never over it: the eyebrow, the h1, the lead, a plain list of serif links (Home, Check
- * Availability, The Space, Events, Rates), and the phone line. The gazebo is the one photo. The page is
+ * Availability, The Space, Events, Rates & FAQ), and the phone line. The gazebo is the one photo. The page is
  * noindex and carries no structured data.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -19,7 +19,7 @@ const links = [
   { label: 'Check Availability', href: bookHref },
   { label: 'The Space', href: '/the-space/' },
   { label: 'Events', href: '/events/' },
-  { label: 'Rates', href: pricingHref },
+  { label: 'Rates & FAQ', href: pricingHref },
 ];
 ---
 <BaseLayout

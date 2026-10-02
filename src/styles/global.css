@@ -537,6 +537,34 @@ main:focus {
   padding-block: calc(var(--section) * 0.6);
 }
 
+/*
+  The title band (version 8): every inner page without a photo intro opens the same way, the serif h1 and an
+  optional lead on Petal. One rule for Events, Rates & FAQ, and Book.
+*/
+.title-band {
+  background: var(--band);
+  padding-block: clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
+}
+
+.title-band__inner {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.title-band h1 {
+  line-height: 1.05;
+}
+
+.title-band .t-lead {
+  max-width: 38rem;
+}
+
+@media (forced-colors: active) {
+  .title-band {
+    border-bottom: 1px solid CanvasText;
+  }
+}
+
 /* The reference's hairline between two sections on the same surface. */
 .section--rule {
   border-top: 1px solid var(--separator);

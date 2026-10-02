@@ -1,14 +1,13 @@
 ---
 /**
  * The top of an inner page (docs/design/redesign-v7.md, section 2, PageIntro): the text beside the photo,
- * never over it. From 60rem two columns, 5:7: the text block on the left (breadcrumbs on event pages, the
+ * never over it. From 60rem two columns, 5:7: the text block on the left (the
  * eyebrow, the h1, the lead, a row of links, one action) and the photo on the right, shown whole at 3:2 with
  * its caption under it. On phones the text comes first, then the photo (the 4:5 file where there is one),
  * then the caption. The photo is the page's main image: it loads first and opens in the viewer. A staged
  * photo carries the disclosure at the start of its caption (Figure.astro).
  */
 import Figure from './Figure.astro';
-import Breadcrumbs from './Breadcrumbs.astro';
 import Icon from './Icon.astro';
 import type { VenuePhoto } from '../data/photos';
 import { href as toHref } from '../lib/paths';
@@ -25,16 +24,14 @@ interface Props {
   photo?: VenuePhoto | null;
   /** The caption under the photo (a staged photo gets the disclosure first). */
   caption?: string | boolean;
-  breadcrumbs?: { name: string; path: string }[];
   class?: string;
 }
 
-const { id, title, eyebrow, lead, links = [], linksLabel, photo, caption = true, breadcrumbs, class: className } = Astro.props;
+const { id, title, eyebrow, lead, links = [], linksLabel, photo, caption = true, class: className } = Astro.props;
 ---
 <section class:list={['section', 'intro', { 'intro--photo': photo }, className]} aria-labelledby={id}>
   <div class="container intro__inner">
     <div class="intro__text">
-      {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
       {eyebrow && <p class="eyebrow">{eyebrow}</p>}
       <h1 id={id} class="intro__title">{title}</h1>
       {lead && <p class="t-lead intro__lead">{lead}</p>}

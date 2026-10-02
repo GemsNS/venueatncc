@@ -35,7 +35,7 @@ export function offBrandPhrase(text: string): string | null {
 }
 
 /**
- * Catering is neutral copy, but brand.md allows it only in the one FAQ entry on /faq/. Structured data and
+ * Catering is neutral copy, but brand.md allows it only in the one FAQ entry on Rates & FAQ. Structured data and
  * llms.txt leave that entry out quietly; it is on-brand, not an error.
  */
 export function mentionsCatering(text: string): boolean {
@@ -54,7 +54,7 @@ export function spaceName(choice: SpaceChoice): string {
   return SPACE_NAMES[choice];
 }
 
-/** The places the venue serves, typed for schema.org. Shared by the venue and every event Service. */
+/** The places the venue serves, typed for schema.org. */
 function areaServed() {
   return site.areaServed.map((a) => ({ '@type': a.type, name: a.name }));
 }
@@ -163,18 +163,6 @@ export function webPage(opts: { path: string; title: string; description: string
   };
 }
 
-export function breadcrumbs(items: { name: string; path: string }[]) {
-  return {
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      name: item.name,
-      item: abs(item.path),
-    })),
-  };
-}
-
 export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
   const onBrand = items.filter((f) => {
     const phrase = offBrandPhrase(`${f.q} ${f.a}`);
@@ -190,22 +178,6 @@ export function faqPage(items: { q: string; a: string }[] = publishedFaqs) {
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
     })),
-  };
-}
-
-/** An event type offered at the venue, modelled as a Service. It names no price: rates are quoted personally. */
-export function eventService(opts: { name: string; description: string; path: string; serviceType: string }) {
-  const phrase = offBrandPhrase(opts.description);
-  if (phrase) warnOnce(`[schema] The description of "${opts.name}" says "${phrase}", so its Service markup uses the venue description. Rewrite it to follow docs/design/brand.md.`);
-  return {
-    '@type': 'Service',
-    '@id': `${abs(opts.path)}#service`,
-    name: opts.name,
-    serviceType: opts.serviceType,
-    description: phrase ? site.description : opts.description,
-    url: abs(opts.path),
-    provider: { '@id': venueId },
-    areaServed: areaServed(),
   };
 }
 

@@ -1,41 +1,31 @@
 ---
 /**
- * The events index (docs/design/redesign-v7.md, section 5, "/events/"): the page intro (the text beside one
- * photo), then every event as a figure card in a grid. Nothing sits on any photo: each card is the photo
- * shown whole, with the event's name and a meta line under it.
+ * Events (docs/design/redesign-v7.md, "Version 8"): the one page for every occasion. The title band, then
+ * each occasion in src/data/events.ts as a compact block with its slug as its id (the old event pages,
+ * /events/<slug>/, answer 301 to /events/#<slug>): one photo shown whole with its caption under it, the
+ * name, one or two sentences, and the spaces that suit it, each a link to its section on The Space. Then
+ * one closing line for any other occasion, with Check Availability, the page's one action.
  *
  * Photos follow the one photo rule (docs/design/brand.md, "Photography"; src/data/photos.ts). While the
- * staged set is complete (eventsStaged) the intro shows the styled indoor ceremony (a wedding scene that is
- * not any event's own card, so all eight events can be cards without an image appearing twice), its caption
- * beginning with the disclosure, and each card shows its event's staged photo with a meta line that begins
- * "Styled concept"; the section lead carries the full sentence once. Without the staged set the intro shows
- * the real photo the ceremony image is made from, with its plain caption, and the events are a list of
- * links: eight events cannot map to eight distinct real photos.
+ * staged set is complete (eventsStaged) each block shows its event's staged photo, whose caption begins with
+ * the disclosure, "Styled concept. Décor is not included." (Figure.astro). Without the staged set the
+ * blocks carry no photo: eight events cannot map to eight distinct real photos.
  *
- * The venue's facts (capacities, parking, rates) are left to The Space and Rates; each card's line is the
- * event's own one-line summary.
+ * Capacities, rates, parking, and visits have their homes elsewhere and are not written here.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageIntro from '../../components/PageIntro.astro';
-import SectionHeading from '../../components/SectionHeading.astro';
-import FigureCard from '../../components/FigureCard.astro';
-import Icon from '../../components/Icon.astro';
+import Figure from '../../components/Figure.astro';
 import { events } from '../../data/events';
-import { EVENTS_STYLED_NOTE, STAGED_SCENES, eventPhoto, eventsStaged, photoByName, realPhoto } from '../../data/photos';
-import { site } from '../../data/site';
-import { breadcrumbs, abs } from '../../lib/schema';
+import { STAGED_SCENES, eventPhoto, eventsStaged } from '../../data/photos';
+import { site, type SpaceId } from '../../data/site';
+import { bookHref } from '../../data/nav';
+import { abs } from '../../lib/schema';
 import { href } from '../../lib/paths';
 
-const hall = site.spaces.find((s) => s.id === 'indoor');
-const mainHall = site.spaces.find((s) => s.id === 'main');
-const grove = site.spaces.find((s) => s.id === 'outdoor');
-
 const title = 'Events at The Venue @ NCC in Suffolk, VA';
-const description = `Weddings, showers, birthdays, repasts, conferences, and community events in Suffolk, VA. ${hall?.name} and ${mainHall?.name} hold up to ${hall?.capacity} each and ${grove?.name} up to ${grove?.capacity}.`;
-const crumbs = [
-  { name: 'Home', path: '/' },
-  { name: 'Events', path: '/events/' },
-];
+const description =
+  'Weddings, showers, birthdays, banquets, repasts, meetings, reunions, and community events at The Venue @ NCC in Suffolk, VA, with the spaces that suit each one.';
+
 const itemList = {
   '@type': 'ItemList',
   name: `Events at ${site.name}`,
@@ -43,118 +33,136 @@ const itemList = {
     '@type': 'ListItem',
     position: i + 1,
     name: e.name,
-    url: abs(`/events/${e.slug}/`),
+    url: abs(`/events/#${e.slug}`),
   })),
 };
 
-/** The intro photo: the styled indoor ceremony while the set is staged, otherwise the real room it is made from. */
-const HERO_NAME = 'styled-wedding-indoor-ceremony';
-const styledHero = photoByName(HERO_NAME);
-const introPhoto = eventsStaged ? styledHero : (realPhoto(styledHero) ?? eventPhoto(events[0].slug));
-const introCaption = introPhoto?.styledOf ? (STAGED_SCENES[introPhoto.name] ?? false) : true;
+/* Each space's section on The Space. */
+const SPACE_ANCHORS: Record<SpaceId, string> = { indoor: 'hall', main: 'main-hall', outdoor: 'grove' };
+const spaceLinks = (ids: SpaceId[]) =>
+  ids
+    .map((id) => site.spaces.find((s) => s.id === id))
+    .filter((s) => s !== undefined)
+    .map((s) => ({ label: s.name, href: href(`/the-space/#${SPACE_ANCHORS[s.id]}`) }));
 
-/** The cards: every event with its staged photo; without the staged set, links only. */
-const cards = events.map((e) => ({ event: e, photo: eventsStaged ? eventPhoto(e.slug) : null }));
-const withPhotos = eventsStaged && cards.every((c) => c.photo?.styledOf !== undefined && c.photo.name !== introPhoto?.name);
+const blocks = events.map((e) => {
+  const photo = eventsStaged ? eventPhoto(e.slug) : null;
+  return { event: e, photo: photo?.styledOf !== undefined ? photo : null, spaces: spaceLinks(e.spaces) };
+});
+
+const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
 ---
-<BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[breadcrumbs(crumbs), itemList]}>
-  <PageIntro
-    id="events-title"
-    eyebrow="Events"
-    title="Weddings, celebrations, and gatherings in Suffolk"
-    lead="Each occasion has its own planning guide, the space that suits it, and a practical checklist. For another kind of event, describe it in your request and we will confirm which space suits it."
-    photo={introPhoto}
-    caption={introCaption}
-  />
+<BaseLayout title={title} description={description} og="events" pageType="CollectionPage" schema={[itemList]}>
+  <section class="title-band" aria-labelledby="page-title">
+    <div class="container title-band__inner">
+      <h1 id="page-title">Events we host</h1>
+      <p class="t-lead">Celebrations, gatherings, and meetings, and the spaces that suit each one.</p>
+    </div>
+  </section>
 
-  <section class="section" aria-labelledby="occasions-heading">
+  <section class="section" aria-label="Occasions">
     <div class="container">
-      <SectionHeading
-        id="occasions-heading"
-        eyebrow="Occasions"
-        heading="Every occasion we host"
-        lead={withPhotos ? EVENTS_STYLED_NOTE : undefined}
-      />
-      {
-        withPhotos ? (
-          <ul class="ev-grid" aria-label="Events we host">
-            {cards.map(
-              (c) =>
-                c.photo && (
-                  <li>
-                    <FigureCard
-                      photo={c.photo}
-                      label={c.event.name}
-                      meta={`Styled concept · ${c.event.summary}`}
-                      href={`/events/${c.event.slug}/`}
-                      tall={false}
-                      sizes="(min-width: 81.25rem) 300px, (min-width: 75rem) 23vw, (min-width: 56rem) 31vw, (min-width: 36rem) 46vw, 100vw"
-                    />
-                  </li>
-                ),
-            )}
-          </ul>
-        ) : (
-          <ul class="ev-links" aria-label="Events we host">
-            {cards.map((c) => (
-              <li>
-                <a class="link-more" href={href(`/events/${c.event.slug}/`)}>
-                  {c.event.name} <Icon name="chevron-right" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
+      <ul class="ev-list">
+        {
+          blocks.map((b) => (
+            <li class="ev" id={b.event.slug}>
+              {b.photo && <Figure photo={b.photo} caption={STAGED_SCENES[b.photo.name] ?? false} tall={false} sizes={SIZES} />}
+              <div class="ev__text">
+                <h2 id={`${b.event.slug}-heading`} class="ev__name">{b.event.name}</h2>
+                <p class="ev__copy">{b.event.summary}</p>
+                <p class="ev__spaces">
+                  <span class="ev__label">Suits</span>
+                  {b.spaces.map((s, i) => (
+                    <>
+                      {i > 0 && <span aria-hidden="true"> · </span>}
+                      <a href={s.href}>{s.label}</a>
+                    </>
+                  ))}
+                </p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="other-heading">
+    <div class="container ev-other">
+      <h2 id="other-heading" class="t-title-2">Planning something else?</h2>
+      <p class="t-lead">Describe it in your request and we will confirm which space suits it.</p>
+      <div class="btn-row">
+        <a class="btn btn--filled btn--lg" href={href(bookHref)}>Check Availability</a>
+      </div>
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  /* One card across on phones, two from 36rem, three from 56rem, four from 75rem. */
-  .ev-grid {
+  /* Two blocks across from 48rem, one on phones; every block lands under the bar when linked to. */
+  .ev-list {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem 1.5rem;
+    gap: clamp(2.5rem, 2rem + 2vw, 3.5rem) 2rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .ev-grid li {
+  @media (min-width: 48rem) {
+    .ev-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ev {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
     min-width: 0;
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
   }
 
-  @media (min-width: 36rem) {
-    .ev-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 56rem) {
-    .ev-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 75rem) {
-    .ev-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  /* Without the staged set: the events as serif links in two columns. */
-  .ev-links {
+  .ev__text {
     display: grid;
-    gap: 0.25rem 2rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    gap: 0.5rem;
   }
 
-  @media (min-width: 36rem) {
-    .ev-links {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .ev__name {
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    line-height: 1.25;
+  }
+
+  .ev__copy {
+    font-family: var(--font-serif);
+    color: var(--label-2);
+  }
+
+  .ev__spaces {
+    font-family: var(--font-serif);
+    font-size: var(--t-subhead);
+    color: var(--label-2);
+  }
+
+  .ev__label {
+    margin-right: 0.5rem;
+    font-size: var(--t-caption);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ev__spaces a {
+    display: inline-block;
+    min-height: 24px;
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+  }
+
+  .ev-other {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
   }
 </style>

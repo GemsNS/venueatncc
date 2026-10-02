@@ -1,135 +1,80 @@
 ---
 /**
- * The Space (docs/design/redesign-v7.md, section 5, "/the-space/"), in this order: the page intro (the text
- * beside The Main Hall, with three links that jump to the spaces), each space as an editorial split with
- * its fact row (The Hall and The Grove each followed by two more views as figures), the amenities, the
- * grounds, what the rental includes, and the visit request. Nothing sits on any photo: every photo is
- * shown whole with its caption under it, and there is no in-page sticky bar.
+ * The Space (docs/design/redesign-v7.md, "Version 8"): the title band, one block per space (its photo whole
+ * with the caption under it, beside two or three sentences, the capacity, and the key features), a small
+ * gallery of further views, and the amenities as one compact list. No page intro photo, no jump links, no
+ * visit or "included" sections: the visit request lives on Book, and what the rental includes on Rates & FAQ.
  *
- * Real photos only, each shown once: hall-windows (intro), hall-doors (The Hall, the
- * opposite end of the room, so the two views differ), main-hall-stage (The
- * Main Hall), grove-tables, gazebo, grove-path (The Grove), approach-dusk (the grounds). The intro shows The
- * Hall rather than The Main Hall because the two Main Hall photos are the same view down the aisle, and The
- * Hall's split follows the intro with its copy first on phones, so two photos never stack back to back.
- * driveway is the home page's arrival photo and is not on this page.
- *
- * This page is the one home of the capacities, the features, the amenities, the grounds, what the rental
- * includes, and the visit request (redesign-v7.md, section 4). Rates live on Rates; the address and
- * directions live on the home page (Find us) and in the footer.
+ * Real photos only, each shown once on the page: hall-windows, main-hall, and grove-tables lead the
+ * blocks; hall-doors, gazebo, grove-path, and approach-dusk make the gallery. This page is the one home of
+ * the features and the amenities; the capacities appear here and on the home page's space cards.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageIntro from '../components/PageIntro.astro';
-import SectionHeading from '../components/SectionHeading.astro';
 import Figure from '../components/Figure.astro';
-import FeatureStrip from '../components/FeatureStrip.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
-import Checklist from '../components/Checklist.astro';
-import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
 import { photoByName, type VenuePhoto } from '../data/photos';
-import { bookHref } from '../data/nav';
-import { breadcrumbs, abs } from '../lib/schema';
-import { href, withoutBase } from '../lib/paths';
-import type { IconName } from '../shared/icons';
+import { abs } from '../lib/schema';
+import { withoutBase } from '../lib/paths';
 
 const hall = site.spaces.find((s) => s.id === 'indoor') ?? site.spaces[0];
 const mainHall = site.spaces.find((s) => s.id === 'main') ?? site.spaces[1];
 const grove = site.spaces.find((s) => s.id === 'outdoor') ?? site.spaces[2];
 
 const title = 'Event spaces in Suffolk, VA | The Venue @ NCC';
-const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See the spaces, amenities, and grounds.`;
-/** The page's place in the site, for structured data only: breadcrumbs are shown on event pages alone. */
-const crumbs = [
-  { name: 'Home', path: '/' },
-  { name: 'The Space', path: '/the-space/' },
-];
+const description = `${hall.name} and ${mainHall.name} for up to ${hall.capacity} guests each, and ${grove.name} for up to ${grove.capacity}, at The Venue @ NCC in Suffolk, VA. See each space, its features, and the amenities.`;
 
-const introPhoto = photoByName('hall-windows');
-
-interface Fact {
-  label: string;
-  value: string;
-}
-
-interface Extra {
-  photo: VenuePhoto | null;
-  caption: string;
-}
-
-interface SpaceSection {
+interface SpaceBlock {
   id: 'hall' | 'main-hall' | 'grove';
   name: string;
-  heading: string;
   lead: string;
-  facts: Fact[];
+  capacity: number;
+  features: string;
   photo: VenuePhoto | null;
   caption: string;
-  flip: boolean;
-  extras: Extra[];
 }
 
-/** The three spaces, each with its primary photo, the facts the photos confirm, and any further views. */
-const spaces: SpaceSection[] = [
+const spaces: SpaceBlock[] = [
   {
     id: 'hall',
     name: hall.name,
-    heading: 'A bright, open room',
-    lead: `${hall.name} is our indoor room for receptions, dinners, showers, meetings, and workshops: daylight from a row of arched windows, a fireplace feature wall as the natural focal point, and an open floor that takes round tables, a long table, or rows of seating.`,
-    facts: [
-      { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
-      { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, a wall-mounted screen, and double doors' },
-    ],
-    photo: photoByName('hall-doors'),
-    caption: 'The double doors and the wall-mounted screen',
-    flip: false,
-    extras: [],
+    lead: 'A bright indoor room for receptions, dinners, showers, and meetings. Arched windows bring in daylight, the fireplace wall is a natural focal point, and the open floor takes round tables, a long table, or rows of seats.',
+    capacity: hall.capacity,
+    features: 'Arched windows, a fireplace feature wall, wood-look floors, recessed lighting, a wall-mounted screen, and double doors',
+    photo: photoByName('hall-windows'),
+    caption: 'The arched windows and the fireplace wall',
   },
   {
     id: 'main-hall',
     name: mainHall.name,
-    heading: 'Stage seating under a vaulted ceiling',
-    lead: `${mainHall.name} is a high-capacity, multi-purpose auditorium with stage seating, fully equipped for weddings, corporate events, bridal showers, conferences, and large celebrations. Rows of upholstered chairs face the raised stage, so every seat has a clear view.`,
-    facts: [
-      { label: 'Capacity', value: `Up to ${mainHall.capacity} guests` },
-      { label: 'Features', value: 'A raised stage with steps, rows of upholstered chairs, a vaulted ceiling with recessed lighting, and a wall-mounted screen' },
-    ],
-    photo: photoByName('main-hall-stage'),
-    caption: 'The raised stage',
-    flip: true,
-    extras: [],
+    lead: 'A multi-purpose auditorium for ceremonies, conferences, and large celebrations. Rows of upholstered chairs face a raised stage, so every seat has a clear view.',
+    capacity: mainHall.capacity,
+    features: 'A raised stage, rows of upholstered chairs, a vaulted ceiling, and a wall-mounted screen',
+    photo: photoByName('main-hall'),
+    caption: 'Stage seating under the vaulted ceiling',
   },
   {
     id: 'grove',
     name: grove.name,
-    heading: 'Among the pines',
-    lead: `${grove.name} is our outdoor setting for ceremonies, reunions, and gatherings in the open air: a timber gazebo at its heart, picnic tables on a paved patio, open lawn, and tall pines on every side.`,
-    facts: [
-      { label: 'Capacity', value: `Up to ${grove.capacity} guests` },
-      { label: 'Features', value: 'A timber gazebo, picnic tables on a patio, open lawn, and paths through the trees' },
-    ],
+    lead: 'Our outdoor setting for ceremonies, reunions, and gatherings in the open air, with a timber gazebo at its heart and tall pines on every side.',
+    capacity: grove.capacity,
+    features: 'A timber gazebo, picnic tables on a patio, open lawn, and paths through the trees',
     photo: photoByName('grove-tables'),
     caption: 'Picnic tables and the gazebo',
-    flip: false,
-    extras: [
-      { photo: photoByName('gazebo'), caption: 'The gazebo' },
-      { photo: photoByName('grove-path'), caption: 'The path to the gazebo' },
-    ],
   },
 ];
 
-/** The owner's amenities (site.amenities), each with a line icon. */
-const AMENITY_ICONS: IconName[] = ['users', 'home', 'sparkles'];
-const amenities = site.amenities.map((a, i) => ({ icon: AMENITY_ICONS[i % AMENITY_ICONS.length], name: a.name, text: a.detail }));
-
-const grounds = photoByName('approach-dusk');
+/* Further views, each shown once. */
+const gallery = [
+  { photo: photoByName('hall-doors'), caption: `${hall.name}: the double doors and the screen` },
+  { photo: photoByName('gazebo'), caption: `The gazebo in ${grove.name}` },
+  { photo: photoByName('grove-path'), caption: 'The path to the gazebo' },
+  { photo: photoByName('approach-dusk'), caption: 'The drive at dusk' },
+].filter((g): g is { photo: VenuePhoto; caption: string } => g.photo !== null);
 
 // Structured data lists the photos on this page.
-const pagePhotos = [
-  introPhoto,
-  ...spaces.flatMap((s) => [s.photo, ...s.extras.map((e) => e.photo)]),
-  grounds,
-].filter((p): p is VenuePhoto => p !== null);
+const pagePhotos = [...spaces.map((s) => s.photo), ...gallery.map((g) => g.photo)].filter((p): p is VenuePhoto => p !== null);
 const fullImages = await Promise.all(
   pagePhotos.map((p) => getImage({ src: p.src, width: Math.min(1600, p.src.width), format: 'jpg' })),
 );
@@ -150,41 +95,37 @@ const gallerySchema =
     : [];
 
 const SPLIT_SIZES = '(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw';
-const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw';
+const GALLERY_SIZES = '(min-width: 75rem) 584px, (min-width: 46.5rem) 46vw, 100vw';
 ---
-<BaseLayout title={title} description={description} og="the-space" venueDetails schema={[breadcrumbs(crumbs), ...gallerySchema]}>
-  <PageIntro
-    id="space-title"
-    eyebrow="The Space"
-    title="Three spaces, indoors and out"
-    lead={`Well-maintained indoor and outdoor spaces surrounded by nature, with bright natural light and a dedicated stage area. Book one space, or ${hall.name} and ${grove.name} together.`}
-    links={spaces.map((s) => ({ label: s.name, href: `#${s.id}` }))}
-    linksLabel="The spaces"
-    photo={introPhoto}
-    caption="The Hall, with its arched windows and fireplace wall"
-  />
+<BaseLayout title={title} description={description} og="the-space" venueDetails schema={gallerySchema}>
+  <section class="title-band" aria-labelledby="page-title">
+    <div class="container title-band__inner">
+      <h1 id="page-title">The Space</h1>
+      <p class="t-lead">Two indoor rooms and an outdoor grove among the pines.</p>
+    </div>
+  </section>
 
   {
-    spaces.map((s) => (
+    spaces.map((s, i) => (
       <section id={s.id} class="section sp-target" aria-labelledby={`${s.id}-heading`}>
         <div class="container">
           {s.photo ? (
-            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} caption={s.caption} flip={s.flip} sizes={SPLIT_SIZES} copyFirst={s.id === 'hall'}>
+            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} heading={s.name} lead={s.lead} caption={s.caption} flip={i % 2 === 1} sizes={SPLIT_SIZES}>
               <dl class="sp-facts">
-                {s.facts.map((f) => (
-                  <div class="sp-fact">
-                    <dt>{f.label}</dt>
-                    <dd>{f.value}</dd>
-                  </div>
-                ))}
+                <div class="sp-fact">
+                  <dt>Capacity</dt>
+                  <dd>Up to {s.capacity} guests</dd>
+                </div>
+                <div class="sp-fact">
+                  <dt>Features</dt>
+                  <dd>{s.features}</dd>
+                </div>
               </dl>
             </ImageTextSplit>
           ) : (
-            <SectionHeading id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} />
-          )}
-          {s.extras.some((e) => e.photo) && (
-            <div class="sp-extras">
-              {s.extras.map((e) => e.photo && <Figure photo={e.photo} caption={e.caption} tall={false} sizes={EXTRA_SIZES} />)}
+            <div class="section-head">
+              <h2 id={`${s.id}-heading`}>{s.name}</h2>
+              <p class="t-lead">{s.lead}</p>
             </div>
           )}
         </div>
@@ -193,69 +134,46 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
   }
 
   {
-    amenities.length > 0 && (
-      <section id="amenities" class="section sp-target" aria-labelledby="amenities-heading">
+    gallery.length > 0 && (
+      <section id="gallery" class="section sp-target" aria-labelledby="gallery-heading">
         <div class="container">
-          <SectionHeading id="amenities-heading" eyebrow="Amenities" heading="Premium amenities" />
-          <FeatureStrip items={amenities} />
+          <h2 id="gallery-heading" class="sp-head">A closer look</h2>
+          <div class="sp-gallery">
+            {gallery.map((g) => <Figure photo={g.photo} caption={g.caption} tall={false} sizes={GALLERY_SIZES} />)}
+          </div>
         </div>
       </section>
     )
   }
 
   {
-    grounds && (
-      <section id="grounds" class="section sp-target" aria-labelledby="grounds-heading">
+    site.amenities.length > 0 && (
+      <section id="amenities" class="section sp-target" aria-labelledby="amenities-heading">
         <div class="container">
-          <ImageTextSplit
-            photo={grounds}
-            id="grounds-heading"
-            eyebrow="The grounds"
-            heading="Renovated grounds and on-site parking"
-            lead="On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot with landscaped islands, so guests park steps from the door."
-            caption="The drive at dusk"
-            flip
-          />
+          <h2 id="amenities-heading" class="sp-head">Amenities</h2>
+          <dl class="sp-amenities">
+            {site.amenities.map((a) => (
+              <div class="sp-amenity">
+                <dt>{a.name}</dt>
+                <dd>{a.detail}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
     )
   }
-
-  <section id="included" class="section sp-target" aria-labelledby="included-heading">
-    <div class="container sp-included">
-      <SectionHeading
-        id="included-heading"
-        eyebrow="Every booking"
-        heading="What the rental includes"
-        lead="Every booking comes with the essentials, so you can plan the rest your way."
-        class="sp-included__head"
-      />
-      <Checklist title="Included with the space" items={[...site.included]} class="sp-included__panel" />
-    </div>
-  </section>
-
-  <section id="visit" class="section sp-target" aria-labelledby="visit-heading">
-    <div class="container">
-      <SectionHeading
-        id="visit-heading"
-        eyebrow="Visit"
-        heading="Schedule a visit"
-        lead="If you are interested in a walk-through or would like more information, please reach out. We would love to schedule a personal tour so you can see how the space fits your vision."
-        class="sp-visit__head"
-      >
-        <Fragment slot="actions">
-          <a class="btn btn--filled" href={`${href(bookHref)}?visit=1`}>Request a Visit</a>
-          <a class="link-more" href={`tel:${site.contact.phoneE164}`}>Or call {site.contact.phone} <Icon name="chevron-right" /></a>
-        </Fragment>
-      </SectionHeading>
-    </div>
-  </section>
 </BaseLayout>
 
 <style>
-  /* Links from the intro and from the home page land just under the header. */
+  /* Links from the home page and the events page land just under the header. */
   .sp-target {
     scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+
+  .sp-head {
+    margin-bottom: var(--section-head);
+    line-height: 1.08;
   }
 
   /* The fact row: LABEL / value pairs on a hairline under the lead. */
@@ -275,13 +193,15 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
     }
   }
 
-  .sp-fact {
+  .sp-fact,
+  .sp-amenity {
     display: grid;
     gap: 0.35rem;
     align-content: start;
   }
 
-  .sp-fact dt {
+  .sp-fact dt,
+  .sp-amenity dt {
     font-family: var(--font-serif);
     font-size: var(--t-caption);
     letter-spacing: 0.14em;
@@ -289,7 +209,8 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
     color: var(--label-2);
   }
 
-  .sp-fact dd {
+  .sp-fact dd,
+  .sp-amenity dd {
     margin: 0;
     font-family: var(--font-serif);
     font-size: var(--t-headline);
@@ -297,39 +218,33 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
     color: var(--label);
   }
 
-  /* Further views of a space: two figures in a row under its split, stacked on phones. */
-  .sp-extras {
+  /* The gallery: two across from 46.5rem, stacked on phones. */
+  .sp-gallery {
     display: grid;
-    gap: 2rem clamp(2rem, 5vw, 5rem);
-    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    gap: 2rem 1.5rem;
   }
 
   @media (min-width: 46.5rem) {
-    .sp-extras {
+    .sp-gallery {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 2rem 1.5rem;
     }
   }
 
-  /* What the rental includes: the heading beside one checklist panel. */
-  .sp-included {
+  /* The amenities: three short items on hairlines, in a row from 48rem. */
+  .sp-amenities {
     display: grid;
-    gap: 2rem 4rem;
-    align-items: start;
+    gap: 1.75rem 2.5rem;
+    margin: 0;
   }
 
-  .sp-included :global(.sp-included__head) {
-    margin-bottom: 0;
-  }
-
-  @media (min-width: 60rem) {
-    .sp-included {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  @media (min-width: 48rem) {
+    .sp-amenities {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
-  /* The visit request carries no content under its heading, so the heading keeps no bottom margin. */
-  :global(.sp-visit__head) {
-    margin-bottom: 0;
+  .sp-amenity {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
   }
 </style>

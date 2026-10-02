@@ -28,9 +28,16 @@ describe('static site', () => {
 
   test('moved pages redirect permanently to their new address, with or without the slash, keeping the query', async () => {
     const cases: [string, string][] = [
-      ['/events/church-community-events/', '/events/community-events/'],
-      ['/events/church-community-events', '/events/community-events/'],
-      ['/events/church-community-events/?utm_source=flyer', '/events/community-events/?utm_source=flyer'],
+      ['/events/church-community-events/', '/events/#community-events'],
+      ['/events/church-community-events', '/events/#community-events'],
+      ['/events/church-community-events/?utm_source=flyer', '/events/?utm_source=flyer#community-events'],
+      ['/events/weddings/', '/events/#weddings'],
+      ['/events/weddings?utm_source=flyer', '/events/?utm_source=flyer#weddings'],
+      ['/events/community-events/', '/events/#community-events'],
+      ['/events/repasts-memorials/', '/events/#repasts-memorials'],
+      ['/faq/', '/pricing/#faq'],
+      ['/faq', '/pricing/#faq'],
+      ['/faq/?ref=card', '/pricing/?ref=card#faq'],
       ['/about/', '/the-space/'],
       ['/about', '/the-space/'],
     ];

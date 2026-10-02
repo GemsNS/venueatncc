@@ -2,7 +2,7 @@
  * /llms.txt: a plain-text summary of the venue for AI assistants and answer engines.
  * Generated from the same data as the site so it never drifts. Written in the brand voice of
  * docs/design/brand.md: first person plural, brief and precise. It never mentions alcohol or catering, so
- * the one catering FAQ stays on /faq/ only. Each fact is stated once: the questions and answers section
+ * the one catering FAQ stays on Rates & FAQ only. Each fact is stated once: the questions and answers section
  * carries only FAQs whose answers the sections above do not already give (COVERED_QUESTIONS).
  * The demo build does not publish this file (astro.config.mjs); the real one lives on venueatncc.org.
  */
@@ -30,22 +30,14 @@ function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => s
 
 /**
  * Published FAQs, word for word, whose answers the sections of this file already state (brand.md, Redundancy
- * rules). They stay on /faq/ and in its structured data. A question reworded in src/data/faq.ts no longer
+ * rules). They stay on Rates & FAQ (/pricing/#faq) and in its structured data. A question reworded in src/data/faq.ts no longer
  * matches and appears under questions and answers again, which repeats a fact but never drops one.
  */
 const COVERED_QUESTIONS = new Set([
   'How do I check if my date is available?', // Booking
   'Who can book the venue?', // Booking
   'Can I see the venue before I book?', // Booking
-  'How many guests can the venue hold?', // The spaces
   `Can I book ${spaceName('both')} together?`, // The spaces
-  'Is parking included?', // The spaces
-  'What is included in the rental?', // The spaces and Rates
-  'How much does it cost to rent the venue?', // Rates
-  'How do deposits and payments work?', // Rates and Booking
-  'What days and hours can I book?', // Booking
-  `Where is ${site.name}?`, // Contact and location
-  'What kinds of events can I host?', // Events we host
 ]);
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -80,7 +72,7 @@ export const GET: APIRoute = () => {
     '',
     `- ${RATES_WORDING}`,
     `- Deposits: ${site.depositPolicy}`,
-    `- Ask about rates for your date: ${u('/pricing/')}`,
+    `- Rates, what is included, and answers to common questions: ${u('/pricing/')}`,
     `- Minimum hours: ${DAY_TYPES.map((d) => `${dayTypes[d].label} ${minimumHours[d]}`).join(', ')}`,
     '',
     '## Booking',
@@ -101,7 +93,7 @@ export const GET: APIRoute = () => {
     '',
     '## Events we host',
     '',
-    ...eventList.map((e) => `- [${e.name}](${u(`/events/${e.slug}/`)}): ${e.summary}`),
+    ...eventList.map((e) => `- [${e.name}](${u(`/events/#${e.slug}`)}): ${e.summary}`),
     '- Another kind of event: describe it in your request, and we will confirm which space suits it.',
     '',
     ...(faqs.length > 0 ? ['## Questions and answers', '', ...faqs.flatMap((f) => [`### ${f.q}`, '', f.a, ''])] : []),

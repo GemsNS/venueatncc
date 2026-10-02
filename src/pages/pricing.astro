@@ -1,124 +1,120 @@
 ---
 /**
- * Rates and inquiries (docs/design/redesign-v7.md, section 5, "/pricing/ Rates").
+ * Rates & FAQ (docs/design/redesign-v7.md, "Version 8"). The URL stays /pricing/ so existing links keep
+ * working; the old /faq/ answers 301 to #faq.
  *
- * In order: a serif title band on Petal; the rates split (the approved wording beside a real photo of The
- * Hall, shown whole with its caption under it, the Call button, and the contact person and email); then
- * "Before you book" (#before): the deposit and the building hours, whose one home is this page, beside a
- * link to the booking page and one to what the rental includes (its home is The Space).
+ * In order: the title band; the rates (the approved wording beside a real photo of The Hall, shown whole
+ * with its caption under it, the Call button, and the contact person and email); the booking details, the
+ * one home of what the rental includes (#included), how a date is held (#hold), and the hours (#hours);
+ * then the questions (#faq), one accordion with no groups, and the FAQPage structured data.
  *
- * There is no second request form here: a date request asks for the same things as the booking page (space,
- * date, guests, hours), so it has one home, /book/, and this page is about the rates. Call is the page's one
- * filled button.
- *
- * The venue does not publish prices: no amounts, packages, fees, or estimates appear here, and no price
- * in structured data. The phone number appears once, on the Call button.
- * The URL stays /pricing/ so existing links keep working. Breadcrumbs are for event pages only.
+ * Call is the page's one filled button. A date request has one home, the booking page, so there is no
+ * second form here: a text link points to it. The venue does not publish prices: no amounts, packages,
+ * fees, or estimates appear here, and no price in structured data. The phone appears once, on the button.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
-import SectionHeading from '../components/SectionHeading.astro';
+import FaqAccordion from '../components/FaqAccordion.astro';
 import { site } from '../data/site';
 import { href } from '../lib/paths';
 import { photoByName } from '../data/photos';
+import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
+import { faqPage } from '../lib/schema';
 import { SETUP_CLEANUP_RULE } from '../shared/booking-rules';
 
-const title = 'Rates and inquiries | The Venue @ NCC, Suffolk, VA';
-const description = `Rates at ${site.name} in ${site.address.city}, VA vary with peak season, holidays, and the day of the week. Call or email us about The Hall, The Main Hall, or The Grove.`;
+const title = 'Rates & FAQ | The Venue @ NCC, Suffolk, VA';
+const description = `Rates at ${site.name} in ${site.address.city}, VA vary with the season and the day of the week. What the rental includes, how to hold your date, our hours, and answers to common questions.`;
 
 /* The approved wording (brand.md, "No published prices"), without the number: the Call button carries it. */
 const ratesLead =
   'Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us and we will be happy to help you.';
 
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const included = site.included.map(lowerFirst);
+
+const details = [
+  { id: 'included', title: 'Included', text: `Every rental includes ${included.slice(0, -1).join(', ')}, and ${included[included.length - 1]}.` },
+  { id: 'hold', title: 'Holding your date', text: site.depositPolicy },
+  { id: 'hours', title: 'Hours', text: `Events can be booked ${site.access.days}, ${site.access.hours}. ${SETUP_CLEANUP_RULE}` },
+];
+
 const hallPhoto = photoByName('hall-fireplace');
 ---
-<BaseLayout title={title} description={description} og="pricing" pageType="ContactPage">
-  <section class="band-section title-band" aria-labelledby="page-title">
-    <div class="container">
-      <p class="eyebrow">Rates</p>
-      <h1 id="page-title">Rates and inquiries</h1>
+<BaseLayout title={title} description={description} og="pricing" pageType="ContactPage" schema={[faqPage(publishedFaqs)]}>
+  <section class="title-band" aria-labelledby="page-title">
+    <div class="container title-band__inner">
+      <h1 id="page-title">Rates &amp; FAQ</h1>
     </div>
   </section>
 
-  <section class="section" aria-labelledby="rates-heading">
+  <section id="rates" class="section pr-target" aria-labelledby="rates-heading">
     <div class="container">
       {
         hallPhoto ? (
-          <ImageTextSplit photo={hallPhoto} id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead} caption="The Hall">
+          <ImageTextSplit photo={hallPhoto} id="rates-heading" heading="Rates by phone" lead={ratesLead} caption="The Hall">
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
                 Call {site.contact.phone}
               </a>
               <p class="rates__contact secondary">
-                Ask for {site.contact.contactName}, or email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+                Ask for {site.contact.contactName}, email <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>, or{' '}
+                <a href={href(bookHref)}>send a request online</a>.
               </p>
             </Fragment>
           </ImageTextSplit>
         ) : (
-          <SectionHeading id="rates-heading" eyebrow="By phone" heading="Our special rates" lead={ratesLead}>
-            <Fragment slot="actions">
+          <div class="section-head">
+            <h2 id="rates-heading">Rates by phone</h2>
+            <p class="t-lead">{ratesLead}</p>
+            <div class="btn-row">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
                 Call {site.contact.phone}
               </a>
-            </Fragment>
-          </SectionHeading>
+            </div>
+          </div>
         )
       }
     </div>
   </section>
 
-  <section id="before" class="section before-section" aria-labelledby="before-heading">
-    <div class="container before">
-      <SectionHeading
-        id="before-heading"
-        eyebrow="Booking"
-        heading="Before you book"
-        lead="Choose a date and a space on the booking page, and we confirm availability and your rate personally."
-        class="before__head"
-      >
-        <Fragment slot="actions">
-          <a class="link-more" href={href(bookHref)}>Check availability <Icon name="chevron-right" /></a>
-        </Fragment>
-      </SectionHeading>
-      <div class="before__panel">
-        <ul class="before__list">
-          <li>{site.depositPolicy}</li>
-          <li>Events can be booked {site.access.days}, {site.access.hours}. {SETUP_CLEANUP_RULE}</li>
-        </ul>
-        <a class="link-more" href={href('/the-space/#included')}>What the rental includes <Icon name="chevron-right" /></a>
-      </div>
+  <section id="details" class="section pr-target" aria-labelledby="details-heading">
+    <div class="container">
+      <h2 id="details-heading" class="pr-head">Booking details</h2>
+      <dl class="pr-details">
+        {
+          details.map((d) => (
+            <div class="pr-detail pr-target" id={d.id}>
+              <dt>{d.title}</dt>
+              <dd>{d.text}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section id="faq" class="section pr-target" aria-labelledby="faq-heading">
+    <div class="container pr-faq">
+      <h2 id="faq-heading" class="pr-head">Questions</h2>
+      <FaqAccordion items={publishedFaqs} class="pr-faq__list" />
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  /* ---------- Title band (the reference's contact page opens with a serif title on a tinted band) ---------- */
-
-  .title-band {
-    background: var(--band);
-    padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+  /* Links to a section (from the old /faq/, the FAQ answers, and other pages) land under the bar. */
+  .pr-target {
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
   }
 
-  .title-band .container {
-    display: grid;
-    gap: 0.75rem;
+  .pr-head {
+    margin-bottom: var(--section-head);
+    line-height: 1.08;
   }
-
-  .title-band h1 {
-    line-height: 1.05;
-  }
-
-  @media (forced-colors: active) {
-    .title-band {
-      border-bottom: 1px solid CanvasText;
-    }
-  }
-
-  /* ---------- Rates ---------- */
 
   /* The contact line takes the row under the Call button. */
   .rates__contact {
@@ -130,51 +126,58 @@ const hallPhoto = photoByName('hall-fireplace');
     color: var(--accent-text);
   }
 
-  /* ---------- Before you book: the heading beside one small Petal panel ---------- */
+  /* ---------- Booking details: three short facts, stacked on phones, in a row from 48rem ---------- */
 
-  .before-section {
-    scroll-margin-top: calc(var(--nav-h) + 1rem);
-  }
-
-  .before {
+  .pr-details {
     display: grid;
-    gap: 2rem clamp(2rem, 5vw, 5rem);
-    align-items: start;
+    gap: 1.75rem 2.5rem;
+    margin: 0;
   }
 
-  @media (min-width: 60rem) {
-    .before {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  @media (min-width: 48rem) {
+    .pr-details {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
-  .before :global(.before__head) {
-    margin-bottom: 0;
+  .pr-detail {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--separator);
   }
 
-  .before__panel {
-    display: grid;
-    gap: 0.75rem;
-    justify-items: start;
-    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-    border-radius: var(--r-card);
-    background: var(--panel);
+  .pr-detail dt {
+    font-family: var(--font-serif);
+    font-size: var(--t-caption);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--label-2);
   }
 
-  .before__list {
-    display: grid;
-    gap: 0.6rem;
+  .pr-detail dd {
     margin: 0;
-    padding-left: 1.1rem;
     font-family: var(--font-serif);
     font-size: var(--t-headline);
     line-height: 1.45;
     color: var(--label);
   }
 
-  @media (forced-colors: active) {
-    .before__panel {
-      border: 1px solid CanvasText;
+  /* ---------- Questions: the heading beside the accordion from 60rem ---------- */
+
+  .pr-faq {
+    display: grid;
+    gap: 0 4rem;
+  }
+
+  .pr-faq :global(.pr-faq__list) {
+    max-width: 50rem;
+  }
+
+  @media (min-width: 60rem) {
+    .pr-faq {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     }
   }
 </style>
