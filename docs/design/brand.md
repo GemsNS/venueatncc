@@ -445,7 +445,9 @@ under the bar, and the bar turns solid after 8px.
 - **Open for the lead's decision: the hero clip's resolution (the client's rule 3).** The clip and its
   landscape poster are 2560 x 1440 and the portrait poster 1216 x 2160, cut from a 3840 x 2160 source. Cover
   fills the full-height hero, so they are drawn wider than their files: on a 390 x 844 phone at 3x the clip is
-  1500 CSS px wide (4501 device px, 1.76 times its 2560 file; the portrait poster 1.17 times), at 768 x 1024 at 2x 1.42 times (portrait poster  1.26 times), at 1440 x 900 at 2x 1.25 times, and at 1920 x 1080 at 2x 1.5 times. It is footage of soft roses,
+  1500 CSS px wide (4501 device px, 1.76 times its 2560 file; the portrait poster 1.17 times), at 768 x
+  1024 at 2x 1.42 times (the portrait poster 1.26 times), at 1440 x 900 at 2x 1.25 times, and at 1920 x 1080
+  at 2x 1.5 times. It is footage of soft roses,
   not a photo of the property, and it was left unchanged in the October 1 pass because re-encoding it changes
   the home page's largest file and the veil and contrast figures above, which the lead reviews in person. The
   two fixes: a portrait cut of the clip, the middle 1216 x 2160 of the 4K source with the same edit and grade,
