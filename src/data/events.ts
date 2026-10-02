@@ -8,8 +8,8 @@
  *   sentence works. Headings in sentence case.
  * - Never mention alcohol or drinks of any kind, and never mention catering, menus, kitchens, or
  *   bringing your own anything. Catering appears only in one FAQ entry on /faq/.
- * - The venue is a stand-alone business (brand.md, "Separation"): no copy connects it to a church. A
- *   client's own congregation or clergy may be mentioned.
+ * - The venue is a stand-alone business (brand.md, "Separation"): no copy connects it to a church or a
+ *   congregation.
  * - Describe only what the photos and the owner's copy confirm. The Hall: arched windows, a fireplace
  *   feature wall, dark wood-look floors, recessed lighting, double doors. The Main Hall: an auditorium with
  *   stage seating in rows, a raised stage, a vaulted ceiling. The Grove: a timber gazebo, open lawn, picnic
@@ -75,7 +75,6 @@ const HALL = spaceOf('indoor').name;
 const MAIN = spaceOf('main').name;
 const GROVE = spaceOf('outdoor').name;
 const INDOOR = spaceOf('indoor').capacity;
-const MAIN_CAP = spaceOf('main').capacity;
 const OUTDOOR = spaceOf('outdoor').capacity;
 const PHONE = site.contact.phone;
 
@@ -94,9 +93,9 @@ export const events: EventType[] = [
       {
         heading: 'Your choice of an indoor or outdoor reception',
         body: [
-          `${GROVE} sets your vows outdoors: a timber gazebo with a metal roof, open lawn, a patio, and tall pines around it. It holds up to ${OUTDOOR} guests.`,
-          `${HALL}, with arched windows, a fireplace feature wall, and dark wood-look floors, holds up to ${INDOOR} guests for the reception. Reserve ${HALL} and ${GROVE} for the same day and guests move from the ceremony to the reception without returning to their cars.`,
-          `For a ceremony indoors, ${MAIN} seats up to ${MAIN_CAP} guests in rows facing a raised stage.`,
+          `${GROVE} sets your vows outdoors, with the gazebo as the altar and the pines as the backdrop, and it is the space for the largest guest list.`,
+          `${HALL} is a bright room for the reception, with the fireplace wall behind the head table. Reserve ${HALL} and ${GROVE} for the same day and guests move from the ceremony to the reception without returning to their cars.`,
+          `For a ceremony indoors, ${MAIN} seats your guests in rows facing a raised stage.`,
         ],
       },
       {
@@ -154,8 +153,8 @@ export const events: EventType[] = [
       {
         heading: 'The Hall for a formal evening',
         body: [
-          `${HALL} holds up to ${INDOOR} guests. Arched windows, a fireplace feature wall, and recessed lighting give a banquet a finished look, and the double doors make a clear entrance for guests of honor.`,
-          `For a larger gathering or a summer evening outdoors, ${GROVE} holds up to ${OUTDOOR} guests among tall pines, with a timber gazebo and picnic tables on a patio.`,
+          `${HALL} gives a banquet a finished look with no extra decorating, and the double doors make a clear entrance for guests of honor and a natural moment for a toast.`,
+          `For a larger gathering or a summer evening outdoors, ${GROVE} is the space with the most room, under the pines.`,
         ],
       },
       {
@@ -215,8 +214,8 @@ export const events: EventType[] = [
       {
         heading: 'The Hall for a shower',
         body: [
-          `Most showers fit comfortably in ${HALL}, which holds up to ${INDOOR} guests. The fireplace feature wall makes a natural backdrop for gifts and photos, and the arched windows bring in daylight for an afternoon shower.`,
-          `For a spring or summer shower outdoors, ${GROVE} holds up to ${OUTDOOR} guests, with picnic tables on a patio beside the timber gazebo.`,
+          `Most showers fit comfortably in ${HALL}. The fireplace wall makes a natural backdrop for the gift table and photos, and an afternoon shower gets plenty of daylight.`,
+          `For a spring or summer shower outdoors, ${GROVE} sets the tables in the shade beside the gazebo.`,
         ],
       },
       {
@@ -269,8 +268,8 @@ export const events: EventType[] = [
       {
         heading: 'Choosing the space for your party',
         body: [
-          `${HALL} suits most milestone parties: an open room for up to ${INDOOR} guests, with arched windows, a fireplace feature wall, and double doors that make a fine entrance for the guest of honor.`,
-          `A large open-house party or a summer celebration can move outdoors to ${GROVE}, which holds up to ${OUTDOOR} guests, with open lawn, a timber gazebo, and picnic tables on a patio.`,
+          `${HALL} suits most milestone parties: the open floor takes a dinner, a dance floor, or both, and the double doors make a fine entrance for the guest of honor.`,
+          `A large open-house party or a summer celebration can move outdoors to ${GROVE}, where children have the lawn and the gazebo makes a ready spot for the cake and the photos.`,
         ],
       },
       {
@@ -328,15 +327,15 @@ export const events: EventType[] = [
       {
         heading: 'A calm room for the gathering',
         body: [
-          `${HALL} holds up to ${INDOOR} guests. Arched windows, a fireplace feature wall, and recessed lighting give it a quiet, dignified character, and the fireplace wall is a natural place for photographs and flowers.`,
-          `A celebration of life in warmer months, or one expecting more guests, can use ${GROVE}, which holds up to ${OUTDOOR} among tall pines.`,
+          `${HALL} has a quiet, dignified character, and the fireplace wall is a natural place for photographs and flowers.`,
+          `A celebration of life in warmer months, or one expecting more guests, can gather in ${GROVE} among the pines.`,
         ],
       },
       {
         heading: 'Planning a repast',
         body: [
           'Most repasts begin soon after the burial or memorial service, so the service schedule sets the timing. Choose one family point person to confirm the date, share a rough guest count, and keep decisions in one place.',
-          'Decide early who will welcome guests, who will offer a blessing, and who will gather photographs and flowers at the end. Small tasks like these are easy to hand to cousins, friends, or members of your congregation who want to help.',
+          'Decide early who will welcome guests, who will offer a blessing, and who will gather photographs and flowers at the end. Small tasks like these are easy to hand to cousins, friends, or neighbors who want to help.',
         ],
       },
     ],
@@ -387,9 +386,9 @@ export const events: EventType[] = [
       {
         heading: 'The Hall for meetings and trainings',
         body: [
-          `${HALL} holds up to ${INDOOR} people in one open room with arched windows and recessed lighting. It suits a board meeting, a training session, or a workshop that breaks into small groups.`,
-          `For a presentation or a corporate event, ${MAIN} seats up to ${MAIN_CAP} in rows facing a raised stage.`,
-          `For a staff picnic or an outdoor team day, ${GROVE} holds up to ${OUTDOOR} among tall pines, with picnic tables on a patio.`,
+          `${HALL} is one open room with good daylight, so it suits a board meeting, a training session, or a workshop that breaks into small groups.`,
+          `For a presentation or a corporate event, ${MAIN} puts every seat in view of a raised stage and a wall-mounted screen.`,
+          `For a staff picnic or an outdoor team day, ${GROVE} has picnic tables in the shade of the pines.`,
         ],
       },
       {
@@ -443,8 +442,8 @@ export const events: EventType[] = [
       {
         heading: 'The Grove for a large gathering',
         body: [
-          `${GROVE} holds up to ${OUTDOOR} guests. Families gather at the picnic tables on the patio, children have the open lawn, and the timber gazebo makes a natural spot for a group photograph.`,
-          `For a smaller or cooler-weather gathering, ${HALL} holds up to ${INDOOR} guests indoors. Reserve both and the day can move between them.`,
+          `${GROVE} is our largest space. Families gather at the picnic tables, children have the open lawn, and the gazebo makes a natural spot for a group photograph.`,
+          `For a smaller or cooler-weather gathering, ${HALL} keeps everyone together indoors. Reserve both and the day can move between them.`,
         ],
       },
       {
@@ -508,9 +507,9 @@ export const events: EventType[] = [
       {
         heading: 'Choosing the space',
         body: [
-          `${MAIN} suits a conference or a civic forum: a multi-purpose auditorium that seats up to ${MAIN_CAP} in rows facing a raised stage.`,
-          `${HALL} suits sessions, workshops, and community meetings: one open room for up to ${INDOOR} guests, with arched windows and recessed lighting.`,
-          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering, with room for up to ${OUTDOOR} guests on the lawn and the patio under tall pines. Reserve ${HALL} and ${GROVE} together for a program that moves between them.`,
+          `${MAIN} suits a conference or a civic forum, with rows of seating facing a raised stage.`,
+          `${HALL} suits sessions, workshops, and community meetings in one open room.`,
+          `${GROVE} suits a community picnic, a volunteer appreciation day, or a neighborhood gathering on the lawn under the pines. Reserve ${HALL} and ${GROVE} together for a program that moves between them.`,
         ],
       },
       {

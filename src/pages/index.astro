@@ -39,13 +39,12 @@ import HeroVideo from '../components/HeroVideo.astro';
 import Logo from '../components/Logo.astro';
 import Icon from '../components/Icon.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import Carousel from '../components/Carousel.astro';
 import FigureCard from '../components/FigureCard.astro';
 import ImageTextSplit from '../components/ImageTextSplit.astro';
 import DateChecker from '../components/booking/DateChecker';
 import { site, cityState, fullAddress } from '../data/site';
 import { events } from '../data/events';
-import { EVENTS_STYLED_NOTE, STAGED_SCENES, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
+import { STAGED_SCENES, eventPhoto, eventsStaged, photoByName, photosFor, type VenuePhoto } from '../data/photos';
 import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 
@@ -111,29 +110,31 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
         <SectionHeading
           id="spaces-heading"
           eyebrow="The spaces"
-          heading="Three spaces, indoors and out"
-          lead="Our fully renovated property is available for weddings, receptions, conferences, banquets, memorials, and community gatherings, with elegant backdrops, flexible layouts, and full-day access."
+          heading="Two halls and a grove"
+          lead="A fully renovated property with two indoor rooms and an outdoor grove among the pines, each with its own setting and flexible layouts."
         >
           <Fragment slot="actions">
             <a class="btn btn--outline" href={href('/the-space/')}>Explore The Space</a>
           </Fragment>
         </SectionHeading>
-        <Carousel cols={3} label="The spaces">
+        <ul class="space-cards" aria-label="The spaces">
           {
             spaceCards.map(
               (card) =>
                 card.photo && (
+                  <li>
                   <FigureCard
                     photo={card.photo}
                     label={card.name}
                     meta={card.capacity ? `Up to ${card.capacity} guests` : undefined}
                     href={card.href}
-                    sizes="(min-width: 75rem) 410px, (min-width: 60rem) 31vw, (min-width: 46.5rem) 46vw, 82vw"
+                    sizes="(min-width: 75rem) 410px, (min-width: 48rem) 31vw, 100vw"
                   />
+                  </li>
                 ),
             )
           }
-        </Carousel>
+        </ul>
       </div>
     </section>
 
@@ -157,7 +158,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
               id="events-heading"
               eyebrow="Occasions"
               heading="Events we host"
-              lead={EVENTS_STYLED_NOTE}
+              lead="For an occasion not listed here, describe it in your request and we will confirm which space suits it."
               caption={STAGED_SCENES[eventsPhoto.name] ?? false}
               sizes="(min-width: 75rem) 620px, (min-width: 60rem) 50vw, 100vw"
             >
@@ -192,7 +193,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
     {
       arrival && (
-        <section class="section" aria-labelledby="location-heading">
+        <section id="location" class="section location-section" aria-labelledby="location-heading">
           <div class="container">
             <ImageTextSplit
               photo={arrival}
@@ -329,6 +330,8 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       if (g !== gone) {
         gone = g;
         hero!.toggleAttribute('data-welcome-gone', g);
+        // The bar's Check Availability waits until the welcome's own has faded: one on the first screen.
+        nav!.toggleAttribute('data-cta-wait', !g);
       }
       const l = y >= distance;
       if (l !== landed) {
@@ -413,6 +416,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
       clear();
       tracks = [];
       hero!.removeAttribute('data-welcome-gone');
+      nav!.removeAttribute('data-cta-wait');
       nav!.removeAttribute('data-morph');
       nav!.removeAttribute('data-morphed');
     }
@@ -535,7 +539,7 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     the halo is invisible, so the landing is unchanged.
   */
   .welcome__words {
-    filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px rgb(255 255 255 / 0.8));
+    filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px rgb(255 255 255 / 0.8));
   }
 
   .welcome__below {
@@ -585,18 +589,44 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
     background: var(--bg);
   }
 
+  /* ---------- The spaces: three whole cards, stacked on phones, in a row from 48rem ---------- */
+
+  .space-cards {
+    display: grid;
+    gap: 2.5rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .space-cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Links from the FAQ land under the bar. */
+  .location-section {
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+
   /* ---------- Check a date ---------- */
 
   .checker {
     display: grid;
     gap: 2rem 4rem;
-    align-items: center;
+    align-items: start;
   }
 
   @media (min-width: 60rem) {
     .checker {
       grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
       justify-content: space-between;
+    }
+
+    /* The eyebrow lines up with the panel's first label, as in every other two-column section. */
+    .checker__copy {
+      padding-top: 0.5rem;
     }
   }
 

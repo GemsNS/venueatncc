@@ -47,6 +47,13 @@ The eight staged files and the real photo each is made from:
 Use originals at least 1600px on the long edge. The build prints a warning for smaller files, for files with
 no `photoDetails` entry, and for real photos listed with no file.
 
+## driveway-tall (recut 2026-10-01)
+
+`driveway-tall.jpg` is a 3100 x 3875 window of IMG_4899 (left 420, top 700, the camera original's pixels)
+scaled to 2000 x 2500, with the building near the upper third and the landscaped island in the lower half,
+in the tone of `driveway.jpg` (a per-channel curve fitted from the original to `driveway.jpg` over the
+area they share). The earlier full-width framing is in `design-archive/driveway-tall-before-recut/`.
+
 ## Resolution (re-exported 2026-10-01)
 
 The client found the photos soft. Every real photo except `grove-pines` (already at the original's width) is

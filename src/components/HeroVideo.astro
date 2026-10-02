@@ -7,7 +7,7 @@
  * The page's content slides up over it, as on the reference. The poster is an image beneath the video, so
  * there is no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the
  * poster shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
- * the property. `data-hero` lets the header stay transparent over it and turn solid as it leaves.
+ * the property. `data-hero` tells the header (solid White throughout) when to draw its hairline.
  */
 import { href } from '../lib/paths';
 
@@ -67,7 +67,7 @@ const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
     display: grid;
     align-items: center;
     min-height: 100svh;
-    /* The bar is transparent over the hero, so the content is centred in the space beneath it. */
+    /* The hero starts under the solid bar, so the content is centred in the space beneath it. */
     padding-block: calc(var(--nav-h) + 1rem) 2rem;
     margin-top: calc(-1 * var(--nav-h));
   }

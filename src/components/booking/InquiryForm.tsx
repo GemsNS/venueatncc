@@ -1,5 +1,7 @@
 /**
- * The inquiry form on /pricing/ (Rates and inquiries), mounted client:load.
+ * The inquiry form, formerly on /pricing/ (Rates and inquiries). Not mounted on any page since redesign
+ * version 7: date requests have one home, the booking page, whose wizard asks for the same fields. Kept,
+ * with inquiry.css, in case the venue wants a short contact form later.
  *
  * One page, no steps: the space, the kind of event, a date (the same date field as the home page date
  * checker), guests, start time and hours, then how to reach the person. It sends through the same API
@@ -45,6 +47,7 @@ import {
 } from './lib';
 import { ChoiceList, CountField, Note, Segmented, Spinner, Stepper, type ChoiceOption } from './ui';
 import { useAvailability, useRefreshOnReturn } from './useAvailability';
+import { SETUP_CLEANUP_RULE } from '../../shared/booking-rules';
 import { DEFAULT_DRAFT, GUESTS_MAX, GUESTS_MIN, buildInput, emailError, errorId, fieldId, fitHours, validate, type Draft } from './wizard';
 
 const EVENT_OPTIONS = [...eventTypes, OTHER_EVENT];
@@ -574,7 +577,7 @@ export default function InquiryForm() {
             <span class="num">
               {formatTime(d.startTime)} to {formatEndTime(d.startTime, d.hours)}
             </span>
-            . Include time to set up and clean up. Events end by 12:00 midnight.
+            . {SETUP_CLEANUP_RULE} Events end by 12:00 midnight.
           </p>
         </fieldset>
 

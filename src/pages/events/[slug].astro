@@ -139,7 +139,7 @@ const schema = [
     aboutPhoto && aboutSection && (
       <section id="about" class="section ev-target" aria-labelledby="about-heading">
         <div class="container">
-          <ImageTextSplit photo={aboutPhoto} id="about-heading" eyebrow="About this occasion" heading={aboutSection.heading} caption={aboutCaption} flip>
+          <ImageTextSplit photo={aboutPhoto} id="about-heading" eyebrow="About this occasion" heading={aboutSection.heading} caption={aboutCaption} flip copyFirst>
             {aboutSection.body.map((p) => (
               <p class="t-copy ev-copy">{splitPhone(p).map((chunk, i) => (i === 0 ? chunk : <><a class="ev-tel" href={tel}>{PHONE}</a>{chunk}</>))}</p>
             ))}
@@ -152,9 +152,9 @@ const schema = [
   {
     guideSections.length > 0 && (
       <section id="guide" class="section ev-target" aria-labelledby="guide-heading">
-        <div class="container">
-          <SectionHeading id="guide-heading" eyebrow="Step by step" heading="Planning guide" />
-          <div class:list={['ev-guide', { 'ev-guide--one': guideSections.length === 1 }]}>
+        <div class:list={['container', { 'ev-guide-one': guideSections.length === 1 }]}>
+          <SectionHeading id="guide-heading" eyebrow="Step by step" heading="Planning guide" class="ev-guide__head" />
+          <div class="ev-guide">
             {guideSections.map((s) => (
               <section class="ev-guide__item" aria-label={s.heading}>
                 <h3 class="t-title-2">{s.heading}</h3>
@@ -250,9 +250,23 @@ const schema = [
     }
   }
 
-  /* A single remaining section reads as one column on the page measure, not half an empty row. */
+  /*
+    A single remaining section sits beside the heading, the same split as the checklist below, so it never
+    reads as half of a missing row.
+  */
   @media (min-width: 60rem) {
-    .ev-guide--one {
+    .ev-guide-one {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 2rem clamp(2rem, 5vw, 5rem);
+      align-items: start;
+    }
+
+    .ev-guide-one :global(.ev-guide__head) {
+      margin-bottom: 0;
+    }
+
+    .ev-guide-one .ev-guide {
       grid-template-columns: minmax(0, 1fr);
     }
   }

@@ -43,11 +43,28 @@ const spacePhotos: SpacePhotos = {
 <BaseLayout title={title} description={description} og="book" pageType="ContactPage" schema={[breadcrumbs(crumbs)]}>
   <section class="book-title">
     <div class="container book-title__inner">
-      <p class="eyebrow">Availability</p>
-      <h1>Check availability</h1>
-      <p class="t-lead book-title__lead">Choose a date and a space, and send your request in about two minutes.</p>
+      <p class="eyebrow" data-visit-eyebrow>Availability</p>
+      <h1 data-visit-title>Check availability</h1>
+      <p class="t-lead book-title__lead" data-visit-lead>Choose a date and a space, and send your request in about two minutes.</p>
     </div>
   </section>
+  <script is:inline>
+    /*
+      Request a Visit links here with ?visit=1, which ticks "I would like to see the space before I book" in
+      the wizard. The title says so from the first paint (an inline script, so the words never flash), and a
+      reader who asked for a tour knows they are in the right place.
+    */
+    if (new URLSearchParams(location.search).get('visit') === '1') {
+      var set = function (sel, text) {
+        var el = document.querySelector(sel);
+        if (el) el.textContent = text;
+      };
+      set('[data-visit-eyebrow]', 'Visit');
+      set('[data-visit-title]', 'Request a visit');
+      set('[data-visit-lead]', 'Choose the date and the space you are considering, and we will arrange a time for you to see it before you book. Or call us to set up a tour.');
+      document.title = 'Request a visit | The Venue @ NCC, Suffolk, VA';
+    }
+  </script>
 
   <section class="section book-app">
     <div class="container">

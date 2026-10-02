@@ -14,10 +14,11 @@
  *
  * The FAQ rule (docs/design/redesign-v7.md, section 4): an answer whose fact has a home elsewhere on the
  * site is one sentence, and `more` links to that home (capacities and inclusions on The Space, rates, the
- * deposit and the hours on Rates). Only questions with no other home carry a full answer. The answer here
+ * deposit and the hours on Rates at #before, directions on the home page at #location). Only questions with no other home carry a full answer. The answer here
  * is the short one, so the FAQ page, the FAQPage structured data, and llms.txt all say the same thing.
  */
 import { site, fullAddress } from './site';
+import { SETUP_CLEANUP_RULE } from '../shared/booking-rules';
 
 export interface Faq {
   q: string;
@@ -57,8 +58,8 @@ export const faqs: Faq[] = [
   {
     topic: 'booking',
     q: 'What days and hours can I book?',
-    a: `Events can be booked ${site.access.days}, ${site.access.hours}, with setup and cleanup included in that time.`,
-    more: { label: 'Rental policies on Rates', href: '/pricing/' },
+    a: `Events can be booked ${site.access.days}, ${site.access.hours}. ${SETUP_CLEANUP_RULE}`,
+    more: { label: 'Deposit and hours on Rates', href: '/pricing/#before' },
   },
   {
     topic: 'space',
@@ -84,14 +85,14 @@ export const faqs: Faq[] = [
   {
     topic: 'pricing',
     q: 'How much does it cost to rent the venue?',
-    a: 'We quote each event personally. See Rates to call us or send an inquiry.',
-    more: { label: 'Rates and inquiries', href: '/pricing/' },
+    a: 'We quote each event personally. Call us, or request your date and we will send your rate.',
+    more: { label: 'Rates', href: '/pricing/' },
   },
   {
     topic: 'pricing',
     q: 'How do deposits and payments work?',
     a: site.depositPolicy,
-    more: { label: 'Rental policies on Rates', href: '/pricing/' },
+    more: { label: 'Deposit and hours on Rates', href: '/pricing/#before' },
   },
   {
     topic: 'pricing',
@@ -103,11 +104,12 @@ export const faqs: Faq[] = [
     topic: 'about',
     q: 'Where is The Venue @ NCC?',
     a: `The Venue @ NCC is at ${fullAddress}.`,
+    more: { label: 'Directions and parking', href: '/#location' },
   },
   {
     topic: 'about',
     q: 'What kinds of events can I host?',
-    a: 'Weddings and receptions, banquets and anniversaries, baby and bridal showers, birthdays and milestones, repasts and celebrations of life, conferences, meetings and workshops, graduations and reunions, and community events. For another kind of event, describe it in your request, and we will confirm which space suits it.',
+    a: 'We host eight kinds of occasions, from weddings to community events, and for anything else, describe it in your request and we will confirm which space suits it.',
     more: { label: 'See all events', href: '/events/' },
   },
   // To answer, then publish:

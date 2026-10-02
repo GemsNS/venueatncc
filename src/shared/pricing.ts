@@ -216,7 +216,7 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
       : Math.min(total, model.bookingDeposit.value);
 
   // Notes are about this estimate only. What every rental includes (parking) is stated once per page by
-  // the page itself: the Included card on /pricing/ and "Good to know" in the booking wizard.
+  // the page itself: "What the rental includes" on The Space.
   const notes: string[] = [];
   if (billableHours > hours) notes.push(`${model.dayTypes[dayType].label} bookings have a ${minHours}-hour minimum.`);
   if (applicable.length > 1) notes.push('Discounts do not combine, so your estimate uses the best one.');

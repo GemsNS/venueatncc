@@ -32,6 +32,18 @@ originals at full resolution with the same framing and grade, the staged photos 
 (Real-ESRGAN and Lanczos half and half), replaced the same day by a one quarter Real-ESRGAN mix because the
 ceremony's flower walls still looked waxy at 1:1 (`src/assets/venue/README.md`, Resolution).
 
+## hero-roses-grade1
+
+The rose hero loop and its posters with the first grade (gamma 1.5, brightness +0.02, saturation 1.05), used
+on 2026-10-01 until the clip was recut from the same 4K source with a brighter grade so the Plum name meets
+its 7:1 floor (`public/media/CREDITS.md`).
+
+## driveway-tall-before-recut
+
+`driveway-tall.jpg` (the home arrival photo on phones) before it was recut on 2026-10-01: the whole width of
+IMG_4899, so the building sat small at the horizon over about 70 percent pavement. The new file is a tighter
+4:5 window of the same original with the building near the upper third.
+
 ## hero-petals-1280
 
 The home hero clip and poster at 1280 x 720 as used until 2026-10-01, replaced by 2560 x 1440 files cut from

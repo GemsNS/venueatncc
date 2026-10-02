@@ -3,7 +3,7 @@ import { site } from '../../data/site';
 import { spaceIsFree } from '../../shared/availability';
 import { capacityError, suggestSpace } from '../../shared/capacity';
 import { formatEndTime, formatShort, formatTime } from '../../shared/dates';
-import { dayTypeOf } from '../../shared/booking-rules';
+import { SETUP_CLEANUP_RULE, dayTypeOf } from '../../shared/booking-rules';
 import type { AvailabilityDay, DateKey } from '../../shared/types';
 import { Calendar, type CalStatus } from './Calendar';
 import {
@@ -222,7 +222,7 @@ export function StepDate(props: StepDateProps) {
           <span class="num">
             {formatTime(d.startTime)} to {formatEndTime(d.startTime, d.hours)}
           </span>
-          . Ask us about time to set up and clean up. Events end by 12:00 midnight.
+          . {SETUP_CLEANUP_RULE} Events end by 12:00 midnight.
           {dayType ? ` ${minimumHoursNote(dayType)}` : ''}
         </p>
       </section>

@@ -114,6 +114,18 @@ const { id, title, eyebrow, lead, links = [], linksLabel, photo, caption = true,
     list-style: none;
   }
 
+  /* Phones: one link per full-width 44px row, so the list never wraps raggedly under the lead. */
+  @media (width < 36rem) {
+    .intro__links {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .intro__links :global(.link-more) {
+      min-height: 44px;
+    }
+  }
+
   .intro__actions {
     margin-top: 0.5rem;
   }

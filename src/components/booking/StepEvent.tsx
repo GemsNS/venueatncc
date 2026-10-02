@@ -127,28 +127,6 @@ export function StepEvent(props: { d: Draft; update: (patch: Partial<Draft>) => 
           </div>
         )}
       </section>
-
-      <section class="bk-facts" aria-labelledby="bk-included-label">
-        <h3 class="bk-facts__title" id="bk-included-label">
-          Good to know
-        </h3>
-        <ul class="bk-facts__list">
-          <li class="bk-fact">
-            <Icon name="check" class="bk-fact__check" />
-            <span class="bk-fact__text">
-              <span>Tables and chairs are included.</span>
-              <span class="bk-fact__hint">They come with the rental, and you may use them if you wish.</span>
-            </span>
-          </li>
-          <li class="bk-fact">
-            <Icon name="check" class="bk-fact__check" />
-            <span class="bk-fact__text">
-              <span>Parking is included.</span>
-              <span class="bk-fact__hint">A large paved lot sits beside the building.</span>
-            </span>
-          </li>
-        </ul>
-      </section>
     </div>
   );
 }

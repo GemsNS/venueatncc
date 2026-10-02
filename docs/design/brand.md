@@ -209,8 +209,9 @@ Deep (#7E1F41), the dusty Rose (#B5456E), and every dark-mode color are retired.
 anywhere (global.css, components, booking, inquiry, admin, the photo viewer, the hero). A phone set to dark
 mode gets the same bright site.
 
-- **Page, header bar, cards, form panels:** White. The header is transparent over the home hero and a solid
-  White bar with a hairline once the hero has scrolled past (after 8px on pages without a hero).
+- **Page, header bar, cards, form panels:** White. The header is a solid White bar at every scroll position,
+  the home hero included, and gains a hairline once the hero has scrolled past (after 8px on pages without a
+  hero).
 - **Footer:** Blush (a very pale pink) under a hairline, with Plum text, Mauve secondary text, Cerise column
   heads, Plum links, the Plum and Cerise lockup, the Peony Check Availability, and the large Plum statement.
   There is no dark block on the site.
@@ -342,8 +343,8 @@ follows the reference site's light serif display over a quiet sans, with our own
 
 The header is a three-column grid: links (Events, The Space, Rates, FAQ), the lockup centred, then the
 phone and Check Availability; on compact screens (below 60rem) a menu button, the lockup centred, and a
-round phone button. It is sticky, transparent over the home hero, and a solid White bar with a hairline once
-the hero has scrolled past (`data-solid`).
+round phone button. It is sticky and solid White everywhere, the home hero included (so nothing in it sits
+on the video), with a hairline once the hero has scrolled past (`data-solid`).
 
 **The lockup is the bar's largest element** (version 5.1, after the owner asked for a bigger name): 40px tall
 on phones, 44px on tablets, 46px from 960px to 1119px, and 52px from about 1140px, in a bar 64px tall on
@@ -394,15 +395,26 @@ under the bar, and the bar turns solid after 8px.
   white ground, a 13.96 s seamless loop at 2560 x 1440 (`public/media/hero-roses.*`, the edit and grade in
   `public/media/CREDITS.md`), with a 1216 x 2160 portrait poster. The veil is White at 0.5 across the band
   that holds the welcome, easing to 0.2 at the edges (0.32 on portrait screens, where the clip is one large
-  rose), with no colour blend layer, so the roses read as pink. The first screen's mean HSL lightness
-  measures 78.2 at 360 and 390, 80.3 at 768, and 79.7 at 1440 (12 frames; the band is 78 to 90). The welcome's
-  name carries a static White halo (`drop-shadow`) that hugs its letters. Measured over 12 frames at 360,
-  390, 768, 1440, and 1920, at the 2nd-percentile pixel: "Welcome to" 5.2:1 and the location line 5.7:1 or
-  better against the veiled clip; the Plum name 5.3:1 against the veiled clip alone and 7.5:1 or better at
-  its glyph edges with the halo; the Cerise "@ NCC" 2.4:1 against the veiled clip alone and 3.3:1 (phones) to
-  4.0:1 (1440) at its glyph edges with the halo. The name is large text, so AA asks 3:1, which the halo meets;
-  version 7's own floors (7:1 for the name, 4.5:1 for "@ NCC", against the clip) are not reachable for the
-  Cerise accent over pink roses under the 0.5 veil cap, and that is open for the lead's decision.
+  rose), with no colour blend layer, so the roses read as pink. The clip carries its own grade (gamma 2.1,
+  brightness +0.08, saturation 0.95; `public/media/CREDITS.md`). The first screen's mean HSL lightness, below
+  the bar, measures 87.1 at 360 and 390, 88.6 at 768, 88.3 at 1440, and 88.2 at 1920 (12 frames; the band is
+  78 to 90). The welcome's name carries a static White halo (`drop-shadow`, five steps) that hugs its
+  letters. Measured over 12 frames at 360, 390, 768, 1440, and 1920, at the 2nd-percentile pixel: "Welcome
+  to" 7.3:1 and the location line 7.8:1 or better against the veiled clip; the Plum name 7.4:1 or better
+  against the veiled clip alone (floor 7:1, met) and 10.5:1 or better at its glyph edges with the halo; the
+  Cerise "@ NCC" 3.2:1 (768) to 3.3:1 (phones) against the veiled clip alone and 4.5:1 (phones) to 5.1:1
+  (1440) at its glyph edges with the halo.
+- **Open for the lead's decision: "@ NCC" against the clip.** Version 7's floor for the Cerise accent is
+  4.5:1 against the veiled clip alone. It measures 3.2:1 to 3.3:1, and it cannot reach 4.5:1 inside the
+  version 7 limits: the second grade already puts the first screen at 87 to 89 of the 90 ceiling with the
+  veil at its 0.5 cap. The accent is large text, so WCAG AA asks 3:1, which it meets against the clip alone,
+  and it reaches 4.5:1 at its glyph edges with the halo. The lead must either accept the AA large-text figure
+  for the accent or ask for a design change (for example, the accent in Plum over the hero) before anything
+  is pushed.
+- **The header over the hero** (since 2026-10-01): the bar is solid White at every scroll position, so its
+  links, phone, and buttons never sit on the video, and the welcome is the only text over the roses. On the
+  home page the bar's Check Availability is hidden until the welcome's own button has faded, so the first
+  screen offers one.
 - **The hero loop, version 5 and 6** (*superseded by version 7; the files are archived in
   `design-archive/hero-petals/`*): a royalty-free clip of white rose petals on
   a pink ground, 12 seconds, muted, autoplay, loop, playsinline, poster first, fixed behind the welcome under a

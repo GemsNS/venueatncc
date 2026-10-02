@@ -6,13 +6,16 @@
  * grounds, what the rental includes, and the visit request. Nothing sits on any photo: every photo is
  * shown whole with its caption under it, and there is no in-page sticky bar.
  *
- * Real photos only, each shown once: main-hall (intro), hall-windows, hall-fireplace, hall-doors (The
- * Hall), main-hall-stage (The Main Hall), grove-tables, gazebo, grove-path (The Grove), approach-dusk (the
- * grounds). driveway is the home page's arrival photo and is not on this page.
+ * Real photos only, each shown once: hall-windows (intro), hall-doors (The Hall, the
+ * opposite end of the room, so the two views differ), main-hall-stage (The
+ * Main Hall), grove-tables, gazebo, grove-path (The Grove), approach-dusk (the grounds). The intro shows The
+ * Hall rather than The Main Hall because the two Main Hall photos are the same view down the aisle, and The
+ * Hall's split follows the intro with its copy first on phones, so two photos never stack back to back.
+ * driveway is the home page's arrival photo and is not on this page.
  *
  * This page is the one home of the capacities, the features, the amenities, the grounds, what the rental
- * includes, and the visit request (redesign-v7.md, section 4). Rates, the address, and the phone and email
- * live on Rates and in the footer.
+ * includes, and the visit request (redesign-v7.md, section 4). Rates live on Rates; the address and
+ * directions live on the home page (Find us) and in the footer.
  */
 import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -42,7 +45,7 @@ const crumbs = [
   { name: 'The Space', path: '/the-space/' },
 ];
 
-const introPhoto = photoByName('main-hall');
+const introPhoto = photoByName('hall-windows');
 
 interface Fact {
   label: string;
@@ -77,13 +80,10 @@ const spaces: SpaceSection[] = [
       { label: 'Capacity', value: `Up to ${hall.capacity} guests` },
       { label: 'Features', value: 'Arched windows, a fireplace feature wall, dark wood-look floors, recessed lighting, a wall-mounted screen, and double doors' },
     ],
-    photo: photoByName('hall-windows'),
-    caption: 'The Hall, with its arched windows and fireplace wall',
+    photo: photoByName('hall-doors'),
+    caption: 'The double doors and the wall-mounted screen',
     flip: false,
-    extras: [
-      { photo: photoByName('hall-fireplace'), caption: 'The open floor and the fireplace wall' },
-      { photo: photoByName('hall-doors'), caption: 'The double doors and arched windows' },
-    ],
+    extras: [],
   },
   {
     id: 'main-hall',
@@ -161,7 +161,7 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
     links={spaces.map((s) => ({ label: s.name, href: `#${s.id}` }))}
     linksLabel="The spaces"
     photo={introPhoto}
-    caption="The Main Hall, down the aisle to the stage"
+    caption="The Hall, with its arched windows and fireplace wall"
   />
 
   {
@@ -169,7 +169,7 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
       <section id={s.id} class="section sp-target" aria-labelledby={`${s.id}-heading`}>
         <div class="container">
           {s.photo ? (
-            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} caption={s.caption} flip={s.flip} sizes={SPLIT_SIZES}>
+            <ImageTextSplit photo={s.photo} id={`${s.id}-heading`} eyebrow={s.name} heading={s.heading} lead={s.lead} caption={s.caption} flip={s.flip} sizes={SPLIT_SIZES} copyFirst={s.id === 'hall'}>
               <dl class="sp-facts">
                 {s.facts.map((f) => (
                   <div class="sp-fact">
@@ -215,13 +215,7 @@ const EXTRA_SIZES = '(min-width: 75rem) 620px, (min-width: 46.5rem) 50vw, 100vw'
             lead="On Godwin Boulevard in north Suffolk, a long paved drive leads past open lawn to the building and a large paved lot with landscaped islands, so guests park steps from the door."
             caption="The drive at dusk"
             flip
-          >
-            <Fragment slot="actions">
-              <a class="btn btn--outline" href={site.address.directionsUrl} rel="noopener" target="_blank">
-                Get Directions<span class="visually-hidden">, opens in a new tab</span>
-              </a>
-            </Fragment>
-          </ImageTextSplit>
+          />
         </div>
       </section>
     )

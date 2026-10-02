@@ -1,15 +1,16 @@
 ---
 /**
  * The footer (docs/design/redesign-v7.md, section 3): a very pale pink (Blush) band under a hairline, in
- * three rows. Row one: the very large centred serif statement (the brand line). Row two: three link
- * columns (Explore: the main navigation; Plan: Check availability, a visit, and an inquiry; Visit: the
- * address with directions, the phone, the email, and the contact person, the one place all four appear
- * together). Row three: the Plum lockup and the legal line. Booking is a text link here, not a button: the
+ * three rows. Row one: the very large centred serif statement (the brand line). Row two: four link
+ * columns (Explore: the main navigation; Events: the eight event pages, so each is one click from any
+ * page; Plan: Check availability and a visit; Visit: the address with directions, the phone, the email,
+ * and the contact person, the one place all four appear together). Row three: the Plum lockup and the legal line. Booking is a text link here, not a button: the
  * header carries the button. On Blush: Plum 13.2:1, Mauve 7.1:1, Cerise 5.5:1.
  */
 import Logo from './Logo.astro';
 import { site } from '../data/site';
-import { mainNav, bookHref, pricingHref } from '../data/nav';
+import { events } from '../data/events';
+import { mainNav, bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { isDemo } from '../lib/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../lib/api/demo-credentials';
@@ -35,12 +36,18 @@ const year = new Date().getFullYear();
           </ul>
         </section>
 
+        <section class="footer__col footer__col--events" aria-labelledby="f-events">
+          <h2 id="f-events" class="footer__head">Events</h2>
+          <ul>
+            {events.map((e) => <li><a href={href(`/events/${e.slug}/`)}>{e.name}</a></li>)}
+          </ul>
+        </section>
+
         <section class="footer__col" aria-labelledby="f-plan">
           <h2 id="f-plan" class="footer__head">Plan</h2>
           <ul>
             <li><a href={href(book)}>Check availability</a></li>
             <li><a href={`${href(bookHref)}?visit=1`}>Request a visit</a></li>
-            <li><a href={href(pricingHref)}>Send an inquiry</a></li>
           </ul>
         </section>
 
@@ -103,24 +110,37 @@ const year = new Date().getFullYear();
     margin-bottom: clamp(2.5rem, 2rem + 2vw, 3.5rem);
   }
 
-  /* Phones: Explore and Plan side by side, Visit beneath at full width, so the email never breaks. */
+  /*
+    Phones: Explore and Plan side by side, then Events and Visit each at full width, so the long event names
+    and the email never break. From 40rem two by two, and from 60rem the four in one row.
+  */
   .footer__cols {
     display: grid;
     gap: 2rem 2.5rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .footer__col--events {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+
   .footer__col:last-child {
+    order: 2;
     grid-column: 1 / -1;
   }
 
   @media (min-width: 40rem) {
-    .footer__cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
+    .footer__col--events,
     .footer__col:last-child {
+      order: 0;
       grid-column: auto;
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .footer__cols {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1.2fr);
     }
   }
 

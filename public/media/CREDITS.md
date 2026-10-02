@@ -16,15 +16,18 @@ clip on 2026-10-01 because the client said the petals did not read as flower pet
 - Edit: 1.0 s to 18.0 s of the source, with its last second crossfaded into the first second of the source,
   so the loop ends on the frame it starts with and wraps without a jump; the whole 17 s then played at 1.22x
   speed (the motion is a near-still drift, so the change does not show) to give a 13.96 s loop, 335 frames at
-  24 fps, whose last frame matches its first at 38.7 dB PSNR. Grade: gamma 1.5, brightness +0.02, saturation
-  1.05 (ffmpeg eq), which lifts the mean HSL lightness of the first frame from 51 to 66 (landscape) and from 44
-  to 61 (the 9:16 centre) so a light veil reaches redesign-v7.md's 78 to 90 band without washing the roses
-  out. No audio, scaled to 2560 x 1440 (Lanczos).
-- Encodes: H.264 (libx264, crf 33, preset veryslow, high profile, yuv420p, faststart, 982,229 bytes) and VP9
-  (libvpx-vp9, crf 42, constant quality with b:v 0, row-mt, 455,241 bytes), both 2560 x 1440,
-  24 fps. SSIM against the edit master is 0.984 (H.264) and 0.987 (VP9).
-- Posters: the loop's first frame (source 1.0 s) as JPEG, 2560 x 1440 (mozjpeg quality 72, 109,864 bytes); the
-  portrait poster is the middle 1216 x 2160 of the same 4K source frame with the same grade (76,777 bytes),
+  24 fps, whose last frame matches its first at 40.9 dB PSNR.
+- Grade (second grade, 2026-10-01): gamma 2.1, brightness +0.08, saturation 0.95 (ffmpeg eq), recut from the
+  4K source so nothing is graded twice. It replaced the first grade (gamma 1.5, brightness +0.02, saturation
+  1.05; those files are in `design-archive/hero-roses-grade1/`), which left the Plum name at 5.3:1 against
+  the veiled clip. With the 0.5 veil unchanged, the first screen below the bar now measures 87.1 to 88.6 mean
+  HSL lightness (the band is 78 to 90) and the roses still read as pink (docs/design/brand.md, "The hero
+  loop"). No audio, scaled to 2560 x 1440 (Lanczos).
+- Encodes: H.264 (libx264, crf 33, preset veryslow, high profile, yuv420p, faststart, 848,432 bytes) and VP9
+  (libvpx-vp9, crf 42, constant quality with b:v 0, row-mt, 369,085 bytes), both 2560 x 1440,
+  24 fps. SSIM against the lossless edit master is 0.986 (H.264) and 0.988 (VP9).
+- Posters: the loop's first frame (source 1.0 s) as JPEG, 2560 x 1440 (mozjpeg quality 72, 92,757 bytes); the
+  portrait poster is the middle 1216 x 2160 of the same 4K source frame with the same grade (65,336 bytes),
   which is what a cover crop shows on portrait screens.
 
 ## Earlier: hero-petals (now in design-archive/hero-petals/)

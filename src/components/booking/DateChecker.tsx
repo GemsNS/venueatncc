@@ -150,9 +150,8 @@ export default function DateChecker(props: { bookHref?: string }) {
       </div>
 
       <div id="bk-dc-status" class="bk-dc__status">
-        {!date ? (
-          <p class="bk-dc__hint">See which spaces are open on your day.</p>
-        ) : statusPending ? (
+        {/* No idle hint: the section around the checker already says what it does. */}
+        {!date ? null : statusPending ? (
           <p class="bk-dc__hint">
             <Spinner /> Checking availability{ELLIPSIS}
           </p>

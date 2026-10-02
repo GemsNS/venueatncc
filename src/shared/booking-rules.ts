@@ -51,6 +51,13 @@ export const ACCESS_DAYS = 'Monday to Saturday';
 export const ACCESS_TIMES = '9:00 AM to 12:00 midnight';
 export const ACCESS_HOURS = `${ACCESS_DAYS}, ${ACCESS_TIMES}`;
 
+/**
+ * The one rule for setup and cleanup, used word for word by the FAQ, Rates, and the booking page: the hours a
+ * guest books are the whole time in the building (src/shared/types.ts, "total rental hours including setup
+ * and cleanup").
+ */
+export const SETUP_CLEANUP_RULE = 'Your booked hours include time to set up and clean up.';
+
 export const CLOSED_DAY_MESSAGE = 'We are closed on Sundays. Choose a date from Monday to Saturday.';
 export const START_TOO_EARLY_MESSAGE = 'Choose a start time from 9:00 AM on.';
 export const ENDS_TOO_LATE_MESSAGE = 'Events end by 12:00 midnight. Choose an earlier start time or fewer hours.';

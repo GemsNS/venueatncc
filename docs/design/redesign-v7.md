@@ -88,7 +88,7 @@ remains is the booking wizard's 76px thumbnails, which are 3:2 files in 3:2 fram
 | Arrangement | Desktop (from 60rem) | Phone | Used for |
 |---|---|---|---|
 | **Page intro** (`PageIntro`) | Two columns, 5:7: the text block left (eyebrow, h1, lead, descriptor links, one action), the photo right, both top-aligned; the caption under the photo | The text block, then the photo, then the caption | The top of The Space, /events/, every event page, the 404 |
-| **Editorial split** (`ImageTextSplit`, kept) | 1:1, photo left or right (`flip`), vertically centred; the caption under the photo | Photo, caption, then the copy | Mid-page sections: each space on The Space, the grounds, Find us on home, the rates split and the inquiry photo on Rates, About on an event page |
+| **Editorial split** (`ImageTextSplit`, kept) | 1:1, photo left or right (`flip`), vertically centred; the caption under the photo | Photo, caption, then the copy; the split that directly follows a page intro puts its copy first on phones (`copyFirst`), so two photos never stack back to back | Mid-page sections: each space on The Space, the grounds, Find us on home, the rates split on Rates, About on an event page |
 | **Figure** and **figure card** (`Figure`, `FigureCard`) | The photo, then under it on the page surface the label (Caslon Text 1.25rem, Plum), a meta line (Caslon Text, Mauve), and an italic caption where there is one | The same, stacked | Space cards, event cards, gallery figures, extra views in a section |
 
 **Captions.** Every caption is Caslon Text italic 1rem, Mauve, 0.75rem under the frame, left-aligned to the
@@ -231,13 +231,13 @@ Five pages, one list, the same everywhere:
 | 1 | Home (the lockup) | `/` | The welcome, the three spaces, the date checker, the events list, where we are |
 | 2 | The Space | `/the-space/` | What you rent: the three spaces, the grounds, what is included, a visit |
 | 3 | Events | `/events/` | The eight occasions, each with its own page |
-| 4 | Rates | `/pricing/` | The approved wording, the Call button, the inquiry form |
+| 4 | Rates | `/pricing/` | The approved wording, the Call button, the deposit and hours ("Before you book", #before) |
 | 5 | FAQ | `/faq/` | Every question with a short answer and a link to the fact's home |
 | (action) | Check Availability | `/book/` | The booking wizard; event pages pass their event |
 
-Rates and FAQ stay separate: Rates is where a visitor acts (call, or send the inquiry form) and the FAQ is
-where they read. Merging them would put a form in the middle of a reading page and push the questions under
-it on phones.
+Rates and FAQ stay separate: Rates is where a visitor acts (call) and the FAQ is where they read. A date
+request has one home, `/book/`: the inquiry form that once sat on Rates asked for the same space, date,
+guests, and hours as the wizard, so it was removed in the review of October 1, 2026.
 
 **Top bar (from 60rem):** The Space, Events, Rates, FAQ on the left (in that order; The Space moves ahead
 of Events because it is what the business rents), the lockup centred, the phone and the filled Check
@@ -245,11 +245,10 @@ Availability on the right. The current page is underlined in Cerise, as now.
 
 **Phone menu (below 60rem):** the full-screen dialog as now, with these rows in Caslon Display: Home,
 The Space, Events, Rates, FAQ; then Check Availability (filled, large) and Call (outline); the address line
-is cut (the footer carries it). The Events row is a link to `/events/` with, beside it, a native `details`
-disclosure labelled "All events" that expands to the eight event names as a secondary list (Caslon Text
-1.125rem, 44px rows). This answers "every page reachable in one tap from the menu" for the event pages
-without eight large rows in the menu; the lead decides on review whether the expanded list should be open
-by default.
+is cut (the footer carries it). The Events row is a link to `/events/`, and the eight event names are listed
+under it, always open, as a secondary list (Caslon Text 1.125rem, 44px rows), so every event page is one
+tap from the menu. Check Availability and Call are pinned to the foot of the menu, so they stay on screen
+however long the list runs. On regular screens the footer's Events column lists the eight.
 
 **Breadcrumbs:** event pages only, in the page intro's text column above the eyebrow (Home, Events, the
 event). No other page is deep enough to need them; structured data keeps the breadcrumb lists it has.
@@ -279,8 +278,9 @@ a text link, not a button.
 Blush under a hairline, three rows:
 
 1. The large centred serif statement, `site.tagline` ("Celebrate among the pines.") on its own, first.
-2. Three columns. **Explore:** The Space, Events, Rates, FAQ. **Plan:** Check availability (event-aware
-   `bookHref`), Request a visit, Send an inquiry. **Visit:** the address as a directions link, the phone, the
+2. Four columns. **Explore:** The Space, Events, Rates, FAQ. **Events:** the eight event pages, so each is
+   one click from any page on desktop. **Plan:** Check availability (event-aware `bookHref`) and Request a
+   visit. **Visit:** the address as a directions link, the phone, the
    email, the contact person. This is the one place the phone, the email, Faith VanDyke, and the address all
    appear together, and it is on every page.
 3. The lockup (a home link) and the legal line; the demo note where `isDemo`.
@@ -302,13 +302,15 @@ alone) and keep stating facts.
 | What the rental includes (the space, tables and chairs, on-site parking) | The Space, "What the rental includes" checklist | FAQ "What is included" links; Rates links ("What the rental includes is on The Space"). Cut from home (the feature strip) and from Rates (the panel). |
 | The amenities (ballroom seating, hospitality areas, flexible layouts) | The Space, the amenities strip | nowhere else |
 | The grounds, parking, directions | The Space, the grounds split (lead, Get Directions) | Home "Find us" (the address and Get Directions, which is arrival rather than a repeat), the footer's Visit column |
-| The address | The footer | Home "Find us" shows it once beside the directions button; FAQ "Where is" answers it (it is the question); cut from the menu and from The Space's grounds split |
+| The address | The footer | Home "Find us" (#location) shows it once beside the directions button, the only Get Directions button in a page body; FAQ "Where is" answers it (it is the question) and links to #location; cut from the menu and from The Space's grounds split |
 | The rates wording | Rates, the rates split | Home: no rates band (cut); FAQ "How much does it cost" answers "We quote each event personally. See Rates to call us or send an inquiry." and links; event pages: cut the shared line, keep "Ask about rates" beside the checklist |
 | The phone number | The footer and the header (icon on phones, number on desktop) | Rates: the Call button (it is the action); 404: the "or call us" line; the repast page's prose (contextual, kept); cut from the home rates band (gone), the menu (the Call button stays, the address line goes) |
 | The email and the contact person | The footer | Rates: "Ask for Faith VanDyke" line under the Call button (kept: it is the inquiry page); nowhere else |
-| The deposit and the building hours | Rates, a single "Before you send" panel under the inquiry form (two lines: the deposit sentence, the hours) | FAQ "How do deposits work" and "What days and hours" answer in one sentence each and link; the wizard states "Events end by 12:00 midnight" in its hours hint (a form hint, kept) |
-| The styled-concept disclosure | Under each staged photo (section 2) | The section lead on /events/ and home carries the full sentence once |
-| The list of events | /events/, the grid | Home: the eight names as a text list beside one staged figure; event pages: three "Other events" text links; FAQ "What kinds of events" lists them (it is the question) and links |
+| The deposit and the building hours | Rates, a single "Before you book" panel (#before; two lines: the deposit sentence, the hours with the setup rule) | FAQ "How do deposits work" and "What days and hours" answer in one sentence each and link; the wizard states "Events end by 12:00 midnight" in its hours hint (a form hint, kept) |
+| The styled-concept disclosure | Under each staged photo (section 2) | The section lead on /events/ carries the full sentence once; home's events split has one staged photo, so its caption carries it and the lead does not |
+| The list of events | /events/, the grid | Home: the eight names as a text list beside one staged figure; the phone menu and the footer: the eight as navigation; event pages: three "Other events" text links; FAQ "What kinds of events" answers in one sentence and links |
+| Setup and cleanup time | `SETUP_CLEANUP_RULE` in src/shared/booking-rules.ts ("Your booked hours include time to set up and clean up.") | Used word for word by the FAQ hours answer, Rates' Before you book, and the wizard's hours hint |
+| Capacities | The Space (and the home space cards, which link there) | Event pages describe why a space suits the occasion without numbers; the wizard's space rows show them (a form that collects the choice) |
 | Booking lead times | Each event page's prose or FAQ, once | nowhere else (the hero fact is gone) |
 | How booking works ("choose a date and a space, send your request, we confirm personally") | /book/, the title lead | Home date checker lead: shortened to "See which spaces are open on your day." Cut from the closing band (gone) and the events index ("Planning something else?" band gone; the sentence moves to the /events/ lead as "For another kind of event, describe it in your request.") |
 | The visit request | The Space, the visit section | Event checklists (Request a Visit), the footer's Plan column, FAQ "Can I see the venue" |
@@ -392,34 +394,37 @@ band (Petal). "Split" means `ImageTextSplit`; "intro" means `PageIntro`.
 
 1. **Welcome** (`HeroVideo`, the rose clip, section 6): "Welcome to", the name as the lockup's words, the
    location line, Check Availability. Unchanged morph.
-2. **The spaces** (`SectionHeading` + `Carousel` of three `FigureCard`s): eyebrow "The spaces", h2 "Three
-   spaces, indoors and out", the owner's welcome text as the lead, Explore The Space (outline) on the right.
+2. **The spaces** (`SectionHeading` + a grid of three `FigureCard`s: stacked whole below 48rem, three in a
+   row from 48rem, never a peeking scroller): eyebrow "The spaces", h2 "Two halls and a grove" (not The
+   Space's h1), a one-sentence lead about the spaces themselves (the occasions live in Events we host),
+   Explore The Space (outline) on the right.
    Cards: hall-windows "The Hall" / main-hall "The Main Hall" / grove-tables "The Grove", meta "Up to N
    guests", each linking to its section on The Space.
-3. **Check a date** (`SectionHeading` beside the `DateChecker` island): lead "See which spaces are open on
-   your day." The checker's Continue to Booking is the in-page primary.
+3. **Check a date** (`SectionHeading` beside the `DateChecker` island, both top-aligned): lead "See which
+   spaces are open on your day." (the checker shows no idle hint, so the sentence appears once). The
+   checker's Continue to Booking is the in-page primary.
 4. **Events we host** (split, photo left: the weddings staged figure, caption "Styled concept. Décor is not
-   included. A ceremony at the gazebo in The Grove."): eyebrow "Occasions", h2 "Events we host", the lead
-   `EVENTS_STYLED_NOTE`, then the eight event names as Caslon Text links in two columns, and See All Events
+   included. A ceremony at the gazebo in The Grove."): eyebrow "Occasions", h2 "Events we host", a lead that
+   invites other occasions (the caption already carries the disclosure, so the lead does not repeat it), then the eight event names as Caslon Text links in two columns, and See All Events
    (text link). Weddings is the one event whose photo appears on home, so the weddings link in the list is
    still listed (the list is complete).
-5. **Find us** (split, driveway, caption "The drive and the parking lot"): eyebrow "Getting here", h2 "Find
+5. **Find us** (`#location`, split, driveway, caption "The drive and the parking lot"): eyebrow "Getting here", h2 "Find
    us in north Suffolk", the address, Get Directions (outline).
 6. Footer.
 
 ### `/the-space/`
 
-1. **Intro** (main-hall, caption "The Main Hall, down the aisle to the stage"): eyebrow "The Space", h1
+1. **Intro** (hall-windows, caption "The Hall, with its arched windows and fireplace wall"; the two Main
+   Hall photos are the same view down the aisle, so the intro shows The Hall): eyebrow "The Space", h1
    "Three spaces, indoors and out", lead "Well-maintained indoor and outdoor spaces surrounded by nature,
    with bright natural light and a dedicated stage area. Book one space, or The Hall and The Grove
    together.", links The Hall / The Main Hall / The Grove (to the sections), no action.
-2. **The Hall** (`#hall`, split, hall-windows left, caption "The Hall, with its arched windows and
-   fireplace wall"): eyebrow "The Hall", h2 "A bright, open room", the lead, fact row Capacity / Features;
-   under the split, two figures in a row: hall-fireplace ("The open floor and the fireplace wall") and
-   hall-doors ("The double doors and arched windows").
+2. **The Hall** (`#hall`, split, hall-doors left, the opposite end of the room from the intro, caption
+   "The double doors and the wall-mounted screen"; `copyFirst`, so on phones the copy comes between the two
+   photos): eyebrow "The Hall", h2 "A bright, open room", the lead, fact row Capacity / Features. No extra
+   figures.
 3. **The Main Hall** (`#main-hall`, split, flip, main-hall-stage right, caption "The raised stage"):
-   eyebrow, h2 "Stage seating under a vaulted ceiling", the lead, fact row. No extra figures (the intro
-   already shows the room).
+   eyebrow, h2 "Stage seating under a vaulted ceiling", the lead, fact row. No extra figures.
 4. **The Grove** (`#grove`, split, grove-tables left, caption "Picnic tables and the gazebo"): eyebrow, h2
    "Among the pines", the lead, fact row; under it two figures: gazebo ("The gazebo") and grove-path ("The
    path to the gazebo").
