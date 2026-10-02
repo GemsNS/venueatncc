@@ -8,6 +8,9 @@
  * Catering is mentioned in exactly one entry, "Is catering provided?". It is shown on /faq/ only:
  * llms.txt and the FAQPage structured data leave it out (mentionsCatering in src/lib/schema.ts).
  *
+ * No answer says how far ahead to book, reserve, or plan a date, and no question asks it (brand.md, "The
+ * client's rules of October 1, 2026", rule 2). The FAQPage structured data and llms.txt are built from here.
+ *
  * The venue does not publish prices: no answer names an amount, a percentage, a deposit figure, or a
  * discount. The rates answer points to Rates, which carries the owner's approved wording (RATES_WORDING,
  * also used by llms.txt) and the Call button.

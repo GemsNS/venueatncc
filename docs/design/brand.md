@@ -8,6 +8,37 @@ the page plans are in `redesign-spec.md` (version 5, with its version 6 colour n
 build from; the creative director's decisions in `fable-advice.md` are binding. Version 7
 (`redesign-v7.md`, image first) is binding on top of all three and overrides them where they differ.
 
+## The client's rules of October 1, 2026 (binding)
+
+Three rules from the client, verbatim in quotes, binding on every page, component, email, share card, data
+file, and doc that feeds the site:
+
+1. **The gazebo's roof is never described.** "REMOVE MENTION OF METAL ROOF ON GAZEBO". No copy, alt text,
+   caption, photo note (`photos.ts`, the photo README), feature list (`the-space.astro`), event copy,
+   structured data, llms.txt, share card, or email names the gazebo's roof or its material. It is "a timber
+   gazebo" (or "the gazebo").
+2. **No booking timelines.** "REMOVE MENTION OF '9 MONTH BOOKING' OR ANY TIMELINES OF WHEN BOOKINGS CAN BE
+   BOOKED IN ADVANCE". Nothing says how far ahead to book, reserve, or plan a date: no "nine to twelve months
+   ahead", no "a season ahead", no "within a few days", no "open dates up to two years ahead", and no "How far
+   in advance should we book ..." question, in event copy, FAQs, FAQPage structured data, llms.txt, or data
+   comments. Timing that belongs to the occasion itself (a shower before the due date, a graduation party the
+   weekend of the ceremony) may be said, without week or month counts. The two-year limit on online requests
+   stays as behavior (`latestBookableDate`), but its messages state no timeline: "That date is not open for
+   online requests yet. Call us at (948) 205-2934 and we will help." (`DATE_TOO_FAR`, `ALT_DATE_TOO_FAR`,
+   `TOO_LATE_MESSAGE`, the demo backend's `tooFar` and `altTooFar`, all with the phone from site.ts).
+3. **No photo larger than its detail.** "DONT ZOOM IMAGES TO A POINT WHERE THEY LOOK BLURRY". A photo is never
+   drawn wider, in device pixels (CSS width times the screen's pixel ratio, counting any object-fit crop),
+   than its real detail: a real photo's file width (camera originals), about 1600 px for a staged
+   `styled-*.jpg` (each is an upscale of a Gemini output of about 1024 px; `STAGED_DETAIL_PX` and
+   `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
+   than that detail; the viewer (Figure.astro) caps its image at the detail divided by
+   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen; the booking summary's
+   photo has a 960 px file for its 360 px frame; the home share card (the bouquet) is written at 1024 x 538.
+   No hover or CSS transform scales a photo up. Where a frame would be too big, cap the frame (max-width) or
+   change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
+   2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
+   not a photo of the property, and is measured against the same rule: see brand.md, "The hero loop".
+
 ## Version 7 amendments (image first, October 1, 2026)
 
 The client asked to "get rid of the concept of cards covering image", to have "the images fully shown", for
@@ -411,6 +442,16 @@ under the bar, and the bar turns solid after 8px.
   and it reaches 4.5:1 at its glyph edges with the halo. The lead must either accept the AA large-text figure
   for the accent or ask for a design change (for example, the accent in Plum over the hero) before anything
   is pushed.
+- **Open for the lead's decision: the hero clip's resolution (the client's rule 3).** The clip and its
+  landscape poster are 2560 x 1440 and the portrait poster 1216 x 2160, cut from a 3840 x 2160 source. Cover
+  fills the full-height hero, so they are drawn wider than their files: on a 390 x 844 phone at 3x the clip is
+  1500 CSS px wide (4501 device px, 1.76 times its 2560 file; the portrait poster 1.17 times), at 768 x 1024 at 2x 1.42 times (portrait poster  1.26 times), at 1440 x 900 at 2x 1.25 times, and at 1920 x 1080 at 2x 1.5 times. It is footage of soft roses,
+  not a photo of the property, and it was left unchanged in the October 1 pass because re-encoding it changes
+  the home page's largest file and the veil and contrast figures above, which the lead reviews in person. The
+  two fixes: a portrait cut of the clip, the middle 1216 x 2160 of the 4K source with the same edit and grade,
+  served to portrait screens (`<source media="(orientation: portrait)">`), which brings phones to 1.17 (the
+  4K source's own height is the limit) with a smaller file than today's; and a 3840 x 2160 landscape encode
+  for 2x desktops, about twice today's bytes, which brings 1920 at 2x to 1.0.
 - **The header over the hero** (since 2026-10-01): the bar is solid White at every scroll position, so its
   links, phone, and buttons never sit on the video, and the welcome is the only text over the roses. On the
   home page the bar's Check Availability is hidden until the welcome's own button has faded, so the first
@@ -541,7 +582,8 @@ Professional hospitality: confident, warm, precise, brief. "We" for the venue, "
 exclamation points, slang, or jokes. Never in public copy: alcohol, drinks, bar, beer, wine, mimosas, toast,
 "raise a glass", Virginia ABC, BYO, "bring your own", "your own caterer", "caterer of your choice", "the freedom
 to", advice to "ask whether there is a kitchen", and any connection to New Community Church. Catering appears
-exactly once, neutrally, in one FAQ entry. Prices never appear.
+exactly once, neutrally, in one FAQ entry. Prices never appear. No copy says how far ahead to book, reserve,
+or plan a date, and none describes the gazebo's roof (the client's rules of October 1, 2026, above).
 
 ## Page direction
 

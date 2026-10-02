@@ -27,6 +27,37 @@ Read as three rules:
    (section 4); the navigation is one short list, the same everywhere, with no second sticky bar and one
    primary action per page (section 3).
 
+## The client's rules of October 1, 2026 (binding)
+
+Three rules from the client, verbatim in quotes, binding on every page, component, email, share card, data
+file, and doc that feeds the site:
+
+1. **The gazebo's roof is never described.** "REMOVE MENTION OF METAL ROOF ON GAZEBO". No copy, alt text,
+   caption, photo note (`photos.ts`, the photo README), feature list (`the-space.astro`), event copy,
+   structured data, llms.txt, share card, or email names the gazebo's roof or its material. It is "a timber
+   gazebo" (or "the gazebo").
+2. **No booking timelines.** "REMOVE MENTION OF '9 MONTH BOOKING' OR ANY TIMELINES OF WHEN BOOKINGS CAN BE
+   BOOKED IN ADVANCE". Nothing says how far ahead to book, reserve, or plan a date: no "nine to twelve months
+   ahead", no "a season ahead", no "within a few days", no "open dates up to two years ahead", and no "How far
+   in advance should we book ..." question, in event copy, FAQs, FAQPage structured data, llms.txt, or data
+   comments. Timing that belongs to the occasion itself (a shower before the due date, a graduation party the
+   weekend of the ceremony) may be said, without week or month counts. The two-year limit on online requests
+   stays as behavior (`latestBookableDate`), but its messages state no timeline: "That date is not open for
+   online requests yet. Call us at (948) 205-2934 and we will help." (`DATE_TOO_FAR`, `ALT_DATE_TOO_FAR`,
+   `TOO_LATE_MESSAGE`, the demo backend's `tooFar` and `altTooFar`, all with the phone from site.ts).
+3. **No photo larger than its detail.** "DONT ZOOM IMAGES TO A POINT WHERE THEY LOOK BLURRY". A photo is never
+   drawn wider, in device pixels (CSS width times the screen's pixel ratio, counting any object-fit crop),
+   than its real detail: a real photo's file width (camera originals), about 1600 px for a staged
+   `styled-*.jpg` (each is an upscale of a Gemini output of about 1024 px; `STAGED_DETAIL_PX` and
+   `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
+   than that detail; the viewer (Figure.astro) caps its image at the detail divided by
+   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen; the booking summary's
+   photo has a 960 px file for its 360 px frame; the home share card (the bouquet) is written at 1024 x 538.
+   No hover or CSS transform scales a photo up. Where a frame would be too big, cap the frame (max-width) or
+   change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
+   2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
+   not a photo of the property, and is measured against the same rule: see brand.md, "The hero loop".
+
 ## What the audit found (why these changes)
 
 - Every photo on the site has something on it. The caption panel covers the lower third of the hero on The
@@ -198,8 +229,8 @@ The hero panel's data has nowhere to go and is retired or re-homed:
 
 - `EventType.spaces` stays: it feeds the page intro's `links` (each space name linking to its section on
   The Space) and the booking wizard's suggestions. It no longer produces a capacity fact.
-- `EventType.leadTime` is retired from the page (the prose or one FAQ already states it; the events.ts
-  comment says so) and from the type, with its data comment.
+- `EventType.leadTime` is retired from the page and from the type, with its data comment. Booking lead
+  times are not stated anywhere (the client's rule 2, above): no prose, no FAQ, no fact.
 - The "Rates vary with the season ..." line beside the checklist is removed (section 4).
 
 ### The booking wizard
@@ -311,7 +342,7 @@ alone) and keep stating facts.
 | The list of events | /events/, the grid | Home: the eight names as a text list beside one staged figure; the phone menu and the footer: the eight as navigation; event pages: three "Other events" text links; FAQ "What kinds of events" answers in one sentence and links |
 | Setup and cleanup time | `SETUP_CLEANUP_RULE` in src/shared/booking-rules.ts ("Your booked hours include time to set up and clean up.") | Used word for word by the FAQ hours answer, Rates' Before you book, and the wizard's hours hint |
 | Capacities | The Space (and the home space cards, which link there) | Event pages describe why a space suits the occasion without numbers; the wizard's space rows show them (a form that collects the choice) |
-| Booking lead times | Each event page's prose or FAQ, once | nowhere else (the hero fact is gone) |
+| Booking lead times | none: never stated (the client's rule 2) | nowhere; the two-year limit on online requests is behavior only, and its message states no timeline |
 | How booking works ("choose a date and a space, send your request, we confirm personally") | /book/, the title lead | Home date checker lead: shortened to "See which spaces are open on your day." Cut from the closing band (gone) and the events index ("Planning something else?" band gone; the sentence moves to the /events/ lead as "For another kind of event, describe it in your request.") |
 | The visit request | The Space, the visit section | Event checklists (Request a Visit), the footer's Plan column, FAQ "Can I see the venue" |
 | Hours of operation for calls | not published (`site.hours` is empty) | |

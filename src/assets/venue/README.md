@@ -135,7 +135,7 @@ source width, crops with CSS to the frame's ratio, and swaps in the tall file on
 | `main-hall` | main | The Main Hall down its aisle: red upholstered chairs in rows, vaulted ceiling, raised stage (owner's IMG_4937, leveled) |
 | `main-hall-stage` | main | The raised stage up close, the screen, the front rows (owner's IMG_4940) |
 | `grove-tables` | grove | Gazebo and picnic tables on a paved patio under pines |
-| `gazebo` | grove | Timber gazebo with a metal roof |
+| `gazebo` | grove | Timber gazebo |
 | `grove-path` | grove | Paved path to the gazebo through the trees |
 
 Use descriptive file names. Search engines read them, and they become the fallback alt text when a photo has

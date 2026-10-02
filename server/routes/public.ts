@@ -9,7 +9,7 @@ import { capacityError } from '../../src/shared/capacity';
 import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
 import { estimate } from '../../src/shared/pricing';
 import { makeReference } from '../../src/shared/reference';
-import { availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, inquiryInputSchema, latestBookableDate } from '../../src/shared/schemas';
+import { ALT_DATE_TOO_FAR, availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, inquiryInputSchema, latestBookableDate } from '../../src/shared/schemas';
 import type { AvailabilityResponse, CalendarBlock, DateKey, Estimate, InquiryCreated } from '../../src/shared/types';
 import { apiError, clientBucket, iso, readBody, type AppEnv, type ServerContext } from '../context';
 import { guestConfirmationEmail, spaceLabel, venueNotificationEmail } from '../email/templates';
@@ -232,7 +232,7 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (input.date < today) fields.date = 'Choose a date that has not passed.';
     else if (input.date > latest) fields.date = DATE_TOO_FAR;
     if (input.altDate && input.altDate < today) fields.altDate = 'Choose an alternate date that has not passed.';
-    else if (input.altDate && input.altDate > latest) fields.altDate = 'Choose an alternate date within the next two years.';
+    else if (input.altDate && input.altDate > latest) fields.altDate = ALT_DATE_TOO_FAR;
     const tooMany = capacityError(input.space, input.guests);
     if (tooMany) fields.guests = tooMany;
     const messages = Object.values(fields);

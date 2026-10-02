@@ -20,11 +20,12 @@
  *   describes the spaces. Rates, deposits, parking, and visits are not written here: beside the
  *   checklist the event page links to /pricing/ (Ask about rates) and carries the
  *   Request a Visit action. Parking may appear as a checklist task.
- * - Each event states its own booking lead time once, in its section prose or in one FAQ.
+ * - Never state how far ahead to book, reserve, or plan a date: no lead times, no "months ahead", no
+ *   "How far in advance" questions (brand.md, "The client's rules of October 1, 2026", rule 2). Timing tied to the occasion
+ *   itself (a shower before the due date, a party the weekend of the ceremony) is written without counts.
  * - `spaces` lists the spaces the event's first section names, the most suitable first. The page intro
  *   links each one to its section on The Space and states no capacity (docs/design/redesign-v7.md,
- *   section 2). The booking lead time is stated only in the event's prose or one FAQ, never as a fact
- *   elsewhere on the page.
+ *   section 2).
  * - FAQs answer only what the page body and /faq/ do not already answer.
  * - Venue facts (space names, capacities, phone) come from site.ts through the constants below, so a
  *   change there flows into every page. Never type them in by hand. The phone appears at most once in
@@ -114,7 +115,7 @@ export const events: EventType[] = [
         'Build the timeline of the day backward from the ceremony time.',
         'Visit the property before you reserve.',
         'Plan a weather option for any part of the day outdoors.',
-        'Confirm your final guest count and order of the day a few weeks ahead.',
+        'Confirm your final guest count and the order of the day with us before the wedding.',
         'Send guests the address and parking details with the invitation.',
       ],
     },
@@ -122,10 +123,6 @@ export const events: EventType[] = [
       {
         q: 'What happens if it rains on our wedding day?',
         a: `When you reserve ${HALL} and ${GROVE} together, ${HALL} is ready for your guests if the weather turns. If your guest list is larger than ${HALL} holds, talk through a weather plan with us before you book.`,
-      },
-      {
-        q: 'How far in advance should we book a wedding venue?',
-        a: 'Many couples book nine to twelve months ahead, and earlier for a popular Saturday. The availability calendar shows open dates up to two years ahead, so you can see right away whether yours is free.',
       },
     ],
     related: ['receptions-banquets', 'baby-bridal-showers', 'community-events'],
@@ -162,7 +159,6 @@ export const events: EventType[] = [
         body: [
           'Formal celebrations run best with a clear program. Decide early who will speak, whether there will be awards or tributes, and how long each part should last. Give every presenter a set number of minutes and share the order of events with them ahead of time.',
           'For an anniversary, a few words from children or grandchildren and a display of photos across the decades make the evening personal. For an awards banquet, confirm names and spellings before the printing deadline.',
-          'Most hosts reserve a banquet date three to six months ahead, and earlier for a date near the end of a school or sports season.',
         ],
       },
     ],
@@ -175,7 +171,7 @@ export const events: EventType[] = [
         'Visit the space to plan the room and the program.',
         'Write the program with speakers, awards, and timing in order.',
         'Order plaques, certificates, or keepsakes early so they arrive in time.',
-        'Confirm your final guest count about two weeks ahead.',
+        'Confirm your final guest count before the event.',
         'Send guests the address and parking details.',
       ],
     },
@@ -221,8 +217,8 @@ export const events: EventType[] = [
       {
         heading: 'Baby showers, gender reveals, and bridal showers',
         body: [
-          'A baby shower usually happens four to eight weeks before the due date. A gender reveal builds toward one shared moment, so timing and a clear view for every guest matter most. Tell us which one you are planning in your request, and mention it if you are combining the two.',
-          'A bridal shower is usually hosted by a friend, a sister, or a relative, two weeks to two months before the wedding. A couples shower follows the same idea with both partners as guests of honor. Confirm the wedding date and the guest list with the family before you book. Many hosts reserve six to ten weeks ahead.',
+          'A baby shower is usually planned around the due date. A gender reveal builds toward one shared moment, so timing and a clear view for every guest matter most. Tell us which one you are planning in your request, and mention it if you are combining the two.',
+          'A bridal shower is usually hosted by a friend, a sister, or a relative before the wedding. A couples shower follows the same idea with both partners as guests of honor. Confirm the wedding date and the guest list with the family before you book.',
         ],
       },
     ],
@@ -289,14 +285,10 @@ export const events: EventType[] = [
         'Set a budget and a working guest count.',
         "Visit the space to plan the room and the guest of honor's arrival.",
         'Plan a short run of show for the welcome, speeches, and photos.',
-        'Send invitations four to six weeks ahead with the address and parking details.',
+        'Send invitations with the address and parking details.',
       ],
     },
     faqs: [
-      {
-        q: 'How far in advance should I book a birthday party venue?',
-        a: 'Many hosts book two to three months ahead for a milestone birthday and earlier for a larger party or a holiday weekend. The availability calendar shows open dates, so you can check yours right away.',
-      },
       {
         q: 'How do I plan a surprise birthday party?',
         a: 'Ask guests to arrive about thirty minutes before the guest of honor, and choose one trusted person to bring them in on time. Mention the surprise in your request so we can plan arrival times with you.',
@@ -321,7 +313,7 @@ export const events: EventType[] = [
     h1: 'Repasts and celebrations of life',
     intro: [
       `The gathering after a service is often where family and friends finally have time to talk and remember. ${HALL} offers a calm, dignified room for that time together.`,
-      `You may be planning within a few days, so the first step is short: call ${PHONE}, or send a request from the availability calendar, and we will follow up with you personally.`,
+      `The first step is short: call ${PHONE}, or send a request from the availability calendar, and we will follow up with you personally.`,
     ],
     sections: [
       {
@@ -355,10 +347,6 @@ export const events: EventType[] = [
       {
         q: 'What is a repast?',
         a: 'A repast is a gathering after a funeral or memorial service, usually with family, friends, and members of their faith community. It gives people time to rest, visit, and share memories together.',
-      },
-      {
-        q: 'How far ahead should we plan a celebration of life?',
-        a: 'Repasts are often arranged within a few days of a funeral. Celebrations of life are sometimes held weeks or months later, which gives relatives from across Hampton Roads and farther away time to travel.',
       },
     ],
     related: ['community-events', 'receptions-banquets', 'meetings-trainings'],
@@ -395,7 +383,7 @@ export const events: EventType[] = [
         heading: 'Before the meeting',
         body: [
           'Start with the agenda and work backward: what the group needs to finish, how long the session should run, and when to take breaks. A hands-on training needs a different layout than a board meeting where everyone faces each other.',
-          'Most organizers book a few weeks ahead for a single meeting and a season ahead for an annual meeting or a full-day training. A few days before, send attendees the agenda, address, and start time, along with anything they should read first.',
+          'Before the day, send attendees the agenda, address, and start time, along with anything they should read first.',
         ],
       },
     ],
@@ -474,12 +462,8 @@ export const events: EventType[] = [
     },
     faqs: [
       {
-        q: 'How far ahead should we plan a family reunion?',
-        a: 'Many families start nine to twelve months ahead so relatives can save and arrange travel. Check your date on the availability calendar as soon as the committee agrees on it.',
-      },
-      {
         q: 'When should we have a graduation party?',
-        a: 'Many families hold the party the same weekend as the ceremony or within a few weeks after, so relatives can make one trip.',
+        a: 'Many families hold the party the same weekend as the ceremony or soon after, so relatives can make one trip.',
       },
     ],
     related: ['birthday-parties', 'receptions-banquets', 'community-events'],
@@ -517,7 +501,6 @@ export const events: EventType[] = [
         body: [
           'Start with the purpose. Write one sentence about why the event exists and who should be there, and let it guide every other decision. Then set a date, a headcount, and a budget, and decide whether attendees will register.',
           'Build a simple run of show with start times, speakers, breaks, and an end time. Name one point person for the day, so volunteers, speakers, and our team all have a single contact.',
-          'Conferences and community days are often set a season ahead so leaders, speakers, and volunteers can hold the date. Youth nights and smaller gatherings usually need four to eight weeks.',
         ],
       },
     ],

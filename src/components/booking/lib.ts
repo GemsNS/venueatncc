@@ -3,6 +3,7 @@
  * lighter islands (the date checker) stay lean.
  */
 import { href } from '../../lib/paths';
+import { site } from '../../data/site';
 import { CAPACITY } from '../../shared/capacity';
 import { formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
 import { CLOSED_DAY_MESSAGE, CLOSES_HOUR, OPENS_HOUR, dayTypes, maxHoursFrom, minimumHours, type DayType } from '../../shared/booking-rules';
@@ -45,7 +46,8 @@ export function latestBookableDate(today: DateKey): DateKey {
   return toKey(y + 2, m, d);
 }
 
-export const TOO_LATE_MESSAGE = 'Choose a date within the next two years.';
+/** The same words as DATE_TOO_FAR in shared/schemas.ts. It states no timeline (brand.md). */
+export const TOO_LATE_MESSAGE = `That date is not open for online requests yet. Call us at ${site.contact.phone} and we will help.`;
 
 /** What a calendar says when someone picks a day that cannot be requested. */
 export function unavailableMessage(date: DateKey, status: CalStatus): string {

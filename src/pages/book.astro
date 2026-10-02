@@ -21,14 +21,16 @@ const crumbs = [
   { name: 'Check availability', path: '/book/' },
 ];
 
-/** A small responsive rendering of one real photo for the island (WebP, 1x and 2x of a 160px frame). */
+/**
+ * A responsive rendering of one real photo for the island (WebP). 240 and 480 serve the 76px space rows;
+ * 960 serves the summary card's photo, 360px wide on desktop, so it is never drawn past its file at 2x
+ * (brand.md, "The client's rules of October 1, 2026", rule 3).
+ */
 async function thumb(photo: VenuePhoto | null): Promise<SpacePhoto | null> {
   if (!photo) return null;
-  const [one, two] = await Promise.all([
-    getImage({ src: photo.src, width: 240, format: 'webp' }),
-    getImage({ src: photo.src, width: 480, format: 'webp' }),
-  ]);
-  return { src: one.src, srcset: `${one.src} 240w, ${two.src} 480w`, alt: photo.alt };
+  const widths = [240, 480, 960];
+  const files = await Promise.all(widths.map((width) => getImage({ src: photo.src, width, format: 'webp' })));
+  return { src: files[0].src, srcset: files.map((f, i) => `${f.src} ${widths[i]}w`).join(', '), alt: photo.alt };
 }
 
 /* The Hall, The Main Hall, and The Grove each get their own photo; the combined choice shows two others. */

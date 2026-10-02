@@ -13,7 +13,7 @@
  */
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
-import type { VenuePhoto } from '../data/photos';
+import { detailWidth, type VenuePhoto } from '../data/photos';
 
 interface Props {
   photo: VenuePhoto;
@@ -58,15 +58,19 @@ const CANDIDATES = [640, 960, 1280, 1600, 1920, 2400, 2880, 3840];
 const AVIF_QUALITY = 60;
 const WEBP_QUALITY = 82;
 
-/** Widths up to the source width, always including the source width itself. */
-function widthsFor(img: ImageMetadata): number[] {
-  const fit = CANDIDATES.filter((w) => w < img.width);
-  return [...fit, img.width];
+/**
+ * Widths up to the photo's real detail (detailWidth: the file width, or 1600 for a staged photo), always
+ * including that width itself, so no file wider than the photo's detail is shipped.
+ */
+function widthsFor(img: ImageMetadata, max: number): number[] {
+  const top = Math.min(img.width, max);
+  const fit = CANDIDATES.filter((w) => w < top);
+  return [...fit, top];
 }
 
-async function sources(img: ImageMetadata) {
-  const widths = widthsFor(img);
-  const fallbackWidth = widths.find((w) => w >= 1280) ?? img.width;
+async function sources(img: ImageMetadata, max = img.width) {
+  const widths = widthsFor(img, max);
+  const fallbackWidth = widths.find((w) => w >= 1280) ?? widths[widths.length - 1];
   const [avif, webp] = await Promise.all([
     getImage({ src: img, widths, width: fallbackWidth, format: 'avif', quality: AVIF_QUALITY }),
     getImage({ src: img, widths, width: fallbackWidth, format: 'webp', quality: WEBP_QUALITY }),
@@ -74,7 +78,7 @@ async function sources(img: ImageMetadata) {
   return { avif: avif.srcSet.attribute, webp: webp.srcSet.attribute, src: webp.src, width: img.width, height: img.height };
 }
 
-const main = await sources(photo.src);
+const main = await sources(photo.src, detailWidth(photo));
 const portrait = useTall && photo.tall ? await sources(photo.tall) : null;
 // The frame is the file's own shape, so the photo is never cover-cropped.
 const style = [

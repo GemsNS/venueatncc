@@ -12,7 +12,7 @@
  */
 import { getImage } from 'astro:assets';
 import Photo from './Photo.astro';
-import { STYLED_CAPTION, type VenuePhoto } from '../data/photos';
+import { STYLED_CAPTION, detailWidth, type VenuePhoto } from '../data/photos';
 
 interface Props {
   photo: VenuePhoto;
@@ -38,10 +38,12 @@ const captionText = isStyled
   : own;
 
 /*
-  The viewer shows the whole landscape file up to 1600 CSS px wide. It offers 1600, 2400 and 3200 wide
-  files (3200 covers 1600 at 2x), and the browser picks by the screen. It loads only when the viewer opens.
+  The viewer shows the whole landscape file up to 1600 CSS px wide, and never wider than the photo's real
+  detail (detailWidth: the file width, or 1600 device px for a staged photo) at the screen's pixel ratio,
+  so no photo is enlarged past the point where it looks soft (brand.md, "The client's rules of October 1, 2026", rule 3).
+  It offers 1600, 2400 and 3200 wide files, up to that detail, and loads only when the viewer opens.
 */
-const viewerMax = Math.min(photo.src.width, 3200);
+const viewerMax = Math.min(detailWidth(photo), 3200);
 const viewerWidths = [...[1600, 2400].filter((w) => w < viewerMax), viewerMax];
 const full = zoom
   ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: 82 })
@@ -52,6 +54,7 @@ const full = zoom
   data-zoom-src={full?.src}
   data-zoom-srcset={full?.srcSet.attribute}
   data-zoom-alt={full ? photo.alt : undefined}
+  data-zoom-detail={full ? viewerMax : undefined}
   data-zoom-caption={full ? (captionText ?? '') : undefined}
 >
   <Photo photo={photo} sizes={sizes} tall={tall} priority={priority} frame={full ? 'button' : 'div'} label={`Enlarge photo: ${photo.alt}`} />
@@ -128,8 +131,11 @@ const full = zoom
     index = (i + list.length) % list.length;
     const f = list[index];
     const img = dialog.querySelector<HTMLImageElement>('.lightbox__img')!;
+    // Never wider than the photo's real detail at this screen's pixel ratio (data-zoom-detail, device px).
+    const widthCap = Math.round(Number(f.dataset.zoomDetail || 3200) / (window.devicePixelRatio || 1));
+    img.style.setProperty('--zoom-cap', `${widthCap}px`);
     // sizes before srcset, so the browser chooses with the right width.
-    img.sizes = 'min(100vw - 2rem, 1600px)';
+    img.sizes = `min(100vw - 2rem, 1600px, ${widthCap}px)`;
     img.srcset = f.dataset.zoomSrcset ?? '';
     img.src = f.dataset.zoomSrc ?? '';
     img.alt = f.dataset.zoomAlt ?? '';
@@ -190,7 +196,7 @@ const full = zoom
   /* The whole photo, never cropped: it fits inside the screen at its own shape. */
   .lightbox__img {
     display: block;
-    max-width: min(100%, 1600px);
+    max-width: min(100%, 1600px, var(--zoom-cap, 1600px));
     max-height: calc(100dvh - 9rem);
     width: auto;
     height: auto;
@@ -258,7 +264,7 @@ const full = zoom
   /* Wider screens: the photo stops short of the arrows at its sides, so no control covers it. */
   @media (width >= 46.5rem) {
     .lightbox__img {
-      max-width: min(100% - 8rem, 1600px);
+      max-width: min(100% - 8rem, 1600px, var(--zoom-cap, 1600px));
     }
   }
 

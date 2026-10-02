@@ -6,6 +6,7 @@ import { addDays, todayKey } from '../../src/shared/dates';
 import { estimate } from '../../src/shared/pricing';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
+import { DATE_TOO_FAR } from '../../src/shared/schemas';
 import type { AvailabilityResponse, Estimate, InquiryCreated } from '../../src/shared/types';
 import { createHash } from 'node:crypto';
 import { GUEST_CONFIRMATIONS_PER_HOUR } from '../routes/public';
@@ -295,13 +296,15 @@ describe('public API', () => {
       assert.ok(body.fields.startTime);
     });
 
-    test('dates must be today or later and within two years', async () => {
+    test('dates must be today or later and no later than the online limit, with a message that states no timeline', async () => {
       const past = await submitInquiry(h, { date: addDays(today(), -1) });
       assert.equal(past.status, 400);
       assert.ok((await past.json()).fields.date);
       const far = await submitInquiry(h, { date: addDays(today(), 800) });
       assert.equal(far.status, 400);
-      assert.ok((await far.json()).fields.date);
+      const farDate = (await far.json()).fields.date;
+      assert.equal(farDate, DATE_TOO_FAR);
+      assert.doesNotMatch(farDate, /year|month|week|ahead|advance/i);
       assert.equal((await submitInquiry(h, { date: today() })).status, 201);
     });
 

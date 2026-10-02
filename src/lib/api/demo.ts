@@ -17,6 +17,7 @@ import { capacityError } from '../../shared/capacity';
 import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimate } from '../../shared/pricing';
+import { site } from '../../data/site';
 import { makeReference } from '../../shared/reference';
 import { INQUIRY_STATUSES, SPACE_NAMES, spaceFromParts, spaceParts, spacesOverlap } from '../../shared/types';
 import type {
@@ -56,9 +57,9 @@ export const demoMessages = {
   formExpired: 'This form has expired. Refresh the page and send your request again.',
   pastDate: 'Choose a date that has not passed.',
   pastAltDate: 'Choose an alternate date that has not passed.',
-  /** The same words as DATE_TOO_FAR in shared/schemas.ts (not imported: see loadSchemas). */
-  tooFar: 'Choose a date within the next two years.',
-  altTooFar: 'Choose an alternate date within the next two years.',
+  /** The same words as DATE_TOO_FAR and ALT_DATE_TOO_FAR in shared/schemas.ts (not imported: see loadSchemas). */
+  tooFar: `That date is not open for online requests yet. Call us at ${site.contact.phone} and we will help.`,
+  altTooFar: `That alternate date is not open for online requests yet. Call us at ${site.contact.phone} and we will help.`,
   badRange: 'Choose a valid date range.',
   signedOut: 'Your session ended. Sign in again.',
   badLogin: 'That email and password do not match.',

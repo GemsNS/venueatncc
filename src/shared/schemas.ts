@@ -10,6 +10,7 @@ import { eventTypes, OTHER_EVENT } from '../data/event-types';
 import { isDateKey, parseKey, toKey } from './dates';
 import { CLOSED_DAY_MESSAGE, ENDS_TOO_LATE_MESSAGE, START_TOO_EARLY_MESSAGE, endsInHours, isClosedDay, startsInHours } from './booking-rules';
 import { INQUIRY_STATUSES, SPACE_CHOICES } from './types';
+import { site } from '../data/site';
 import type { DateKey } from './types';
 
 const dateKey = z.string().refine(isDateKey, 'Choose a valid date.');
@@ -17,13 +18,17 @@ const hhmm = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, 'Choose a start
 const trimmed = (max: number) => z.string().trim().max(max);
 const spaceChoice = (error?: string) => z.enum(SPACE_CHOICES, error ? { error } : undefined);
 
-/** The latest bookable date: the same calendar day two years from today. */
+/**
+ * The latest date open for online requests: the same calendar day two years from today. The limit is
+ * behavior only; no message states it (brand.md, "The client's rules of October 1, 2026", rule 2).
+ */
 export function latestBookableDate(today: DateKey): DateKey {
   const { y, m, d } = parseKey(today);
   return toKey(y + 2, m, d);
 }
 
-export const DATE_TOO_FAR = 'Choose a date within the next two years.';
+export const DATE_TOO_FAR = `That date is not open for online requests yet. Call us at ${site.contact.phone} and we will help.`;
+export const ALT_DATE_TOO_FAR = `That alternate date is not open for online requests yet. Call us at ${site.contact.phone} and we will help.`;
 
 /** Every event type a request may name: the listed slugs, plus "other". */
 export const EVENT_TYPE_SLUGS = [...eventTypes.map((e) => e.slug), OTHER_EVENT.slug] as string[] as [string, ...string[]];

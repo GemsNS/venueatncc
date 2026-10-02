@@ -19,12 +19,12 @@ import path from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
-import { shareCards, type ShareCard } from './_cards';
+import { shareCards, shareCardSize, type ShareCard } from './_cards';
 import { site } from '../../data/site';
 import { NAME_BOX } from '../../lib/lockup';
 
 export const getStaticPaths = (() =>
-  Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card } }))) satisfies GetStaticPaths;
+  Object.entries(shareCards).map(([key, card]) => ({ params: { key }, props: { card, key } }))) satisfies GetStaticPaths;
 
 const W = 1200;
 const H = 630;
@@ -126,7 +126,7 @@ function titleSize(title: string): number {
 }
 
 export const GET: APIRoute = async ({ props }) => {
-  const { card } = props as { card: ShareCard };
+  const { card, key } = props as { card: ShareCard; key: string };
   const [a, photo] = await Promise.all([loadShared(), loadPhoto(card.photo)]);
   const size = titleSize(card.title);
 
@@ -143,7 +143,9 @@ export const GET: APIRoute = async ({ props }) => {
   });
   const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
   // Full-resolution color (4:4:4) keeps the serif edges crisp on the White panel.
-  const jpeg = await sharp(rendered).removeAlpha().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+  // The still card is written smaller, so its 1024px bouquet is not shown past its detail (shareCardSize).
+  const out = shareCardSize(key);
+  const jpeg = await sharp(rendered).removeAlpha().resize(out.width, out.height, { fit: 'fill', kernel: 'lanczos3' }).jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
   return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } });
 };
 

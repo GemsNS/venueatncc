@@ -99,3 +99,13 @@ export function shareCardAlt(key: string): string | undefined {
   if (card.title.includes(site.name)) return `${card.title}, ${lowerFirst(sentence(card.line))}${photo}`;
   return `${site.name}. ${sentence(card.title)} ${sentence(card.line)}${photo}`;
 }
+
+/**
+ * The pixel size of a card's file. Cards are 1200 x 630, except the still life: its bouquet is a 1024 x 572
+ * generated image, and a 1200 x 630 card would draw it 1.17 times larger than its real detail (brand.md, "No
+ * photo larger than its detail"). The still card is laid out at 1200 x 630 and written at 1024 x 538, the same
+ * 1.91:1 shape, so the bouquet is shown at its own scale.
+ */
+export function shareCardSize(key: string): { width: number; height: number } {
+  return shareCards[key]?.layout === 'still' ? { width: 1024, height: 538 } : { width: 1200, height: 630 };
+}

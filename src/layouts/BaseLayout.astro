@@ -16,7 +16,7 @@ import { abs, graph, venue, website, webPage } from '../lib/schema';
 import { isDemo } from '../lib/env';
 import { href, withoutBase } from '../lib/paths';
 import { bookHref } from '../data/nav';
-import { shareCardAlt } from '../pages/og/_cards';
+import { shareCardAlt, shareCardSize } from '../pages/og/_cards';
 
 interface Props {
   /** Full <title>. Keep under 60 characters. */
@@ -67,6 +67,7 @@ const canonical = abs(path);
 const withCanonical = !isDemo && !noindex;
 // Share images must resolve where the page is actually hosted.
 const ogImage = new URL(href(`/og/${og}.jpg`), Astro.site).href;
+const ogSize = shareCardSize(og);
 
 const hero = heroPhoto();
 const venueImages: string[] = [];
@@ -116,8 +117,8 @@ const robots = isDemo ? 'noindex, nofollow' : noindex ? 'noindex, follow' : unde
     {withCanonical && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content={String(ogSize.width)} />
+    <meta property="og:image:height" content={String(ogSize.height)} />
     <meta property="og:image:alt" content={ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />

@@ -75,6 +75,22 @@ export const STYLED_CAPTION = 'Styled concept. Décor is not included.';
 const STYLED_ALT_PREFIX = 'Styled concept:';
 
 /**
+ * The real detail of a staged photo, in px across its width. Each is a Gemini output of about 1024px,
+ * upscaled to 2880 for the file; past about 1600 device px it shows no more detail, only softness
+ * (brand.md, "The client's rules of October 1, 2026", rule 3).
+ */
+export const STAGED_DETAIL_PX = 1600;
+
+/**
+ * How wide a photo may be drawn, in device px, before it looks soft: a real photo's file width (camera
+ * originals), or STAGED_DETAIL_PX for a staged photo. Photo.astro ships no wider file, and the viewer
+ * (Figure.astro) never draws one wider.
+ */
+export function detailWidth(p: VenuePhoto): number {
+  return p.styledOf ? Math.min(STAGED_DETAIL_PX, p.src.width) : p.src.width;
+}
+
+/**
  * What each staged photo shows, in a few words, for the caption under it after the disclosure
  * ("Styled concept. Décor is not included. A ceremony at the gazebo in The Grove."; redesign-v7.md, section 2).
  */
@@ -137,7 +153,7 @@ export const photoDetails: Record<string, PhotoDetail> = {
     space: 'grove',
   },
   'gazebo.jpg': {
-    alt: 'The timber gazebo in The Grove, with a dark metal roof and wooden railings, in front of tall trees',
+    alt: 'The timber gazebo in The Grove, with wooden railings, in front of tall trees',
     caption: 'The gazebo',
     tags: ['outdoor'],
     space: 'grove',
