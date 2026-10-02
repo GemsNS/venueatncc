@@ -146,13 +146,21 @@ const SIZES = '(min-width: 75rem) 584px, (min-width: 48rem) 46vw, 100vw';
     gap: 0.5rem;
   }
 
+  /* Weddings at every width: its heading leads, so neither ceremony photo stands alone without one. */
+  .ev--pair .ev__text {
+    order: -1;
+  }
+
   .ev__photos {
     display: grid;
     gap: 1.5rem;
     min-width: 0;
   }
 
-  /* Weddings: both ceremonies, outdoor and indoor, across the full width, with the text under them. */
+  /*
+    Weddings: both ceremonies, outdoor and indoor, across the full width. The heading, copy and spaces lead
+    the block, above the pair, so both photos read as Weddings and neither sits alone without a heading.
+  */
   @media (min-width: 48rem) {
     .ev--pair {
       grid-column: 1 / -1;

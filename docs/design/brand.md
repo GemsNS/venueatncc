@@ -28,13 +28,17 @@ file, and doc that feeds the site:
    `TOO_LATE_MESSAGE`, the demo backend's `tooFar` and `altTooFar`, all with the phone from site.ts).
 3. **No photo larger than its detail.** "DONT ZOOM IMAGES TO A POINT WHERE THEY LOOK BLURRY". A photo is never
    drawn wider, in device pixels (CSS width times the screen's pixel ratio, counting any object-fit crop),
-   than its real detail: a real photo's file width (camera originals), about 1600 px for a staged
-   `styled-*.jpg` (each is an upscale of a Gemini output of about 1024 px; `STAGED_DETAIL_PX` and
-   `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
-   than that detail; the viewer (Figure.astro) caps its image at the detail divided by
-   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen, and its zoom (pinch,
-   wheel, double tap, the Zoom in button) stops where one pixel of that detail fills one device pixel:
-   the largest file's width for a real photo, 1600 px for a staged one; the booking summary's
+   than its real detail: its file width (`detailWidth()` in `photos.ts`). A real photo's file is cut from
+   the camera original at or below the original's resolution; a staged `styled-*.jpg` is 2880 px, an
+   upscale of a Gemini output of about 1024 px whose blend was tuned and checked at 1:1 so petals keep their
+   structure there (`src/assets/venue/README.md`, Resolution); `share-rose-bouquet.jpg` counts as 1024 px.
+   (Until October 2 a staged photo was held to about 1600 px, which left the client's request "MAKE A WAY
+   TO ZOOM ON ENLARGED IMAGES" with no zoom at all on a 2x screen for the staged photos, the Main Hall
+   ceremony among them.) Photo.astro ships no file wider than that detail; the viewer (Figure.astro) caps
+   its image at the detail divided by `devicePixelRatio` (a staged photo opens at most 1440 CSS px wide on
+   a 2x screen), and its zoom (pinch, wheel, double tap, the Zoom in button) stops where one pixel of that
+   detail fills one device pixel: 2880 to 3840 px. Where a screen already shows a photo at its full detail
+   there is no zoom to offer, and the viewer shows "Shown at full detail" in place of the zoom buttons. The booking summary's
    photo has 960 and 1280 px files for its 360 px frame, so it stays within its file at 3x; the home share card (the bouquet) is written at 1024 x 538.
    No hover or CSS transform scales a photo up, except the viewer's zoom within that cap. Where a frame would be too big, cap the frame (max-width) or
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
@@ -603,8 +607,8 @@ archive earlier ones.
 
 Two more staged photos sit outside the event set. `styled-wedding-indoor-ceremony.jpg`, a ceremony in The
 Main Hall (`styledOf: 'main-hall.jpg'`), is the indoor ceremony in the Weddings block on /events/ (version 8):
-that block spans the full width with the gazebo ceremony and the Main Hall ceremony side by side, each under
-its own caption, "Styled concept. Décor is not included. A ceremony in The Main Hall." `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
+that block spans the full width, its heading, copy and spaces above the gazebo ceremony and the Main Hall
+ceremony side by side, each under its own caption, "Styled concept. Décor is not included. A ceremony in The Main Hall." `styled-driveway-petals.jpg`, the drive lined with petals (`styledOf: 'driveway.jpg'`), stays in the
 set but is not placed on any page: the building's cross is front and centre in it (Separation).
 
 ## Redundancy rules

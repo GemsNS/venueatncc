@@ -59,7 +59,7 @@ const AVIF_QUALITY = 60;
 const WEBP_QUALITY = 82;
 
 /**
- * Widths up to the photo's real detail (detailWidth: the file width, or 1600 for a staged photo), always
+ * Widths up to the photo's real detail (detailWidth: the file width), always
  * including that width itself, so no file wider than the photo's detail is shipped.
  */
 function widthsFor(img: ImageMetadata, max: number): number[] {

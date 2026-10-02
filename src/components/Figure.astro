@@ -43,7 +43,7 @@ const captionText = isStyled
 
 /*
   The viewer shows the whole landscape file up to 1600 CSS px wide, and never wider than the photo's real
-  detail (detailWidth: the file width, or 1600 device px for a staged photo) at the screen's pixel ratio,
+  detail (detailWidth: the file width) at the screen's pixel ratio,
   so no photo is enlarged past the point where it looks soft (brand.md, "The client's rules of October 1, 2026", rule 3).
   It offers 1600, 2400 and 3200 wide files, up to that detail, and loads only when the viewer opens.
 */
@@ -53,8 +53,8 @@ const full = zoom
   ? await getImage({ src: photo.src, widths: viewerWidths, width: viewerMax, format: 'webp', quality: 82 })
   : null;
 /*
-  Zooming in swaps in one file at the photo's full real detail: the source width for a real photo (up to
-  3840), 1600 for a staged one (the same file as the viewer's largest). The viewer never zooms past it.
+  Zooming in swaps in one file at the photo's full real detail: the source width (up to 3840 for a real
+  photo, 2880 for a staged one). The viewer never zooms past it.
 */
 const zoomMax = detailWidth(photo);
 const deep = full
@@ -101,7 +101,9 @@ const deep = full
     screen's pixel ratio) and zoomed with a CSS transform only. Phones: pinch, drag when zoomed, double tap,
     swipe to change photo when not zoomed. Desktop: wheel or trackpad pinch toward the pointer, drag,
     double click. Keys: + and - zoom, 0 resets, arrows pan when zoomed (else Left and Right change photo),
-    Escape closes. Panning is clamped so the photo never leaves the stage.
+    Escape closes; Ctrl and Cmd combinations are left to the browser, so its page zoom still works.
+    Panning is clamped so the photo never leaves the stage. A photo the screen already shows at its full
+    detail has no zoom to offer: the zoom buttons give way to a short note saying so.
   */
   const figures = () => [...document.querySelectorAll<HTMLElement>('figure[data-zoom-src]')];
   const STEP = 1.6;
@@ -139,8 +141,9 @@ const deep = full
         <div class="lightbox__zoom" role="group" aria-label="Zoom">
           <button type="button" class="lightbox__btn" data-zoom="in" aria-label="Zoom in" aria-keyshortcuts="+">${icon('M12 5v14M5 12h14')}</button>
           <button type="button" class="lightbox__btn" data-zoom="out" aria-label="Zoom out" aria-keyshortcuts="-">${icon('M5 12h14')}</button>
-          <button type="button" class="lightbox__btn" data-zoom="reset" aria-label="Reset zoom" aria-keyshortcuts="0">${icon('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5')}</button>
+          <button type="button" class="lightbox__btn" data-zoom="reset" aria-label="Reset zoom" aria-keyshortcuts="0">${icon('M3 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L3 10')}</button>
         </div>
+        <p class="lightbox__note" hidden>Shown at full detail</p>
         <button type="button" class="lightbox__btn lightbox__close" aria-label="Close photo">${icon('M6 6l12 12M18 6L6 18')}</button>
       </div>
       <button type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo">${icon('M15 18l-6-6 6-6')}</button>
@@ -203,11 +206,15 @@ const deep = full
     fitH = fitW / ratio;
     /*
       The zoom cap: one pixel of real detail never covers more than one device pixel. Real detail is the
-      largest file's width (data-zoom-max): the source width for a real photo (3000 to 3840 px), about
-      1600 px for a staged styled-*.jpg (STAGED_DETAIL_PX: an upscaled Gemini output). So the maximum zoom
-      is that width over the fitted width in device px, and never below 1 (the fitted photo).
+      largest file's width (data-zoom-max): 2880 to 3840 px. So the maximum zoom is that width over the
+      fitted width in device px, and never below 1 (the fitted photo).
     */
     maxS = Math.max(1, Number(current.dataset.zoomMax || 1600) / (fitW * dpr));
+    // Less than a tenth more is no zoom worth offering: no dead or near dead buttons, a note instead.
+    const none = maxS < 1.1;
+    if (none) maxS = 1;
+    dialog!.querySelector<HTMLElement>('.lightbox__zoom')!.hidden = none;
+    dialog!.querySelector<HTMLElement>('.lightbox__note')!.hidden = !none;
     img.style.width = `${fitW}px`;
     img.style.height = `${fitH}px`;
     img.style.left = `${(stageW - fitW) / 2}px`;
@@ -252,7 +259,16 @@ const deep = full
     s = next;
     img.classList.toggle('is-animating', animate && !reduceMotion.matches);
     apply();
-    status.textContent = s > 1 ? `Zoom ${Math.round(s * 100)} percent` : 'Zoom reset';
+    announce();
+  }
+
+  /** Says the zoom level once it settles, not on every wheel or trackpad step. */
+  let announceTimer = 0;
+  function announce() {
+    clearTimeout(announceTimer);
+    announceTimer = window.setTimeout(() => {
+      status.textContent = s > 1 ? `Zoom ${Math.round(s * 100)} percent` : 'Zoom reset';
+    }, 300);
   }
 
   function toggleAt(x: number, y: number) {
@@ -288,6 +304,7 @@ const deep = full
   }
 
   function reset() {
+    clearTimeout(announceTimer);
     s = 1;
     tx = 0;
     ty = 0;
@@ -379,7 +396,7 @@ const deep = full
     if (pts.size > 0) return;
     stage.classList.remove('is-dragging');
     if (pinched) {
-      if (s > 1) status.textContent = `Zoom ${Math.round(s * 100)} percent`;
+      if (s > 1) announce();
       return;
     }
     const dx = e.clientX - start.x;
@@ -399,8 +416,12 @@ const deep = full
       }
       lastTap = { t: now, x: e.clientX, y: e.clientY };
     }
-    // A tap on the empty stage around the whole photo closes the viewer, as a tap on a backdrop would.
-    if (!downOnPhoto && s === 1) dialog?.close();
+    /*
+      A click on the empty stage around the whole photo closes the viewer, as a click on a backdrop would.
+      Not a tap: on a phone a missed double tap or a stray touch near the photo's edge would close it, and
+      the Close button is always in reach.
+    */
+    if (e.pointerType === 'mouse' && !downOnPhoto && s === 1) dialog?.close();
   }
 
   function onWheel(e: WheelEvent) {
@@ -413,7 +434,8 @@ const deep = full
   }
 
   function onKey(e: KeyboardEvent) {
-    if (e.altKey || e.metaKey || (e.ctrlKey && e.key !== '+' && e.key !== '-' && e.key !== '=')) return;
+    // Ctrl and Cmd combinations belong to the browser (its page zoom, WCAG 1.4.4).
+    if (e.altKey || e.metaKey || e.ctrlKey) return;
     const nudge = Math.max(40, stageW * 0.12);
     const zoomed = s > 1;
     let done = true;
@@ -539,6 +561,20 @@ const deep = full
   .lightbox__zoom {
     display: flex;
     gap: 0.5rem;
+  }
+
+  .lightbox__zoom[hidden],
+  .lightbox__note[hidden] {
+    display: none;
+  }
+
+  /* In place of the zoom buttons when the screen already shows the photo at its full detail. */
+  .lightbox__note {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--label-2);
   }
 
   .lightbox__stage {

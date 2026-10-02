@@ -88,11 +88,10 @@ file, and doc that feeds the site:
    `TOO_LATE_MESSAGE`, the demo backend's `tooFar` and `altTooFar`, all with the phone from site.ts).
 3. **No photo larger than its detail.** "DONT ZOOM IMAGES TO A POINT WHERE THEY LOOK BLURRY". A photo is never
    drawn wider, in device pixels (CSS width times the screen's pixel ratio, counting any object-fit crop),
-   than its real detail: a real photo's file width (camera originals), about 1600 px for a staged
-   `styled-*.jpg` (each is an upscale of a Gemini output of about 1024 px; `STAGED_DETAIL_PX` and
-   `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
-   than that detail; the viewer (Figure.astro) caps its image at the detail divided by
-   `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen; the booking summary's
+   than its real detail: its file width (`detailWidth()` in `photos.ts`; 2880 px for a staged
+   `styled-*.jpg`, tuned and checked at 1:1), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no
+   file wider than that detail; the viewer (Figure.astro) caps its image and its zoom at that detail in
+   device pixels (brand.md, rule 3); the booking summary's
    photo has a 960 px file for its 360 px frame; the home share card (the bouquet) is written at 1024 x 538.
    No hover or CSS transform scales a photo up. Where a frame would be too big, cap the frame (max-width) or
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at

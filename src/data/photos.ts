@@ -75,19 +75,15 @@ export const STYLED_CAPTION = 'Styled concept. Décor is not included.';
 const STYLED_ALT_PREFIX = 'Styled concept:';
 
 /**
- * The real detail of a staged photo, in px across its width. Each is a Gemini output of about 1024px,
- * upscaled to 2880 for the file; past about 1600 device px it shows no more detail, only softness
- * (brand.md, "The client's rules of October 1, 2026", rule 3).
- */
-export const STAGED_DETAIL_PX = 1600;
-
-/**
- * How wide a photo may be drawn, in device px, before it looks soft: a real photo's file width (camera
- * originals), or STAGED_DETAIL_PX for a staged photo. Photo.astro ships no wider file, and the viewer
- * (Figure.astro) never draws one wider.
+ * How wide a photo may be drawn, in device px, before it looks soft: its file width. A real photo's file is
+ * cut from the camera original at or below the original's own resolution; a staged photo's file (2880 px,
+ * a Gemini output of about 1024 px upscaled with a Real-ESRGAN and Lanczos blend) was tuned and checked at
+ * 1:1 so its petals keep their structure there (src/assets/venue/README.md, Resolution). Photo.astro ships
+ * no wider file, and the viewer (Figure.astro) never draws one wider (brand.md, "The client's rules of
+ * October 1, 2026", rule 3).
  */
 export function detailWidth(p: VenuePhoto): number {
-  return p.styledOf ? Math.min(STAGED_DETAIL_PX, p.src.width) : p.src.width;
+  return p.src.width;
 }
 
 /**
