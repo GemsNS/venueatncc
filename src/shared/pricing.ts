@@ -65,8 +65,6 @@ export interface PricingModel {
 export interface IntroOffer {
   /** Its name, e.g. "Founding rate". The estimate line reads "<name>, <percent>% off the rental". */
   name: string;
-  /** The condition, completing "20% off the rental ...", e.g. "when you book by March 31, 2027". */
-  terms: string;
   percent: number;
   validUntil: DateKey;
 }
@@ -135,7 +133,7 @@ export const pricing: PricingModel = {
     },
     { id: 'military', label: 'Military, veterans, and first responders', percent: 10, appliesTo: 'manual' },
   ],
-  introOffer: { name: 'Founding rate', terms: 'when you book by March 31, 2027', percent: 20, validUntil: '2027-03-31' },
+  introOffer: { name: 'Founding rate', percent: 20, validUntil: '2027-03-31' },
 };
 
 

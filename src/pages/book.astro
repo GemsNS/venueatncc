@@ -23,12 +23,12 @@ const crumbs = [
 
 /**
  * A responsive rendering of one real photo for the island (WebP). 240 and 480 serve the 76px space rows;
- * 960 serves the summary card's photo, 360px wide on desktop, so it is never drawn past its file at 2x
+ * 960 and 1280 serve the summary card's photo, 360px wide on desktop, so it is never drawn past its file at 2x or 3x
  * (brand.md, "The client's rules of October 1, 2026", rule 3).
  */
 async function thumb(photo: VenuePhoto | null): Promise<SpacePhoto | null> {
   if (!photo) return null;
-  const widths = [240, 480, 960];
+  const widths = [240, 480, 960, 1280];
   const files = await Promise.all(widths.map((width) => getImage({ src: photo.src, width, format: 'webp' })));
   return { src: files[0].src, srcset: files.map((f, i) => `${f.src} ${widths[i]}w`).join(', '), alt: photo.alt };
 }

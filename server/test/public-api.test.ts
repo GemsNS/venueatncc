@@ -2,11 +2,11 @@ import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { addDays, todayKey } from '../../src/shared/dates';
+import { addDays, dayOfWeek, todayKey } from '../../src/shared/dates';
 import { estimate } from '../../src/shared/pricing';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
-import { DATE_TOO_FAR } from '../../src/shared/schemas';
+import { ALT_DATE_TOO_FAR, DATE_TOO_FAR } from '../../src/shared/schemas';
 import type { AvailabilityResponse, Estimate, InquiryCreated } from '../../src/shared/types';
 import { createHash } from 'node:crypto';
 import { GUEST_CONFIRMATIONS_PER_HOUR } from '../routes/public';
@@ -305,6 +305,13 @@ describe('public API', () => {
       const farDate = (await far.json()).fields.date;
       assert.equal(farDate, DATE_TOO_FAR);
       assert.doesNotMatch(farDate, /year|month|week|ahead|advance/i);
+      const altFar = addDays(today(), 800);
+      // Moved off a Sunday, so only the online limit applies to the alternate date.
+      const farAlt = await submitInquiry(h, { altDate: dayOfWeek(altFar) === 0 ? addDays(altFar, 1) : altFar });
+      assert.equal(farAlt.status, 400);
+      const farAltDate = (await farAlt.json()).fields.altDate;
+      assert.equal(farAltDate, ALT_DATE_TOO_FAR);
+      assert.doesNotMatch(farAltDate, /year|month|week|ahead|advance/i);
       assert.equal((await submitInquiry(h, { date: today() })).status, 201);
     });
 

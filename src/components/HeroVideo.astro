@@ -4,9 +4,10 @@
  * muted, looping clip of pink roses on a bright white ground (public/media/hero-roses.*, credited in
  * public/media/CREDITS.md; docs/design/redesign-v7.md, section 6), under a light white veil that keeps the
  * Plum name legible on every frame while the roses stay clearly pink.
- * The page's content slides up over it, as on the reference. The poster is an image beneath the video, so
- * there is no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the
- * poster shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
+ * The page's content slides up over it, as on the reference. The poster is an image beneath the video (the
+ * video carries no poster of its own, so the still a screen sees is always the one chosen for it), so there is
+ * no layout shift and no flash: under prefers-reduced-motion the video is hidden and paused and the poster
+ * shows still. It shows no identifiable venue, building, room, or person, and is never a photo of
  * the property. `data-hero` tells the header (solid White throughout) when to draw its hairline.
  */
 import { href } from '../lib/paths';
@@ -19,22 +20,30 @@ interface Props {
 
 const { labelledby, class: className } = Astro.props;
 /*
-  The clip and its poster are 2560 x 1440 (cut from the 4K source; public/media/CREDITS.md). Portrait screens
-  get their own poster, the middle of the 4K first frame at 9:16 (1216 x 2160), which is the part the cover
-  crop shows there, so a phone's still frame is drawn from a file as tall as its screen.
+  Never drawn past its detail (the client's rule 3; brand.md, "The hero loop"). The clip and its poster are the
+  full 3840 x 2160 of the 4K source. Narrow portrait screens get a 3:4 cut of the same frames, the middle
+  1620 x 2160 (public/media/CREDITS.md), which holds everything the cover crop shows there in fewer bytes. The
+  source is 2160 px tall, so the hero is never taller than 2160 device px (see .hero below): with that cap both
+  files are drawn at no more than their own size on every screen.
+  The landscape sources come first with an explicit query, so a browser that ignores media on a video source
+  plays the 4K file. The two queries are exact complements (aspect above 3:4, or wider than 810px).
 */
 const poster = href('/media/hero-roses-poster.jpg');
 const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
+const wide = '(min-aspect-ratio: 3001/4000), (min-width: 811px)';
+const narrow = '(max-aspect-ratio: 3/4) and (max-width: 810px)';
 ---
 <section class:list={['hero', className]} data-hero aria-labelledby={labelledby}>
   <div class="hero__media" aria-hidden="true">
     <picture>
-      <source media="(orientation: portrait)" srcset={posterPortrait} width="1216" height="2160" />
-      <img class="hero__poster" src={poster} alt="" width="2560" height="1440" decoding="async" fetchpriority="high" />
+      <source media={narrow} srcset={posterPortrait} width="1620" height="2160" />
+      <img class="hero__poster" src={poster} alt="" width="3840" height="2160" decoding="async" fetchpriority="high" />
     </picture>
-    <video class="hero__video" muted autoplay loop playsinline preload="auto" poster={poster} tabindex="-1" data-hero-video>
-      <source src={href('/media/hero-roses.webm')} type="video/webm" />
-      <source src={href('/media/hero-roses.mp4')} type="video/mp4" />
+    <video class="hero__video" muted autoplay loop playsinline preload="auto" tabindex="-1" data-hero-video>
+      <source media={wide} src={href('/media/hero-roses.webm')} type="video/webm" />
+      <source media={wide} src={href('/media/hero-roses.mp4')} type="video/mp4" />
+      <source media={narrow} src={href('/media/hero-roses-portrait.webm')} type="video/webm" />
+      <source media={narrow} src={href('/media/hero-roses-portrait.mp4')} type="video/mp4" />
     </video>
     <div class="hero__overlay"></div>
   </div>
@@ -62,11 +71,17 @@ const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
 </script>
 
 <style>
+  /*
+    The hero, and the fixed box its clip fills, are as tall as the screen but never taller than the clip's
+    2160 device px: 1080px at 2x, 720px at 3x (the client's rule 3). Most phones' visible height is already
+    under 720px with the browser's bars showing; on taller screens the page simply starts a little higher.
+  */
   .hero {
+    --hero-h: 100svh;
     position: relative;
     display: grid;
     align-items: center;
-    min-height: 100svh;
+    min-height: var(--hero-h);
     /* The hero starts under the solid bar, so the content is centred in the space beneath it. */
     padding-block: calc(var(--nav-h) + 1rem) 2rem;
     margin-top: calc(-1 * var(--nav-h));
@@ -79,8 +94,8 @@ const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
   */
   .hero__media {
     position: fixed;
-    inset: 0;
-    height: 100svh;
+    inset: 0 0 auto;
+    height: var(--hero-h);
     z-index: -1;
     pointer-events: none;
   }
@@ -120,6 +135,14 @@ const posterPortrait = href('/media/hero-roses-poster-portrait.jpg');
   .hero__content {
     position: relative;
   }
+
+  @media (min-resolution: 1.5dppx) { .hero { --hero-h: min(100svh, 1440px); } }
+  @media (min-resolution: 2dppx) { .hero { --hero-h: min(100svh, 1080px); } }
+  @media (min-resolution: 2.5dppx) { .hero { --hero-h: min(100svh, 864px); } }
+  @media (min-resolution: 2.625dppx) { .hero { --hero-h: min(100svh, 822px); } }
+  @media (min-resolution: 2.75dppx) { .hero { --hero-h: min(100svh, 785px); } }
+  @media (min-resolution: 3dppx) { .hero { --hero-h: min(100svh, 720px); } }
+  @media (min-resolution: 3.5dppx) { .hero { --hero-h: min(100svh, 617px); } }
 
   @media (prefers-reduced-motion: reduce) {
     .hero__video {

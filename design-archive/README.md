@@ -32,6 +32,13 @@ originals at full resolution with the same framing and grade, the staged photos 
 (Real-ESRGAN and Lanczos half and half), replaced the same day by a one quarter Real-ESRGAN mix because the
 ceremony's flower walls still looked waxy at 1:1 (`src/assets/venue/README.md`, Resolution).
 
+## hero-roses-2560
+
+The rose hero loop (second grade) and its posters at 2560 x 1440, with a 1216 x 2160 portrait poster, used on
+2026-10-01 until the client's rule against blurry, over-enlarged images: the full-height hero drew them up to
+1.76 times their size on phones and 1.5 times on 1920 x 1080 screens at 2x. They were replaced by the full
+3840 x 2160 cut of the same 4K source and edit, with a 1620 x 2160 portrait cut (`public/media/CREDITS.md`).
+
 ## hero-roses-grade1
 
 The rose hero loop and its posters with the first grade (gamma 1.5, brightness +0.02, saturation 1.05), used

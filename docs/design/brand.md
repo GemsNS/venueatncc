@@ -33,11 +33,11 @@ file, and doc that feeds the site:
    `detailWidth()` in `photos.ts`), 1024 px for `share-rose-bouquet.jpg`. Photo.astro ships no file wider
    than that detail; the viewer (Figure.astro) caps its image at the detail divided by
    `devicePixelRatio`, so a staged photo opens at most 800 CSS px wide on a 2x screen; the booking summary's
-   photo has a 960 px file for its 360 px frame; the home share card (the bouquet) is written at 1024 x 538.
+   photo has 960 and 1280 px files for its 360 px frame, so it stays within its file at 3x; the home share card (the bouquet) is written at 1024 x 538.
    No hover or CSS transform scales a photo up. Where a frame would be too big, cap the frame (max-width) or
    change the layout; never enlarge the photo. Check every route at 390 x 844 at 3x, 768 at 2x, 1440 x 900 at
    2x, and 1920 x 1080 at 2x, and look at 100% crops of the largest displays. The hero rose clip is footage,
-   not a photo of the property, and is measured against the same rule: see brand.md, "The hero loop".
+   not a photo of the property, and is measured against the same rule and meets it: see "The hero loop".
 
 ## Version 7 amendments (image first, October 1, 2026)
 
@@ -423,13 +423,14 @@ under the bar, and the bar turns solid after 8px.
 
 - **The hero loop, version 7** (`src/components/HeroVideo.astro`; `redesign-v7.md`, section 6): Pexels video
   36494699, "Close-up of Beautiful Pink Roses in Bloom" (Marek Ruczaj, Pexels License): pink roses on a bright
-  white ground, a 13.96 s seamless loop at 2560 x 1440 (`public/media/hero-roses.*`, the edit and grade in
-  `public/media/CREDITS.md`), with a 1216 x 2160 portrait poster. The veil is White at 0.5 across the band
+  white ground, a 13.96 s seamless loop at the source's full 3840 x 2160 (`public/media/hero-roses.*`, the edit
+  and grade in `public/media/CREDITS.md`), with a 1620 x 2160 portrait cut of the same frames for narrow
+  portrait screens (clip and poster). The veil is White at 0.5 across the band
   that holds the welcome, easing to 0.2 at the edges (0.32 on portrait screens, where the clip is one large
   rose), with no colour blend layer, so the roses read as pink. The clip carries its own grade (gamma 2.1,
-  brightness +0.08, saturation 0.95; `public/media/CREDITS.md`). The first screen's mean HSL lightness, below
-  the bar, measures 87.1 at 360 and 390, 88.6 at 768, 88.3 at 1440, and 88.2 at 1920 (12 frames; the band is
-  78 to 90). The welcome's name carries a static White halo (`drop-shadow`, five steps) that hugs its
+  brightness +0.08, saturation 0.95; `public/media/CREDITS.md`). The hero's mean HSL lightness, below
+  the bar, measures 87.2 at 360, 87.5 at 390 (both at 3x), 88.6 at 768, 88.3 at 1440, and 88.2 at 1920 (all
+  at 2x; 12 frames, re-measured on the 3840 x 2160 files; the band is 78 to 90). The welcome's name carries a static White halo (`drop-shadow`, five steps) that hugs its
   letters. Measured over 12 frames at 360, 390, 768, 1440, and 1920, at the 2nd-percentile pixel: "Welcome
   to" 7.3:1 and the location line 7.8:1 or better against the veiled clip; the Plum name 7.4:1 or better
   against the veiled clip alone (floor 7:1, met) and 10.5:1 or better at its glyph edges with the halo; the
@@ -442,18 +443,19 @@ under the bar, and the bar turns solid after 8px.
   and it reaches 4.5:1 at its glyph edges with the halo. The lead must either accept the AA large-text figure
   for the accent or ask for a design change (for example, the accent in Plum over the hero) before anything
   is pushed.
-- **Open for the lead's decision: the hero clip's resolution (the client's rule 3).** The clip and its
-  landscape poster are 2560 x 1440 and the portrait poster 1216 x 2160, cut from a 3840 x 2160 source. Cover
-  fills the full-height hero, so they are drawn wider than their files: on a 390 x 844 phone at 3x the clip is
-  1500 CSS px wide (4501 device px, 1.76 times its 2560 file; the portrait poster 1.17 times), at 768 x
-  1024 at 2x 1.42 times (the portrait poster 1.26 times), at 1440 x 900 at 2x 1.25 times, and at 1920 x 1080
-  at 2x 1.5 times. It is footage of soft roses,
-  not a photo of the property, and it was left unchanged in the October 1 pass because re-encoding it changes
-  the home page's largest file and the veil and contrast figures above, which the lead reviews in person. The
-  two fixes: a portrait cut of the clip, the middle 1216 x 2160 of the 4K source with the same edit and grade,
-  served to portrait screens (`<source media="(orientation: portrait)">`), which brings phones to 1.17 (the
-  4K source's own height is the limit) with a smaller file than today's; and a 3840 x 2160 landscape encode
-  for 2x desktops, about twice today's bytes, which brings 1920 at 2x to 1.0.
+- **The hero clip's resolution (the client's rule 3), met since 2026-10-01.** The clip and its poster are
+  the full 3840 x 2160 of the 4K source; narrow portrait screens (aspect 3:4 or taller and at most 810px wide)
+  get the middle 1620 x 2160 of the same frames, from one `media` query shared by the video's sources and the
+  poster's `<picture>` (the landscape sources come first, so a browser that ignores `media` on a video
+  source plays the 4K file). The video carries no `poster` attribute, so until its first frame paints the
+  still a screen sees is the poster chosen for it. The source is 2160 px tall, so the hero (and the fixed box
+  its clip fills) is as tall as the screen but never taller than 2160 device px: 1440px at 1.5x, 1080px at
+  2x, 864px at 2.5x, 822px at 2.625x, 785px at 2.75x, 720px at 3x, 617px at 3.5x. Measured (displayed device
+  px over the file): 390 x 844 at 3x 1.00 (a 720px hero), 430 x 932 at 3x 1.00, 412 x 915 at 2.625x 1.00,
+  768 x 1024 at 2x 0.95, 1024 x 1366 at 2x 1.00, 1440 x 900 at 2x 0.83, 1920 x 1080 at 2x 1.00, 2560 x 1440
+  at 1x 0.67, for the playing clip and the still alike. The soft areas in 100% crops are the source's own
+  shallow depth of field (out-of-focus petals), not enlargement. The 2560 x 1440 files are archived in
+  `design-archive/hero-roses-2560/`.
 - **The header over the hero** (since 2026-10-01): the bar is solid White at every scroll position, so its
   links, phone, and buttons never sit on the video, and the welcome is the only text over the roses. On the
   home page the bar's Check Availability is hidden until the welcome's own button has faded, so the first

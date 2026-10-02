@@ -1,6 +1,6 @@
 # Media credits
 
-## hero-roses.mp4, hero-roses.webm, hero-roses-poster.jpg, hero-roses-poster-portrait.jpg
+## hero-roses.mp4, hero-roses.webm, hero-roses-portrait.mp4, hero-roses-portrait.webm, hero-roses-poster.jpg, hero-roses-poster-portrait.jpg
 
 The home page hero loop: a slow, close view of real pink roses in bloom against a bright white background,
 with soft daylight. It shows no identifiable venue, building, room, or person. It replaced the white petals
@@ -22,13 +22,18 @@ clip on 2026-10-01 because the client said the petals did not read as flower pet
   1.05; those files are in `design-archive/hero-roses-grade1/`), which left the Plum name at 5.3:1 against
   the veiled clip. With the 0.5 veil unchanged, the first screen below the bar now measures 87.1 to 88.6 mean
   HSL lightness (the band is 78 to 90) and the roses still read as pink (docs/design/brand.md, "The hero
-  loop"). No audio, scaled to 2560 x 1440 (Lanczos).
-- Encodes: H.264 (libx264, crf 33, preset veryslow, high profile, yuv420p, faststart, 848,432 bytes) and VP9
-  (libvpx-vp9, crf 42, constant quality with b:v 0, row-mt, 369,085 bytes), both 2560 x 1440,
-  24 fps. SSIM against the lossless edit master is 0.986 (H.264) and 0.988 (VP9).
-- Posters: the loop's first frame (source 1.0 s) as JPEG, 2560 x 1440 (mozjpeg quality 72, 92,757 bytes); the
-  portrait poster is the middle 1216 x 2160 of the same 4K source frame with the same grade (65,336 bytes),
-  which is what a cover crop shows on portrait screens.
+  loop"). No audio, kept at the source's full 3840 x 2160 (no scaling).
+- Full resolution (2026-10-01, the client's rule 3, no image drawn past its detail): the 2560 x 1440 files
+  were drawn up to 1.76 times their size by the full-height hero and are archived in
+  `design-archive/hero-roses-2560/`. The same edit and grade were recut from the 4K source at full size, with
+  a lossless (FFV1) master, and a portrait cut was taken from that master: the middle 1620 x 2160 (3:4, crop
+  offset 1110 px), served to narrow portrait screens (`src/components/HeroVideo.astro`).
+- Encodes, 24 fps, 335 frames: landscape 3840 x 2160, H.264 (libx264, crf 33, preset veryslow, high profile,
+  yuv420p, faststart, 1,937,783 bytes) and VP9 (libvpx-vp9, crf 42, constant quality with b:v 0, row-mt,
+  667,328 bytes); portrait 1620 x 2160, H.264 (882,038 bytes) and VP9 (372,812 bytes) with the same settings.
+  SSIM of the landscape encodes against the lossless master is 0.989 (H.264) and 0.991 (VP9).
+- Posters: the loop's first frame (source 1.0 s) as JPEG (mozjpeg quality 72), 3840 x 2160 (162,509 bytes),
+  and the same frame's portrait cut, 1620 x 2160 (87,356 bytes).
 
 ## Earlier: hero-petals (now in design-archive/hero-petals/)
 
