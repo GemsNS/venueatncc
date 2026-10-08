@@ -8,7 +8,7 @@ import { z } from 'zod';
 z.config({ jitless: true });
 import { eventTypes, OTHER_EVENT } from '../data/event-types';
 import { isDateKey, parseKey, toKey } from './dates';
-import { CLOSED_DAY_MESSAGE, ENDS_TOO_LATE_MESSAGE, START_TOO_EARLY_MESSAGE, endsInHours, isClosedDay, startsInHours } from './booking-rules';
+import { ENDS_TOO_LATE_MESSAGE, closedDayMessage, START_TOO_EARLY_MESSAGE, endsInHours, isClosedDay, startsInHours } from './booking-rules';
 import { INQUIRY_STATUSES, SPACE_CHOICES } from './types';
 import { site } from '../data/site';
 import type { DateKey } from './types';
@@ -86,12 +86,13 @@ export const inquiryInputSchema = z.object({
   if (v.eventType === 'other' && !v.eventTypeOther) {
     ctx.addIssue({ code: 'custom', path: ['eventTypeOther'], message: 'Tell us what kind of event you are planning.' });
   }
-  // Building access: Monday to Saturday, 9:00 AM to 12:00 midnight (src/shared/booking-rules.ts).
+  // Building access: Monday to Saturday, 9:00 AM to 12:00 midnight, closed on New Year's Eve, Good Friday, and
+  // Easter Sunday (src/shared/booking-rules.ts).
   if (isDateKey(v.date) && isClosedDay(v.date)) {
-    ctx.addIssue({ code: 'custom', path: ['date'], message: CLOSED_DAY_MESSAGE });
+    ctx.addIssue({ code: 'custom', path: ['date'], message: closedDayMessage(v.date) });
   }
   if (v.altDate && isDateKey(v.altDate) && isClosedDay(v.altDate)) {
-    ctx.addIssue({ code: 'custom', path: ['altDate'], message: CLOSED_DAY_MESSAGE });
+    ctx.addIssue({ code: 'custom', path: ['altDate'], message: closedDayMessage(v.altDate) });
   }
   if (!startsInHours(v.startTime)) {
     ctx.addIssue({ code: 'custom', path: ['startTime'], message: START_TOO_EARLY_MESSAGE });

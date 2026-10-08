@@ -7,7 +7,7 @@ import { spaceIsFree } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { formatShort } from '../../shared/dates';
 import {
-  CLOSED_DAY_MESSAGE,
+  closedDayMessage,
   ENDS_TOO_LATE_MESSAGE,
   OPENS_AT,
   START_TOO_EARLY_MESSAGE,
@@ -249,7 +249,7 @@ export function validate(d: Draft, steps: Step[], ctx: ValidationContext): Recor
     if (!d.date) out.date = 'Choose a date.';
     else if (d.date < ctx.today) out.date = 'Choose a date from today on.';
     else if (d.date > latestBookableDate(ctx.today)) out.date = TOO_LATE_MESSAGE;
-    else if (isClosedDay(d.date)) out.date = CLOSED_DAY_MESSAGE;
+    else if (isClosedDay(d.date)) out.date = closedDayMessage(d.date);
     else if (ctx.day?.status === 'booked') out.date = 'That date is booked. Choose another date.';
   }
   // Building hours, stated here as well as in the schema: the schema's cross-field rules only run once

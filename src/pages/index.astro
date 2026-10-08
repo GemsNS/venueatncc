@@ -57,6 +57,7 @@ import { events } from '../data/events';
 import { STAGED_SCENES, eventPhoto, eventsStaged, spacePhoto, type VenuePhoto } from '../data/photos';
 import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
+import { CLOSED_HOLIDAYS } from '../shared/booking-rules';
 
 const fireside = site.spaces.find((s) => s.id === 'indoor');
 const stageHall = site.spaces.find((s) => s.id === 'main');
@@ -82,7 +83,8 @@ const spaceCards: SpaceCard[] = [
   prices"). "Open to the public" lives here only; the FAQ no longer asks it.
 */
 const included = 'Open to the public. Tables, chairs, and on-site parking come with every rental.';
-const hours = `${site.access.days}, ${site.access.hours}.`;
+// The holiday closures, confirmed by the owner; Christmas events and parties are welcome.
+const hours = `${site.access.days}, ${site.access.hours}. Closed on ${CLOSED_HOLIDAYS[0]}, ${CLOSED_HOLIDAYS[1]}, and ${CLOSED_HOLIDAYS[2]}. Christmas events and parties are welcome.`;
 const ratesShort = 'Our affordable rates vary with peak season, holidays, and the day of the week. Call us for pricing and special offers.';
 
 /*

@@ -7,7 +7,7 @@ import './booking.css';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
 import { addDays, dayOfWeek, formatLong, formatShort, todayKey } from '../../shared/dates';
-import { CLOSED_DAY_MESSAGE } from '../../shared/booking-rules';
+import { closedDayMessage } from '../../shared/booking-rules';
 import type { DateKey, SingleSpace } from '../../shared/types';
 import { DateField } from './DateField';
 import { ELLIPSIS, SINGLE_SPACES, bookUrl, latestBookableDate, listSpaces, spaceLabel } from './lib';
@@ -111,7 +111,7 @@ export default function DateChecker(props: { bookHref?: string }) {
   if (date && day) {
     const free = SINGLE_SPACES.filter((s) => isFree(s));
     const taken = SINGLE_SPACES.filter((s) => !isFree(s));
-    if (day.status === 'closed') dayNews = CLOSED_DAY_MESSAGE;
+    if (day.status === 'closed') dayNews = closedDayMessage(date);
     else if (free.length === SINGLE_SPACES.length) dayNews = 'All three spaces are open.';
     else if (free.length > 0) {
       dayNews = `${listSpaces(free)} ${free.length === 1 ? 'is' : 'are'} open. ${listSpaces(taken)} ${taken.length === 1 ? 'is' : 'are'} booked.`;

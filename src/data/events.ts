@@ -37,8 +37,8 @@ export const events: EventType[] = [
   },
   {
     slug: 'receptions-banquets',
-    name: 'Banquets & anniversaries',
-    summary: 'Anniversary dinners, awards banquets, and formal evenings, with the fireplace wall of The Fireside Room behind the head table.',
+    name: 'Banquets & Christmas parties',
+    summary: 'Christmas parties, anniversary dinners, awards banquets, and formal evenings, with the fireplace wall of The Fireside Room behind the head table.',
     spaces: ['indoor', 'outdoor'],
   },
   {

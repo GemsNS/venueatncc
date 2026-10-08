@@ -12,7 +12,7 @@ export interface EventTypeLite {
 
 export const eventTypes: EventTypeLite[] = [
   { slug: 'weddings', name: 'Weddings & receptions', icon: 'heart' },
-  { slug: 'receptions-banquets', name: 'Banquets & anniversaries', icon: 'sparkles' },
+  { slug: 'receptions-banquets', name: 'Banquets & Christmas parties', icon: 'sparkles' },
   { slug: 'baby-bridal-showers', name: 'Baby & bridal showers', icon: 'gift' },
   { slug: 'birthday-parties', name: 'Birthdays & milestones', icon: 'cake' },
   { slug: 'repasts-memorials', name: 'Repasts & celebrations of life', icon: 'flower' },

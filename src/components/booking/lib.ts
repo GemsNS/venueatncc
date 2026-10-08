@@ -6,7 +6,7 @@ import { href } from '../../lib/paths';
 import { site } from '../../data/site';
 import { CAPACITY } from '../../shared/capacity';
 import { formatLong, formatShort, formatTime, isDateKey, parseKey, toKey } from '../../shared/dates';
-import { CLOSED_DAY_MESSAGE, CLOSES_HOUR, OPENS_HOUR, dayTypes, maxHoursFrom, minimumHours, type DayType } from '../../shared/booking-rules';
+import { CLOSES_HOUR, closedDayMessage, OPENS_HOUR, dayTypes, maxHoursFrom, minimumHours, type DayType } from '../../shared/booking-rules';
 import { SINGLE_SPACE_IDS, SPACE_CHOICES, SPACE_NAMES, isSpaceChoice, spaceParts, type DateKey, type SingleSpace, type SpaceChoice } from '../../shared/types';
 
 export { spaceParts };
@@ -53,7 +53,7 @@ export const TOO_LATE_MESSAGE = `That date is not open for online requests yet. 
 export function unavailableMessage(date: DateKey, status: CalStatus): string {
   if (status === 'past') return 'That date has passed. Choose another date.';
   if (status === 'later') return TOO_LATE_MESSAGE;
-  if (status === 'closed') return CLOSED_DAY_MESSAGE;
+  if (status === 'closed') return closedDayMessage(date);
   return `${formatShort(date)} is booked. Choose another date.`;
 }
 

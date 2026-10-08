@@ -10,7 +10,8 @@ import { loadConfig, type Config } from '../config';
 import { iso, type Logger } from '../context';
 import { openDatabase, type Db } from '../db';
 import { hashPassword, useFastPasswordHashingForTests } from '../security';
-import { addDays, dayOfWeek, todayKey } from '../../src/shared/dates';
+import { addDays, todayKey } from '../../src/shared/dates';
+import { isClosedDay } from '../../src/shared/booking-rules';
 import type { InquiryInput } from '../../src/shared/types';
 
 export const ADMIN_EMAIL = 'faith@venueatncc.org';
@@ -140,9 +141,11 @@ export async function createHarness(env: Record<string, string> = {}): Promise<H
   };
 }
 
-/** The date itself, or the Monday after when it is a Sunday: the venue is closed on Sundays. */
+/** The date itself, or the next day the venue is open: it is closed on Sundays and a few holidays. */
 export function openDay(key: string): string {
-  return dayOfWeek(key) === 0 ? addDays(key, 1) : key;
+  let day = key;
+  while (isClosedDay(day)) day = addDays(day, 1);
+  return day;
 }
 
 /** A valid inquiry for a date 30 days after the harness clock's today. */

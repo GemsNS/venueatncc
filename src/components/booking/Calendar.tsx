@@ -5,7 +5,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Icon } from '../islands/Icon';
-import { isClosedDay } from '../../shared/booking-rules';
+import { CLOSED_DAYS_TEXT, closedHolidayOf, isClosedDay } from '../../shared/booking-rules';
 import { addDays, dayOfWeek, formatLong, monthGrid, parseKey, toKey } from '../../shared/dates';
 import type { DateKey, DayStatus } from '../../shared/types';
 import { Spinner } from './ui';
@@ -29,7 +29,7 @@ const STATUS_WORD: Record<CalStatus, string> = {
   partial: 'partly booked',
   booked: 'booked',
   past: 'past',
-  closed: 'closed on Sundays',
+  closed: 'closed',
   later: 'not open for requests yet',
 };
 
@@ -233,7 +233,7 @@ export function Calendar(props: CalendarProps) {
                 const isSel = k === selected;
                 const isToday = k === today;
                 const disabled = Boolean(st && UNAVAILABLE.includes(st));
-                const label = [formatLong(k), st ? STATUS_WORD[st] : '', isSel ? 'selected' : ''].filter(Boolean).join(', ');
+                const label = [formatLong(k), st === 'closed' ? `closed on ${closedHolidayOf(k) ?? 'Sundays'}` : st ? STATUS_WORD[st] : '', isSel ? 'selected' : ''].filter(Boolean).join(', ');
                 // The cell (a gridcell under role="grid") carries the selected state; the label says it too.
                 return (
                   <td key={k} aria-selected={isSel ? 'true' : 'false'}>
@@ -281,7 +281,7 @@ export function Calendar(props: CalendarProps) {
           </span>
           <span class="bk-legend__booked">Booked</span>
         </li>
-        <li>Closed Sundays</li>
+        <li>Closed {CLOSED_DAYS_TEXT}</li>
       </ul>
     </div>
   );

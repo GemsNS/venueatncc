@@ -34,6 +34,7 @@ import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/
 import { estimate } from '../../src/shared/pricing';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
 import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
+import { closedDayMessage, closedHolidayOf, easterSunday, isClosedDay } from '../../src/shared/booking-rules';
 import { capacityError } from '../../src/shared/capacity';
 import { SPACE_NAMES, type CalendarBlock, type Inquiry } from '../../src/shared/types';
 import { silentLog } from './helpers';
@@ -618,9 +619,28 @@ describe('inquiry schema', () => {
     return r.success ? {} : Object.fromEntries(r.error.issues.map((i) => [i.path.join('.'), i.message]));
   };
 
+  test('closed holidays: New Year\'s Eve, Good Friday, and Easter Sunday; Christmas is open', () => {
+    const easters: Record<number, string> = { 2019: '2019-04-21', 2024: '2024-03-31', 2025: '2025-04-20', 2026: '2026-04-05', 2027: '2027-03-28', 2028: '2028-04-16', 2038: '2038-04-25' };
+    for (const [y, d] of Object.entries(easters)) assert.equal(easterSunday(Number(y)), d);
+    assert.equal(closedHolidayOf('2027-03-26'), 'Good Friday');
+    assert.equal(closedHolidayOf('2027-03-28'), 'Easter Sunday');
+    assert.equal(closedHolidayOf('2026-12-31'), "New Year's Eve");
+    assert.equal(closedHolidayOf('2026-12-24'), null);
+    assert.equal(closedHolidayOf('2026-12-25'), null);
+    assert.equal(closedHolidayOf('2027-01-01'), null);
+    assert.equal(isClosedDay('2026-12-31'), true);
+    assert.equal(isClosedDay('2027-03-26'), true);
+    assert.equal(isClosedDay('2026-12-25'), false);
+    assert.equal(closedDayMessage('2027-03-28'), 'We are closed on Easter Sunday. Choose another date.');
+    assert.equal(closedDayMessage('2026-11-15'), 'We are closed on Sundays. Choose a date from Monday to Saturday.');
+  });
+
   test('building hours: Monday to Saturday, from 9:00 AM, ending by 12:00 midnight', () => {
     assert.equal(errorsFor({ date: '2026-11-15' }).date, 'We are closed on Sundays. Choose a date from Monday to Saturday.');
     assert.equal(errorsFor({ altDate: '2026-11-15' }).altDate, 'We are closed on Sundays. Choose a date from Monday to Saturday.');
+    assert.equal(errorsFor({ date: '2026-12-31' }).date, "We are closed on New Year's Eve. Choose another date.");
+    assert.equal(errorsFor({ altDate: '2027-03-26' }).altDate, 'We are closed on Good Friday. Choose another date.');
+    assert.deepEqual(errorsFor({ date: '2026-12-25' }), {}, 'Christmas events are welcome');
     assert.equal(errorsFor({ startTime: '08:30' }).startTime, 'Choose a start time from 9:00 AM on.');
     assert.deepEqual(errorsFor({ startTime: '09:00', hours: 15 }), {}, '9:00 AM to 12:00 midnight is allowed');
     assert.deepEqual(errorsFor({ startTime: '23:00', hours: 1 }), {});

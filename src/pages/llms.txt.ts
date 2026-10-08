@@ -11,6 +11,7 @@ import { site, fullAddress } from '../data/site';
 import { events } from '../data/events';
 import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
+import { CLOSED_DAYS_TEXT } from '../shared/booking-rules';
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -69,7 +70,7 @@ export const GET: APIRoute = () => {
     '## Booking',
     '',
     '- Booking is open to the public.',
-    `- Hours of operation: building access ${site.access.days}, ${site.access.hours}. Closed on Sundays.`,
+    `- Hours of operation: building access ${site.access.days}, ${site.access.hours}. Closed on ${CLOSED_DAYS_TEXT}. Christmas events and parties are welcome.`,
     '- How it works: choose a date and a space and send a request. We confirm availability and send your quote personally, with the payment terms for your date.',
     '- Visits: ask for a personal tour when you send your request, or call us.',
     `- Check availability and request a date: ${u('/book/')}`,

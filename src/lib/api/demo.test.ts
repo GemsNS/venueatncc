@@ -98,7 +98,7 @@ test('availability has one day per date with per-space state', async () => {
     assert.ok(['free', 'taken'].includes(day.spaces.indoor));
     assert.ok(['free', 'taken'].includes(day.spaces.main));
     assert.ok(['free', 'taken'].includes(day.spaces.outdoor));
-    assert.equal(day.status === 'closed', dayOfWeek(day.date) === 0, 'Sundays, and only Sundays, are closed');
+    assert.equal(day.status === 'closed', isClosedDay(day.date), 'Sundays and the closed holidays, and only those, are closed');
   }
   assert.ok(res.days.some((d) => d.status === 'partial'), 'seed has a partly taken day');
   assert.ok(res.days.some((d) => d.status === 'booked'), 'seed has a fully taken day');
