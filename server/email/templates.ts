@@ -107,10 +107,14 @@ export function dialable(phone: string): string {
  * read it, never recompute it. Never used in the guest email.
  */
 export function paymentRows(est: Estimate): [string, string][] {
-  const balance = Math.max(0, est.total - est.bookingDeposit);
-  const rows: [string, string][] = [['Due to reserve the date', formatUSD(est.bookingDeposit)]];
-  if (balance > 0) rows.push(['Balance', formatUSD(balance)]);
-  rows.push(['Refundable damage deposit, returned if there is no damage', formatUSD(est.refundableDeposit)]);
+  // Rows the rate card has no amount for (no deposit or damage deposit set) are left out.
+  const rows: [string, string][] = [];
+  if (est.bookingDeposit > 0) {
+    rows.push(['Due to reserve the date', formatUSD(est.bookingDeposit)]);
+    const balance = Math.max(0, est.total - est.bookingDeposit);
+    if (balance > 0) rows.push(['Balance', formatUSD(balance)]);
+  }
+  if (est.refundableDeposit > 0) rows.push(['Refundable damage deposit, returned if there is no damage', formatUSD(est.refundableDeposit)]);
   return rows;
 }
 

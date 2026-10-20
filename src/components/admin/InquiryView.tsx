@@ -384,21 +384,33 @@ export function InquiryView({ id }: { id: number }) {
                 <dt class="adm-kv__label">Total</dt>
                 <dd class="adm-kv__value adm-num">{formatUSD(est.total)}</dd>
               </div>
-              <Row label="Due to reserve">
-                <span class="adm-num">{formatUSD(est.bookingDeposit)}</span>
-              </Row>
+              {est.bookingDeposit > 0 && (
+                <Row label="Due to reserve">
+                  <span class="adm-num">{formatUSD(est.bookingDeposit)}</span>
+                </Row>
+              )}
               {/* Within the balance window the full amount is due to reserve, so there is no balance row; the footnote says why. */}
-              {est.total - est.bookingDeposit > 0 && (
+              {est.bookingDeposit > 0 && est.total - est.bookingDeposit > 0 && (
                 <Row label="Balance">
                   <span class="adm-num">{formatUSD(est.total - est.bookingDeposit)}</span>
                 </Row>
               )}
-              <Row label="Refundable damage deposit">
-                <span class="adm-num">{formatUSD(est.refundableDeposit)}</span>
-              </Row>
+              {est.refundableDeposit > 0 && (
+                <Row label="Refundable damage deposit">
+                  <span class="adm-num">{formatUSD(est.refundableDeposit)}</span>
+                </Row>
+              )}
             </dl>
+            {/* The pricing notes saved with the estimate (the owner's rates, src/shared/pricing.ts). */}
+            {est.notes.length > 0 && (
+              <ul class="adm-footnote adm-pricing-notes">
+                {est.notes.map((n, i) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
+            )}
             <p class="adm-footnote">
-              {est.dayTypeLabel} rates, {plural(est.billableHours, 'billable hour')}.{' '}
+              {plural(est.billableHours, 'billable hour')}.{' '}
               {est.billableHours > est.hours ? `${plural(est.hours, 'hour')} requested. ` : ''}
               {est.total > 0 && est.bookingDeposit >= est.total
                 ? `Requested within ${BALANCE_DUE_DAYS_BEFORE} days of the event, so the full amount is due to reserve. `

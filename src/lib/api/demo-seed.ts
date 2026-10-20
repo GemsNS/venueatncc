@@ -11,7 +11,7 @@
  */
 import { eventTypeName } from '../../data/event-types';
 import { addDays, dayOfWeek, formatLong, todayKey } from '../../shared/dates';
-import { estimate } from '../../shared/pricing';
+import { demoEstimate as estimate } from './demo-rate-card';
 import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
 import type {
   BlockKind,
@@ -394,7 +394,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
     const createdAt = at(created);
     const est = estimate(
       { date: seed.fields.date, space: seed.fields.space, hours: seed.fields.hours, eventType: seed.fields.eventType },
-      undefined,
       today,
     );
     const notes: InquiryNote[] = [];

@@ -31,7 +31,7 @@ import { MOVED_PAGES, inlineScriptHashes, movedTo, withQuery } from '../static';
 import { eventTypes } from '../../src/data/event-types';
 import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
-import { estimate } from '../../src/shared/pricing';
+import { PRICING_NOTES, estimateWithRates } from '../rate-card';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
 import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
 import { closedDayMessage, closedHolidayOf, easterSunday, isClosedDay } from '../../src/shared/booking-rules';
@@ -409,7 +409,7 @@ describe('email templates', () => {
     createdAt: '2026-10-01T15:00:00.000Z',
     updatedAt: '2026-10-01T15:00:00.000Z',
   };
-  const est = estimate({ date: inquiry.date, space: inquiry.space, hours: inquiry.hours }, undefined, '2026-10-01');
+  const est = estimateWithRates({ date: inquiry.date, space: inquiry.space, hours: inquiry.hours }, '2026-10-01');
 
   test('escape user input, include the key facts, and use no em or en dashes', () => {
     const venue = venueNotificationEmail(inquiry, est, { origin: 'https://venueatncc.org', conflict: 'Date is taken.' });
@@ -465,36 +465,38 @@ describe('email templates', () => {
   const NL = String.fromCharCode(10);
   const CRLF = String.fromCharCode(13, 10);
 
-  test('more than 30 days out: the team email carries the internal rate-card guide with the deposit, balance, and notes', () => {
-    assert.ok(est.bookingDeposit < est.total);
+  test("the team email carries the internal rate-card guide with the owner's pricing notes", () => {
     const venue = venueNotificationEmail(inquiry, est, { origin: 'https://venueatncc.org' });
-    const deposit = `$${est.bookingDeposit.toLocaleString('en-US')}`;
-    const balance = `$${(est.total - est.bookingDeposit).toLocaleString('en-US')}`;
     assert.ok(venue.text.includes('Internal rate-card guide'));
     assert.ok(venue.html.includes('Internal rate-card guide'));
     assert.ok(!venue.text.includes('Estimate shown to the guest'));
-    assert.ok(venue.text.includes(`Due to reserve the date: ${deposit}`), venue.text);
-    assert.ok(venue.text.includes(`Balance: ${balance}`));
-    assert.ok(venue.text.includes('Refundable damage deposit, returned if there is no damage: $250'));
-    assert.ok(!venue.text.includes('returned after the event'));
-    for (const note of est.notes) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
-    assert.ok(venue.html.includes('Due to reserve the date'));
-    assert.ok(venue.html.includes('Balance'));
+    assert.ok(venue.text.includes(`Estimated total: $${est.total.toLocaleString('en-US')}`), venue.text);
+    // The owner set no deposit amount or damage deposit, so those rows are left out.
+    assert.ok(!venue.text.includes('Due to reserve the date'));
+    assert.ok(!venue.text.includes('Refundable damage deposit'));
+    for (const note of PRICING_NOTES) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
+    assert.ok(venue.text.includes('* High seasons: venue rent starts at $250 per hour, for a maximum of 4 hours.'));
   });
 
-  test('within 30 days: the team guide shows the full amount due to reserve and no balance', () => {
-    const soon = estimate({ date: '2026-10-10', space: 'indoor', hours: 6, eventType: 'weddings' }, undefined, '2026-09-28');
-    assert.equal(soon.bookingDeposit, soon.total);
-    const soonInquiry = { ...inquiry, date: '2026-10-10', space: 'indoor' as const, guests: 80 };
-    const venue = venueNotificationEmail(soonInquiry, soon, { origin: 'https://venueatncc.org' });
-    const total = `$${soon.total.toLocaleString('en-US')}`;
-    assert.ok(venue.text.includes(`Due to reserve the date: ${total}`));
-    assert.ok(!venue.text.includes('Balance:'));
-    assert.ok(venue.text.includes('the full amount is due when you reserve'));
+  test("the owner's rates: hourly up to 4 hours, the flat package up to 8, then the full day block", () => {
+    const at = (hours: number, date = '2026-11-18') => estimateWithRates({ date, space: 'indoor', hours }, '2026-10-20');
+    assert.equal(at(2).total, 500);
+    assert.equal(at(4).total, 1000);
+    assert.equal(at(5).total, 2500);
+    assert.equal(at(8).total, 2500);
+    assert.equal(at(9).total, 2995);
+    assert.equal(at(15).total, 2995);
+    // Saturday's 5-hour booking minimum puts a short Saturday request on the flat package.
+    assert.equal(at(3, '2026-11-21').total, 2500);
+    assert.match(at(9).lines[0].label, /Full day or evening flat block/);
+    assert.equal(at(6).bookingDeposit, 0);
+    assert.equal(at(6).refundableDeposit, 0);
+    assert.equal(at(6).lines.length, 1, 'no cleaning fee or discount lines');
+    assert.ok(at(6).notes.includes('Food and decoration are not included.'));
   });
 
   test('the guest email names no price, deposit amount, or discount, and says we send the quote personally', () => {
-    const soon = estimate({ date: '2026-10-10', space: 'indoor', hours: 6, eventType: 'repasts-memorials' }, undefined, '2026-09-28');
+    const soon = estimateWithRates({ date: '2026-10-10', space: 'indoor', hours: 6, eventType: 'repasts-memorials' }, '2026-09-28');
     const soonInquiry = { ...inquiry, date: '2026-10-10', space: 'indoor' as const, guests: 80 };
     for (const guest of [
       guestConfirmationEmail(inquiry, est, { origin: 'https://venueatncc.org' }),

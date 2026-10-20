@@ -10,8 +10,8 @@
  * "Internal rate-card guide" in the team email and the admin; and, as booking rules rather than prices,
  * the day types and minimum hours the booking wizard enforces.
  *
- * STATUS: recommended rates from the Hampton Roads comparables analysis. The venue team
- * should confirm them before relying on the internal guide.
+ * The real rate card is NOT in this file: it is server/rate-card.ts (confirmed by the owner, October 2026),
+ * because this module also runs in the demo's browser bundle. This file holds the types and the calculator.
  */
 import { SPACE_NAME } from './capacity';
 import { daysBetween, todayKey } from './dates';
@@ -60,6 +60,14 @@ export interface PricingModel {
   bookingDeposit: { type: 'percent' | 'flat'; value: number; balanceDueDaysBefore: number };
   discounts: PricingDiscount[];
   introOffer: IntroOffer | null;
+  /** Hourly rates apply up to this many billable hours; longer events move to a flat block. */
+  hourlyMaxHours: number;
+  /** The flat rate package for events longer than hourlyMaxHours, up to its hours. */
+  flatPackage: { name: string; hours: number; price: number; detail: string };
+  /** The full day or evening flat block, for anything longer than the package. */
+  fullDayBlock: { name: string; from: number; detail: string };
+  /** The pricing notes shown to the team with every estimate. */
+  notes: string[];
 }
 
 export interface IntroOffer {
@@ -72,72 +80,19 @@ export interface IntroOffer {
 /** The estimate line for an introductory offer: "Founding rate, 20% off the rental". */
 export const introOfferLabel = (o: IntroOffer) => `${o.name}, ${o.percent}% off the rental`;
 
-/**
- * Recommended from the September 2026 comparables analysis (47 distinct Hampton Roads venues plus
- * 5 market benchmarks): private venue-only halls for 75 to 100 guests rent for about $145 to $225
- * an hour on Saturdays ($870 to $1,350 for 6 hours, hall rental only, before fees and tax). This card
- * sits at the value end of that band, below the priced faith halls, with a founding discount to earn
- * first reviews.
- */
-export const pricing: PricingModel = {
-  status: 'recommended',
-  currency: 'USD',
-  // The public names, the same as SPACE_NAME in ./capacity and SPACE_NAMES in ./types, which the
-  // booking app, the admin, the emails, and the CSV export use.
-  spaces: {
-    indoor: { label: SPACE_NAME.indoor, capacity: 100 },
-    main: { label: SPACE_NAME.main, capacity: 100 },
-    outdoor: { label: SPACE_NAME.outdoor, capacity: 150 },
-    // 150 for 'both' is an internal validation ceiling (the larger space), NOT a published combined
-    // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
-    both: { label: SPACE_NAME.both, capacity: 150 },
-  },
-  // Booking rules, shared with the public site through ./booking-rules.
-  dayTypes,
-  hourly: {
-    indoor: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
-    // The Stage Hall: the same guide as The Fireside Room until the venue team sets its own rates.
-    main: { weekday: 100, friday: 130, saturday: 160, sunday: 120 },
-    outdoor: { weekday: 85, friday: 115, saturday: 140, sunday: 100 },
-    both: { weekday: 140, friday: 180, saturday: 220, sunday: 165 },
-  },
-  minimumHours,
-  packages: [
-    { id: 'sat-indoor-6', name: 'Saturday Fireside Room Block', description: 'Suited to receptions, showers, and banquets.', space: 'indoor', dayType: 'saturday', hours: 6, price: 900 },
-    { id: 'sat-outdoor-6', name: 'Saturday Pine Garden Block', description: 'Suited to ceremonies, reunions, and graduation parties.', space: 'outdoor', dayType: 'saturday', hours: 6, price: 800 },
-    { id: 'sat-both-6', name: 'Saturday Fireside Room and Pine Garden Block', description: 'The Fireside Room is available as a rain plan.', space: 'both', dayType: 'saturday', hours: 6, price: 1250 },
-    { id: 'sat-indoor-12', name: 'Saturday Full Day, Fireside Room', description: 'For a long program or a full day of events.', space: 'indoor', dayType: 'saturday', hours: 12, price: 1500 },
-    { id: 'sat-outdoor-12', name: 'Saturday Full Day, Pine Garden', description: 'For an all-day reunion or community day.', space: 'outdoor', dayType: 'saturday', hours: 12, price: 1400 },
-    { id: 'sat-both-12', name: 'Saturday Wedding and Celebration Day', description: 'A ceremony in The Pine Garden and a reception in either space.', space: 'both', dayType: 'saturday', hours: 12, price: 2200 },
-    { id: 'fri-indoor-6', name: 'Friday Fireside Room Block', space: 'indoor', dayType: 'friday', hours: 6, price: 700 },
-    { id: 'fri-outdoor-6', name: 'Friday Pine Garden Block', space: 'outdoor', dayType: 'friday', hours: 6, price: 650 },
-    { id: 'fri-both-6', name: 'Friday Fireside Room and Pine Garden Block', space: 'both', dayType: 'friday', hours: 6, price: 1000 },
-    { id: 'fri-both-12', name: 'Friday Full Day, Fireside Room and Pine Garden', description: 'Suited to weddings and receptions.', space: 'both', dayType: 'friday', hours: 12, price: 1800 },
-    { id: 'sun-indoor-6', name: 'Sunday Fireside Room Block', space: 'indoor', dayType: 'sunday', hours: 6, price: 650 },
-    { id: 'sun-outdoor-6', name: 'Sunday Pine Garden Block', space: 'outdoor', dayType: 'sunday', hours: 6, price: 550 },
-    { id: 'sun-both-6', name: 'Sunday Fireside Room and Pine Garden Block', space: 'both', dayType: 'sunday', hours: 6, price: 900 },
-    { id: 'weekday-indoor-8', name: 'Weekday Full Day, Fireside Room', description: 'Suited to trainings and retreats.', space: 'indoor', dayType: 'weekday', hours: 8, price: 600 },
-  ],
-  fees: { cleaning: 100, damageDepositRefundable: 250 },
-  bookingDeposit: { type: 'percent', value: 50, balanceDueDaysBefore: BALANCE_DUE_DAYS_BEFORE },
-  discounts: [
-    { id: 'repast', label: 'Repast and celebration of life rate', percent: 25, appliesTo: 'eventType:repasts-memorials' },
-    { id: 'weekday-daytime', label: 'Weekday daytime, Monday to Thursday, ending by 4 PM', percent: 20, appliesTo: 'manual' },
-    {
-      id: 'nonprofit',
-      label: 'Nonprofits and churches, Sunday to Thursday',
-      who: 'Nonprofits and churches',
-      when: 'Sunday to Thursday',
-      percent: 15,
-      appliesTo: 'manual',
-    },
-    { id: 'military', label: 'Military, veterans, and first responders', percent: 10, appliesTo: 'manual' },
-  ],
-  introOffer: { name: 'Founding rate', percent: 20, validUntil: '2027-03-31' },
+export const allDays = (rate: number): Record<DayType, number> => ({ weekday: rate, friday: rate, saturday: rate, sunday: rate });
+
+/** The public space names and capacities every rate card shares. */
+export const SPACES_FOR_PRICING: PricingModel['spaces'] = {
+  indoor: { label: SPACE_NAME.indoor, capacity: 100 },
+  main: { label: SPACE_NAME.main, capacity: 100 },
+  outdoor: { label: SPACE_NAME.outdoor, capacity: 150 },
+  // 150 for 'both' is an internal validation ceiling (the larger space), NOT a published combined
+  // capacity. Never display it; show capacityLabel('both') from ./capacity instead.
+  both: { label: SPACE_NAME.both, capacity: 150 },
 };
 
-
-export function dayTypeOf(date: DateKey, model: PricingModel = pricing): DayType {
+export function dayTypeOf(date: DateKey, model: PricingModel): DayType {
   return ruleDayTypeOf(date, model.dayTypes);
 }
 
@@ -150,32 +105,35 @@ export interface EstimateInput {
   eventType?: string;
 }
 
-/** Price an event. Picks whichever is cheaper for the host: hourly, or a matching package plus extra hours. */
-export function estimate(input: EstimateInput, model: PricingModel = pricing, today: DateKey = todayKey()): Estimate {
+/**
+ * Price an event against a rate card: hourly up to hourlyMaxHours, then the flat package, then the full day
+ * block. The real card lives on the server only (server/rate-card.ts); the demo passes its own sample card
+ * (src/lib/api/demo-rate-card.ts), so no real figure reaches a browser bundle.
+ */
+export function estimate(input: EstimateInput, model: PricingModel, today: DateKey = todayKey()): Estimate {
   const dayType = dayTypeOf(input.date, model);
   const rate = model.hourly[input.space][dayType];
   const minHours = model.minimumHours[dayType];
   const hours = Math.max(1, Math.round(input.hours));
   const billableHours = Math.max(hours, minHours);
 
-  let rental = rate * billableHours;
-  // Below the day's minimum, the line says why it bills more hours than were asked for.
-  let rentalLabel =
-    billableHours > hours
-      ? `${SPACE_NAME[input.space]}, ${model.dayTypes[dayType].label} minimum of ${billableHours} hours at $${rate} an hour`
-      : `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate} an hour`;
+  let rental: number;
+  let rentalLabel: string;
   let packageName: string | undefined;
-
-  for (const p of model.packages) {
-    if (p.space !== input.space) continue;
-    if (p.dayType !== 'any' && p.dayType !== dayType) continue;
-    const extra = Math.max(0, hours - p.hours);
-    const price = p.price + extra * rate;
-    if (price < rental) {
-      rental = price;
-      packageName = p.name;
-      rentalLabel = extra > 0 ? `${p.name}, ${p.hours} hours, plus ${extra} extra ${extra === 1 ? 'hour' : 'hours'} at $${rate} an hour` : `${p.name}, ${p.hours} hours`;
-    }
+  if (billableHours <= model.hourlyMaxHours) {
+    rental = rate * billableHours;
+    rentalLabel =
+      billableHours > hours
+        ? `${SPACE_NAME[input.space]}, ${model.dayTypes[dayType].label} minimum of ${billableHours} hours at $${rate} an hour (high season)`
+        : `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate} an hour (high season)`;
+  } else if (billableHours <= model.flatPackage.hours) {
+    rental = model.flatPackage.price;
+    packageName = model.flatPackage.name;
+    rentalLabel = `${SPACE_NAME[input.space]}, ${model.flatPackage.name}, ${billableHours} hours (${model.flatPackage.detail})`;
+  } else {
+    rental = model.fullDayBlock.from;
+    packageName = model.fullDayBlock.name;
+    rentalLabel = `${SPACE_NAME[input.space]}, ${model.fullDayBlock.name}, ${billableHours} hours (${model.fullDayBlock.detail})`;
   }
 
   const lines: EstimateLine[] = [{ label: rentalLabel, amount: money(rental), kind: 'rental' }];
@@ -225,7 +183,8 @@ export function estimate(input: EstimateInput, model: PricingModel = pricing, to
         : `Balance due ${model.bookingDeposit.balanceDueDaysBefore} days before your event.`,
     );
   }
-  notes.push('This is an estimate. We confirm your final quote.');
+  notes.push(...model.notes);
+  notes.push('This is a starting figure. Quote the final price personally.');
 
   return {
     currency: 'USD',

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { addDays, dayOfWeek, todayKey } from '../../src/shared/dates';
-import { estimate } from '../../src/shared/pricing';
+import { estimateWithRates } from '../rate-card';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
 import { ALT_DATE_TOO_FAR, DATE_TOO_FAR } from '../../src/shared/schemas';
@@ -77,7 +77,7 @@ describe('public API', () => {
       const created = (await res.json()) as InquiryCreated;
       assert.equal(created.ok, true);
       assert.match(created.reference, referencePattern);
-      const expected = estimate({ date: body.date, space: body.space, hours: body.hours, eventType: body.eventType }, undefined, today());
+      const expected = estimateWithRates({ date: body.date, space: body.space, hours: body.hours, eventType: body.eventType }, today());
       assert.equal('estimate' in created, false, 'the public response carries no estimate');
       assert.ok(expected.total > 1);
 
@@ -242,7 +242,7 @@ describe('public API', () => {
       // The team still sees the internal rate-card guide.
       const venueHtml = fs.readFileSync(path.join(h.config.outboxDir, files.find((f) => f.includes('-venue-') && f.endsWith('.html'))!), 'utf8');
       assert.ok(venueHtml.includes('Internal rate-card guide'));
-      assert.ok(venueHtml.includes(`$${est.bookingDeposit.toLocaleString('en-US')}`));
+      assert.ok(venueHtml.includes(`$${est.total.toLocaleString('en-US')}`));
     });
 
     test(`after ${GUEST_CONFIRMATIONS_PER_HOUR} guest confirmations in an hour, the next guest gets none but the venue is still told`, async () => {

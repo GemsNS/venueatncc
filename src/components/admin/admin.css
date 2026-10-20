@@ -514,6 +514,14 @@ body.is-bare .btn {
   color: var(--label-2);
 }
 
+/* The owner's pricing notes under the rate-card guide. */
+.adm-pricing-notes {
+  display: grid;
+  gap: 4px;
+  padding-left: 1.25em;
+  color: var(--label);
+}
+
 .adm-num {
   font-variant-numeric: tabular-nums;
 }

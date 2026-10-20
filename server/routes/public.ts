@@ -7,7 +7,7 @@ import { site } from '../../src/data/site';
 import { availabilityFor, MAX_RANGE_DAYS } from '../../src/shared/availability';
 import { capacityError } from '../../src/shared/capacity';
 import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
-import { estimate } from '../../src/shared/pricing';
+import { estimateWithRates } from '../rate-card';
 import { makeReference } from '../../src/shared/reference';
 import { ALT_DATE_TOO_FAR, availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, inquiryInputSchema, latestBookableDate } from '../../src/shared/schemas';
 import type { AvailabilityResponse, CalendarBlock, DateKey, Estimate, InquiryCreated } from '../../src/shared/types';
@@ -239,7 +239,7 @@ export function publicRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (messages.length > 0) return apiError(c, 400, messages.length === 1 ? messages[0] : 'Check the highlighted fields.', fields);
 
     // 7. Price it here; never trust a client-side estimate.
-    const est = estimate({ date: input.date, space: input.space, hours: input.hours, eventType: input.eventType }, undefined, today);
+    const est = estimateWithRates({ date: input.date, space: input.space, hours: input.hours, eventType: input.eventType }, today);
     const clash = repo.conflictingBlocks(input.date, input.space)[0];
     const conflict = clash ? inquiryText.conflict(input.date, clash) : null;
     const userAgent = (c.req.header('user-agent') ?? '').slice(0, 400) || null;
