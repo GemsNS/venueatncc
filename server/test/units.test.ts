@@ -31,7 +31,7 @@ import { MOVED_PAGES, inlineScriptHashes, movedTo, withQuery } from '../static';
 import { eventTypes } from '../../src/data/event-types';
 import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
-import { PRICING_NOTES, estimateWithRates } from '../rate-card';
+import { PRICING_NOTES, estimateWithRates } from '../../src/shared/rate-card';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
 import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
 import { closedDayMessage, closedHolidayOf, easterSunday, isClosedDay } from '../../src/shared/booking-rules';

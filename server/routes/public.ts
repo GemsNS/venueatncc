@@ -7,7 +7,7 @@ import { site } from '../../src/data/site';
 import { availabilityFor, MAX_RANGE_DAYS } from '../../src/shared/availability';
 import { capacityError } from '../../src/shared/capacity';
 import { addDays, daysBetween, formatLong, isDateKey, todayKey } from '../../src/shared/dates';
-import { estimateWithRates } from '../rate-card';
+import { estimateWithRates } from '../../src/shared/rate-card';
 import { makeReference } from '../../src/shared/reference';
 import { ALT_DATE_TOO_FAR, availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, inquiryInputSchema, latestBookableDate } from '../../src/shared/schemas';
 import type { AvailabilityResponse, CalendarBlock, DateKey, Estimate, InquiryCreated } from '../../src/shared/types';

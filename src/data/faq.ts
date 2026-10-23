@@ -17,6 +17,7 @@
  * No answer says how far ahead to book, reserve, or plan a date, and no question asks it (brand.md, "The
  * client's rules of October 1, 2026", rule 2). No answer names an amount, a percentage, or a discount.
  */
+import { RATES_SUMMARY } from '../shared/rate-card';
 import { site } from './site';
 
 export interface Faq {
@@ -31,8 +32,8 @@ const fireside = site.spaces.find((s) => s.id === 'indoor');
 const stageHall = site.spaces.find((s) => s.id === 'main');
 const pineGarden = site.spaces.find((s) => s.id === 'outdoor');
 
-/** The owner's approved wording for rates, with the number to call. */
-export const RATES_WORDING = `Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special offers, please call us at ${phone} and we will be happy to help you.`;
+/** The rates in one sentence, with the number to call (src/shared/rate-card.ts). */
+export const RATES_WORDING = `${RATES_SUMMARY} Food and decoration are not included. Call us at ${phone} for the rate for your date.`;
 
 export const faqs: Faq[] = [
   {

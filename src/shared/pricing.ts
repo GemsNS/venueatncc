@@ -10,8 +10,8 @@
  * "Internal rate-card guide" in the team email and the admin; and, as booking rules rather than prices,
  * the day types and minimum hours the booking wizard enforces.
  *
- * The real rate card is NOT in this file: it is server/rate-card.ts (confirmed by the owner, October 2026),
- * because this module also runs in the demo's browser bundle. This file holds the types and the calculator.
+ * The rate card itself is src/shared/rate-card.ts (confirmed by the owner, October 2026, public since
+ * 2026-10-23). This file holds the types and the calculator.
  */
 import { SPACE_NAME } from './capacity';
 import { daysBetween, todayKey } from './dates';
@@ -107,8 +107,7 @@ export interface EstimateInput {
 
 /**
  * Price an event against a rate card: hourly up to hourlyMaxHours, then the flat package, then the full day
- * block. The real card lives on the server only (server/rate-card.ts); the demo passes its own sample card
- * (src/lib/api/demo-rate-card.ts), so no real figure reaches a browser bundle.
+ * block, against src/shared/rate-card.ts.
  */
 export function estimate(input: EstimateInput, model: PricingModel, today: DateKey = todayKey()): Estimate {
   const dayType = dayTypeOf(input.date, model);

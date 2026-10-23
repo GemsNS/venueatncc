@@ -16,7 +16,7 @@ import { availabilityFor } from '../../shared/availability';
 import { capacityError } from '../../shared/capacity';
 import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
-import { demoEstimate } from './demo-rate-card';
+import { estimateWithRates } from '../../shared/rate-card';
 import { site } from '../../data/site';
 import { makeReference } from '../../shared/reference';
 import { INQUIRY_STATUSES, SPACE_NAMES, spaceFromParts, spaceParts, spacesOverlap } from '../../shared/types';
@@ -401,7 +401,7 @@ export const demoApi: VenueApi = {
     if (tooMany) fields.guests = tooMany;
     if (Object.keys(fields).length > 0) return invalid(fields);
 
-    const est = demoEstimate({ date: data.date, space: data.space, hours: data.hours, eventType: data.eventType });
+    const est = estimateWithRates({ date: data.date, space: data.space, hours: data.hours, eventType: data.eventType });
 
     return mutate((db) => {
       let reference = makeReference((n) => crypto.getRandomValues(new Uint8Array(n)));

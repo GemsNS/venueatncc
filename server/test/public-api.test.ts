@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { addDays, dayOfWeek, todayKey } from '../../src/shared/dates';
-import { estimateWithRates } from '../rate-card';
+import { estimateWithRates } from '../../src/shared/rate-card';
 import { referencePattern } from '../../src/shared/reference';
 import { capacityError } from '../../src/shared/capacity';
 import { ALT_DATE_TOO_FAR, DATE_TOO_FAR } from '../../src/shared/schemas';

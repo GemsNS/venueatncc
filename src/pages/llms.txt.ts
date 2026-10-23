@@ -12,6 +12,7 @@ import { events } from '../data/events';
 import { publishedFaqs, RATES_WORDING } from '../data/faq';
 import { mentionsCatering, offBrandPhrase, spaceName } from '../lib/schema';
 import { CLOSED_DAYS_TEXT } from '../shared/booking-rules';
+import { PUBLIC_RATES } from '../shared/rate-card';
 
 /** Leaves out an FAQ or event whose copy the brand keeps out of public text, with a build warning. */
 function onBrand<T>(items: T[], text: (item: T) => string, label: (item: T) => string): T[] {
@@ -63,6 +64,7 @@ export const GET: APIRoute = () => {
     '## Rates',
     '',
     `- ${RATES_WORDING}`,
+    ...PUBLIC_RATES.map((r) => `- ${r.name}: ${r.price}. ${r.detail}`),
     `- Deposits: ${site.depositPolicy}`,
     `- How to get a quote, how booking works, and answers to common questions: ${u('/pricing/')}`,
     `- What is included, the hours, and how a date is held: ${u('/#essentials')}`,

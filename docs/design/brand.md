@@ -227,7 +227,8 @@ Still binding from earlier versions:
 
 - **One photo system** (Photography), **no redundancy** (Redundancy rules), and **the venue is a separate
   business from New Community Church** (Separation).
-- **No published prices.** No dollar amounts, rate tables, packages, estimates, deposit or fee amounts,
+- **Published starting prices (amended 2026-10-23).** The owner now publishes the rates in src/shared/rate-card.ts: from $250 an hour in high seasons for up to 4 hours, a flat rate package from $2,500 for a block of up to 6 to 8 hours, and full day or evening flat blocks from $2,995 to $3,995+, food and decoration not included. They appear on Rates & FAQ (#rates), in the home essentials, in llms.txt, and as priceRange in structured data. Show only these figures, as starting prices; the guest email still promises a personal quote. The rule below is superseded:
+- **(Superseded) No published prices.** No dollar amounts, rate tables, packages, estimates, deposit or fee amounts,
   discounts with amounts, or `priceRange` and `Offer` prices appear on any public page, booking step, guest
   email, share image, structured data, or llms.txt. Where rates come up, use the approved wording exactly:
   "Our affordable rates vary with peak season, holidays, and the day of the week. For pricing and special

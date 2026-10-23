@@ -4,10 +4,10 @@
  * Brand rules (docs/design/brand.md): spaces go by their public names, The Fireside Room, The Stage Hall,
  * and The Pine Garden (version 9). Structured
  * data never mentions alcohol or catering, and the venue is a stand-alone business with no parent
- * organization. The venue does not publish prices, so no node carries priceRange, a price, or an
- * OfferCatalog of rates.
+ * organization. The rates are public (src/shared/rate-card.ts), so the venue carries priceRange.
  */
 import { site } from '../data/site';
+import { PRICE_RANGE } from '../shared/rate-card';
 import { publishedFaqs } from '../data/faq';
 import { SPACE_NAMES, type SpaceChoice } from '../shared/types';
 
@@ -108,6 +108,7 @@ export function venue(imageUrls: string[] = [], opts: { details?: boolean } = {}
     image: [...new Set([...imageUrls, ...VENUE_SHARE_IMAGES.map(abs)])],
     logo: abs('/icon-512.png'),
     publicAccess: site.policies.openToPublic,
+    priceRange: PRICE_RANGE,
     maximumAttendeeCapacity: site.maxCapacity,
     // Building access for events (site.access): Monday to Saturday, 9:00 AM to 12:00 midnight.
     openingHoursSpecification: {

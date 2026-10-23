@@ -11,8 +11,8 @@
  * structured data.
  *
  * Call is the page's one filled button. A date request has one home, the booking page, so there is no
- * second form here: a text link points to it. The venue does not publish prices: no amounts, packages,
- * fees, or estimates appear here, and no price in structured data.
+ * second form here: a text link points to it. The rates are public since 2026-10-23: the owner's starting
+ * prices (src/shared/rate-card.ts) in a table under the heading, with the fine print.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
@@ -24,13 +24,13 @@ import { spacePhoto } from '../data/photos';
 import { publishedFaqs } from '../data/faq';
 import { bookHref } from '../data/nav';
 import { faqPage } from '../lib/schema';
+import { PUBLIC_RATES, RATES_FINE_PRINT } from '../shared/rate-card';
 
 const title = 'Rates & FAQ | The Venue @ NCC, Suffolk, VA';
-const description = `How to get a quote from ${site.name} in ${site.address.city}, VA, how booking works, and answers to common questions.`;
+const description = `Rates at ${site.name} in ${site.address.city}, VA: from $250 an hour, flat packages from $2,500, and full day or evening blocks from $2,995. How booking works and common questions.`;
 
 /* What a quote needs and covers. The rates sentence itself is on the home page (#essentials). */
-const quoteLead =
-  'Every rate is quoted for a specific date. Call with your date, the space, your guest count, and the hours you need, and we will give you the rate for that day and any special offer that applies.';
+const quoteLead = RATES_FINE_PRINT;
 
 /* How booking works, from the request to the held date. The deposit rule itself is on the home page (#essentials), so step 3 does not name it. */
 const steps = [
@@ -52,7 +52,16 @@ const photo = spacePhoto('main');
     <div class="container">
       {
         photo ? (
-          <ImageTextSplit photo={photo} id="rates-heading" heading="Your rate" lead={quoteLead} caption="The Stage Hall">
+          <ImageTextSplit photo={photo} id="rates-heading" heading="Rates" lead={quoteLead} caption="The Stage Hall">
+            <dl class="rates-table">
+              {PUBLIC_RATES.map((r) => (
+                <div class="rates-table__row">
+                  <dt>{r.name}</dt>
+                  <dd class="rates-table__price">{r.price}</dd>
+                  <dd class="rates-table__detail">{r.detail}</dd>
+                </div>
+              ))}
+            </dl>
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -65,7 +74,16 @@ const photo = spacePhoto('main');
           </ImageTextSplit>
         ) : (
           <div class="section-head">
-            <h2 id="rates-heading">Your rate</h2>
+            <h2 id="rates-heading">Rates</h2>
+            <dl class="rates-table">
+              {PUBLIC_RATES.map((r) => (
+                <div class="rates-table__row">
+                  <dt>{r.name}</dt>
+                  <dd class="rates-table__price">{r.price}</dd>
+                  <dd class="rates-table__detail">{r.detail}</dd>
+                </div>
+              ))}
+            </dl>
             <p class="t-lead">{quoteLead}</p>
             <div class="btn-row">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
@@ -113,6 +131,42 @@ const photo = spacePhoto('main');
   .pr-head {
     margin-bottom: var(--section-head);
     line-height: 1.08;
+  }
+
+  /* The rate table: name, starting price, and what it covers, one row each, hairlines between. */
+  .rates-table {
+    display: grid;
+    margin: 0 0 1.25rem;
+    border-top: 1px solid var(--separator);
+  }
+
+  .rates-table__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.125rem 1rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  .rates-table dt {
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    color: var(--label);
+  }
+
+  .rates-table__price {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: var(--t-title-3);
+    color: var(--accent-text);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .rates-table__detail {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--label-2);
   }
 
   /* The request link takes the row under the Call button. */

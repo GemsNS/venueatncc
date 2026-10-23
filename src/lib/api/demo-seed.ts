@@ -11,7 +11,7 @@
  */
 import { eventTypeName } from '../../data/event-types';
 import { addDays, dayOfWeek, formatLong, todayKey } from '../../shared/dates';
-import { demoEstimate as estimate } from './demo-rate-card';
+import { estimateWithRates as estimate } from '../../shared/rate-card';
 import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
 import type {
   BlockKind,

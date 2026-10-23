@@ -58,6 +58,7 @@ import { STAGED_SCENES, eventPhoto, eventsStaged, spacePhoto, type VenuePhoto } 
 import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { CLOSED_HOLIDAYS } from '../shared/booking-rules';
+import { RATES_SUMMARY } from '../shared/rate-card';
 
 const fireside = site.spaces.find((s) => s.id === 'indoor');
 const stageHall = site.spaces.find((s) => s.id === 'main');
@@ -85,7 +86,8 @@ const spaceCards: SpaceCard[] = [
 const included = 'Open to the public. Tables, chairs, and on-site parking come with every rental.';
 // The holiday closures, confirmed by the owner; Christmas events and parties are welcome.
 const hours = `${site.access.days}, ${site.access.hours}. Closed on ${CLOSED_HOLIDAYS[0]}, ${CLOSED_HOLIDAYS[1]}, and ${CLOSED_HOLIDAYS[2]}. Christmas events and parties are welcome.`;
-const ratesShort = 'Our affordable rates vary with peak season, holidays, and the day of the week. Call us for pricing and special offers.';
+// The starting prices, shown publicly since 2026-10-23 (src/shared/rate-card.ts); the full table is on Rates & FAQ.
+const ratesShort = `${RATES_SUMMARY} Food and decoration are not included.`;
 
 /*
   The events: the weddings staged photo, with its disclosure, beside the eight event names. Without the
@@ -175,8 +177,9 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
               <span class="essential__action">
                 <a class="btn btn--filled" href={`tel:${site.contact.phoneE164}`}>
                   <Icon name="phone" />
-                  Call for Pricing
+                  Call for Your Date
                 </a>
+                <a class="link-more" href={href('/pricing/#rates')}>All rates <Icon name="chevron-right" /></a>
               </span>
             </dd>
           </div>
@@ -708,6 +711,9 @@ const description = `Welcome to The Venue @ NCC, an event venue in Suffolk, Virg
 
   .essential__action {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
     margin-top: 1rem;
   }
 

@@ -10,7 +10,7 @@ import { endsInHours, isClosedDay, startsInHours } from '../../shared/booking-ru
 import { CAPACITY } from '../../shared/capacity';
 import { CSV_COLUMNS } from '../../shared/csv';
 import { addDays, dayOfWeek, todayKey } from '../../shared/dates';
-import { demoEstimate } from './demo-rate-card';
+import { estimateWithRates } from '../../shared/rate-card';
 import { referencePattern } from '../../shared/reference';
 import { ALT_DATE_TOO_FAR, DATE_TOO_FAR, latestBookableDate } from '../../shared/schemas';
 import { INQUIRY_STATUSES, SPACE_NAMES } from '../../shared/types';
@@ -187,7 +187,7 @@ test('seed data covers every status, event type, and space, within capacity', as
     assert.ok(endsInHours(i.startTime, i.hours), `${i.name} ends by 12:00 midnight`);
     const detail = ok(await api.admin.getInquiry(i.id));
     assert.equal(detail.estimate.total, i.estimateTotal);
-    assert.equal(i.estimateTotal, demoEstimate({ date: i.date, space: i.space, hours: i.hours, eventType: i.eventType }).total);
+    assert.equal(i.estimateTotal, estimateWithRates({ date: i.date, space: i.space, hours: i.hours, eventType: i.eventType }).total);
     assert.ok(detail.events.length >= 2);
   }
   assert.ok(seeded.some((i) => i.createdAt > new Date(Date.now() - 7 * 86400000).toISOString()));
