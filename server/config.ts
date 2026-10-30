@@ -30,7 +30,19 @@ export interface ImapConfig {
    * the venue address is an alias), only mail to or from the venue address, or in its threads, is copied.
    */
   copyAll: boolean;
+  /** Copy emails sent from the admin into the sent folder. Off for Gmail, which files what it sends itself. */
+  appendSent: boolean;
 }
+
+/**
+ * The venue's mailbox: faith@venueatncc.org on Google Workspace. With MAIL_APP_PASSWORD set (a Google
+ * app password for that account) and no SMTP_HOST or IMAP_HOST, the server sends and receives through it
+ * with these settings; nothing else needs configuring (docs/deploy-gcloud-apache.md, section 11).
+ */
+export const GOOGLE_MAIL = {
+  smtp: { host: 'smtp.gmail.com', port: 587, secure: false },
+  imap: { host: 'imap.gmail.com', port: 993, secure: true, inbox: 'INBOX', sent: '[Gmail]/Sent Mail' },
+} as const;
 
 export interface Config {
   nodeEnv: string;
@@ -131,6 +143,11 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
   const publicOrigin = origin(str(env, 'PUBLIC_ORIGIN', site.url));
   const https = publicOrigin.startsWith('https:');
 
+  const mailFrom = str(env, 'MAIL_FROM', `${site.name} <${site.contact.email}>`);
+  const mailAddress = addressOf(mailFrom);
+  // Google shows app passwords in groups of four; the spaces are not part of it.
+  const appPassword = optional(env, 'MAIL_APP_PASSWORD')?.replace(/\s+/g, '');
+
   const smtpHost = optional(env, 'SMTP_HOST');
   const smtpUser = optional(env, 'SMTP_USER');
   const smtp: SmtpConfig | null = smtpHost
@@ -141,10 +158,10 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
         user: smtpUser,
         pass: smtpUser ? (env.SMTP_PASS ?? '') : undefined,
       }
-    : null;
+    : appPassword
+      ? { ...GOOGLE_MAIL.smtp, user: mailAddress, pass: appPassword }
+      : null;
 
-  const mailFrom = str(env, 'MAIL_FROM', `${site.name} <${site.contact.email}>`);
-  const mailAddress = addressOf(mailFrom);
   const imapHost = optional(env, 'IMAP_HOST');
   const imapUser = optional(env, 'IMAP_USER') ?? mailAddress;
   const tenant = optional(env, 'IMAP_OAUTH_TENANT');
@@ -165,8 +182,11 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
         sent: optional(env, 'IMAP_SENT') ?? null,
         // A mailbox of its own (signing in as the venue address) is all venue mail.
         copyAll: bool(env, 'IMAP_COPY_ALL', imapUser.toLowerCase() === mailAddress),
+        appendSent: !/(^|\.)gmail\.com$/i.test(imapHost),
       }
-    : null;
+    : appPassword
+      ? { ...GOOGLE_MAIL.imap, user: mailAddress, pass: appPassword, copyAll: true, appendSent: false }
+      : null;
   const dataDir = path.dirname(databasePathFrom(env));
 
   const adminEmail = optional(env, 'ADMIN_EMAIL');

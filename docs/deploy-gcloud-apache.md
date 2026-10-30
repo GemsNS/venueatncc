@@ -572,6 +572,7 @@ so all paths below are absolute.
 | `NOTIFY_TO` | `faith@venueatncc.org` (`config.ts:134`) | `faith@venueatncc.org` | Also the Reply-To on guest confirmations (`routes/public.ts:135`), so it must never be a wearencc.org address. It receives mail once 11.2 is done. |
 | `OUTBOX_DIR` | `./data/outbox` (`config.ts:135`) | `/var/www/venueatncc.org/data/outbox` | Created as 700, files 600 (`mailer.ts:62-68`). |
 | `OUTBOX_RETENTION_DAYS` | unset or `0`: keep forever (`config.ts:136`) | unset | Set (for example `90`) only once SMTP is sending; checked hourly (`index.ts:68-90`). |
+| `MAIL_APP_PASSWORD` | unset | the Google app password for `faith@venueatncc.org` ([11.0](#110-the-mailbox-google-workspace-one-setting-decided-2026-10-30)) | With `SMTP_HOST` and `IMAP_HOST` empty, sends and receives through Google Workspace with no other setting (`config.ts`, `GOOGLE_MAIL`). Spaces are ignored. Never print it. |
 | `IMAP_HOST` | unset: the admin's Mail tab sends but does not receive | unset until [11.4](#114-receive-in-the-admin-connect-the-mailbox-owner--grokbot) | The mailbox the admin reads. When set, `IMAP_PASS` or the three `IMAP_OAUTH_*` values are required or the app refuses to start. |
 | `IMAP_PORT` / `IMAP_SECURE` | `993` / `true` | defaults | |
 | `IMAP_USER` | the address in `MAIL_FROM` | per 11.4 | When it is the venue address, all mail in the folders is copied; otherwise only venue mail (`IMAP_COPY_ALL` overrides). |
@@ -1183,6 +1184,63 @@ needs a firewall change or touches the server's shared state.
 
 All DNS for `venueatncc.org` is managed by the owner at GoDaddy (My Products, venueatncc.org, DNS).
 Keep exactly **one** SPF (`v=spf1 ...`) TXT record on `@`; merge includes into it.
+
+### 11.0 The mailbox: Google Workspace, one setting (decided 2026-10-30)
+
+`faith@venueatncc.org` is a Google Workspace mailbox of its own, separate from the church's Microsoft
+365. The server sends **and** receives through it, so there is no separate relay (11.3) and no
+alias (11.2). With `MAIL_APP_PASSWORD` set and `SMTP_HOST` and `IMAP_HOST` left empty, the server
+uses `smtp.gmail.com:587` and `imap.gmail.com:993` as `faith@venueatncc.org`
+(`GOOGLE_MAIL` in `server/config.ts`), and the admin's Mail tab sends and receives. Google Cloud needs
+no change: outbound 587 and 993 are open (only port 25 is blocked).
+
+1. **Owner, Google Workspace:** sign up (Business Starter is enough) with the domain `venueatncc.org`
+   and the first user `faith@venueatncc.org`. When Google asks to verify the domain and turn on Gmail,
+   choose GoDaddy and sign in. Google adds its records automatically. To add them by hand in GoDaddy
+   DNS instead:
+
+   | Type | Name | Value |
+   | --- | --- | --- |
+   | TXT | `@` | `google-site-verification=...` (the value Google shows) |
+   | MX | `@` | `smtp.google.com`, priority 1. **Delete every other MX record** on the domain. |
+   | TXT | `@` | `v=spf1 include:_spf.google.com ~all` (the only SPF record; replace any existing one) |
+   | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:faith@venueatncc.org` |
+
+2. **Owner, Google Admin console** (admin.google.com), Apps, Google Workspace, Gmail, Authenticate
+   email: Generate new record (2048-bit), add it in GoDaddy as TXT `google._domainkey`, wait about an
+   hour, then click **Start authentication**.
+3. **Owner, signed in as faith@venueatncc.org:** myaccount.google.com, Security, turn on **2-Step
+   Verification**, then open myaccount.google.com/apppasswords, create one named "Venue website",
+   and copy the 16 letters. If App passwords is missing, allow 2-Step Verification in the Admin
+   console (Security, Authentication, 2-step verification) and try again. Give the 16 letters to
+   grokbot privately, never in a chat log or the repository.
+4. **grokbot:** add one line to `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`),
+   keeping `SMTP_HOST` and `IMAP_HOST` empty, and never print it:
+
+   ```ini
+   MAIL_APP_PASSWORD=<the 16 letters>
+   OUTBOX_RETENTION_DAYS=90
+   ```
+
+   Restart this app only and check the log:
+
+   ```sh
+   sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && sleep 20 && pm2 logs venueatncc --lines 40 --nostream' | grep -E '\[(email|mail)\]'
+   # expect: [email] Sending through smtp.gmail.com:587 as The Venue @ NCC <faith@venueatncc.org>. Notifications go to faith@venueatncc.org.
+   # expect: [mail] Reading faith@venueatncc.org at imap.gmail.com every 120 seconds (all mail).
+   # and no "[mail] checking the mailbox failed" line
+   ```
+
+5. **Check:** `dig +short MX venueatncc.org @8.8.8.8` prints `1 smtp.google.com.` Send a test booking
+   request (10.3) with your own address: the confirmation arrives From `faith@venueatncc.org`, and the
+   admin's Mail tab shows it. Reply to it from your own mail app; within two minutes the reply shows
+   in Mail, unread, under the same conversation. Answer it from the admin; the answer reaches you.
+
+Faith can also read the same mailbox in Gmail or add it to Outlook on her phone. What she sends
+there shows in the admin too, because the server reads the Sent Mail folder.
+
+The sections below (11.1 to 11.4) describe the earlier plan and the other providers the server
+still supports. They are not needed with 11.0.
 
 ### 11.1 Launch with the outbox (grokbot, at deploy)
 

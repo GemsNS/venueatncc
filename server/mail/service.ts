@@ -439,7 +439,7 @@ export function createMailService(deps: {
         );
         repo.touchInquiry(inquiryId, stamp);
       }
-      if (result.status === 'sent' && imap?.sent) {
+      if (result.status === 'sent' && imap?.sent && imap.appendSent) {
         const sent = imap.sent;
         tasks.run('mail: copy to the sent folder', async () => {
           try {

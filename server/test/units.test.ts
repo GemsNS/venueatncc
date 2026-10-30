@@ -201,6 +201,26 @@ describe('request helpers', () => {
 });
 
 describe('config', () => {
+  test('one app password connects the venue mailbox on Google Workspace, for sending and receiving', () => {
+    const none = loadConfig({}, silentLog);
+    assert.equal(none.smtp, null);
+    assert.equal(none.imap, null);
+    const c = loadConfig({ MAIL_APP_PASSWORD: 'abcd efgh ijkl mnop' }, silentLog);
+    assert.deepEqual(c.smtp, { host: 'smtp.gmail.com', port: 587, secure: false, user: 'faith@venueatncc.org', pass: 'abcdefghijklmnop' });
+    assert.equal(c.imap?.host, 'imap.gmail.com');
+    assert.equal(c.imap?.user, 'faith@venueatncc.org');
+    assert.equal(c.imap?.pass, 'abcdefghijklmnop');
+    assert.equal(c.imap?.sent, '[Gmail]/Sent Mail');
+    assert.equal(c.imap?.copyAll, true);
+    assert.equal(c.imap?.appendSent, false, 'Gmail files what it sends itself');
+    assert.equal(c.mailFrom, 'The Venue @ NCC <faith@venueatncc.org>');
+    // Explicit settings still win.
+    const own = loadConfig({ MAIL_APP_PASSWORD: 'x', SMTP_HOST: 'smtp.example.org', IMAP_HOST: 'imap.example.org', IMAP_PASS: 'y' }, silentLog);
+    assert.equal(own.smtp?.host, 'smtp.example.org');
+    assert.equal(own.imap?.host, 'imap.example.org');
+    assert.equal(own.imap?.appendSent, true);
+  });
+
   test('production requires secrets', () => {
     assert.throws(() => loadConfig({ NODE_ENV: 'production' }, silentLog), /SESSION_SECRET/);
     assert.throws(() => loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'short', FORM_TOKEN_SECRET: 'x'.repeat(40) }, silentLog), /at least 32/);
