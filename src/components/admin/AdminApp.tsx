@@ -11,6 +11,7 @@ import { CalendarView } from './CalendarView';
 import { SHOW_DEMO, resetDemo } from './demo-tools';
 import { InboxView } from './InboxView';
 import { InquiryView } from './InquiryView';
+import { MailComposeView, MailListView, MailThreadView } from './MailView';
 import { parseHash, screenKey, useHash, type Route } from './route';
 import { SettingsView } from './SettingsView';
 import { Shell } from './Shell';
@@ -40,6 +41,12 @@ function screenTitle(route: Route): string {
       return 'Request';
     case 'calendar':
       return 'Calendar';
+    case 'mail':
+      return 'Mail';
+    case 'mailThread':
+      return 'Email';
+    case 'mailNew':
+      return 'New Email';
     case 'settings':
       return 'Settings';
     default:
@@ -249,6 +256,15 @@ export default function AdminApp() {
       break;
     case 'calendar':
       view = <CalendarView month={route.month} day={route.day} />;
+      break;
+    case 'mail':
+      view = <MailListView box={route.box} q={route.q} />;
+      break;
+    case 'mailThread':
+      view = <MailThreadView key={route.id} id={route.id} />;
+      break;
+    case 'mailNew':
+      view = <MailComposeView to={route.to} subject={route.subject} />;
       break;
     case 'settings':
       view = <SettingsView onReset={onReset} />;

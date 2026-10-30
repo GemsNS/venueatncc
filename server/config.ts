@@ -14,6 +14,24 @@ export interface SmtpConfig {
   pass?: string;
 }
 
+/** The mailbox the admin reads (server/mail/imap.ts). Password, or a Microsoft 365 app (OAuth client credentials). */
+export interface ImapConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass?: string;
+  oauth?: { tenant: string; clientId: string; clientSecret: string };
+  inbox: string;
+  /** The sent folder, to copy the admin's emails into and read replies sent from other mail apps. */
+  sent: string | null;
+  /**
+   * Copy every message in the folders. When false (the mailbox also holds someone else's mail, as when
+   * the venue address is an alias), only mail to or from the venue address, or in its threads, is copied.
+   */
+  copyAll: boolean;
+}
+
 export interface Config {
   nodeEnv: string;
   production: boolean;
@@ -36,6 +54,13 @@ export interface Config {
   outboxDir: string;
   /** Delete outbox files after this many days; null keeps them (the default). */
   outboxRetentionDays: number | null;
+  /** The address in MAIL_FROM: the venue's own address, as the admin's mail shows it. */
+  mailAddress: string;
+  imap: ImapConfig | null;
+  /** How often the server checks the mailbox. */
+  mailPollSeconds: number;
+  /** Where received attachments are kept. */
+  mailFilesDir: string;
   admin: { email: string; password: string; name: string } | null;
 }
 
@@ -90,6 +115,11 @@ function secret(env: Env, key: string, production: boolean, log: Logger): string
   return randomBytes(32).toString('base64url');
 }
 
+/** The address part of "Name <address>", lower case. */
+export function addressOf(from: string): string {
+  return (/<([^<>]+)>s*$/.exec(from)?.[1] ?? from).trim().toLowerCase();
+}
+
 /** Where the database lives. Split out so the CLI tools do not need the web secrets. */
 export function databasePathFrom(env: Env = process.env): string {
   return path.resolve(str(env, 'DATABASE_PATH', './data/venue.db'));
@@ -113,6 +143,32 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
       }
     : null;
 
+  const mailFrom = str(env, 'MAIL_FROM', `${site.name} <${site.contact.email}>`);
+  const mailAddress = addressOf(mailFrom);
+  const imapHost = optional(env, 'IMAP_HOST');
+  const imapUser = optional(env, 'IMAP_USER') ?? mailAddress;
+  const tenant = optional(env, 'IMAP_OAUTH_TENANT');
+  const clientId = optional(env, 'IMAP_OAUTH_CLIENT_ID');
+  const clientSecret = optional(env, 'IMAP_OAUTH_CLIENT_SECRET');
+  if (imapHost && !(tenant && clientId && clientSecret) && !env.IMAP_PASS) {
+    throw new Error('IMAP_HOST is set, so IMAP_PASS (or IMAP_OAUTH_TENANT, IMAP_OAUTH_CLIENT_ID and IMAP_OAUTH_CLIENT_SECRET) is required.');
+  }
+  const imap: ImapConfig | null = imapHost
+    ? {
+        host: imapHost,
+        port: int(env, 'IMAP_PORT', 993),
+        secure: bool(env, 'IMAP_SECURE', true),
+        user: imapUser,
+        pass: tenant && clientId && clientSecret ? undefined : env.IMAP_PASS,
+        oauth: tenant && clientId && clientSecret ? { tenant, clientId, clientSecret } : undefined,
+        inbox: str(env, 'IMAP_INBOX', 'INBOX'),
+        sent: optional(env, 'IMAP_SENT') ?? null,
+        // A mailbox of its own (signing in as the venue address) is all venue mail.
+        copyAll: bool(env, 'IMAP_COPY_ALL', imapUser.toLowerCase() === mailAddress),
+      }
+    : null;
+  const dataDir = path.dirname(databasePathFrom(env));
+
   const adminEmail = optional(env, 'ADMIN_EMAIL');
   const adminPassword = env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length > 0 ? env.ADMIN_PASSWORD : undefined;
 
@@ -130,10 +186,14 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
     secureCookies: https || production,
     hsts: https,
     smtp,
-    mailFrom: str(env, 'MAIL_FROM', `${site.name} <${site.contact.email}>`),
+    mailFrom,
     notifyTo: str(env, 'NOTIFY_TO', site.contact.email),
     outboxDir: path.resolve(str(env, 'OUTBOX_DIR', './data/outbox')),
     outboxRetentionDays: int(env, 'OUTBOX_RETENTION_DAYS', 0) || null,
+    mailAddress,
+    imap,
+    mailPollSeconds: Math.max(30, int(env, 'MAIL_POLL_SECONDS', 120)),
+    mailFilesDir: path.resolve(str(env, 'MAIL_FILES_DIR', path.join(dataDir, 'mail-files'))),
     admin:
       adminEmail && adminPassword
         ? { email: adminEmail.toLowerCase(), password: adminPassword, name: str(env, 'ADMIN_NAME', site.contact.contactName) }

@@ -15,6 +15,12 @@ import type {
   InquiryEvent,
   InquiryNote,
   InquiryStatus,
+  MailAddress,
+  MailBox,
+  MailInquiryLink,
+  MailMessage,
+  MailThread,
+  MailThreadSummary,
   SpaceChoice,
 } from '../src/shared/types';
 import { INQUIRY_STATUSES, spacesOverlap } from '../src/shared/types';
@@ -141,6 +147,68 @@ export interface EmailLogEntry {
   error?: string | null;
 }
 
+export interface MailRow {
+  id: number;
+  thread_id: number;
+  direction: 'in' | 'out';
+  status: 'received' | 'sent' | 'outbox';
+  mailbox: string | null;
+  uid_validity: string | null;
+  uid: number | null;
+  message_id: string | null;
+  in_reply_to: string | null;
+  refs: string;
+  from_name: string;
+  from_address: string;
+  to_json: string;
+  cc_json: string;
+  counterpart_name: string;
+  counterpart: string;
+  subject: string;
+  subject_key: string;
+  sent_at: string;
+  body_text: string;
+  snippet: string;
+  is_read: number;
+  archived: number;
+  inquiry_id: number | null;
+  sent_by: number | null;
+  sent_by_name: string | null;
+  created_at: string;
+}
+
+export interface NewMail {
+  threadId: number | null;
+  direction: 'in' | 'out';
+  status: 'received' | 'sent' | 'outbox';
+  mailbox?: string;
+  uidValidity?: string;
+  uid?: number;
+  messageId: string | null;
+  inReplyTo: string | null;
+  refs: string[];
+  from: MailAddress;
+  to: MailAddress[];
+  cc: MailAddress[];
+  counterpart: MailAddress;
+  subject: string;
+  subjectKey: string;
+  sentAt: string;
+  text: string;
+  snippet: string;
+  read: boolean;
+  inquiryId: number | null;
+  sentBy?: AdminUser;
+  attachments?: { filename: string; contentType: string; size: number; file: string }[];
+}
+
+/** Where a received message sits in the mailbox. */
+export interface MailUid {
+  mailbox: string;
+  uidValidity: string;
+  uid: number;
+}
+
 /** InquiryDetail plus the calendar blocks linked to the inquiry. */
 export type InquiryDetailWithBlocks = InquiryDetail & { blocks: CalendarBlock[] };
 
@@ -247,6 +315,7 @@ export class Repo {
       notes,
       events,
       blocks: this.blocksForInquiry(id),
+      emails: this.mailForInquiry(id),
     };
     return detail;
   }
@@ -443,6 +512,265 @@ export class Repo {
     return (this.db.prepare('SELECT COUNT(*) AS n FROM email_log WHERE kind = ? AND created_at >= ?').get(kind, sinceIso) as { n: number }).n;
   }
 
+  // ------------------------------------------------------------ mail
+
+  /** Whether a message with this Message-ID is already stored (each email is kept once). */
+  mailHasMessageId(messageId: string): boolean {
+    return this.db.prepare('SELECT 1 FROM mail_messages WHERE message_id = ?').get(messageId) !== undefined;
+  }
+
+  /** Whether any stored message has one of these ids, so a reply to venue mail is venue mail. */
+  mailKnowsAny(messageIds: string[]): boolean {
+    if (messageIds.length === 0) return false;
+    const ids = messageIds.slice(-50);
+    return this.db.prepare(`SELECT 1 FROM mail_messages WHERE message_id IN (${ids.map(() => '?').join(',')}) LIMIT 1`).get(...ids) !== undefined;
+  }
+
+  /**
+   * The thread a new message belongs to: the thread of any message it refers to, or else the latest
+   * thread with the same person and subject since `sinceIso`. Null starts a new thread.
+   */
+  mailThreadFor(refs: string[], counterpart: string, subjectKey: string, sinceIso: string): number | null {
+    if (refs.length > 0) {
+      const ids = refs.slice(-50);
+      const row = this.db
+        .prepare(`SELECT thread_id FROM mail_messages WHERE message_id IN (${ids.map(() => '?').join(',')}) AND thread_id IS NOT NULL ORDER BY id DESC LIMIT 1`)
+        .get(...ids) as { thread_id: number } | undefined;
+      if (row) return row.thread_id;
+    }
+    if (!subjectKey) return null;
+    const row = this.db
+      .prepare('SELECT thread_id FROM mail_messages WHERE counterpart = ? AND subject_key = ? AND sent_at >= ? ORDER BY sent_at DESC, id DESC LIMIT 1')
+      .get(counterpart.toLowerCase(), subjectKey, sinceIso) as { thread_id: number } | undefined;
+    return row?.thread_id ?? null;
+  }
+
+  /** The request a message is about: a reference in its subject, or else the latest request from that address. */
+  inquiryForMail(address: string, subject: string): number | null {
+    const ref = /\bNCC-[A-HJ-NP-Z2-9]{5}\b/.exec(subject.toUpperCase())?.[0];
+    if (ref) {
+      const row = this.db.prepare('SELECT id FROM inquiries WHERE reference = ?').get(ref) as { id: number } | undefined;
+      if (row) return row.id;
+    }
+    const row = this.db.prepare('SELECT id FROM inquiries WHERE email = ? COLLATE NOCASE ORDER BY created_at DESC, id DESC LIMIT 1').get(address) as
+      | { id: number }
+      | undefined;
+    return row?.id ?? null;
+  }
+
+  /** Store a message and give it a thread (its own id when it starts one). A message into an archived thread brings the thread back. */
+  insertMail(m: NewMail, now: string): number {
+    return this.db.transaction(() => {
+      const info = this.db
+        .prepare(
+          `INSERT INTO mail_messages (thread_id, direction, status, mailbox, uid_validity, uid, message_id, in_reply_to, refs,
+            from_name, from_address, to_json, cc_json, counterpart_name, counterpart, subject, subject_key, sent_at, body_text, snippet,
+            is_read, archived, inquiry_id, sent_by, sent_by_name, created_at)
+           VALUES (@threadId, @direction, @status, @mailbox, @uidValidity, @uid, @messageId, @inReplyTo, @refs,
+            @fromName, @fromAddress, @toJson, @ccJson, @counterpartName, @counterpart, @subject, @subjectKey, @sentAt, @bodyText, @snippet,
+            @isRead, 0, @inquiryId, @sentBy, @sentByName, @now)`,
+        )
+        .run({
+          threadId: m.threadId,
+          direction: m.direction,
+          status: m.status,
+          mailbox: m.mailbox ?? null,
+          uidValidity: m.uidValidity ?? null,
+          uid: m.uid ?? null,
+          messageId: m.messageId,
+          inReplyTo: m.inReplyTo,
+          refs: m.refs.join(' '),
+          fromName: m.from.name,
+          fromAddress: m.from.address.toLowerCase(),
+          toJson: JSON.stringify(m.to),
+          ccJson: JSON.stringify(m.cc),
+          counterpartName: m.counterpart.name,
+          counterpart: m.counterpart.address.toLowerCase(),
+          subject: m.subject,
+          subjectKey: m.subjectKey,
+          sentAt: m.sentAt,
+          bodyText: m.text,
+          snippet: m.snippet,
+          isRead: m.read ? 1 : 0,
+          inquiryId: m.inquiryId,
+          sentBy: m.sentBy?.id ?? null,
+          sentByName: m.sentBy?.name ?? null,
+          now,
+        });
+      const id = Number(info.lastInsertRowid);
+      if (m.threadId === null) this.db.prepare('UPDATE mail_messages SET thread_id = ? WHERE id = ?').run(id, id);
+      else this.db.prepare('UPDATE mail_messages SET archived = 0 WHERE thread_id = ?').run(m.threadId);
+      for (const a of m.attachments ?? []) {
+        this.db
+          .prepare('INSERT INTO mail_attachments (message_id, filename, content_type, size, file) VALUES (?, ?, ?, ?, ?)')
+          .run(id, a.filename, a.contentType, a.size, a.file);
+      }
+      return id;
+    })();
+  }
+
+  private mailRows(where: string, ...params: unknown[]): MailRow[] {
+    return this.db.prepare(`SELECT * FROM mail_messages WHERE ${where} ORDER BY sent_at, id`).all(...params) as MailRow[];
+  }
+
+  private toMail(rows: MailRow[]): MailMessage[] {
+    if (rows.length === 0) return [];
+    const ids = rows.map((r) => r.id);
+    const files = this.db
+      .prepare(`SELECT id, message_id, filename, content_type, size FROM mail_attachments WHERE message_id IN (${ids.map(() => '?').join(',')}) ORDER BY id`)
+      .all(...ids) as { id: number; message_id: number; filename: string; content_type: string; size: number }[];
+    return rows.map((r) => {
+      const m: MailMessage = {
+        id: r.id,
+        threadId: r.thread_id,
+        direction: r.direction,
+        from: { name: r.from_name, address: r.from_address },
+        to: JSON.parse(r.to_json) as MailAddress[],
+        cc: JSON.parse(r.cc_json) as MailAddress[],
+        subject: r.subject,
+        sentAt: r.sent_at,
+        text: r.body_text,
+        read: r.is_read === 1,
+        status: r.status,
+        attachments: files
+          .filter((f) => f.message_id === r.id)
+          .map((f) => ({ id: f.id, filename: f.filename, contentType: f.content_type, size: f.size })),
+        inquiryId: r.inquiry_id,
+      };
+      if (r.sent_by_name) m.sentBy = r.sent_by_name;
+      return m;
+    });
+  }
+
+  private inquiryLink(id: number | null): MailInquiryLink | null {
+    if (id === null) return null;
+    const row = this.db.prepare('SELECT id, reference, name FROM inquiries WHERE id = ?').get(id) as MailInquiryLink | undefined;
+    return row ?? null;
+  }
+
+  /** Threads, newest activity first. */
+  mailThreads(filter: { box: MailBox; q?: string }, limit = 300): MailThreadSummary[] {
+    const params: unknown[] = [];
+    let search = '';
+    const q = filter.q?.trim();
+    if (q) {
+      const like = `%${likeEscape(q)}%`;
+      const cols = ['subject', 'body_text', 'from_address', 'from_name', 'counterpart', 'counterpart_name', 'to_json'];
+      search = `WHERE thread_id IN (SELECT thread_id FROM mail_messages WHERE ${cols.map((c) => `${c} LIKE ? ESCAPE '${LIKE_ESCAPE}'`).join(' OR ')})`;
+      params.push(...cols.map(() => like));
+    }
+    const groups = this.db
+      .prepare(
+        `SELECT thread_id, COUNT(*) AS n, SUM(CASE WHEN is_read = 0 AND direction = 'in' THEN 1 ELSE 0 END) AS unread,
+           MAX(sent_at) AS last_at, MIN(archived) AS archived, MAX(inquiry_id) AS inquiry_id
+         FROM mail_messages ${search} GROUP BY thread_id HAVING MIN(archived) = ? ORDER BY last_at DESC LIMIT ?`,
+      )
+      .all(...params, filter.box === 'archived' ? 1 : 0, limit) as {
+      thread_id: number;
+      n: number;
+      unread: number;
+      last_at: string;
+      archived: number;
+      inquiry_id: number | null;
+    }[];
+    const latest = this.db.prepare('SELECT * FROM mail_messages WHERE thread_id = ? ORDER BY sent_at DESC, id DESC LIMIT 1');
+    const first = this.db.prepare('SELECT subject FROM mail_messages WHERE thread_id = ? ORDER BY sent_at, id LIMIT 1');
+    const attached = this.db.prepare('SELECT 1 FROM mail_attachments a JOIN mail_messages m ON m.id = a.message_id WHERE m.thread_id = ? LIMIT 1');
+    return groups.map((g) => {
+      const last = latest.get(g.thread_id) as MailRow;
+      const root = first.get(g.thread_id) as { subject: string };
+      return {
+        id: g.thread_id,
+        subject: root.subject,
+        counterpart: { name: last.counterpart_name, address: last.counterpart },
+        snippet: last.snippet,
+        lastAt: g.last_at,
+        count: g.n,
+        unread: g.unread,
+        lastDirection: last.direction,
+        archived: g.archived === 1,
+        hasAttachments: attached.get(g.thread_id) !== undefined,
+        inquiry: this.inquiryLink(g.inquiry_id),
+      };
+    });
+  }
+
+  mailThread(threadId: number): MailThread | null {
+    const rows = this.mailRows('thread_id = ?', threadId);
+    if (rows.length === 0) return null;
+    const last = rows[rows.length - 1];
+    const inquiryId = rows.reduce<number | null>((acc, r) => r.inquiry_id ?? acc, null);
+    return {
+      id: threadId,
+      subject: rows[0].subject,
+      counterpart: { name: rows.find((r) => r.direction === 'in')?.from_name || last.counterpart_name, address: last.counterpart },
+      archived: rows.every((r) => r.archived === 1),
+      inquiry: this.inquiryLink(inquiryId),
+      messages: this.toMail(rows),
+    };
+  }
+
+  /** What a reply in this thread answers: the latest message from the other party, or else the latest message. */
+  mailReplyTarget(threadId: number): MailRow | null {
+    const row =
+      this.db.prepare(`SELECT * FROM mail_messages WHERE thread_id = ? AND direction = 'in' ORDER BY sent_at DESC, id DESC LIMIT 1`).get(threadId) ??
+      this.db.prepare('SELECT * FROM mail_messages WHERE thread_id = ? ORDER BY sent_at DESC, id DESC LIMIT 1').get(threadId);
+    return (row as MailRow | undefined) ?? null;
+  }
+
+  /** The latest thread with this address, to continue rather than start a new one. */
+  latestMailThreadWith(address: string): number | null {
+    const row = this.db.prepare('SELECT thread_id FROM mail_messages WHERE counterpart = ? ORDER BY sent_at DESC, id DESC LIMIT 1').get(address.toLowerCase()) as
+      | { thread_id: number }
+      | undefined;
+    return row?.thread_id ?? null;
+  }
+
+  /** Mark a thread read or unread. Returns the mailbox copies that changed, to update the mailbox too. */
+  setMailThreadRead(threadId: number, read: boolean): MailUid[] {
+    const changed = this.db
+      .prepare(`SELECT mailbox, uid_validity, uid FROM mail_messages WHERE thread_id = ? AND direction = 'in' AND is_read = ? AND uid IS NOT NULL`)
+      .all(threadId, read ? 0 : 1) as { mailbox: string; uid_validity: string; uid: number }[];
+    this.db.prepare(`UPDATE mail_messages SET is_read = ? WHERE thread_id = ? AND direction = 'in'`).run(read ? 1 : 0, threadId);
+    return changed.map((c) => ({ mailbox: c.mailbox, uidValidity: c.uid_validity, uid: c.uid }));
+  }
+
+  setMailThreadArchived(threadId: number, archived: boolean): void {
+    this.db.prepare('UPDATE mail_messages SET archived = ? WHERE thread_id = ?').run(archived ? 1 : 0, threadId);
+  }
+
+  /** Every email with a request's guest, oldest first. */
+  mailForInquiry(inquiryId: number): MailMessage[] {
+    return this.toMail(this.mailRows('inquiry_id = ?', inquiryId));
+  }
+
+  unreadMailCount(): number {
+    return (this.db.prepare(`SELECT COUNT(*) AS n FROM mail_messages WHERE is_read = 0 AND direction = 'in' AND archived = 0`).get() as { n: number }).n;
+  }
+
+  mailAttachment(id: number): { filename: string; contentType: string; size: number; file: string } | null {
+    const row = this.db.prepare('SELECT filename, content_type, size, file FROM mail_attachments WHERE id = ?').get(id) as
+      | { filename: string; content_type: string; size: number; file: string }
+      | undefined;
+    return row ? { filename: row.filename, contentType: row.content_type, size: row.size, file: row.file } : null;
+  }
+
+  getMailSync(mailbox: string): { uidValidity: string; lastUid: number; syncedAt: string | null } | null {
+    const row = this.db.prepare('SELECT uid_validity, last_uid, synced_at FROM mail_sync WHERE mailbox = ?').get(mailbox) as
+      | { uid_validity: string; last_uid: number; synced_at: string | null }
+      | undefined;
+    return row ? { uidValidity: row.uid_validity, lastUid: row.last_uid, syncedAt: row.synced_at } : null;
+  }
+
+  setMailSync(mailbox: string, uidValidity: string, lastUid: number, syncedAt: string): void {
+    this.db
+      .prepare(
+        `INSERT INTO mail_sync (mailbox, uid_validity, last_uid, synced_at) VALUES (?, ?, ?, ?)
+         ON CONFLICT(mailbox) DO UPDATE SET uid_validity = excluded.uid_validity, last_uid = excluded.last_uid, synced_at = excluded.synced_at`,
+      )
+      .run(mailbox, uidValidity, lastUid, syncedAt);
+  }
+
   // ------------------------------------------------------------ stats
 
   stats(today: DateKey, weekAgoIso: string): AdminStats {
@@ -464,6 +792,6 @@ export class Repo {
           .prepare(`SELECT COALESCE(SUM(estimate_total), 0) AS total FROM inquiries WHERE status IN (${statuses.map(() => '?').join(',')})`)
           .get(...statuses) as { total: number }
       ).total;
-    return { byStatus, newThisWeek, upcomingBooked, pipelineValue: sum(OPEN_STATUSES), bookedValue: sum(['booked']) };
+    return { byStatus, newThisWeek, upcomingBooked, pipelineValue: sum(OPEN_STATUSES), bookedValue: sum(['booked']), unreadMail: this.unreadMailCount() };
   }
 }

@@ -450,6 +450,44 @@ test('stored data from more than two weeks ago is replaced with a current seed',
   await resetDemoData();
 });
 
+test('the demo mailbox: seeded threads, reading, replying, archiving, and emailing a guest', async () => {
+  await resetDemoData();
+  const list = ok(await api.admin.mail.threads('inbox'));
+  assert.equal(list.status.sending, 'demo');
+  assert.ok(list.threads.length >= 2);
+  const unread = list.threads.find((t) => t.unread > 0)!;
+  assert.ok(unread);
+  assert.ok((ok(await api.admin.stats()).unreadMail ?? 0) >= 1);
+
+  const opened = ok(await api.admin.mail.thread(unread.id));
+  assert.ok(opened.messages.every((m) => m.read));
+
+  assert.ok(isError(await api.admin.mail.reply(unread.id, '   ')));
+  const replied = ok(await api.admin.mail.reply(unread.id, 'Yes, that works.'));
+  const sent = replied.messages[replied.messages.length - 1];
+  assert.equal(sent.direction, 'out');
+  assert.match(sent.subject, /^Re: /);
+  assert.match(sent.text, /^Yes, that works\.\n\n/);
+  const after = ok(await api.admin.mail.threads('inbox')).threads.find((t) => t.id === unread.id)!;
+  assert.equal(after.snippet, 'Yes, that works.');
+
+  ok(await api.admin.mail.update(unread.id, { archived: true }));
+  assert.ok(ok(await api.admin.mail.threads('archived')).threads.some((t) => t.id === unread.id));
+  assert.ok(isError(await api.admin.mail.update(unread.id, {})));
+
+  const bad = await api.admin.mail.send({ to: 'nope', subject: 'Hi', body: 'Hello' });
+  assert.ok(isError(bad) && bad.fields?.to);
+  const fresh = ok(await api.admin.mail.send({ to: 'pat@example.com', subject: 'Tour times', body: 'Hello' }));
+  assert.equal(fresh.messages.length, 1);
+
+  const newOne = ok(await api.admin.listInquiries({ status: 'new' }))[0];
+  const detail = ok(await api.admin.mail.emailInquiry(newOne.id, 'Thanks for reaching out.'));
+  assert.equal(detail.status, 'contacted');
+  assert.ok(detail.emails?.some((m) => m.text.startsWith('Thanks for reaching out.')));
+  assert.equal(api.admin.mail.attachmentUrl(1), null);
+  await resetDemoData();
+});
+
 test('logout ends the session', async () => {
   await api.admin.logout();
   assert.equal(await api.admin.session(), null);

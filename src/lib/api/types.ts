@@ -17,6 +17,11 @@ import type {
   InquiryInput,
   InquiryListQuery,
   InquiryStatus,
+  MailBox,
+  MailCompose,
+  MailStatus,
+  MailThread,
+  MailThreadList,
   SpaceChoice,
   BlockKind,
 } from '../../shared/types';
@@ -58,5 +63,19 @@ export interface VenueApi {
     deleteBlock(id: number): Promise<Result<{ ok: true }>>;
     exportCsv(): Promise<Result<Blob>>;
     changePassword(current: string, next: string): Promise<Result<{ ok: true }>>;
+    mail: {
+      threads(box: MailBox, q?: string): Promise<Result<MailThreadList>>;
+      /** Opens a thread, which marks it read. */
+      thread(id: number): Promise<Result<MailThread>>;
+      update(id: number, change: { archived?: boolean; read?: boolean }): Promise<Result<MailThread>>;
+      reply(id: number, body: string): Promise<Result<MailThread>>;
+      send(input: MailCompose): Promise<Result<MailThread>>;
+      /** Email a request's guest; a New request becomes Contacted. */
+      emailInquiry(id: number, body: string): Promise<Result<InquiryDetail>>;
+      /** Check the mailbox now. */
+      sync(): Promise<Result<MailStatus>>;
+      /** A link that downloads an attachment, or null where there is none (the demo). */
+      attachmentUrl(id: number): string | null;
+    };
   };
 }

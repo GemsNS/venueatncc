@@ -65,6 +65,15 @@ async function main(): Promise<void> {
     log.warn('[admin] ADMIN_PASSWORD is set without ADMIN_EMAIL, so it is ignored. Remove it from .env and the environment.');
   }
 
+  if (config.imap) {
+    log.info(`[mail] Reading ${config.imap.user} at ${config.imap.host} every ${config.mailPollSeconds} seconds (${config.imap.copyAll ? 'all mail' : `only mail for ${config.mailAddress}`}).`);
+  } else {
+    log.info('[mail] IMAP is not configured, so the admin can send email but not receive it.');
+  }
+  const mailPoll = setInterval(() => void ctx.mail.sync(), config.mailPollSeconds * 1000);
+  mailPoll.unref();
+  setTimeout(() => void ctx.mail.sync(), 5_000).unref();
+
   if (config.outboxRetentionDays) {
     log.info(`[email] Outbox files older than ${config.outboxRetentionDays} days are deleted.`);
   }
@@ -96,6 +105,7 @@ async function main(): Promise<void> {
     stopping = true;
     log.info(`[server] ${signal} received, shutting down.`);
     clearInterval(housekeeping);
+    clearInterval(mailPoll);
     server.close();
     await Promise.race([whenIdle(), new Promise((resolve) => setTimeout(resolve, 10_000))]);
     db.close();

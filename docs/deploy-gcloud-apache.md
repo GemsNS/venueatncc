@@ -59,7 +59,7 @@ Contents:
 | Public IP (DNS A records already point here) | `34.30.208.144` |
 | Site directory | `/var/www/venueatncc.org/` (owner `mvandykeanthony:www-data`) |
 | Code (git checkout) | `/var/www/venueatncc.org/app/` |
-| Data (SQLite database, email outbox, backups) | `/var/www/venueatncc.org/data/` (mode 700) |
+| Data (SQLite database, email outbox, received mail attachments, backups) | `/var/www/venueatncc.org/data/` (mode 700) |
 | Database file | `/var/www/venueatncc.org/data/venue.db` |
 | Backups | `/var/www/venueatncc.org/data/backups/venue-YYYYMMDD-HHMMSS.db` |
 | Email outbox (while SMTP is unset) | `/var/www/venueatncc.org/data/outbox/` |
@@ -216,7 +216,7 @@ touched, and no `chown`/`chmod` is ever recursive above this directory.
 ├── better_sqlite3.node.keep        664   native add-on built off-server (section 5.4)
 ├── .npm-cache/                           npm's download cache (kept out of the owner's ~/.npm)
 ├── app/                            git checkout: code, node_modules, dist/, server-dist/
-├── data/                           700   venue.db (+ -wal, -shm), outbox/, backups/
+├── data/                           700   venue.db (+ -wal, -shm), outbox/, mail-files/, backups/
 ├── logs/                           750   pm2 out/error logs, backup log
 └── public_html/                    2775  empty; DocumentRoot only so ACME has a safe fallback
 ```
@@ -572,6 +572,14 @@ so all paths below are absolute.
 | `NOTIFY_TO` | `faith@venueatncc.org` (`config.ts:134`) | `faith@venueatncc.org` | Also the Reply-To on guest confirmations (`routes/public.ts:135`), so it must never be a wearencc.org address. It receives mail once 11.2 is done. |
 | `OUTBOX_DIR` | `./data/outbox` (`config.ts:135`) | `/var/www/venueatncc.org/data/outbox` | Created as 700, files 600 (`mailer.ts:62-68`). |
 | `OUTBOX_RETENTION_DAYS` | unset or `0`: keep forever (`config.ts:136`) | unset | Set (for example `90`) only once SMTP is sending; checked hourly (`index.ts:68-90`). |
+| `IMAP_HOST` | unset: the admin's Mail tab sends but does not receive | unset until [11.4](#114-receive-in-the-admin-connect-the-mailbox-owner--grokbot) | The mailbox the admin reads. When set, `IMAP_PASS` or the three `IMAP_OAUTH_*` values are required or the app refuses to start. |
+| `IMAP_PORT` / `IMAP_SECURE` | `993` / `true` | defaults | |
+| `IMAP_USER` | the address in `MAIL_FROM` | per 11.4 | When it is the venue address, all mail in the folders is copied; otherwise only venue mail (`IMAP_COPY_ALL` overrides). |
+| `IMAP_PASS` | unset | per 11.4 A | Not trimmed. Never print it. |
+| `IMAP_OAUTH_TENANT`, `IMAP_OAUTH_CLIENT_ID`, `IMAP_OAUTH_CLIENT_SECRET` | unset | per 11.4 B | Microsoft 365 app (client credentials). Never print the secret. |
+| `IMAP_INBOX` / `IMAP_SENT` | `INBOX` / unset | `INBOX` / the sent folder's name | With `IMAP_SENT`, emails sent from the admin are copied there, and replies sent from Outlook show in the admin. |
+| `MAIL_POLL_SECONDS` | `120` (at least 30) | default | |
+| `MAIL_FILES_DIR` | `<database folder>/mail-files` | default | Received attachments. |
 | `ADMIN_EMAIL` | unset (`config.ts:116`) | unset (use the CLI, [section 10](#10-first-admin-and-smoke-test)) | With `ADMIN_PASSWORD`, creates the first admin at startup when none exists (`bootstrap.ts:19-38`). |
 | `ADMIN_PASSWORD` | unset (`config.ts:117`) | unset | At least 12 characters (`bootstrap.ts:11`). Logs a warning at every start while still set (`bootstrap.ts:22-24`, `index.ts:64-66`). |
 | `ADMIN_NAME` | `Faith VanDyke` (`site.contact.contactName`, `config.ts:139`, `src/data/site.ts:60`) | unset | Only used with the two above. |
@@ -610,6 +618,8 @@ SMTP_USER=
 SMTP_PASS=
 # MAIL_FROM defaults to: The Venue @ NCC <faith@venueatncc.org>
 NOTIFY_TO=faith@venueatncc.org
+# The admin's Mail tab receives once IMAP is set (section 11.4). Leave empty until then.
+IMAP_HOST=
 
 # First admin: created with server-dist/create-admin.mjs instead (section 10). Leave these empty.
 ADMIN_EMAIL=
@@ -1266,6 +1276,94 @@ entirely on `venueatncc.org`. Recommended: **Postmark** (simple, made for transa
    confirmation arrives From and Reply-To `faith@venueatncc.org`, and its headers
    (`Authentication-Results`) show `spf=pass` or `dkim=pass` with `dmarc=pass`. No
    `wearencc.org` appears anywhere in the guest's copy.
+
+### 11.4 Receive in the admin: connect the mailbox (owner + grokbot)
+
+The admin has a **Mail** tab (and an Email section on every request) where Faith reads and answers
+mail to `faith@venueatncc.org` without leaving the admin. Sending uses the same mailer as the booking
+emails (the relay from 11.3; until then replies are saved to the outbox, and the admin says so). Each
+reply goes out From `faith@venueatncc.org` with her signature, threaded under the guest's message.
+Receiving needs the server to sign in to the mailbox over IMAP (`server/mail/service.ts`). Every
+`MAIL_POLL_SECONDS` (default 120) and on **Check for Mail** it copies new messages into the database.
+It never deletes or moves anything in the mailbox. Reading a conversation in the admin marks it read
+in the mailbox too. Bodies are stored and shown as plain text only. Attachments go to
+`data/mail-files/` (mode 700, files 600) and always download as files. Until IMAP is set, the Mail tab
+shows sent mail only and says receiving is not set up.
+
+The guest confirmation is stored in Mail as well, so a guest's reply to it opens in the same
+conversation, linked to their request. Emailing a guest from a **New** request moves it to
+**Contacted**.
+
+**Choose one (owner, with Joel if it touches the church tenant):**
+
+- **A. A mailbox of its own for `faith@venueatncc.org` (recommended).** Any provider with IMAP and an
+  app password works: Google Workspace, GoDaddy Professional Email, Zoho Mail (a paid plan; the free
+  plan has no IMAP), Fastmail. The app signs in as `faith@venueatncc.org` and copies all of its mail.
+  This keeps the venue's mail apart from the church's, which fits the rule that the two businesses
+  stay separate. Faith adds the mailbox to Outlook on her phone and computer as a second account.
+  The MX record from 11.2 then points at this provider instead of Microsoft 365.
+- **B. Keep 11.2's alias in Faith's Microsoft 365 mailbox.** Microsoft 365 does not accept IMAP
+  passwords, so the owner registers an app in Microsoft Entra (client credentials). The app is then
+  technically able to read the whole `faith@wearencc.org` mailbox. The server copies **only** mail
+  to or from `faith@venueatncc.org` and replies in its conversations (`copyAll` is off because
+  `IMAP_USER` is not the venue address), and drops everything else unread. Because this grants access
+  to a church mailbox, it needs Joel's OK.
+
+**A. Settings** (grokbot edits `.env`; the owner gives grokbot the app password privately):
+
+```ini
+IMAP_HOST=<imap.gmail.com, imap.secureserver.net, imappro.zoho.com, imap.fastmail.com>
+IMAP_PORT=993
+IMAP_SECURE=true
+IMAP_USER=faith@venueatncc.org
+IMAP_PASS=<app password>
+IMAP_SENT=<the sent folder's exact name: "[Gmail]/Sent Mail", "Sent", or "Sent Items">
+```
+
+**B. Owner steps in Microsoft 365, then settings:**
+
+1. Microsoft Entra admin center, App registrations, New registration: name it "The Venue @ NCC
+   admin mail", single tenant. Note the **Application (client) ID** and **Directory (tenant) ID**.
+2. API permissions, Add a permission, APIs my organization uses, **Office 365 Exchange Online**,
+   Application permissions, **IMAP.AccessAsApp**. Then Grant admin consent.
+3. Certificates & secrets, New client secret (24 months). Copy its **Value** once and give it to
+   grokbot privately. Put a reminder in the calendar to renew it before it expires.
+4. Exchange Online PowerShell (`Connect-ExchangeOnline`), with the Object ID from **Enterprise
+   applications** (not App registrations):
+
+   ```powershell
+   New-ServicePrincipal -AppId <client id> -ObjectId <enterprise app object id>
+   Add-MailboxPermission -Identity faith@wearencc.org -User <enterprise app object id> -AccessRights FullAccess
+   ```
+
+   This grants the app this one mailbox only, no other mailbox in the tenant.
+
+```ini
+IMAP_HOST=outlook.office365.com
+IMAP_USER=faith@wearencc.org
+IMAP_OAUTH_TENANT=<directory (tenant) id>
+IMAP_OAUTH_CLIENT_ID=<application (client) id>
+IMAP_OAUTH_CLIENT_SECRET=<client secret value>
+IMAP_SENT=Sent Items
+```
+
+**grokbot, either way:** add only these lines to `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`),
+never print them, restart this app only, and check the log:
+
+```sh
+sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && sleep 15 && pm2 logs venueatncc --lines 30 --nostream' | grep '\[mail\]'
+# expect: [mail] Reading <IMAP_USER> at <host> every 120 seconds (all mail | only mail for faith@venueatncc.org).
+# and no "[mail] checking the mailbox failed" line
+```
+
+Then send a test email from an outside address to `faith@venueatncc.org`. Within two minutes it
+appears in the admin's Mail tab with an unread badge. Open it and send a short reply; the outside
+address receives it From `faith@venueatncc.org`, and with `IMAP_SENT` set, a copy is in the mailbox's
+sent folder. If the Mail tab shows "The mailbox could not be checked", the reason follows it (wrong
+password, consent not granted, IMAP turned off for the mailbox). Fix the setting and restart the app.
+
+The first check copies the last 30 days (up to 300 messages). Older mail stays in the mailbox only.
+Received attachments are not in the nightly database backup. They remain in the mailbox itself.
 
 ---
 

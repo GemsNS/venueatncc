@@ -2,6 +2,9 @@
  * Outgoing mail. With SMTP configured, messages go out through nodemailer's SMTP transport.
  * Without it, each message is written to OUTBOX_DIR as an .eml file (the full MIME message,
  * openable in any mail app) and an .html file (the HTML part, openable in a browser).
+ *
+ * Every message is built once as raw MIME and that exact message is sent (or saved), so the admin's mail
+ * can copy what went out into the mailbox's sent folder.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -10,13 +13,19 @@ import { createTransport } from 'nodemailer';
 import type { Config } from '../config';
 
 export interface EmailMessage {
-  to: string;
+  to: string | string[];
+  cc?: string[];
   replyTo?: string | { name: string; address: string };
   subject: string;
   html: string;
   text: string;
   /** Short name used for outbox files, e.g. "NCC-7K3QX-guest". */
   tag: string;
+  /** Set to thread a reply: "<id@host>" forms. */
+  messageId?: string;
+  inReplyTo?: string;
+  references?: string[];
+  headers?: Record<string, string>;
 }
 
 export interface SendResult {
@@ -24,6 +33,8 @@ export interface SendResult {
   messageId?: string;
   /** Outbox only: the .eml path. */
   location?: string;
+  /** The message exactly as sent. */
+  raw: Buffer;
 }
 
 export interface Mailer {
@@ -33,7 +44,33 @@ export interface Mailer {
 
 const safeName = (s: string) => s.replace(/[^a-zA-Z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'message';
 
+/** A header value as nodemailer takes it: the message's own fields, from config.mailFrom. */
+function mailOptions(from: string, m: EmailMessage) {
+  return {
+    from,
+    to: m.to,
+    cc: m.cc,
+    replyTo: m.replyTo,
+    subject: m.subject,
+    html: m.html,
+    text: m.text,
+    messageId: m.messageId,
+    inReplyTo: m.inReplyTo,
+    references: m.references,
+    headers: m.headers,
+  };
+}
+
+const asBuffer = (raw: unknown): Buffer => (Buffer.isBuffer(raw) ? raw : Buffer.from(String(raw)));
+
 export function createMailer(config: Pick<Config, 'smtp' | 'mailFrom' | 'outboxDir'>, now: () => number = Date.now): Mailer {
+  // Builds the raw message (no network).
+  const composer = createTransport({ streamTransport: true, buffer: true, newline: config.smtp ? 'windows' : 'unix' });
+  const compose = async (m: EmailMessage) => {
+    const info = await composer.sendMail(mailOptions(config.mailFrom, m));
+    return { raw: asBuffer(info.message), messageId: typeof info.messageId === 'string' ? info.messageId : undefined, envelope: info.envelope };
+  };
+
   if (config.smtp) {
     const smtp = config.smtp;
     const transporter = createTransport({
@@ -48,25 +85,24 @@ export function createMailer(config: Pick<Config, 'smtp' | 'mailFrom' | 'outboxD
     return {
       transport: 'smtp',
       async send(m) {
-        const info = await transporter.sendMail({ from: config.mailFrom, to: m.to, replyTo: m.replyTo, subject: m.subject, html: m.html, text: m.text });
-        return { status: 'sent', messageId: typeof info.messageId === 'string' ? info.messageId : undefined };
+        const built = await compose(m);
+        await transporter.sendMail({ envelope: built.envelope, raw: built.raw });
+        return { status: 'sent', messageId: built.messageId, raw: built.raw };
       },
     };
   }
 
-  const composer = createTransport({ streamTransport: true, buffer: true, newline: 'unix' });
   return {
     transport: 'outbox',
     async send(m) {
-      const info = await composer.sendMail({ from: config.mailFrom, to: m.to, replyTo: m.replyTo, subject: m.subject, html: m.html, text: m.text });
+      const built = await compose(m);
       await fs.mkdir(config.outboxDir, { recursive: true, mode: 0o700 });
       const stamp = new Date(now()).toISOString().replace(/[:.]/g, '-');
       const base = path.join(config.outboxDir, `${stamp}-${safeName(m.tag)}-${randomBytes(3).toString('hex')}`);
-      const raw = info.message;
       // Guests' names, emails, and phone numbers: readable by the app's user only.
-      await fs.writeFile(`${base}.eml`, Buffer.isBuffer(raw) ? raw : String(raw), { mode: 0o600 });
+      await fs.writeFile(`${base}.eml`, built.raw, { mode: 0o600 });
       await fs.writeFile(`${base}.html`, m.html, { mode: 0o600 });
-      return { status: 'outbox', messageId: typeof info.messageId === 'string' ? info.messageId : undefined, location: `${base}.eml` };
+      return { status: 'outbox', messageId: built.messageId, location: `${base}.eml`, raw: built.raw };
     },
   };
 }

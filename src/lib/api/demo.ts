@@ -33,6 +33,7 @@ import type {
 } from '../../shared/types';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_NAME, DEMO_ADMIN_PASSWORD } from './demo-credentials';
 import { DEMO_DB_VERSION, blockLabelFor, buildSeed, eventLabel, timelineText, type DemoDb } from './demo-seed';
+import { DEMO_MAIL_STATUS, addSent, replySubject, replyTo, seedMail, threadList, threadOf, unreadCount, type DemoMail } from './demo-mail';
 import type { VenueApi } from './types';
 
 /**
@@ -66,6 +67,8 @@ export const demoMessages = {
   inquiryNotFound: 'We could not find that inquiry.',
   blockNotFound: 'We could not find that calendar block.',
   passwordDemo: 'Password changes are turned off in the demo.',
+  mailNotFound: 'That email was not found.',
+  nothingToChange: 'Nothing to change.',
   blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_NAMES[space]}.`,
   /** Mark Booked refused because another block is in the way (the server's 409). */
   bookClash: timelineText.booked.clash,
@@ -264,8 +267,22 @@ const byDate = (a: CalendarBlock, b: CalendarBlock) => (a.date < b.date ? -1 : a
 /** InquiryDetail plus its linked calendar blocks, as the API server returns it. */
 export type DemoInquiryDetail = InquiryDetail & { blocks: CalendarBlock[] };
 
+/** The demo mailbox, seeded on first use for data saved before it existed. */
+function mailOf(db: DemoDb): DemoMail {
+  db.mail ??= seedMail(db.inquiries, Date.now());
+  return db.mail;
+}
+
 function detailOf(db: DemoDb, record: InquiryDetail): DemoInquiryDetail {
-  const out: DemoInquiryDetail = { ...clone(record), blocks: db.blocks.filter((b) => b.inquiryId === record.id).sort(byDate).map((b) => ({ ...b })) };
+  const emails = (db.mail?.messages ?? [])
+    .filter((m) => m.inquiryId === record.id)
+    .map((m) => threadOf(db.mail!, db.inquiries, m.threadId)!.messages.find((x) => x.id === m.id)!)
+    .sort((a, b) => (a.sentAt < b.sentAt ? -1 : a.sentAt > b.sentAt ? 1 : a.id - b.id));
+  const out: DemoInquiryDetail = {
+    ...clone(record),
+    blocks: db.blocks.filter((b) => b.inquiryId === record.id).sort(byDate).map((b) => ({ ...b })),
+    emails,
+  };
   out.notes.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id - b.id));
   out.events.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id - b.id));
   return out;
@@ -491,7 +508,7 @@ export const demoApi: VenueApi = {
           .sort(byDate)
           .slice(0, UPCOMING_BOOKED_LIMIT)
           .map((b) => ({ date: b.date, label: b.label, space: b.space }));
-        return { byStatus, newThisWeek, upcomingBooked, pipelineValue, bookedValue };
+        return { byStatus, newThisWeek, upcomingBooked, pipelineValue, bookedValue, unreadMail: db.mail ? unreadCount(db.mail) : 0 };
       }),
 
     listInquiries: (query) =>
@@ -622,5 +639,107 @@ export const demoApi: VenueApi = {
       }),
 
     changePassword: () => admin<{ ok: true }>(() => fail(demoMessages.passwordDemo)),
+
+    mail: {
+      threads: (box, q) =>
+        admin(() => mutate((db) => ({ threads: threadList(mailOf(db), db.inquiries, box, q ?? ''), status: DEMO_MAIL_STATUS }))),
+
+      thread: (id) =>
+        admin(() =>
+          mutate((db) => {
+            const mail = mailOf(db);
+            for (const m of mail.messages) if (m.threadId === id && m.direction === 'in') m.read = true;
+            return threadOf(mail, db.inquiries, id) ?? fail(demoMessages.mailNotFound);
+          }),
+        ),
+
+      update: (id, change) =>
+        admin(({ mailThreadUpdateSchema }) => {
+          const parsed = mailThreadUpdateSchema.safeParse(change);
+          if (!parsed.success) return fail(demoMessages.nothingToChange);
+          return mutate((db) => {
+            const mail = mailOf(db);
+            const list = mail.messages.filter((m) => m.threadId === id);
+            if (list.length === 0) return fail(demoMessages.mailNotFound);
+            for (const m of list) {
+              if (parsed.data.archived !== undefined) m.archived = parsed.data.archived;
+              if (parsed.data.read !== undefined && m.direction === 'in') m.read = parsed.data.read;
+            }
+            return threadOf(mail, db.inquiries, id)!;
+          });
+        }),
+
+      reply: (id, body) =>
+        admin(({ mailReplySchema, fieldErrors }) => {
+          const parsed = mailReplySchema.safeParse({ body });
+          if (!parsed.success) return invalid(fieldErrors(parsed.error));
+          return mutate((db) => {
+            const mail = mailOf(db);
+            const thread = threadOf(mail, db.inquiries, id);
+            if (!thread) return fail(demoMessages.mailNotFound);
+            const to = replyTo(thread);
+            const subject = replySubject(thread.subject);
+            addSent(mail, { to: [to], subject, body: parsed.data.body, adminName: DEMO_ADMIN_NAME, threadId: id, inquiryId: thread.inquiry?.id ?? null });
+            const record = thread.inquiry ? db.inquiries.find((i) => i.id === thread.inquiry!.id) : undefined;
+            if (record) addEvent(db, record, 'email', timelineText.emailSent(to.address, DEMO_ADMIN_NAME, subject), new Date().toISOString());
+            return threadOf(mail, db.inquiries, id)!;
+          });
+        }),
+
+      send: (input) =>
+        admin(({ mailComposeSchema, parseRecipients, fieldErrors }) => {
+          const parsed = mailComposeSchema.safeParse(input);
+          if (!parsed.success) return invalid(fieldErrors(parsed.error));
+          return mutate((db) => {
+            const inquiryId = parsed.data.inquiryId ?? null;
+            const record = inquiryId === null ? undefined : db.inquiries.find((i) => i.id === inquiryId);
+            if (inquiryId !== null && !record) return fail(demoMessages.inquiryNotFound);
+            const to = parseRecipients(parsed.data.to)!.map((address) => ({ name: '', address }));
+            const mail = mailOf(db);
+            const threadId = addSent(mail, { to, subject: parsed.data.subject, body: parsed.data.body, adminName: DEMO_ADMIN_NAME, inquiryId });
+            if (record) addEvent(db, record, 'email', timelineText.emailSent(to.map((a) => a.address).join(', '), DEMO_ADMIN_NAME, parsed.data.subject), new Date().toISOString());
+            return threadOf(mail, db.inquiries, threadId)!;
+          });
+        }),
+
+      emailInquiry: (id, body) =>
+        admin(({ inquiryEmailSchema, fieldErrors }) => {
+          const parsed = inquiryEmailSchema.safeParse({ body });
+          if (!parsed.success) return invalid(fieldErrors(parsed.error));
+          return mutate((db) => {
+            const record = db.inquiries.find((i) => i.id === id);
+            if (!record) return fail(demoMessages.inquiryNotFound);
+            const mail = mailOf(db);
+            const latest = mail.messages
+              .filter((m) => (m.direction === 'in' ? m.from : m.to[0]).address === record.email.toLowerCase())
+              .sort((a, b) => (a.sentAt < b.sentAt ? 1 : -1))[0];
+            const thread = latest ? threadOf(mail, db.inquiries, latest.threadId) : null;
+            const subject = thread ? replySubject(thread.subject) : `Your request for ${formatLong(record.date)} at The Venue @ NCC (${record.reference})`;
+            addSent(mail, {
+              to: [{ name: record.name, address: record.email }],
+              subject,
+              body: parsed.data.body,
+              adminName: DEMO_ADMIN_NAME,
+              threadId: thread?.id ?? null,
+              inquiryId: id,
+            });
+            const now = new Date().toISOString();
+            addEvent(db, record, 'email', timelineText.emailSent(record.email, DEMO_ADMIN_NAME, subject), now);
+            if (record.status === 'new') {
+              record.status = 'contacted';
+              addEvent(db, record, 'status', timelineText.emailedGuest(DEMO_ADMIN_NAME), now);
+            }
+            record.updatedAt = now;
+            return detailOf(db, record);
+          });
+        }),
+
+      async sync() {
+        await delay();
+        return isSignedIn() ? DEMO_MAIL_STATUS : fail(demoMessages.signedOut);
+      },
+
+      attachmentUrl: () => null,
+    },
   },
 };

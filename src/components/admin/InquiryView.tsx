@@ -10,6 +10,7 @@ import { INQUIRY_STATUSES, type CalendarBlock, type InquiryDetail, type InquiryE
 import { Icon } from '../islands/Icon';
 import { useAdmin } from './context';
 import { ConfirmDialog } from './Dialog';
+import { MailMessageItem, ReplyBox, sentToast } from './MailView';
 import { ELLIPSIS, dialable, eventTypeName, formatStamp, formatUSD, plural, spaceLabel, statusLabel, timeRange } from './format';
 import { calendarHash } from './route';
 import { ErrorBanner, PageHeader, Skeleton, SkeletonRows, StatusBadge } from './ui';
@@ -64,11 +65,8 @@ function newestFirst(a: InquiryEvent, b: InquiryEvent): number {
   return b.createdAt.localeCompare(a.createdAt) || b.id - a.id;
 }
 
-function mailSubject(d: InquiryDetail): string {
-  return `Your request for ${formatLong(d.date)} at The Venue @ NCC (${d.reference})`;
-}
-
-function ContactActions({ d, class: className }: { d: InquiryDetail; class?: string }) {
+/** Email opens the Email section's reply box on this page (sent from the venue address), not a mail app. */
+function ContactActions({ d, class: className, onEmail }: { d: InquiryDetail; class?: string; onEmail: () => void }) {
   const first = d.name.split(' ')[0];
   return (
     <div class={`adm-contact-actions${className ? ` ${className}` : ''}`}>
@@ -84,10 +82,10 @@ function ContactActions({ d, class: className }: { d: InquiryDetail; class?: str
           Text
         </a>
       )}
-      <a class="btn btn--outline" href={`mailto:${d.email}?subject=${encodeURIComponent(mailSubject(d))}`} aria-label={`Email ${first}`}>
+      <button type="button" class="btn btn--outline" aria-label={`Email ${first}`} onClick={onEmail}>
         <Icon name="mail" />
         Email
-      </a>
+      </button>
     </div>
   );
 }
@@ -107,6 +105,10 @@ export function InquiryView({ id }: { id: number }) {
   const [note, setNote] = useState('');
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const emailRef = useRef<HTMLTextAreaElement>(null);
   const actionRef = useRef<HTMLAnchorElement>(null);
   const focusAction = useRef(false);
 
@@ -210,6 +212,33 @@ export function InquiryView({ id }: { id: number }) {
     toast('Note added.');
   };
 
+  const sendEmail = async () => {
+    if (!detail || emailBusy) return;
+    if (!email.trim()) {
+      setEmailError('Write your message first.');
+      return;
+    }
+    setEmailBusy(true);
+    setEmailError(null);
+    const res = await run(api.admin.mail.emailInquiry(detail.id, email.trim()));
+    setEmailBusy(false);
+    if (isError(res)) {
+      setEmailError(res.fields?.body ?? res.error);
+      return;
+    }
+    const wasNew = detail.status === 'new';
+    setDetail(res);
+    setEmail('');
+    refreshStats();
+    const [message, tone] = sentToast(res.emails?.[res.emails.length - 1]);
+    toast(wasNew && res.status === 'contacted' ? `${message} Status changed to Contacted.` : message, tone);
+  };
+
+  const focusEmail = () => {
+    emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    emailRef.current?.focus({ preventScroll: true });
+  };
+
   const back = (
     <a class="btn btn--plain adm-back" href={inboxHref}>
       <Icon name="chevron-left" />
@@ -256,6 +285,7 @@ export function InquiryView({ id }: { id: number }) {
   const over = capacityError(d.space, d.guests);
   const events = d.events.slice().sort(newestFirst);
   const notes = d.notes.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const emails = d.emails ?? [];
   const est = d.estimate;
   const selected = pending ?? d.status;
   const unchanged = selected === d.status;
@@ -351,7 +381,7 @@ export function InquiryView({ id }: { id: number }) {
         )}
       </div>
 
-      <ContactActions d={d} class="adm-quick-contact" />
+      <ContactActions d={d} class="adm-quick-contact" onEmail={focusEmail} />
 
       <div class="adm-detail">
         <div class="adm-detail__main">
@@ -425,6 +455,43 @@ export function InquiryView({ id }: { id: number }) {
             </div>
           </Section>
 
+          <Section
+            id="adm-sec-email"
+            title="Email"
+            action={
+              emails.length > 0 ? (
+                <a class="btn btn--plain btn--sm" href={`#/mail/${emails[emails.length - 1].threadId}`}>
+                  Open in Mail
+                </a>
+              ) : undefined
+            }
+          >
+            {emails.length === 0 ? (
+              <div class="list-group adm-list">
+                <p class="list-row adm-muted">No emails with {d.name.split(' ')[0]} yet.</p>
+              </div>
+            ) : (
+              <ol class="adm-mailthread__list" aria-label="Emails, oldest first">
+                {emails.map((m) => (
+                  <li key={m.id}>
+                    <MailMessageItem m={m} />
+                  </li>
+                ))}
+              </ol>
+            )}
+            <ReplyBox
+              id="adm-inquiry-email"
+              label={`Email ${d.name.split(' ')[0]} at ${d.email}`}
+              placeholder={`Hi ${d.name.split(' ')[0]},`}
+              busy={emailBusy}
+              error={emailError}
+              value={email}
+              onInput={setEmail}
+              onSend={sendEmail}
+              textareaRef={emailRef}
+            />
+          </Section>
+
           <Section id="adm-sec-notes" title="Notes">
             <div class="list-group adm-list">
               {notes.length === 0 ? (
@@ -483,7 +550,7 @@ export function InquiryView({ id }: { id: number }) {
               <Row label="Phone">{d.phone ? formatPhone(d.phone) : <span class="adm-muted">Not given</span>}</Row>
               <Row label="Prefers">{PREF_LABEL[d.contactPreference] ?? d.contactPreference}</Row>
             </dl>
-            <ContactActions d={d} />
+            <ContactActions d={d} onEmail={focusEmail} />
           </Section>
 
           <Section id="adm-sec-activity" title="Activity">

@@ -235,7 +235,7 @@ describe('database', () => {
       assert.equal(db.pragma('journal_mode', { simple: true }), 'wal');
       assert.equal(db.pragma('foreign_keys', { simple: true }), 1);
       const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[]).map((t) => t.name);
-      assert.deepEqual(tables, ['admins', 'blocks', 'email_log', 'form_token_uses', 'inquiries', 'inquiry_events', 'inquiry_notes', 'sessions']);
+      assert.deepEqual(tables, ['admins', 'blocks', 'email_log', 'form_token_uses', 'inquiries', 'inquiry_events', 'inquiry_notes', 'mail_attachments', 'mail_messages', 'mail_sync', 'sessions']);
       db.close();
       const again = openDatabase(path.join(dir, 'nested', 'venue.db'));
       assert.equal(again.pragma('user_version', { simple: true }), MIGRATIONS.length);

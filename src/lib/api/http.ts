@@ -18,6 +18,14 @@
  *   DELETE /api/admin/blocks/:id                             -> { ok: true }
  *   GET    /api/admin/export.csv                             -> text/csv
  *   POST   /api/admin/password       { current, next }       -> { ok: true }
+ *   GET    /api/admin/mail/threads?box=inbox|archived&q=     -> MailThreadList
+ *   GET    /api/admin/mail/threads/:id                       -> MailThread (marks it read)
+ *   PATCH  /api/admin/mail/threads/:id { archived?, read? }  -> MailThread
+ *   POST   /api/admin/mail/threads/:id/reply { body }        -> MailThread
+ *   POST   /api/admin/mail/send      MailCompose             -> MailThread (201)
+ *   POST   /api/admin/mail/inquiry/:id { body, subject? }    -> InquiryDetail
+ *   POST   /api/admin/mail/sync                              -> MailStatus
+ *   GET    /api/admin/mail/attachments/:id                   -> the file, as a download
  * Errors are JSON { ok: false, error, fields? } with a 4xx/5xx status.
  * Mutating requests send X-Requested-With: fetch; the server also checks Origin.
  */
@@ -103,5 +111,15 @@ export const httpApi: VenueApi = {
       }
     },
     changePassword: (current, next) => request('POST', '/api/admin/password', { current, next }),
+    mail: {
+      threads: (box, search) => request('GET', `/api/admin/mail/threads${q({ box, q: search })}`),
+      thread: (id) => request('GET', `/api/admin/mail/threads/${id}`),
+      update: (id, change) => request('PATCH', `/api/admin/mail/threads/${id}`, change),
+      reply: (id, body) => request('POST', `/api/admin/mail/threads/${id}/reply`, { body }),
+      send: (input) => request('POST', '/api/admin/mail/send', input),
+      emailInquiry: (id, body) => request('POST', `/api/admin/mail/inquiry/${id}`, { body }),
+      sync: () => request('POST', '/api/admin/mail/sync', {}),
+      attachmentUrl: (id) => `${apiBase}/api/admin/mail/attachments/${id}`,
+    },
   },
 };

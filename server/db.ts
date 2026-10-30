@@ -200,6 +200,61 @@ export const MIGRATIONS: Migration[] = [
   CREATE INDEX blocks_inquiry ON blocks(inquiry_id);
   `,
   },
+  // 5: the venue's mailbox in the admin (server/mail). Received mail is copied in from IMAP; mail sent
+  // from the admin is stored when it goes out. thread_id is the id of the thread's first message.
+  `
+  CREATE TABLE mail_messages (
+    id INTEGER PRIMARY KEY,
+    thread_id INTEGER,
+    direction TEXT NOT NULL CHECK (direction IN ('in','out')),
+    status TEXT NOT NULL CHECK (status IN ('received','sent','outbox')),
+    mailbox TEXT,
+    uid_validity TEXT,
+    uid INTEGER,
+    message_id TEXT,
+    in_reply_to TEXT,
+    refs TEXT NOT NULL DEFAULT '',
+    from_name TEXT NOT NULL DEFAULT '',
+    from_address TEXT NOT NULL,
+    to_json TEXT NOT NULL DEFAULT '[]',
+    cc_json TEXT NOT NULL DEFAULT '[]',
+    counterpart_name TEXT NOT NULL DEFAULT '',
+    counterpart TEXT NOT NULL,
+    subject TEXT NOT NULL DEFAULT '',
+    subject_key TEXT NOT NULL DEFAULT '',
+    sent_at TEXT NOT NULL,
+    body_text TEXT NOT NULL DEFAULT '',
+    snippet TEXT NOT NULL DEFAULT '',
+    is_read INTEGER NOT NULL DEFAULT 0,
+    archived INTEGER NOT NULL DEFAULT 0,
+    inquiry_id INTEGER REFERENCES inquiries(id) ON DELETE SET NULL,
+    sent_by INTEGER REFERENCES admins(id) ON DELETE SET NULL,
+    sent_by_name TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX mail_messages_uid ON mail_messages(mailbox, uid_validity, uid) WHERE uid IS NOT NULL;
+  CREATE INDEX mail_messages_message_id ON mail_messages(message_id);
+  CREATE INDEX mail_messages_thread ON mail_messages(thread_id, sent_at);
+  CREATE INDEX mail_messages_counterpart ON mail_messages(counterpart, subject_key);
+  CREATE INDEX mail_messages_inquiry ON mail_messages(inquiry_id);
+
+  CREATE TABLE mail_attachments (
+    id INTEGER PRIMARY KEY,
+    message_id INTEGER NOT NULL REFERENCES mail_messages(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    file TEXT NOT NULL
+  );
+  CREATE INDEX mail_attachments_message ON mail_attachments(message_id);
+
+  CREATE TABLE mail_sync (
+    mailbox TEXT PRIMARY KEY,
+    uid_validity TEXT NOT NULL,
+    last_uid INTEGER NOT NULL,
+    synced_at TEXT
+  );
+  `,
 ];
 
 export function migrate(db: Db): number {

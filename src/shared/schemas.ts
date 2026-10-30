@@ -124,6 +124,44 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password.').max(500),
 });
 
+// ---------------------------------------------------------------- mail
+
+export const MAIL_BODY_MAX = 20000;
+export const MAIL_MAX_RECIPIENTS = 10;
+const mailBody = multiLine(MAIL_BODY_MAX).pipe(z.string().min(1, 'Write your message first.'));
+const mailSubject = singleLine(200).pipe(z.string().min(1, 'Add a subject.'));
+const emailOnly = z.email();
+
+/** "a@x.org, B <b@y.org>" to a list of addresses; null when any one is not an email address. */
+export function parseRecipients(raw: string): string[] | null {
+  const parts = raw
+    .split(/[,;]/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => /<([^<>]+)>s*$/.exec(p)?.[1].trim() ?? p);
+  if (parts.length === 0) return null;
+  return parts.every((p) => p.length <= 200 && emailOnly.safeParse(p).success) ? parts.map((p) => p.toLowerCase()) : null;
+}
+
+export const mailComposeSchema = z.object({
+  to: singleLine(2000)
+    .refine((s) => s.length > 0, 'Enter an email address.')
+    .refine((s) => parseRecipients(s) !== null, 'Enter valid email addresses, separated by commas.')
+    .refine((s) => (parseRecipients(s)?.length ?? 0) <= MAIL_MAX_RECIPIENTS, `Send to ${MAIL_MAX_RECIPIENTS} addresses or fewer.`),
+  subject: mailSubject,
+  body: mailBody,
+  inquiryId: z.number().int().positive().optional(),
+});
+
+export const mailReplySchema = z.object({ body: mailBody });
+
+/** An email to a request's guest: a reply in their latest thread, or a new one with this subject. */
+export const inquiryEmailSchema = z.object({ body: mailBody, subject: singleLine(200).optional() });
+
+export const mailThreadUpdateSchema = z
+  .object({ archived: z.boolean().optional(), read: z.boolean().optional() })
+  .refine((v) => v.archived !== undefined || v.read !== undefined, 'Nothing to change.');
+
 export const passwordChangeSchema = z.object({
   current: z.string().min(1).max(500),
   next: z.string().min(12, 'Use at least 12 characters.').max(500),

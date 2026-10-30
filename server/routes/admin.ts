@@ -13,6 +13,7 @@ import { INQUIRY_STATUSES, spaceFromParts, spaceParts } from '../../src/shared/t
 import type { AdminUser, BlockKind, CalendarBlock, DateKey, Inquiry, InquiryListQuery, InquiryStatus, SpaceChoice } from '../../src/shared/types';
 import { apiError, clientIp, ipBucket, iso, MUTATING_METHODS, readBody, type AppContextT, type AppEnv, type ServerContext } from '../context';
 import { spaceLabel } from '../email/templates';
+import { mailRoutes } from './mail';
 import { spacesOverlap, type Repo } from '../repo';
 import { BusyError, dummyPasswordHash, hashPassword, needsRehash, newSessionToken, sha256, verifyPassword, type RateLimiter } from '../security';
 
@@ -381,6 +382,8 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
     })();
     return c.json({ ok: true as const });
   });
+
+  admin.route('/mail', mailRoutes(ctx));
 
   return admin;
 }

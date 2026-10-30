@@ -4,11 +4,14 @@
  *   #/inbox?status=&q=  Inbox
  *   #/inquiry/<id>      Request detail
  *   #/calendar?m=YYYY-MM&d=YYYY-MM-DD
+ *   #/mail?box=archived&q=  Mail (the venue mailbox)
+ *   #/mail/<thread id>
+ *   #/mail/new?to=&subject=
  *   #/settings
  */
 import { useEffect, useState } from 'preact/hooks';
 import { isDateKey } from '../../shared/dates';
-import { INQUIRY_STATUSES, type DateKey, type InquiryStatus } from '../../shared/types';
+import { INQUIRY_STATUSES, type DateKey, type InquiryStatus, type MailBox } from '../../shared/types';
 
 export type InboxFilter = InquiryStatus | 'open' | 'all';
 
@@ -17,6 +20,9 @@ export type Route =
   | { name: 'inbox'; status: InboxFilter; q: string }
   | { name: 'inquiry'; id: number }
   | { name: 'calendar'; month: string | null; day: DateKey | null }
+  | { name: 'mail'; box: MailBox; q: string }
+  | { name: 'mailThread'; id: number }
+  | { name: 'mailNew'; to: string; subject: string }
   | { name: 'settings' }
   | { name: 'notfound' };
 
@@ -44,6 +50,11 @@ export function parseHash(hash: string): Route {
       day: d && isDateKey(d) ? d : null,
     };
   }
+  if (head === 'mail') {
+    if (parts[1] === 'new') return { name: 'mailNew', to: params.get('to') ?? '', subject: params.get('subject') ?? '' };
+    if (parts[1] && /^[0-9]+$/.test(parts[1])) return { name: 'mailThread', id: Number(parts[1]) };
+    return { name: 'mail', box: params.get('box') === 'archived' ? 'archived' : 'inbox', q: params.get('q') ?? '' };
+  }
   if (head === 'settings') return { name: 'settings' };
   return { name: 'notfound' };
 }
@@ -64,9 +75,19 @@ export function calendarHash(month: string | null, day?: DateKey | null): string
   return `#/calendar${s ? `?${s}` : ''}`;
 }
 
+export function mailHash(box: MailBox, q: string): string {
+  const p = new URLSearchParams();
+  if (box !== 'inbox') p.set('box', box);
+  if (q.trim()) p.set('q', q.trim());
+  const s = p.toString();
+  return `#/mail${s ? `?${s}` : ''}`;
+}
+
 /** A stable key for "which screen is this", ignoring filters, so focus moves only on real navigation. */
 export function screenKey(route: Route): string {
-  return route.name === 'inquiry' ? `inquiry:${route.id}` : route.name;
+  if (route.name === 'inquiry') return `inquiry:${route.id}`;
+  if (route.name === 'mailThread') return `mail:${route.id}`;
+  return route.name;
 }
 
 export function useHash(): [string, (hash: string, replace?: boolean) => void] {

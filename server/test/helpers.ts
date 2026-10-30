@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createApp } from '../app';
+import type { ImapFactory } from '../mail/service';
 import { loadConfig, type Config } from '../config';
 import { iso, type Logger } from '../context';
 import { openDatabase, type Db } from '../db';
@@ -73,7 +74,7 @@ export function writeSite(dir: string): void {
   }
 }
 
-export async function createHarness(env: Record<string, string> = {}): Promise<Harness> {
+export async function createHarness(env: Record<string, string> = {}, opts: { imapFactory?: ImapFactory } = {}): Promise<Harness> {
   // Production scrypt (N=2^17) costs about half a second a hash; the API tests only need it to work.
   useFastPasswordHashingForTests();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ncc-server-test-'));
@@ -101,7 +102,7 @@ export async function createHarness(env: Record<string, string> = {}): Promise<H
       this.now += ms;
     },
   };
-  const { app, ctx, whenIdle } = createApp({ config, db, now: () => clock.now, log: silentLog });
+  const { app, ctx, whenIdle } = createApp({ config, db, now: () => clock.now, log: silentLog, imapFactory: opts.imapFactory });
   ctx.repo.createAdmin(ADMIN_EMAIL, 'Faith', await hashPassword(ADMIN_PASSWORD), iso(clock.now));
 
   const request = (urlPath: string, opts: RequestOptions = {}) => {

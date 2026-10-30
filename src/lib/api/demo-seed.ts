@@ -9,6 +9,7 @@
  *
  * Pure module: nothing runs at import time.
  */
+import { seedMail, type DemoMail } from './demo-mail';
 import { eventTypeName } from '../../data/event-types';
 import { addDays, dayOfWeek, formatLong, todayKey } from '../../shared/dates';
 import { estimateWithRates as estimate } from '../../shared/rate-card';
@@ -47,6 +48,8 @@ export interface DemoDb {
   blocks: CalendarBlock[];
   /** Form tokens that already created an inquiry, so a retried request is not stored twice. */
   formTokenUses?: Record<string, { inquiryId: number; fingerprint: string; usedAt: string }>;
+  /** The venue mailbox (demo-mail.ts); missing in demo data saved before it existed. */
+  mail?: DemoMail;
 }
 
 export function statusLabel(status: InquiryStatus): string {
@@ -95,6 +98,9 @@ export const timelineText = {
       `${formatLong(date)} already has a ${b.kind} block for ${SPACE_NAMES[b.space]}${b.label ? ` (${b.label})` : ''}. Remove or change that block on the calendar, then mark this request booked.`,
   },
   blockRemoved: (date: DateKey) => `Removed from the calendar for ${formatLong(date)}.`,
+  /** Emailing from the admin: the same words as server/mail/service.ts and server/routes/mail.ts. */
+  emailSent: (to: string, by: string, subject: string) => `Email sent to ${to} by ${by}: ${subject}`.slice(0, 300),
+  emailedGuest: (by: string) => `Status changed from ${statusLabel('new')} to ${statusLabel('contacted')} when ${by} emailed the guest.`,
 };
 
 type InquiryFields = Omit<Inquiry, 'id' | 'reference' | 'status' | 'estimateTotal' | 'createdAt' | 'updatedAt'>;
@@ -483,5 +489,6 @@ export function buildSeed(now: Date = new Date()): DemoDb {
     nextEntryId,
     inquiries,
     blocks,
+    mail: seedMail(inquiries, nowMs),
   };
 }

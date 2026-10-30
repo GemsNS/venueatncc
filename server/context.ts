@@ -5,6 +5,7 @@ import type { Context } from 'hono';
 import type { HttpBindings } from '@hono/node-server';
 import type { Config } from './config';
 import type { Mailer } from './email/mailer';
+import type { MailService } from './mail/service';
 import type { Repo, SessionRecord } from './repo';
 import type { RateLimiter } from './security';
 import type { ApiError } from '../src/shared/types';
@@ -44,6 +45,8 @@ export interface ServerContext {
   config: Config;
   repo: Repo;
   mailer: Mailer;
+  /** The venue's mailbox in the admin. */
+  mail: MailService;
   /** Milliseconds since the epoch. Injectable so tests can move time. */
   now: () => number;
   log: Logger;
@@ -58,6 +61,10 @@ export interface ServerContext {
     loginAccount: RateLimiter;
     /** Current-password checks per admin. */
     password: RateLimiter;
+    /** Emails sent from the admin, per admin. */
+    mailSend: RateLimiter;
+    /** "Check for Mail" presses, per admin. */
+    mailSync: RateLimiter;
   };
 }
 
@@ -65,7 +72,7 @@ export const iso = (ms: number) => new Date(ms).toISOString();
 
 export const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-export function apiError(c: AppContextT, status: 400 | 401 | 403 | 404 | 409 | 413 | 415 | 429 | 500 | 503, error: string, fields?: Record<string, string>) {
+export function apiError(c: AppContextT, status: 400 | 401 | 403 | 404 | 409 | 413 | 415 | 429 | 500 | 502 | 503, error: string, fields?: Record<string, string>) {
   const body: ApiError = fields && Object.keys(fields).length > 0 ? { ok: false, error, fields } : { ok: false, error };
   return c.json(body, status);
 }

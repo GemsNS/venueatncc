@@ -13,7 +13,8 @@ import { ALT_DATE_TOO_FAR, availabilityQuerySchema, DATE_TOO_FAR, fieldErrors, i
 import type { AvailabilityResponse, CalendarBlock, DateKey, Estimate, InquiryCreated } from '../../src/shared/types';
 import { apiError, clientBucket, iso, readBody, type AppEnv, type ServerContext } from '../context';
 import { guestConfirmationEmail, spaceLabel, venueNotificationEmail } from '../email/templates';
-import type { EmailMessage } from '../email/mailer';
+import type { EmailMessage, SendResult } from '../email/mailer';
+import { APP_HEADER } from '../mail/service';
 import { checkFormToken, FORM_TOKEN_MAX_AGE_MS, issueFormToken, sha256 } from '../security';
 
 export { latestBookableDate } from '../../src/shared/schemas';
@@ -75,7 +76,7 @@ export function requestFingerprint(input: Record<string, unknown>): string {
   return sha256(JSON.stringify(keys.map((k) => [k, rest[k] ?? null])));
 }
 
-async function deliver(ctx: ServerContext, inquiryId: number, kind: string, label: string, message: EmailMessage): Promise<void> {
+async function deliver(ctx: ServerContext, inquiryId: number, kind: string, label: string, message: EmailMessage & { to: string }): Promise<SendResult | null> {
   const { repo, mailer, now, log } = ctx;
   try {
     const result = await mailer.send(message);
@@ -89,6 +90,7 @@ async function deliver(ctx: ServerContext, inquiryId: number, kind: string, labe
       result.status === 'sent' ? `${label} sent to ${message.to}.` : `${label} to ${message.to} saved to the outbox (email sending is not set up).`,
       iso(now()),
     );
+    return result;
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     log.error(`[email] ${kind} for inquiry ${inquiryId} failed:`, reason);
@@ -97,6 +99,7 @@ async function deliver(ctx: ServerContext, inquiryId: number, kind: string, labe
       iso(now()),
     );
     repo.addEvent(inquiryId, 'email', `${label} to ${message.to} could not be sent: ${reason.slice(0, 200)}`, iso(now()));
+    return null;
   }
 }
 
@@ -110,6 +113,7 @@ export async function sendInquiryEmails(ctx: ServerContext, inquiryId: number, e
     replyTo: { name: inquiry.name, address: inquiry.email },
     ...venue,
     tag: `${inquiry.reference}-venue`,
+    headers: { [APP_HEADER]: 'notification' },
   });
   // Check and reserve a send slot in one synchronous step, so a burst of concurrent requests cannot
   // all read a low count before any of them is recorded.
@@ -130,12 +134,24 @@ export async function sendInquiryEmails(ctx: ServerContext, inquiryId: number, e
     return;
   }
   const guest = guestConfirmationEmail(inquiry, est, { origin });
-  await deliver(ctx, inquiryId, 'guest_confirmation', 'Confirmation email', {
+  const sent = await deliver(ctx, inquiryId, 'guest_confirmation', 'Confirmation email', {
     to: inquiry.email,
     replyTo: ctx.config.notifyTo,
     ...guest,
     tag: `${inquiry.reference}-guest`,
+    headers: { [APP_HEADER]: 'confirmation' },
   });
+  // The admin's mail shows the confirmation, so the guest's reply to it opens in the same thread.
+  if (sent) {
+    ctx.mail.record({
+      to: { name: inquiry.name, address: inquiry.email },
+      subject: guest.subject,
+      text: guest.text,
+      messageId: sent.messageId,
+      status: sent.status,
+      inquiryId,
+    });
+  }
 }
 
 /** Times of guest confirmations reserved during the last hour, per app instance. */

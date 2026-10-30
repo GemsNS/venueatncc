@@ -185,6 +185,8 @@ export interface InquiryDetail extends Inquiry {
   events: InquiryEvent[];
   /** Calendar blocks linked to this request (optional so older payloads still type-check). */
   blocks?: CalendarBlock[];
+  /** Emails with the guest, oldest first (the admin's mail, src/components/admin/MailView.tsx). */
+  emails?: MailMessage[];
 }
 
 export type BlockKind = 'booked' | 'held' | 'closed';
@@ -212,9 +214,102 @@ export interface AdminStats {
   upcomingBooked: { date: DateKey; label: string; space: SpaceChoice }[];
   pipelineValue: number; // sum of estimates for new/contacted/visit/quoted
   bookedValue: number; // sum of estimates for booked
+  /** Unread emails in the venue's mailbox (not archived). */
+  unreadMail?: number;
 }
 
 export interface InquiryListQuery {
   status?: InquiryStatus | 'open' | 'all';
   q?: string;
+}
+
+// ---------------------------------------------------------------- mail
+
+export interface MailAddress {
+  name: string;
+  address: string;
+}
+
+export interface MailAttachment {
+  id: number;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
+/**
+ * One email in the venue's mailbox. 'in' came from someone else; 'out' was sent as the venue,
+ * from the admin (status sent, or outbox while sending is not set up) or from another mail app.
+ */
+export interface MailMessage {
+  id: number;
+  threadId: number;
+  direction: 'in' | 'out';
+  from: MailAddress;
+  to: MailAddress[];
+  cc: MailAddress[];
+  subject: string;
+  /** ISO. */
+  sentAt: string;
+  text: string;
+  read: boolean;
+  status: 'received' | 'sent' | 'outbox';
+  /** The admin who sent it from here. */
+  sentBy?: string;
+  attachments: MailAttachment[];
+  inquiryId: number | null;
+}
+
+export interface MailInquiryLink {
+  id: number;
+  reference: string;
+  name: string;
+}
+
+export interface MailThreadSummary {
+  id: number;
+  subject: string;
+  /** The guest or other party. */
+  counterpart: MailAddress;
+  snippet: string;
+  lastAt: string;
+  count: number;
+  unread: number;
+  lastDirection: 'in' | 'out';
+  archived: boolean;
+  hasAttachments: boolean;
+  inquiry: MailInquiryLink | null;
+}
+
+export interface MailThread {
+  id: number;
+  subject: string;
+  counterpart: MailAddress;
+  archived: boolean;
+  inquiry: MailInquiryLink | null;
+  messages: MailMessage[];
+}
+
+/** Whether the mailbox is connected. 'outbox' sending saves emails on the server without delivering them. */
+export interface MailStatus {
+  address: string;
+  sending: 'smtp' | 'outbox' | 'demo';
+  receiving: 'off' | 'ok' | 'error' | 'demo';
+  lastSyncAt: string | null;
+  error?: string;
+}
+
+export type MailBox = 'inbox' | 'archived';
+
+export interface MailThreadList {
+  threads: MailThreadSummary[];
+  status: MailStatus;
+}
+
+export interface MailCompose {
+  /** One or more addresses, separated by commas. */
+  to: string;
+  subject: string;
+  body: string;
+  inquiryId?: number;
 }

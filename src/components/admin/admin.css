@@ -130,7 +130,7 @@ body.is-bare .btn {
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
   height: calc(var(--adm-tabbar-h) + env(safe-area-inset-bottom));
   padding: 4px max(8px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
@@ -2300,4 +2300,223 @@ body.is-bare .btn {
   .adm-row > .adm-datetile {
     display: none;
   }
+}
+
+/* ---------- Mail ---------- */
+
+/* A conversation row: who and when on top, then the subject and the first words, the request it is about. */
+.adm-mailrow.list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: baseline;
+  padding-block: 12px;
+}
+
+.adm-mailrow__top {
+  display: contents;
+}
+
+.adm-mailrow__who {
+  font-weight: 500;
+}
+
+.adm-mailrow.is-unread .adm-mailrow__who,
+.adm-mailrow.is-unread .adm-mailrow__subject {
+  font-weight: 650;
+}
+
+.adm-mailrow__count {
+  margin-left: 6px;
+  color: var(--label-2);
+  font-weight: 400;
+  font-size: var(--t-footnote);
+}
+
+.adm-mailrow__time {
+  color: var(--label-2);
+  font-size: var(--t-footnote);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-mailrow__subject {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+.adm-mailrow__clip {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: -0.1em;
+  color: var(--label-2);
+}
+
+.adm-mailrow__snippet.adm-row__meta {
+  grid-column: 1 / -1;
+  margin-top: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.adm-mailrow__ref {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--on-chip);
+  font-size: var(--t-caption, 0.75rem);
+}
+
+/* A thread: one card per email, oldest first; the venue's own emails sit on the blush tint. */
+.adm-mailthread__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-mailthread__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: var(--t-subhead);
+}
+
+.adm-mailthread__link .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-icon);
+}
+
+.adm-mailmsg {
+  display: grid;
+  gap: 10px;
+  padding: 16px 1.1rem;
+  border-radius: var(--adm-radius-section);
+  background: var(--bg-elevated);
+  box-shadow: var(--adm-card-edge);
+}
+
+.adm-mailmsg--out {
+  background: var(--chip);
+}
+
+.adm-mailmsg__head {
+  display: grid;
+  gap: 2px;
+}
+
+.adm-mailmsg__from {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.adm-mailmsg__addr {
+  color: var(--label-2);
+  font-weight: 400;
+  font-size: var(--t-subhead);
+}
+
+.adm-mailmsg__meta {
+  margin: 0;
+  color: var(--label-2);
+  font-size: var(--t-footnote);
+}
+
+.adm-mailmsg__body,
+.adm-mailmsg__quoted {
+  margin: 0;
+}
+
+.adm-mailmsg__quoted {
+  padding-left: 12px;
+  border-left: 2px solid var(--separator);
+  color: var(--label-2);
+  font-size: var(--t-subhead);
+}
+
+.adm-mailmsg__more.btn {
+  justify-self: start;
+  min-height: 44px;
+  padding-inline: 0;
+}
+
+.adm-mailmsg__note {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  color: var(--adm-orange);
+  font-size: var(--t-footnote);
+  font-weight: 600;
+}
+
+.adm-mailmsg__note .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.adm-mailmsg__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-mailfile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  box-shadow: var(--adm-card-edge);
+  color: var(--label);
+  font-size: var(--t-subhead);
+  text-decoration: none;
+}
+
+a.adm-mailfile:hover {
+  color: var(--accent-text);
+}
+
+.adm-mailfile .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.adm-replybox {
+  margin-top: 16px;
+}
+
+.adm-replybox textarea.input {
+  min-height: 9rem;
+}
+
+.adm-compose {
+  display: grid;
+  gap: 16px;
+  max-width: 44rem;
+}
+
+.adm-compose .input {
+  background: var(--bg-elevated);
+}
+
+.adm-compose textarea.input {
+  min-height: 14rem;
 }

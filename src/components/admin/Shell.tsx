@@ -8,7 +8,7 @@ import { Monogram } from './ui';
 import type { Route } from './route';
 
 interface NavItem {
-  id: 'today' | 'inbox' | 'calendar' | 'settings';
+  id: 'today' | 'inbox' | 'mail' | 'calendar' | 'settings';
   label: string;
   icon: IconName;
   href: string;
@@ -17,12 +17,14 @@ interface NavItem {
 const NAV: NavItem[] = [
   { id: 'today', label: 'Today', icon: 'home', href: '#/' },
   { id: 'inbox', label: 'Inbox', icon: 'inbox', href: '#/inbox' },
+  { id: 'mail', label: 'Mail', icon: 'mail', href: '#/mail' },
   { id: 'calendar', label: 'Calendar', icon: 'calendar', href: '#/calendar' },
   { id: 'settings', label: 'Settings', icon: 'settings', href: '#/settings' },
 ];
 
 function currentSection(route: Route): NavItem['id'] | null {
   if (route.name === 'inquiry') return 'inbox';
+  if (route.name === 'mail' || route.name === 'mailThread' || route.name === 'mailNew') return 'mail';
   if (route.name === 'today' || route.name === 'inbox' || route.name === 'calendar' || route.name === 'settings') return route.name;
   return null;
 }
@@ -36,9 +38,9 @@ function CountBadge({ n }: { n: number }) {
   );
 }
 
-function CountText({ n }: { n: number }) {
+function CountText({ n, word = 'new' }: { n: number; word?: string }) {
   if (n <= 0) return null;
-  return <span class="visually-hidden">, {n} new</span>;
+  return <span class="visually-hidden">, {n} {word}</span>;
 }
 
 export function Shell({
@@ -58,6 +60,9 @@ export function Shell({
 }) {
   const current = currentSection(route);
   const newCount = stats?.byStatus.new ?? 0;
+  const unreadMail = stats?.unreadMail ?? 0;
+  const countFor = (item: NavItem) => (item.id === 'inbox' ? newCount : item.id === 'mail' ? unreadMail : 0);
+  const wordFor = (item: NavItem) => (item.id === 'mail' ? 'unread' : 'new');
   // Inbox keeps its last filter and search, except when you are already on it (then it resets).
   const hrefFor = (item: NavItem) => (item.id === 'inbox' && route.name !== 'inbox' ? inboxHref : item.href);
 
@@ -80,9 +85,9 @@ export function Shell({
                 <Icon name={item.icon} />
                 <span class="adm-nav__label">
                   {item.label}
-                  {item.id === 'inbox' && <CountText n={newCount} />}
+                  <CountText n={countFor(item)} word={wordFor(item)} />
                 </span>
-                {item.id === 'inbox' && <CountBadge n={newCount} />}
+                <CountBadge n={countFor(item)} />
               </a>
             </li>
           ))}
@@ -114,11 +119,11 @@ export function Shell({
           <a key={item.id} class="adm-tab" href={hrefFor(item)} aria-current={current === item.id ? 'page' : undefined}>
             <span class="adm-tab__icon">
               <Icon name={item.icon} />
-              {item.id === 'inbox' && <CountBadge n={newCount} />}
+              <CountBadge n={countFor(item)} />
             </span>
             <span class="adm-tab__label">
               {item.label}
-              {item.id === 'inbox' && <CountText n={newCount} />}
+              <CountText n={countFor(item)} word={wordFor(item)} />
             </span>
           </a>
         ))}
