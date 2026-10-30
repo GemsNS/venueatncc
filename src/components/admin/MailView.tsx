@@ -340,6 +340,7 @@ export function ReplyBox({
   onInput,
   onSend,
   textareaRef,
+  mailto,
 }: {
   id: string;
   label: string;
@@ -350,6 +351,8 @@ export function ReplyBox({
   onInput: (v: string) => void;
   onSend: () => void;
   textareaRef?: { current: HTMLTextAreaElement | null };
+  /** A mailto: link to write from a mail app instead (the way the request page worked before Mail). */
+  mailto?: string;
 }) {
   const { user } = useAdmin();
   return (
@@ -382,6 +385,12 @@ export function ReplyBox({
       />
       <p id={`${id}-help`} class="adm-footnote">
         Your signature is added: {user.name}, The Venue @ NCC, and the phone number.
+        {mailto && (
+          <>
+            {' '}
+            <a href={mailto}>Write from your mail app instead</a>.
+          </>
+        )}
       </p>
       {error && (
         <p id={`${id}-error`} class="adm-error" role="alert">

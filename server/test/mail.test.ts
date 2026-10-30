@@ -237,6 +237,13 @@ describe('mail', () => {
     assert.match(eml, /> Is the Saturday after still open\?/);
     // Not copied to the sent folder: it was not delivered.
     assert.equal(mailbox.appended.length, 0);
+
+    // The same message found later in the sent folder (copied there, or by another mail app) is not stored twice.
+    const count = () => (h.db.prepare('SELECT COUNT(*) AS n FROM mail_messages').get() as { n: number }).n;
+    const n = count();
+    mailbox.deliver('Sent', Buffer.from(eml), new Date(h.clock.now));
+    await h.ctx.mail.sync();
+    assert.equal(count(), n);
   });
 
   test('emailing from a request replies in the guest thread and moves New to Contacted', async () => {
