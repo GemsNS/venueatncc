@@ -21,6 +21,7 @@ import { simpleParser, type AddressObject, type ParsedMail } from 'mailparser';
 import type { Config, ImapConfig } from '../config';
 import { iso, type Logger, type Tasks } from '../context';
 import type { Mailer } from '../email/mailer';
+import { createTokenSource, type TokenSource } from './m365';
 import type { MailRow, MailUid, NewMail, Repo } from '../repo';
 import type { AdminUser, MailAddress, MailStatus } from '../../src/shared/types';
 import { cleanMessageId, formatAddress, messageIds, newMessageId, replyHtml, replyText, signature, snippetOf, subjectKey } from './text';
@@ -174,7 +175,8 @@ export function createMailService(deps: {
   log: Logger;
   now: () => number;
   imapFactory?: ImapFactory;
-  fetchToken?: typeof fetch;
+  /** Microsoft 365 tokens, shared with the mailer. */
+  tokens?: TokenSource;
 }): MailService {
   const { config, repo, mailer, tasks, log, now } = deps;
   const imap = config.imap;
@@ -183,29 +185,11 @@ export function createMailService(deps: {
   let running: Promise<void> | null = null;
   let lastError: string | undefined;
   let lastOk: string | null = imap ? (repo.getMailSync(imap.inbox)?.syncedAt ?? null) : null;
-  let token: { value: string; expires: number } | null = null;
+  const tokens = deps.tokens ?? createTokenSource(fetch, now);
 
-  /** A Microsoft 365 app's token (client credentials), cached until a minute before it expires. */
   async function auth(cfg: ImapConfig): Promise<ImapAuth> {
     if (!cfg.oauth) return { user: cfg.user, pass: cfg.pass ?? '' };
-    if (token && token.expires > now() + 60_000) return { user: cfg.user, accessToken: token.value };
-    const res = await (deps.fetchToken ?? fetch)(`https://login.microsoftonline.com/${encodeURIComponent(cfg.oauth.tenant)}/oauth2/v2.0/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: cfg.oauth.clientId,
-        client_secret: cfg.oauth.clientSecret,
-        scope: 'https://outlook.office365.com/.default',
-        grant_type: 'client_credentials',
-      }).toString(),
-      signal: AbortSignal.timeout(20_000),
-    });
-    const body = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error_description?: string };
-    if (!res.ok || !body.access_token) {
-      throw new Error(`Microsoft 365 did not give the app a mailbox token: ${(body.error_description ?? `HTTP ${res.status}`).split('\n')[0].slice(0, 200)}`);
-    }
-    token = { value: body.access_token, expires: now() + (body.expires_in ?? 3600) * 1000 };
-    return { user: cfg.user, accessToken: token.value };
+    return { user: cfg.user, accessToken: await tokens(cfg.oauth) };
   }
 
   async function withClient<T>(cfg: ImapConfig, fn: (client: ImapClient) => Promise<T>): Promise<T> {

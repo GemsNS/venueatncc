@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { loadConfig } from '../config';
+import { createTokenSource } from '../mail/m365';
 import { ipBucket } from '../context';
 import Database from 'better-sqlite3';
 import { MIGRATIONS, migrate, openDatabase } from '../db';
@@ -201,6 +202,47 @@ describe('request helpers', () => {
 });
 
 describe('config', () => {
+  test('the Microsoft 365 app connects the venue mailbox for sending and receiving, with no other setting', () => {
+    const c = loadConfig({ MAIL_M365_CLIENT_ID: 'app-id', MAIL_M365_CLIENT_SECRET: 'app-secret' }, silentLog);
+    const app = { tenant: 'venueatncc.org', clientId: 'app-id', clientSecret: 'app-secret' };
+    assert.deepEqual(c.smtp, { host: 'smtp.office365.com', port: 587, secure: false, user: 'faith@venueatncc.org', oauth: app });
+    assert.equal(c.imap?.host, 'outlook.office365.com');
+    assert.equal(c.imap?.user, 'faith@venueatncc.org');
+    assert.deepEqual(c.imap?.oauth, app);
+    assert.equal(c.imap?.pass, undefined);
+    assert.equal(c.imap?.sent, 'Sent Items');
+    assert.equal(c.imap?.copyAll, true);
+    assert.equal(c.imap?.appendSent, false, 'Exchange files what it sends itself');
+    // When the venue address is an alias in another mailbox, only venue mail is copied.
+    const alias = loadConfig({ MAIL_M365_CLIENT_ID: 'a', MAIL_M365_CLIENT_SECRET: 'b', MAIL_M365_MAILBOX: 'Faith@Example.org' }, silentLog);
+    assert.equal(alias.imap?.user, 'faith@example.org');
+    assert.equal(alias.imap?.copyAll, false);
+    assert.equal(alias.smtp?.user, 'faith@example.org');
+    assert.throws(() => loadConfig({ MAIL_M365_CLIENT_ID: 'a' }, silentLog), /MAIL_M365_CLIENT_SECRET/);
+  });
+
+  test('Microsoft 365 tokens are fetched once and reused until shortly before they expire', async () => {
+    let calls = 0;
+    let clock = 0;
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      calls++;
+      assert.match(String(init.body), /grant_type=client_credentials/);
+      assert.match(String(init.body), /scope=https%3A%2F%2Foutlook.office365.com%2F.default/);
+      return new Response(JSON.stringify({ access_token: `t${calls}`, expires_in: 3600 }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const tokens = createTokenSource(fakeFetch, () => clock);
+    const app = { tenant: 'venueatncc.org', clientId: 'id', clientSecret: 's' };
+    assert.equal(await tokens(app), 't1');
+    clock += 30 * 60 * 1000;
+    assert.equal(await tokens(app), 't1');
+    clock += 30 * 60 * 1000;
+    assert.equal(await tokens(app), 't2');
+    const refused = createTokenSource(
+      (async () => new Response(JSON.stringify({ error_description: 'AADSTS7000215: Invalid client secret.\nTrace' }), { status: 401 })) as unknown as typeof fetch,
+    );
+    await assert.rejects(refused(app), /Invalid client secret\.$/);
+  });
+
   test('one app password connects the venue mailbox on Google Workspace, for sending and receiving', () => {
     const none = loadConfig({}, silentLog);
     assert.equal(none.smtp, null);

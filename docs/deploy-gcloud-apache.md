@@ -572,7 +572,9 @@ so all paths below are absolute.
 | `NOTIFY_TO` | `faith@venueatncc.org` (`config.ts:134`) | `faith@venueatncc.org` | Also the Reply-To on guest confirmations (`routes/public.ts:135`), so it must never be a wearencc.org address. It receives mail once 11.2 is done. |
 | `OUTBOX_DIR` | `./data/outbox` (`config.ts:135`) | `/var/www/venueatncc.org/data/outbox` | Created as 700, files 600 (`mailer.ts:62-68`). |
 | `OUTBOX_RETENTION_DAYS` | unset or `0`: keep forever (`config.ts:136`) | unset | Set (for example `90`) only once SMTP is sending; checked hourly (`index.ts:68-90`). |
-| `MAIL_APP_PASSWORD` | unset | the Google app password for `faith@venueatncc.org` ([11.0](#110-the-mailbox-google-workspace-one-setting-decided-2026-10-30)) | With `SMTP_HOST` and `IMAP_HOST` empty, sends and receives through Google Workspace with no other setting (`config.ts`, `GOOGLE_MAIL`). Spaces are ignored. Never print it. |
+| `MAIL_M365_CLIENT_ID`, `MAIL_M365_CLIENT_SECRET` | unset | the app registration from [11.0](#110-the-mailbox-the-existing-microsoft-365-inbox-two-settings-decided-2026-10-30) | With `SMTP_HOST` and `IMAP_HOST` empty, sends and receives as `faith@venueatncc.org` through Microsoft 365 with no other setting (`config.ts`, `M365_MAIL`). Never print the secret. |
+| `MAIL_M365_TENANT`, `MAIL_M365_MAILBOX` | `venueatncc.org`, the `MAIL_FROM` address | defaults | `MAIL_M365_MAILBOX` only when the venue address is an alias of another mailbox. |
+| `MAIL_APP_PASSWORD` | unset | unset | A Google Workspace mailbox instead (`GOOGLE_MAIL`). |
 | `IMAP_HOST` | unset: the admin's Mail tab sends but does not receive | unset until [11.4](#114-receive-in-the-admin-connect-the-mailbox-owner--grokbot) | The mailbox the admin reads. When set, `IMAP_PASS` or the three `IMAP_OAUTH_*` values are required or the app refuses to start. |
 | `IMAP_PORT` / `IMAP_SECURE` | `993` / `true` | defaults | |
 | `IMAP_USER` | the address in `MAIL_FROM` | per 11.4 | When it is the venue address, all mail in the folders is copied; otherwise only venue mail (`IMAP_COPY_ALL` overrides). |
@@ -1185,40 +1187,64 @@ needs a firewall change or touches the server's shared state.
 All DNS for `venueatncc.org` is managed by the owner at GoDaddy (My Products, venueatncc.org, DNS).
 Keep exactly **one** SPF (`v=spf1 ...`) TXT record on `@`; merge includes into it.
 
-### 11.0 The mailbox: Google Workspace, one setting (decided 2026-10-30)
+### 11.0 The mailbox: the existing Microsoft 365 inbox, two settings (decided 2026-10-30)
 
-`faith@venueatncc.org` is a Google Workspace mailbox of its own, separate from the church's Microsoft
-365. The server sends **and** receives through it, so there is no separate relay (11.3) and no
-alias (11.2). With `MAIL_APP_PASSWORD` set and `SMTP_HOST` and `IMAP_HOST` left empty, the server
-uses `smtp.gmail.com:587` and `imap.gmail.com:993` as `faith@venueatncc.org`
-(`GOOGLE_MAIL` in `server/config.ts`), and the admin's Mail tab sends and receives. Google Cloud needs
-no change: outbound 587 and 993 are open (only port 25 is blocked).
+`faith@venueatncc.org` already works: it is a Microsoft 365 mailbox bought through GoDaddy (MX
+`venueatncc-org.mail.protection.outlook.com`, DKIM signed by Microsoft, DMARC `p=quarantine`). The
+server sends **and** receives as that mailbox, so there is no relay (11.3), no DNS change, and no change
+in Google Cloud (outbound 587 and 993 are open; only port 25 is blocked). Booking emails go out through
+Microsoft like Faith's own mail and pass DMARC. Everything the admin sends also lands in the mailbox's
+Sent Items, so Outlook shows it, and what Faith sends from Outlook shows in the admin.
 
-1. **Owner, Google Workspace:** sign up (Business Starter is enough) with the domain `venueatncc.org`
-   and the first user `faith@venueatncc.org`. When Google asks to verify the domain and turn on Gmail,
-   choose GoDaddy and sign in. Google adds its records automatically. To add them by hand in GoDaddy
-   DNS instead:
+Microsoft 365 does not accept passwords from apps (basic authentication is retired for IMAP and SMTP),
+so the server signs in as an **app registration** with two application permissions,
+`IMAP.AccessAsApp` and `SMTP.SendAsApp`, limited to this one mailbox. With `MAIL_M365_CLIENT_ID` and
+`MAIL_M365_CLIENT_SECRET` set and `SMTP_HOST` and `IMAP_HOST` empty, the server uses
+`smtp.office365.com:587` and `outlook.office365.com:993` as `faith@venueatncc.org`, with the directory
+`venueatncc.org` (`M365_MAIL` in `server/config.ts`).
 
-   | Type | Name | Value |
-   | --- | --- | --- |
-   | TXT | `@` | `google-site-verification=...` (the value Google shows) |
-   | MX | `@` | `smtp.google.com`, priority 1. **Delete every other MX record** on the domain. |
-   | TXT | `@` | `v=spf1 include:_spf.google.com ~all` (the only SPF record; replace any existing one) |
-   | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:faith@venueatncc.org` |
+Steps on a Windows PC, signed in as the Microsoft 365 administrator of the venueatncc.org account. The
+password and any sign-in codes are typed by the owner.
 
-2. **Owner, Google Admin console** (admin.google.com), Apps, Google Workspace, Gmail, Authenticate
-   email: Generate new record (2048-bit), add it in GoDaddy as TXT `google._domainkey`, wait about an
-   hour, then click **Start authentication**.
-3. **Owner, signed in as faith@venueatncc.org:** myaccount.google.com, Security, turn on **2-Step
-   Verification**, then open myaccount.google.com/apppasswords, create one named "Venue website",
-   and copy the 16 letters. If App passwords is missing, allow 2-Step Verification in the Admin
-   console (Security, Authentication, 2-step verification) and try again. Give the 16 letters to
-   grokbot privately, never in a chat log or the repository.
-4. **grokbot:** add one line to `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`),
-   keeping `SMTP_HOST` and `IMAP_HOST` empty, and never print it:
+1. **Is the address its own mailbox?** Open https://admin.microsoft.com, Users, Active users. If a user
+   named `faith@venueatncc.org` exists, it is its own mailbox: use it in step 5 as is. If the address
+   is only an alias on another user (for example `faith@wearencc.org`), stop and ask Joel first: the
+   app would then have access to that whole mailbox (the server copies only venue mail). In that case
+   step 5 also needs `MAIL_M365_MAILBOX=<that user's address>`, and step 4 runs on that mailbox, plus
+   `Set-OrganizationConfig -SendFromAliasEnabled $true`.
+2. **Register the app:** https://entra.microsoft.com, Applications, App registrations, New
+   registration. Name "The Venue @ NCC website", "Accounts in this organizational directory only", no
+   redirect URI, Register. Note the **Application (client) ID**.
+   - API permissions, Add a permission, **APIs my organization uses**, search "Office 365 Exchange
+     Online", Application permissions, tick **IMAP.AccessAsApp** and **SMTP.SendAsApp**, Add
+     permissions, then **Grant admin consent** (both rows show a green check).
+   - Certificates & secrets, New client secret, "website", 24 months, Add. Copy the **Value** at once
+     (it is shown once). Put a reminder in the calendar to make a new one before it expires.
+   - Applications, **Enterprise applications**, open "The Venue @ NCC website", and note its
+     **Object ID** (this one, not the Object ID on the App registration page).
+   - If Entra says you do not have access, the GoDaddy-managed account lacks the administrator role
+     there: ask GoDaddy support to allow app registrations for this Microsoft 365 account.
+3. **Exchange Online PowerShell** (Windows PowerShell, as the admin):
+
+   ```powershell
+   Install-Module ExchangeOnlineManagement -Scope CurrentUser
+   Connect-ExchangeOnline
+   New-ServicePrincipal -AppId <Application (client) ID> -ObjectId <Enterprise application Object ID> -DisplayName "The Venue @ NCC website"
+   Add-MailboxPermission -Identity faith@venueatncc.org -User <Enterprise application Object ID> -AccessRights FullAccess
+   Set-CASMailbox -Identity faith@venueatncc.org -ImapEnabled $true -SmtpClientAuthenticationDisabled $false
+   Get-CASMailbox -Identity faith@venueatncc.org | Format-List ImapEnabled,SmtpClientAuthenticationDisabled
+   # expect: ImapEnabled True, SmtpClientAuthenticationDisabled False
+   Disconnect-ExchangeOnline -Confirm:$false
+   ```
+
+   This grants the app this one mailbox only, no other mailbox in the account.
+4. Give grokbot the client ID and the secret value privately, never in a chat log or the repository.
+5. **grokbot:** add these lines to `.env` (`sudo -u mvandykeanthony nano /var/www/venueatncc.org/.env`),
+   keeping `SMTP_HOST` and `IMAP_HOST` empty, and never print the secret:
 
    ```ini
-   MAIL_APP_PASSWORD=<the 16 letters>
+   MAIL_M365_CLIENT_ID=<Application (client) ID>
+   MAIL_M365_CLIENT_SECRET=<client secret value>
    OUTBOX_RETENTION_DAYS=90
    ```
 
@@ -1226,21 +1252,22 @@ no change: outbound 587 and 993 are open (only port 25 is blocked).
 
    ```sh
    sudo -H -u mvandykeanthony bash -c 'export PATH=/home/mvandykeanthony/.nvm/versions/node/v24.16.0/bin:$PATH; pm2 restart venueatncc && sleep 20 && pm2 logs venueatncc --lines 40 --nostream' | grep -E '\[(email|mail)\]'
-   # expect: [email] Sending through smtp.gmail.com:587 as The Venue @ NCC <faith@venueatncc.org>. Notifications go to faith@venueatncc.org.
-   # expect: [mail] Reading faith@venueatncc.org at imap.gmail.com every 120 seconds (all mail).
+   # expect: [email] Sending through smtp.office365.com:587 as The Venue @ NCC <faith@venueatncc.org>. Notifications go to faith@venueatncc.org.
+   # expect: [mail] Reading faith@venueatncc.org at outlook.office365.com every 120 seconds (all mail).
    # and no "[mail] checking the mailbox failed" line
    ```
 
-5. **Check:** `dig +short MX venueatncc.org @8.8.8.8` prints `1 smtp.google.com.` Send a test booking
-   request (10.3) with your own address: the confirmation arrives From `faith@venueatncc.org`, and the
-   admin's Mail tab shows it. Reply to it from your own mail app; within two minutes the reply shows
-   in Mail, unread, under the same conversation. Answer it from the admin; the answer reaches you.
+   If the Mail tab says the mailbox could not be checked, the reason follows: "AADSTS7000215" is a
+   wrong secret, "AADSTS700016" a wrong client ID, "AUTHENTICATE failed" means step 3's
+   permission or service principal is missing or still propagating (allow up to an hour).
+6. **Check:** send a test booking request (10.3) with your own address. The confirmation arrives From
+   `faith@venueatncc.org` and shows in Outlook's Sent Items and in the admin's Mail tab. Reply to it
+   from your own mail app; within two minutes the reply shows in Mail, unread, in the same
+   conversation. Answer it from the admin; the answer reaches you and appears in Outlook too.
 
-Faith can also read the same mailbox in Gmail or add it to Outlook on her phone. What she sends
-there shows in the admin too, because the server reads the Sent Mail folder.
-
-The sections below (11.1 to 11.4) describe the earlier plan and the other providers the server
-still supports. They are not needed with 11.0.
+The server still supports other mailboxes: `MAIL_APP_PASSWORD` for a Google Workspace mailbox
+(`GOOGLE_MAIL` in `server/config.ts`), or the explicit `SMTP_*` and `IMAP_*` settings. The sections
+below (11.1 to 11.4) describe the earlier plan; they are not needed with 11.0.
 
 ### 11.1 Launch with the outbox (grokbot, at deploy)
 

@@ -8,6 +8,7 @@ import { apiError, Tasks, type AppEnv, type Logger, type ServerContext } from '.
 import type { Db } from './db';
 import { createMailer, type Mailer } from './email/mailer';
 import { createMailService, type ImapFactory } from './mail/service';
+import { createTokenSource } from './mail/m365';
 import { noStore, sameOrigin, securityHeaders } from './middleware';
 import { Repo } from './repo';
 import { adminRoutes } from './routes/admin';
@@ -41,13 +42,14 @@ export function createApp(deps: AppDeps): VenueServerApp {
   const log = deps.log ?? console;
   const now = deps.now ?? Date.now;
   const repo = new Repo(deps.db);
-  const mailer = deps.mailer ?? createMailer(deps.config, now);
+  const tokens = createTokenSource(fetch, now);
+  const mailer = deps.mailer ?? createMailer(deps.config, now, tokens);
   const tasks = new Tasks(log);
   const ctx: ServerContext = {
     config: deps.config,
     repo,
     mailer,
-    mail: createMailService({ config: deps.config, repo, mailer, tasks, log, now, imapFactory: deps.imapFactory }),
+    mail: createMailService({ config: deps.config, repo, mailer, tasks, log, now, imapFactory: deps.imapFactory, tokens }),
     now,
     log,
     tasks,

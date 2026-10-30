@@ -5,6 +5,7 @@
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { site } from '../src/data/site';
+import type { M365App } from './mail/m365';
 
 export interface SmtpConfig {
   host: string;
@@ -12,6 +13,8 @@ export interface SmtpConfig {
   secure: boolean;
   user?: string;
   pass?: string;
+  /** Microsoft 365: sign in with the app's token (SMTP.SendAsApp) instead of a password. */
+  oauth?: M365App;
 }
 
 /** The mailbox the admin reads (server/mail/imap.ts). Password, or a Microsoft 365 app (OAuth client credentials). */
@@ -35,7 +38,19 @@ export interface ImapConfig {
 }
 
 /**
- * The venue's mailbox: faith@venueatncc.org on Google Workspace. With MAIL_APP_PASSWORD set (a Google
+ * The venue's mailbox: faith@venueatncc.org on Microsoft 365 (bought through GoDaddy; its MX is
+ * venueatncc-org.mail.protection.outlook.com). With MAIL_M365_CLIENT_ID and MAIL_M365_CLIENT_SECRET set
+ * (an app registration with IMAP.AccessAsApp and SMTP.SendAsApp) and no SMTP_HOST or IMAP_HOST, the
+ * server sends and receives as that mailbox with these settings; nothing else needs configuring
+ * (docs/deploy-gcloud-apache.md, section 11.0). Exchange files what is sent into Sent Items itself.
+ */
+export const M365_MAIL = {
+  smtp: { host: 'smtp.office365.com', port: 587, secure: false },
+  imap: { host: 'outlook.office365.com', port: 993, secure: true, inbox: 'INBOX', sent: 'Sent Items' },
+} as const;
+
+/**
+ * An alternative: faith@venueatncc.org on Google Workspace. With MAIL_APP_PASSWORD set (a Google
  * app password for that account) and no SMTP_HOST or IMAP_HOST, the server sends and receives through it
  * with these settings; nothing else needs configuring (docs/deploy-gcloud-apache.md, section 11).
  */
@@ -148,6 +163,15 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
   // Google shows app passwords in groups of four; the spaces are not part of it.
   const appPassword = optional(env, 'MAIL_APP_PASSWORD')?.replace(/\s+/g, '');
 
+  // Microsoft 365: the app registration's id and secret. The directory defaults to the venue's domain,
+  // and the mailbox to the venue address (set MAIL_M365_MAILBOX when the address is an alias of another).
+  const m365Id = optional(env, 'MAIL_M365_CLIENT_ID');
+  const m365Secret = env.MAIL_M365_CLIENT_SECRET?.trim() || undefined;
+  if (m365Id && !m365Secret) throw new Error('MAIL_M365_CLIENT_ID is set, so MAIL_M365_CLIENT_SECRET is required.');
+  const m365: M365App | null =
+    m365Id && m365Secret ? { tenant: str(env, 'MAIL_M365_TENANT', mailAddress.split('@')[1]), clientId: m365Id, clientSecret: m365Secret } : null;
+  const m365Mailbox = (optional(env, 'MAIL_M365_MAILBOX') ?? mailAddress).toLowerCase();
+
   const smtpHost = optional(env, 'SMTP_HOST');
   const smtpUser = optional(env, 'SMTP_USER');
   const smtp: SmtpConfig | null = smtpHost
@@ -158,9 +182,11 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
         user: smtpUser,
         pass: smtpUser ? (env.SMTP_PASS ?? '') : undefined,
       }
-    : appPassword
-      ? { ...GOOGLE_MAIL.smtp, user: mailAddress, pass: appPassword }
-      : null;
+    : m365
+      ? { ...M365_MAIL.smtp, user: m365Mailbox, oauth: m365 }
+      : appPassword
+        ? { ...GOOGLE_MAIL.smtp, user: mailAddress, pass: appPassword }
+        : null;
 
   const imapHost = optional(env, 'IMAP_HOST');
   const imapUser = optional(env, 'IMAP_USER') ?? mailAddress;
@@ -184,9 +210,11 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
         copyAll: bool(env, 'IMAP_COPY_ALL', imapUser.toLowerCase() === mailAddress),
         appendSent: !/(^|\.)gmail\.com$/i.test(imapHost),
       }
-    : appPassword
-      ? { ...GOOGLE_MAIL.imap, user: mailAddress, pass: appPassword, copyAll: true, appendSent: false }
-      : null;
+    : m365
+      ? { ...M365_MAIL.imap, user: m365Mailbox, oauth: m365, copyAll: m365Mailbox === mailAddress, appendSent: false }
+      : appPassword
+        ? { ...GOOGLE_MAIL.imap, user: mailAddress, pass: appPassword, copyAll: true, appendSent: false }
+        : null;
   const dataDir = path.dirname(databasePathFrom(env));
 
   const adminEmail = optional(env, 'ADMIN_EMAIL');

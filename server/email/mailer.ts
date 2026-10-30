@@ -11,6 +11,7 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createTransport } from 'nodemailer';
 import type { Config } from '../config';
+import { createTokenSource, type TokenSource } from '../mail/m365';
 
 export interface EmailMessage {
   to: string | string[];
@@ -63,7 +64,7 @@ function mailOptions(from: string, m: EmailMessage) {
 
 const asBuffer = (raw: unknown): Buffer => (Buffer.isBuffer(raw) ? raw : Buffer.from(String(raw)));
 
-export function createMailer(config: Pick<Config, 'smtp' | 'mailFrom' | 'outboxDir'>, now: () => number = Date.now): Mailer {
+export function createMailer(config: Pick<Config, 'smtp' | 'mailFrom' | 'outboxDir'>, now: () => number = Date.now, tokens?: TokenSource): Mailer {
   // Builds the raw message (no network).
   const composer = createTransport({ streamTransport: true, buffer: true, newline: config.smtp ? 'windows' : 'unix' });
   const compose = async (m: EmailMessage) => {
@@ -73,20 +74,18 @@ export function createMailer(config: Pick<Config, 'smtp' | 'mailFrom' | 'outboxD
 
   if (config.smtp) {
     const smtp = config.smtp;
-    const transporter = createTransport({
-      host: smtp.host,
-      port: smtp.port,
-      secure: smtp.secure,
-      auth: smtp.user ? { user: smtp.user, pass: smtp.pass ?? '' } : undefined,
-      connectionTimeout: 15_000,
-      greetingTimeout: 15_000,
-      socketTimeout: 30_000,
-    });
+    const settings = { host: smtp.host, port: smtp.port, secure: smtp.secure, connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 };
+    const transporter = smtp.oauth ? null : createTransport({ ...settings, auth: smtp.user ? { user: smtp.user, pass: smtp.pass ?? '' } : undefined });
+    const getToken = tokens ?? createTokenSource(fetch, now);
     return {
       transport: 'smtp',
       async send(m) {
         const built = await compose(m);
-        await transporter.sendMail({ envelope: built.envelope, raw: built.raw });
+        // Microsoft 365: a fresh connection with the current token (tokens last an hour).
+        const via =
+          transporter ??
+          createTransport({ ...settings, auth: { type: 'OAuth2', user: smtp.user ?? '', accessToken: await getToken(smtp.oauth!) } });
+        await via.sendMail({ envelope: built.envelope, raw: built.raw });
         return { status: 'sent', messageId: built.messageId, raw: built.raw };
       },
     };
