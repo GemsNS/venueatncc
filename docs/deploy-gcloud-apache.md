@@ -575,7 +575,7 @@ so all paths below are absolute.
 | `MAIL_M365_CLIENT_ID`, `MAIL_M365_CLIENT_SECRET` | unset | the app registration from [11.0](#110-the-mailbox-the-existing-microsoft-365-inbox-two-settings-decided-2026-10-30) | With `SMTP_HOST` and `IMAP_HOST` empty, sends and receives as `faith@venueatncc.org` through Microsoft 365 with no other setting (`config.ts`, `M365_MAIL`). Never print the secret. |
 | `MAIL_M365_TENANT`, `MAIL_M365_MAILBOX` | `venueatncc.org`, the `MAIL_FROM` address | defaults | `MAIL_M365_MAILBOX` only when the venue address is an alias of another mailbox. |
 | `MAIL_APP_PASSWORD` | unset | unset | A Google Workspace mailbox instead (`GOOGLE_MAIL`). |
-| `ANTHROPIC_API_KEY` | unset | the venue's Claude API key ([11.5](#115-reply-drafts-with-claude-owner--grokbot)) | Claude writes and rewrites reply drafts in the admin. Unset: Draft fills in the template, and there is no Rewrite. Never print it. |
+| `ANTHROPIC_API_KEY` | unset | the venue's Claude API key ([11.5](#115-reply-drafts-free-on-the-computer-claude-optional-owner--grokbot)) | Claude writes and rewrites reply drafts in the admin. Unset: Draft fills in the template, and there is no Rewrite. Never print it. |
 | `DRAFT_MODEL` | `claude-opus-5-5` | unset | The Claude model for drafts. |
 | `IMAP_HOST` | unset: the admin's Mail tab sends but does not receive | unset until [11.4](#114-receive-in-the-admin-connect-the-mailbox-owner--grokbot) | The mailbox the admin reads. When set, `IMAP_PASS` or the three `IMAP_OAUTH_*` values are required or the app refuses to start. |
 | `IMAP_PORT` / `IMAP_SECURE` | `993` / `true` | defaults | |
@@ -1452,7 +1452,7 @@ password, consent not granted, IMAP turned off for the mailbox). Fix the setting
 The first check copies the last 30 days (up to 300 messages). Older mail stays in the mailbox only.
 Received attachments are not in the nightly database backup. They remain in the mailbox itself.
 
-### 11.5 Reply drafts with Claude (owner + grokbot)
+### 11.5 Reply drafts: free on the computer, Claude optional (owner + grokbot)
 
 Every reply box in the admin (a request's Email section, a thread in Mail, and New Email) has a
 **Draft** button. With an empty box, Draft writes a reply from the request (date, time, space, guests,
@@ -1465,12 +1465,26 @@ names anything to check: parts in [square brackets] to fill in, an amount not on
 said to be available, or anything the house rules leave out (a church, drinks, outside caterers, how
 far ahead to book, the gazebo's roof).
 
-Without a key, Draft fills in the built-in template (the request and the rates), and there is no
-Rewrite. With `ANTHROPIC_API_KEY`, Claude (`claude-opus-5-5`) writes them. Each draft sends the
-request's details and the emails in that thread to Anthropic's API; prompts and drafts are not logged
-on the server. A draft costs a few cents (about 2 to 5). Drafts are limited to 60 an hour per admin.
+Who writes the draft, in this order, all with **nothing to set up and nothing to pay**, except Claude:
 
-1. **Owner:** sign in at https://platform.claude.com with the venue's account, add a payment method,
+- **Chrome's built-in writer, on the admin's computer (free, the default).** Chrome on a Windows, Mac,
+  or Linux computer, or a Chromebook Plus, with 16 GB of memory (or a graphics card with more than
+  4 GB) and 22 GB of free disk, has Google's small model, Gemini Nano, built in (the Prompt API, since
+  Chrome 148). The admin's browser asks the server for the request and the thread
+  (`/api/admin/mail/draft-input`, which never includes the team's notes or the estimate) and writes the
+  draft on the computer: nothing it reads goes to Google or anyone else, and there is no key and no bill.
+  The first Draft downloads the model once (Chrome shows "Getting the writer ready"). It is a small
+  model, so read its drafts closely; the check list under the button still applies.
+- **The template and Tidy (free, every device).** On a phone, in another browser, or on a computer
+  without the model: Draft fills in the request and the rates, and with text in the box the button is
+  **Tidy**, which fixes capitals, "I", day names, times ("4pm" to "4 PM"), spacing, and adds the
+  greeting and closing, keeping the admin's own words.
+- **Claude (optional, paid).** With `ANTHROPIC_API_KEY` set, Claude (`claude-opus-5-5`) writes every
+  draft on the server instead, on any device, and writes better than the small model. Each draft then
+  sends the request's details and the thread to Anthropic's API (not logged on the server) and costs a
+  few cents (about 2 to 5). Drafts are limited to 60 an hour per admin. Skip the steps below to stay free.
+
+1. **Owner (only for Claude):** sign in at https://platform.claude.com with the venue's account, add a payment method,
    and create an API key named "venueatncc.org drafts" (Settings, API keys). Set a monthly spend limit
    (Settings, Limits), for example $20. Give the key to grokbot privately.
 2. **grokbot:** replace any older line, then add the key through stdin, never as an argument:

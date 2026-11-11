@@ -1,7 +1,7 @@
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import Anthropic from '@anthropic-ai/sdk';
-import { cleanDraft, draftWarnings, newTextOf, templateDraft, venueFacts, type DraftInput, type DraftResult } from '../../src/shared/draft';
+import { cleanDraft, draftWarnings, newTextOf, templateDraft, tidyDraft, venueFacts, type DraftInput, type DraftResult } from '../../src/shared/draft';
 import { PUBLIC_RATES, RATES_FINE_PRINT } from '../../src/shared/rate-card';
 import type { InquiryCreated } from '../../src/shared/types';
 import { createDrafter, draftSystemPrompt, draftUserPrompt, type DraftClient } from '../mail/draft';
@@ -77,6 +77,11 @@ describe('reply drafts: wording and checks', () => {
     assert.equal(cleanDraft(raw, 'Faith'), 'Hi Jordan,\n\nThe Venue @ NCC holds 6 to 8 hours, a full day.\n\n- Parking\n\nWarm regards,');
   });
 
+  test('a signature by first name, or on one line, is dropped too', () => {
+    assert.equal(cleanDraft('Hi Sam,\n\nYes.\n\nWarm regards,\nFaith', 'Faith VanDyke'), 'Hi Sam,\n\nYes.\n\nWarm regards,');
+    assert.equal(cleanDraft('Hi Sam,\n\nYes.\n\nBest,\nFaith | The Venue @ NCC', 'Faith (demo)'), 'Hi Sam,\n\nYes.\n\nBest,');
+  });
+
   test('the checks flag what the house rules do not allow, and leave the admin their own words', () => {
     const w = (t: string, own = '') => draftWarnings(t, own).join(' ');
     assert.match(w('A total of $1,200 for your date.'), /\$1,200: not on the rate card/);
@@ -92,6 +97,16 @@ describe('reply drafts: wording and checks', () => {
     assert.match(w('The gazebo has a metal roof.'), /roof/);
     assert.match(w('Good news, your date is available.'), /available/);
     assert.equal(w('Tables and chairs are available to use, and the venue is open to anyone.'), '');
+  });
+
+  test('Tidy fixes what was typed without changing the words', () => {
+    const t = (s: string) => tidyDraft(s, 'Tanya Whitfield', 'Faith');
+    assert.equal(t('hi tanya saturday 28 works, tour tuesday 4pm?'), 'Hi Tanya,\n\nSaturday 28 works, tour Tuesday 4 PM?\n\nWarm regards,');
+    assert.equal(t('hi tanya,\n\nsaturday works.i can do a tour on tuesday at 4pm\n\nthanks'), 'Hi Tanya,\n\nSaturday works. I can do a tour on Tuesday at 4 PM.\n\nThanks,');
+    assert.equal(t('yes we can do that   for 80 guests'), 'Hi Tanya,\n\nYes we can do that for 80 guests.\n\nWarm regards,');
+    assert.equal(t('good morning tanya. we have space'), 'Good morning Tanya,\n\nWe have space.\n\nWarm regards,');
+    assert.equal(t('Hi Tanya,\n\nEmail faith@venueatncc.org or see venueatncc.org/book.\n\nBest,'), 'Hi Tanya,\n\nEmail faith@venueatncc.org or see venueatncc.org/book.\n\nBest,');
+    assert.equal(t('the 6\u20138 hour block \u2014 yes'), 'Hi Tanya,\n\nThe 6 to 8 hour block, yes.\n\nWarm regards,');
   });
 
   test('the new text of an email leaves out the quoted history', () => {
@@ -205,6 +220,26 @@ describe('reply drafts: the API', () => {
     assert.match(((await res.json()) as { error: string }).error, /would not draft this one/);
   });
 
+  test('the draft input for the browser writer carries the request and thread, never the team notes', async () => {
+    await h.request(`/api/admin/inquiries/${inquiryId}/notes`, { body: { body: 'Private: offered a discount' }, cookie });
+    const calls = claude.calls.length;
+    const res = await h.request('/api/admin/mail/draft-input', { body: { mode: 'rewrite', inquiryId, text: 'saturday works', instructions: 'shorter' }, cookie });
+    assert.equal(res.status, 200, await res.clone().text());
+    const input = (await res.json()) as DraftInput & { inquiry: Record<string, unknown> };
+    assert.equal(input.mode, 'rewrite');
+    assert.equal(input.text, 'saturday works');
+    assert.equal(input.instructions, 'shorter');
+    assert.equal(input.guestName, 'Jordan Rivers');
+    assert.equal(input.adminName, 'Faith');
+    assert.ok(input.emails.length >= 1);
+    assert.equal(input.inquiry.notes, undefined);
+    assert.equal(input.inquiry.estimate, undefined);
+    assert.equal(input.inquiry.email, undefined);
+    assert.ok(!JSON.stringify(input).includes('discount'));
+    assert.equal(claude.calls.length, calls, 'nothing goes to Claude');
+    assert.equal((await h.request('/api/admin/mail/draft-input', { body: { mode: 'draft', inquiryId } })).status, 401);
+  });
+
   test('stats say Claude drafts', async () => {
     const res = await h.request('/api/admin/stats', { cookie });
     assert.equal(((await res.json()) as { drafting: string }).drafting, 'claude');
@@ -231,6 +266,8 @@ describe('reply drafts without an API key', () => {
     assert.equal(out.by, 'basic');
     assert.match(out.text, /^Hi Sam,/);
     assert.equal((await h.request('/api/admin/mail/draft', { body: { mode: 'rewrite', inquiryId: id, text: 'hi' }, cookie })).status, 400);
+    // The browser's own writer can still rewrite: the server only hands it the context.
+    assert.equal((await h.request('/api/admin/mail/draft-input', { body: { mode: 'rewrite', inquiryId: id, text: 'hi' }, cookie })).status, 200);
     const stats = await h.request('/api/admin/stats', { cookie });
     assert.equal(((await stats.json()) as { drafting: string }).drafting, 'basic');
     assert.equal(h.config.anthropicApiKey, null);

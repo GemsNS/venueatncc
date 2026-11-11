@@ -500,6 +500,12 @@ test('demo drafts come from the template: for a request or a thread, never a rew
   assert.match(ok(await api.admin.mail.draft({ mode: 'draft', threadId: thread.id })).text, /^Hi /);
   assert.ok(isError(await api.admin.mail.draft({ mode: 'rewrite', inquiryId: inquiry.id, text: 'hello' })));
   assert.ok(isError(await api.admin.mail.draft({ mode: 'draft' })));
+  const input = ok(await api.admin.mail.draftInput({ mode: 'rewrite', inquiryId: inquiry.id, text: 'hello there' }));
+  assert.equal(input.mode, 'rewrite');
+  assert.equal(input.inquiry?.reference, inquiry.reference);
+  assert.equal((input.inquiry as Record<string, unknown> | null)?.notes, undefined);
+  assert.ok(ok(await api.admin.mail.draftInput({ mode: 'draft', instructions: 'Thank the florist.' })));
+  assert.ok(isError(await api.admin.mail.draftInput({ mode: 'draft' })));
   await resetDemoData();
 });
 

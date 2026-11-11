@@ -7,7 +7,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { api, isError } from '../../lib/api';
 import type { MailBox, MailMessage, MailStatus, MailThread, MailThreadSummary } from '../../shared/types';
 import { Icon } from '../islands/Icon';
+import { draftWarnings, finishDraft, tidyDraft, type DraftResult } from '../../shared/draft';
 import { useAdmin } from './context';
+import { localAvailability, localWrite, localWriterError, prepareLocalWriter, type LocalAvailability } from './local-writer';
 import { ELLIPSIS, LDQUO, RDQUO, SEP, formatStamp, plural } from './format';
 import { mailHash } from './route';
 import { EmptyState, ErrorBanner, PageHeader, SegmentedRadio, SkeletonRows } from './ui';
@@ -334,12 +336,36 @@ export function MailListView({ box, q }: { box: MailBox; q: string }) {
 export interface DraftContext {
   threadId?: number;
   inquiryId?: number;
+  /** Who the email is to, for the greeting Tidy adds. */
+  guestName?: string;
 }
 
 /**
- * Draft and Rewrite above a reply box. Claude (on a server with ANTHROPIC_API_KEY) drafts from the request
- * and the emails, or rewrites what is in the box; otherwise the template drafts an empty box. The draft
- * replaces the box's text, Undo brings the text back, and nothing is sent until Send.
+ * Who writes a draft:
+ *   claude  Claude on the server (ANTHROPIC_API_KEY): draft and rewrite.
+ *   device  Chrome's built-in model on this computer (free; nothing leaves the computer): draft and rewrite.
+ *   basic   the template for an empty box, and Tidy for what is typed (free, everywhere).
+ */
+type Engine = 'claude' | 'device' | 'basic';
+
+function useEngine(): { engine: Engine; needsDownload: boolean } {
+  const { stats } = useAdmin();
+  const [local, setLocal] = useState<LocalAvailability | null>(null);
+  useEffect(() => {
+    let live = true;
+    localAvailability().then((a) => live && setLocal(a));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (stats?.drafting === 'claude') return { engine: 'claude', needsDownload: false };
+  if (local && local !== 'unavailable') return { engine: 'device', needsDownload: local !== 'available' };
+  return { engine: 'basic', needsDownload: false };
+}
+
+/**
+ * Draft and Rewrite (or Tidy) above a reply box. The draft replaces the box's text, Undo brings the text
+ * back, and nothing is sent until Send.
  */
 export function DraftBar({
   id,
@@ -357,37 +383,67 @@ export function DraftBar({
   /** A new email has no request or thread to draft from, so it needs a few words. */
   needsInstructions?: boolean;
 }) {
-  const { run, stats } = useAdmin();
+  const { run, user } = useAdmin();
+  const { engine, needsDownload } = useEngine();
   const [instructions, setInstructions] = useState('');
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ before: string; after: string; warnings: string[]; by: 'claude' | 'basic' } | null>(null);
-  const drafting = stats?.drafting ?? 'basic';
-  const claude = drafting === 'claude';
+  const [result, setResult] = useState<{ before: string; after: string; warnings: string[]; by: DraftResult['by']; tidy: boolean } | null>(null);
   const hasText = value.trim() !== '';
-  const mode = claude && hasText ? 'rewrite' : 'draft';
-  // The template only drafts an empty box, and only from a request or an email.
-  if (!claude && (needsInstructions || (hasText && result?.after !== value))) return null;
+  const writes = engine !== 'basic';
+  const mode = hasText ? 'rewrite' : 'draft';
+  // The template needs a request or an email to draft from.
+  if (engine === 'basic' && needsInstructions && !hasText) return null;
   const current = result && result.after === value ? result : null;
+
+  const finish = (res: DraftResult, tidy = false) => {
+    setResult({ before: value, after: res.text, warnings: res.warnings, by: res.by, tidy });
+    onReplace(res.text);
+  };
 
   const go = async () => {
     if (busy) return;
-    if (needsInstructions && !instructions.trim() && !hasText) {
+    if (needsInstructions && writes && !instructions.trim() && !hasText) {
       setError('Say in a few words what the email should say.');
+      return;
+    }
+    setError(null);
+    if (engine === 'basic' && hasText) {
+      // Tidy: no AI, no server.
+      const text = tidyDraft(value, context.guestName ?? '', user.name);
+      finish({ text, warnings: draftWarnings(text, value), by: 'basic' }, true);
       return;
     }
     setBusy(true);
     onBusy?.(true);
-    setError(null);
-    const res = await run(api.admin.mail.draft({ ...context, mode, text: mode === 'rewrite' ? value : undefined, instructions: instructions.trim() || undefined }));
-    setBusy(false);
-    onBusy?.(false);
-    if (isError(res)) {
-      setError(res.error);
-      return;
+    const request = { threadId: context.threadId, inquiryId: context.inquiryId, mode, text: hasText ? value : undefined, instructions: instructions.trim() || undefined } as const;
+    try {
+      if (engine === 'device') {
+        // Start the writer within the click: Chrome downloads its model only after one.
+        const ready = prepareLocalWriter((f) => setProgress(f)).catch(() => null);
+        const input = await run(api.admin.mail.draftInput(request));
+        if (isError(input)) {
+          setError(input.error);
+          return;
+        }
+        await ready;
+        try {
+          const raw = await localWrite(input, (f) => setProgress(f));
+          finish(finishDraft(raw, input, 'device'));
+        } catch (err) {
+          setError(localWriterError(err));
+        }
+        return;
+      }
+      const res = await run(api.admin.mail.draft(request));
+      if (isError(res)) setError(res.error);
+      else finish(res);
+    } finally {
+      setBusy(false);
+      setProgress(null);
+      onBusy?.(false);
     }
-    setResult({ before: value, after: res.text, warnings: res.warnings, by: res.by });
-    onReplace(res.text);
   };
 
   const undo = () => {
@@ -396,11 +452,26 @@ export function DraftBar({
     setResult(null);
   };
 
-  const label = busy ? (mode === 'rewrite' ? `Rewriting${ELLIPSIS}` : `Drafting${ELLIPSIS}`) : mode === 'rewrite' ? 'Rewrite' : 'Draft';
+  const idle = writes ? (mode === 'rewrite' ? 'Rewrite' : 'Draft') : hasText ? 'Tidy' : 'Draft';
+  const working =
+    progress !== null && progress < 1
+      ? `Getting the writer ready ${Math.round(progress * 100)}%`
+      : mode === 'rewrite'
+        ? `Rewriting${ELLIPSIS}`
+        : `Drafting${ELLIPSIS}`;
+  const byline = !current
+    ? ''
+    : current.tidy
+      ? 'Tidied: capitals, spacing, the greeting, and the closing.'
+      : current.by === 'claude'
+        ? 'Drafted by Claude.'
+        : current.by === 'device'
+          ? 'Drafted on this computer.'
+          : 'Drafted from the template.';
   return (
     <div class="adm-draft">
       <div class="adm-draft__bar">
-        {claude && (
+        {writes && (
           <input
             id={`${id}-ask`}
             class="input"
@@ -408,7 +479,7 @@ export function DraftBar({
             maxLength={500}
             value={instructions}
             placeholder={hasText ? 'What to change' : needsInstructions ? 'What should it say?' : 'What to say'}
-            aria-label={hasText ? 'How Claude should change your text (optional)' : needsInstructions ? 'What the email should say' : 'What the draft should say (optional)'}
+            aria-label={hasText ? 'How your text should change (optional)' : needsInstructions ? 'What the email should say' : 'What the draft should say (optional)'}
             aria-describedby={error ? `${id}-draft-error` : undefined}
             onInput={(e) => setInstructions((e.target as HTMLInputElement).value)}
             onKeyDown={(e) => {
@@ -421,7 +492,7 @@ export function DraftBar({
         )}
         <button type="button" class="btn btn--outline" onClick={go} disabled={busy} aria-busy={busy ? 'true' : undefined}>
           <Icon name="sparkles" />
-          {label}
+          {busy ? working : idle}
         </button>
         {current && !busy && (
           <button type="button" class="btn btn--plain" onClick={undo}>
@@ -438,7 +509,7 @@ export function DraftBar({
       {current && !busy && (
         <div class="adm-draft__check" role="status">
           <p>
-            {current.by === 'claude' ? 'Drafted by Claude.' : 'Drafted from the template.'} Read it before sending{current.warnings.length ? ', and check:' : '.'}
+            {byline} Read it before sending{current.warnings.length ? ', and check:' : '.'}
           </p>
           {current.warnings.length > 0 && (
             <ul>
@@ -449,8 +520,13 @@ export function DraftBar({
           )}
         </div>
       )}
-      {!claude && !current && (
-        <p class="adm-footnote">The template fills in the request and the rates. Claude can write and rewrite replies once it is set up on the server.</p>
+      {!current && !busy && engine === 'device' && needsDownload && (
+        <p class="adm-footnote">The first draft downloads Chrome's writer to this computer, once. It is free, and what it reads stays on this computer.</p>
+      )}
+      {!current && !busy && engine === 'basic' && (
+        <p class="adm-footnote">
+          {hasText ? 'Tidy fixes capitals and spacing and adds the greeting and closing.' : 'Draft fills in the request and the rates.'} In Chrome on a computer, the built-in writer drafts and rewrites for free.
+        </p>
       )}
     </div>
   );
@@ -698,7 +774,7 @@ export function MailThreadView({ id }: { id: number }) {
         value={reply}
         onInput={setReply}
         onSend={send}
-        draft={{ threadId: thread.id }}
+        draft={{ threadId: thread.id, guestName: thread.messages.slice().reverse().find((m) => m.direction === 'in')?.from.name || thread.counterpart.name }}
       />
     </div>
   );

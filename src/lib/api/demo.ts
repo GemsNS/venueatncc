@@ -17,7 +17,7 @@ import { capacityError } from '../../shared/capacity';
 import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimateWithRates } from '../../shared/rate-card';
-import { finishDraft, templateDraft, type DraftInput } from '../../shared/draft';
+import { finishDraft, pickDraftInquiry, templateDraft, type DraftInput } from '../../shared/draft';
 import { site } from '../../data/site';
 import { makeReference } from '../../shared/reference';
 import { INQUIRY_STATUSES, SPACE_NAMES, spaceFromParts, spaceParts, spacesOverlap } from '../../shared/types';
@@ -35,7 +35,7 @@ import type {
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_NAME, DEMO_ADMIN_PASSWORD } from './demo-credentials';
 import { DEMO_DB_VERSION, blockLabelFor, buildSeed, eventLabel, timelineText, type DemoDb } from './demo-seed';
 import { DEMO_MAIL_STATUS, addSent, replySubject, replyTo, seedMail, threadList, threadOf, unreadCount, type DemoMail } from './demo-mail';
-import type { VenueApi } from './types';
+import type { MailDraftRequest, VenueApi } from './types';
 
 /**
  * The validation schemas are loaded on first use rather than imported. schemas.ts runs zod at
@@ -69,8 +69,9 @@ export const demoMessages = {
   blockNotFound: 'We could not find that calendar block.',
   passwordDemo: 'Password changes are turned off in the demo.',
   mailNotFound: 'That email was not found.',
-  rewriteDemo: 'In the demo, drafts come from the template. On the live site, Claude rewrites what you wrote.',
-  draftNeedsContext: 'In the demo, drafts are written for a request or an email you received.',
+  rewriteDemo: 'The server does not rewrite in the demo. Press Tidy, or use Chrome on a computer for its built-in writer.',
+  draftNeedsContext: 'Say in a few words what the email should say, then press Draft.',
+  nothingToRewrite: 'Write something to rewrite first.',
   nothingToChange: 'Nothing to change.',
   blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_NAMES[space]}.`,
   /** Mark Booked refused because another block is in the way (the server's 409). */
@@ -269,6 +270,33 @@ const byDate = (a: CalendarBlock, b: CalendarBlock) => (a.date < b.date ? -1 : a
 
 /** InquiryDetail plus its linked calendar blocks, as the API server returns it. */
 export type DemoInquiryDetail = InquiryDetail & { blocks: CalendarBlock[] };
+
+/** What a draft is written from, as the server's /api/admin/mail/draft-input builds it. */
+function demoDraftInput(db: DemoDb, req: MailDraftRequest): DraftInput | ApiError {
+  const text = (req.text ?? '').trim();
+  const instructions = (req.instructions ?? '').trim();
+  if (req.mode === 'rewrite' && !text) return fail(demoMessages.nothingToRewrite);
+  const mail = mailOf(db);
+  const thread = req.threadId ? threadOf(mail, db.inquiries, req.threadId) : null;
+  if (req.threadId && !thread) return fail(demoMessages.mailNotFound);
+  const linked = req.inquiryId ?? thread?.inquiry?.id;
+  const record = linked ? db.inquiries.find((i) => i.id === linked) : undefined;
+  if (req.inquiryId && !record) return fail(demoMessages.inquiryNotFound);
+  if (!thread && !record && req.mode === 'draft' && !instructions) return fail(demoMessages.draftNeedsContext, { instructions: demoMessages.draftNeedsContext });
+  const detail = record ? detailOf(db, record) : null;
+  const messages = thread?.messages ?? detail?.emails ?? [];
+  const lastIn = [...messages].reverse().find((m) => m.direction === 'in');
+  return {
+    mode: req.mode,
+    text,
+    instructions,
+    inquiry: detail ? pickDraftInquiry(detail) : null,
+    emails: messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text })),
+    adminName: DEMO_ADMIN_NAME,
+    guestName: detail?.name || lastIn?.from.name || thread?.counterpart.name || '',
+    today: todayKey(),
+  };
+}
 
 /** The demo mailbox, seeded on first use for data saved before it existed. */
 function mailOf(db: DemoDb): DemoMail {
@@ -749,29 +777,13 @@ export const demoApi: VenueApi = {
         admin(() =>
           mutate((db) => {
             if (req.mode === 'rewrite') return fail(demoMessages.rewriteDemo);
-            const mail = mailOf(db);
-            const thread = req.threadId ? threadOf(mail, db.inquiries, req.threadId) : null;
-            if (req.threadId && !thread) return fail(demoMessages.mailNotFound);
-            const linked = req.inquiryId ?? thread?.inquiry?.id;
-            const record = linked ? db.inquiries.find((i) => i.id === linked) : undefined;
-            if (req.inquiryId && !record) return fail(demoMessages.inquiryNotFound);
-            if (!thread && !record) return fail(demoMessages.draftNeedsContext);
-            const detail = record ? detailOf(db, record) : null;
-            const messages = thread?.messages ?? detail?.emails ?? [];
-            const lastIn = [...messages].reverse().find((m) => m.direction === 'in');
-            const input: DraftInput = {
-              mode: 'draft',
-              text: '',
-              instructions: (req.instructions ?? '').trim(),
-              inquiry: detail,
-              emails: messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text })),
-              adminName: DEMO_ADMIN_NAME,
-              guestName: detail?.name || lastIn?.from.name || thread?.counterpart.name || '',
-              today: todayKey(),
-            };
-            return finishDraft(templateDraft(input), input, 'basic');
+            const input = demoDraftInput(db, req);
+            return 'ok' in input ? input : finishDraft(templateDraft(input), input, 'basic');
           }),
         ),
+
+      // What the computer's own writer drafts from (the same as the server's /draft-input).
+      draftInput: (req) => admin(() => mutate((db) => demoDraftInput(db, req))),
     },
   },
 };

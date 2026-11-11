@@ -73,7 +73,7 @@ async function main(): Promise<void> {
   log.info(
     config.anthropicApiKey
       ? `[draft] Claude (${config.draftModel}) writes and rewrites reply drafts.`
-      : '[draft] ANTHROPIC_API_KEY is not set, so Draft fills in the template and there is no Rewrite.',
+      : '[draft] No ANTHROPIC_API_KEY: drafts are free, written by Chrome on the admin\'s computer, or the template and Tidy.',
   );
   const mailPoll = setInterval(() => void ctx.mail.sync(), config.mailPollSeconds * 1000);
   mailPoll.unref();

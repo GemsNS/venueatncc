@@ -25,7 +25,7 @@ import type {
   SpaceChoice,
   BlockKind,
 } from '../../shared/types';
-import type { DraftMode, DraftResult } from '../../shared/draft';
+import type { DraftInput, DraftMode, DraftResult } from '../../shared/draft';
 
 /** A reply draft: for a thread, a request, or (with instructions) a new email. */
 export interface MailDraftRequest {
@@ -86,8 +86,10 @@ export interface VenueApi {
       emailInquiry(id: number, body: string): Promise<Result<InquiryDetail>>;
       /** Check the mailbox now. */
       sync(): Promise<Result<MailStatus>>;
-      /** Write a reply draft (nothing is sent). */
+      /** Write a reply draft on the server: Claude, or the template (nothing is sent). */
       draft(input: MailDraftRequest): Promise<Result<DraftResult>>;
+      /** What a draft is written from, for the writer built into the admin's browser. */
+      draftInput(input: MailDraftRequest): Promise<Result<DraftInput>>;
       /** A link that downloads an attachment, or null where there is none (the demo). */
       attachmentUrl(id: number): string | null;
     };

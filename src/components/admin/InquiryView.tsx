@@ -489,7 +489,7 @@ export function InquiryView({ id }: { id: number }) {
               onInput={setEmail}
               onSend={sendEmail}
               textareaRef={emailRef}
-              draft={{ inquiryId: d.id }}
+              draft={{ inquiryId: d.id, guestName: d.name }}
               mailto={`mailto:${d.email}?subject=${encodeURIComponent(`Your request for ${formatLong(d.date)} at The Venue @ NCC (${d.reference})`)}`}
             />
           </Section>

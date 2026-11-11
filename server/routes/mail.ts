@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { formatLong, todayKey } from '../../src/shared/dates';
-import type { DraftEmail, DraftInput } from '../../src/shared/draft';
+import { pickDraftInquiry, type DraftEmail, type DraftInput } from '../../src/shared/draft';
 import { fieldErrors, inquiryEmailSchema, mailComposeSchema, mailDraftSchema, mailReplySchema, mailThreadUpdateSchema, parseRecipients } from '../../src/shared/schemas';
 import type { InquiryStatus, MailAddress, MailBox } from '../../src/shared/types';
 import { INQUIRY_STATUSES } from '../../src/shared/types';
@@ -167,14 +167,14 @@ export function mailRoutes(ctx: ServerContext): Hono<AppEnv> {
    * A reply draft for the reply box: from scratch, from the request and the emails so far, or a rewrite of
    * the text. Nothing is sent; the admin edits and sends it.
    */
-  mail.post('/draft', async (c) => {
+  /** What a draft is written from, or the error to send back. */
+  const draftInputFor = async (c: AppContextT): Promise<DraftInput | Response> => {
     const parsed = mailDraftSchema.safeParse((await readBody(c, false)) ?? {});
     if (!parsed.success) return apiError(c, 400, 'That draft request is not valid.');
     const { threadId, inquiryId, mode } = parsed.data;
     const text = (parsed.data.text ?? '').trim();
     const instructions = (parsed.data.instructions ?? '').trim();
     if (mode === 'rewrite' && !text) return apiError(c, 400, 'Write something to rewrite first.');
-    if (mode === 'rewrite' && ctx.drafter.kind !== 'claude') return apiError(c, 400, 'Rewriting needs Claude, which is not set up on the server.');
     const thread = threadId ? repo.mailThread(threadId) : null;
     if (threadId && !thread) return apiError(c, 404, 'That email was not found.');
     const linked = inquiryId ?? thread?.inquiry?.id ?? null;
@@ -183,22 +183,37 @@ export function mailRoutes(ctx: ServerContext): Hono<AppEnv> {
     if (!thread && !inquiry && mode === 'draft' && !instructions) {
       return apiError(c, 400, 'Say in a few words what the email should say, then press Draft.', { instructions: 'Say what the email should say.' });
     }
-    const key = `admin:${c.get('session').user.id}`;
-    if (!ctx.limits.mailDraft.consume(key, now())) return apiError(c, 429, 'That is a lot of drafts in one hour. Wait a while, then try again.');
-
     const messages = thread?.messages ?? inquiry?.emails ?? [];
     const emails: DraftEmail[] = messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text }));
     const lastIn = [...messages].reverse().find((m) => m.direction === 'in');
-    const input: DraftInput = {
+    return {
       mode,
       text,
       instructions,
-      inquiry,
+      // Only what a reply needs: never the team's notes or the estimate.
+      inquiry: inquiry ? pickDraftInquiry(inquiry) : null,
       emails,
       adminName: c.get('session').user.name,
       guestName: inquiry?.name || lastIn?.from.name || thread?.counterpart.name || '',
       today: todayKey(new Date(now())),
     };
+  };
+
+  /**
+   * What a draft is written from, for the browser's own writer (Chrome's built-in model, on the admin's
+   * computer, free). Nothing is sent anywhere else.
+   */
+  mail.post('/draft-input', async (c) => {
+    const input = await draftInputFor(c);
+    return input instanceof Response ? input : c.json(input);
+  });
+
+  mail.post('/draft', async (c) => {
+    const input = await draftInputFor(c);
+    if (input instanceof Response) return input;
+    if (input.mode === 'rewrite' && ctx.drafter.kind !== 'claude') return apiError(c, 400, 'Rewriting on the server needs Claude, which is not set up.');
+    const key = `admin:${c.get('session').user.id}`;
+    if (!ctx.limits.mailDraft.consume(key, now())) return apiError(c, 429, 'That is a lot of drafts in one hour. Wait a while, then try again.');
     try {
       return c.json(await ctx.drafter.write(input));
     } catch (err) {

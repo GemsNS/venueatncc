@@ -26,6 +26,7 @@
  *   POST   /api/admin/mail/inquiry/:id { body, subject? }    -> InquiryDetail
  *   POST   /api/admin/mail/sync                              -> MailStatus
  *   POST   /api/admin/mail/draft     MailDraftRequest        -> DraftResult (nothing is sent)
+ *   POST   /api/admin/mail/draft-input MailDraftRequest      -> DraftInput (for the browser's own writer)
  *   GET    /api/admin/mail/attachments/:id                   -> the file, as a download
  * Errors are JSON { ok: false, error, fields? } with a 4xx/5xx status.
  * Mutating requests send X-Requested-With: fetch; the server also checks Origin.
@@ -121,6 +122,7 @@ export const httpApi: VenueApi = {
       emailInquiry: (id, body) => request('POST', `/api/admin/mail/inquiry/${id}`, { body }),
       sync: () => request('POST', '/api/admin/mail/sync', {}),
       draft: (input) => request('POST', '/api/admin/mail/draft', input),
+      draftInput: (input) => request('POST', '/api/admin/mail/draft-input', input),
       attachmentUrl: (id) => `${apiBase}/api/admin/mail/attachments/${id}`,
     },
   },
