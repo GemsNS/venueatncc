@@ -11,8 +11,8 @@
  * structured data.
  *
  * Call is the page's one filled button. A date request has one home, the booking page, so there is no
- * second form here: a text link points to it. The rates are public since 2026-10-23: the owner's starting
- * prices (src/shared/rate-card.ts) in a table under the heading, with the fine print.
+ * second form here: a text link points to it. The rates are public since 2026-10-23 (updated 2026-11-10): the
+ * owner's three rates (src/shared/rate-card.ts) in a table under the heading, then the fine print once.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
@@ -27,10 +27,10 @@ import { faqPage } from '../lib/schema';
 import { PUBLIC_RATES, RATES_FINE_PRINT } from '../shared/rate-card';
 
 const title = 'Rates & FAQ | The Venue @ NCC, Suffolk, VA';
-const description = `Rates at ${site.name} in ${site.address.city}, VA: from $250 an hour, flat packages from $2,500, and full day or evening blocks from $2,995. How booking works and common questions.`;
+const description = `Rates at ${site.name} in ${site.address.city}, VA: $375 per hour for up to 5 hours, a $3,500 flat rate package for up to 9 hours, and $4,500 for a full day-evening. How booking works and common questions.`;
 
-/* What a quote needs and covers. The rates sentence itself is on the home page (#essentials). */
-const quoteLead = RATES_FINE_PRINT;
+/* What the rates leave out and how a date is priced, said once, after the three rates. */
+const finePrint = RATES_FINE_PRINT;
 
 /* How booking works, from the request to the held date. The deposit rule itself is on the home page (#essentials), so step 3 does not name it. */
 const steps = [
@@ -52,7 +52,7 @@ const photo = spacePhoto('main');
     <div class="container">
       {
         photo ? (
-          <ImageTextSplit photo={photo} id="rates-heading" heading="Rates" lead={quoteLead} caption="The Stage Hall">
+          <ImageTextSplit photo={photo} id="rates-heading" heading="Rates" caption="The Stage Hall">
             <dl class="rates-table">
               {PUBLIC_RATES.map((r) => (
                 <div class="rates-table__row">
@@ -62,6 +62,7 @@ const photo = spacePhoto('main');
                 </div>
               ))}
             </dl>
+            <p class="t-lead">{finePrint}</p>
             <Fragment slot="actions">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -84,7 +85,7 @@ const photo = spacePhoto('main');
                 </div>
               ))}
             </dl>
-            <p class="t-lead">{quoteLead}</p>
+            <p class="t-lead">{finePrint}</p>
             <div class="btn-row">
               <a class="btn btn--filled btn--lg" href={`tel:${site.contact.phoneE164}`}>
                 <Icon name="phone" />
@@ -133,7 +134,7 @@ const photo = spacePhoto('main');
     line-height: 1.08;
   }
 
-  /* The rate table: name, starting price, and what it covers, one row each, hairlines between. */
+  /* The rate table: name, price, and what it covers, one row each, hairlines between. */
   .rates-table {
     display: grid;
     margin: 0 0 1.25rem;

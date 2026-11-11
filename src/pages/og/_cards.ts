@@ -69,7 +69,7 @@ export const shareCards: Record<string, ShareCard> = {
   // 3840 x 2560 file, so the 1200 x 630 card is never drawn past its detail.
   pricing: {
     title: 'Rates & FAQ',
-    line: 'Rates vary with the season and the day of the week. Call us for pricing',
+    line: '$375 per hour, $3,500 for up to 9 hours, or $4,500 for a full day-evening',
     photo: bySpace('main', { left: 0, top: 0.5, width: 0.62, height: 0.488 }),
   },
   // The events index leads with the photo of the first event on the list.

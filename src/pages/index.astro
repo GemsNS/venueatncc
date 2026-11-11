@@ -58,7 +58,7 @@ import { STAGED_SCENES, eventPhoto, eventsStaged, spacePhoto, type VenuePhoto } 
 import { bookHref } from '../data/nav';
 import { href } from '../lib/paths';
 import { CLOSED_HOLIDAYS } from '../shared/booking-rules';
-import { RATES_SUMMARY } from '../shared/rate-card';
+import { RATES_FINE_PRINT, RATES_SUMMARY } from '../shared/rate-card';
 
 const fireside = site.spaces.find((s) => s.id === 'indoor');
 const stageHall = site.spaces.find((s) => s.id === 'main');
@@ -86,8 +86,8 @@ const spaceCards: SpaceCard[] = [
 const included = 'Open to the public. Tables, chairs, and on-site parking come with every rental.';
 // The holiday closures, confirmed by the owner; Christmas events and parties are welcome.
 const hours = `${site.access.days}, ${site.access.hours}. Closed on ${CLOSED_HOLIDAYS[0]}, ${CLOSED_HOLIDAYS[1]}, and ${CLOSED_HOLIDAYS[2]}. Christmas events and parties are welcome.`;
-// The starting prices, shown publicly since 2026-10-23 (src/shared/rate-card.ts); the full table is on Rates & FAQ.
-const ratesShort = `${RATES_SUMMARY} Food and decoration are not included.`;
+// The rates, shown publicly since 2026-10-23 (updated 2026-11-10) (src/shared/rate-card.ts); the full table is on Rates & FAQ.
+const ratesShort = `${RATES_SUMMARY} ${RATES_FINE_PRINT}`;
 
 /*
   The events: the weddings staged photo, with its disclosure, beside the eight event names. Without the

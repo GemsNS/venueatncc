@@ -32,7 +32,7 @@ import { MOVED_PAGES, inlineScriptHashes, movedTo, withQuery } from '../static';
 import { eventTypes } from '../../src/data/event-types';
 import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
-import { PRICING_NOTES, estimateWithRates } from '../../src/shared/rate-card';
+import { PRICING_NOTES, RATES_FINE_PRINT, estimateWithRates } from '../../src/shared/rate-card';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
 import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
 import { closedDayMessage, closedHolidayOf, easterSunday, isClosedDay } from '../../src/shared/booking-rules';
@@ -537,24 +537,26 @@ describe('email templates', () => {
     assert.ok(!venue.text.includes('Due to reserve the date'));
     assert.ok(!venue.text.includes('Refundable damage deposit'));
     for (const note of PRICING_NOTES) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
-    assert.ok(venue.text.includes('* High seasons: venue rent starts at $250 per hour, for a maximum of 4 hours.'));
+    assert.ok(venue.text.includes('* Hourly rate: $375 per hour, up to a maximum of 5 hours.'));
   });
 
-  test("the owner's rates: hourly up to 4 hours, the flat package up to 8, then the full day block", () => {
+  test("the owner's rates: $375 an hour up to 5 hours, the $3,500 flat package up to 9, then the $4,500 full day-evening", () => {
     const at = (hours: number, date = '2026-11-18') => estimateWithRates({ date, space: 'indoor', hours }, '2026-10-20');
-    assert.equal(at(2).total, 500);
-    assert.equal(at(4).total, 1000);
-    assert.equal(at(5).total, 2500);
-    assert.equal(at(8).total, 2500);
-    assert.equal(at(9).total, 2995);
-    assert.equal(at(15).total, 2995);
-    // Saturday's 5-hour booking minimum puts a short Saturday request on the flat package.
-    assert.equal(at(3, '2026-11-21').total, 2500);
-    assert.match(at(9).lines[0].label, /Full day or evening flat block/);
+    assert.equal(at(2).total, 750);
+    assert.equal(at(4).total, 1500);
+    assert.equal(at(5).total, 1875);
+    assert.equal(at(6).total, 3500);
+    assert.equal(at(9).total, 3500);
+    assert.equal(at(10).total, 4500);
+    assert.equal(at(15).total, 4500);
+    // Saturday's 5-hour booking minimum bills a short Saturday request as 5 hours at the hourly rate.
+    assert.equal(at(3, '2026-11-21').total, 1875);
+    assert.match(at(10).lines[0].label, /Full day-evening flat rate/);
     assert.equal(at(6).bookingDeposit, 0);
     assert.equal(at(6).refundableDeposit, 0);
     assert.equal(at(6).lines.length, 1, 'no cleaning fee or discount lines');
-    assert.ok(at(6).notes.includes('Food and decoration are not included.'));
+    assert.ok(at(6).notes.includes(RATES_FINE_PRINT));
+    assert.equal(at(6).notes.filter((n) => n.includes('not included')).length, 1, 'the not-included line is said once');
   });
 
   test('the guest email names no price, deposit amount, or discount, and says we send the quote personally', () => {
@@ -600,7 +602,7 @@ describe('email templates', () => {
     const venue = venueNotificationEmail(forged, est, { origin: 'https://venueatncc.org' });
     const lines = venue.text.split(NL);
     assert.ok(!lines.some((l) => l.startsWith('Email: forged')), 'no forged Email line at column 0');
-    assert.ok(!lines.some((l) => l.startsWith('Estimated total: $1')), 'no forged total at column 0');
+    assert.ok(!lines.some((l) => l === 'Estimated total: $1'), 'no forged total at column 0');
     assert.equal(lines.filter((l) => l === 'Contact').length, 1, 'only the real Contact heading starts a line');
     assert.ok(venue.text.includes('Visit notes: Any Saturday' + NL + '    Contact' + NL + '    Email: forged@example.net'));
     assert.ok(venue.text.includes('Eve Email: forged@example.net sent a request'), 'the intro line keeps one line');

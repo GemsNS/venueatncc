@@ -64,7 +64,7 @@ export interface PricingModel {
   hourlyMaxHours: number;
   /** The flat rate package for events longer than hourlyMaxHours, up to its hours. */
   flatPackage: { name: string; hours: number; price: number; detail: string };
-  /** The full day or evening flat block, for anything longer than the package. */
+  /** The full day-evening flat rate, for anything longer than the package. */
   fullDayBlock: { name: string; from: number; detail: string };
   /** The pricing notes shown to the team with every estimate. */
   notes: string[];
@@ -123,8 +123,8 @@ export function estimate(input: EstimateInput, model: PricingModel, today: DateK
     rental = rate * billableHours;
     rentalLabel =
       billableHours > hours
-        ? `${SPACE_NAME[input.space]}, ${model.dayTypes[dayType].label} minimum of ${billableHours} hours at $${rate} an hour (high season)`
-        : `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate} an hour (high season)`;
+        ? `${SPACE_NAME[input.space]}, ${model.dayTypes[dayType].label} minimum of ${billableHours} hours at $${rate} an hour`
+        : `${SPACE_NAME[input.space]}, ${billableHours} hours at $${rate} an hour`;
   } else if (billableHours <= model.flatPackage.hours) {
     rental = model.flatPackage.price;
     packageName = model.flatPackage.name;
