@@ -2,10 +2,11 @@
  * Email templates: table-based HTML with inline styles (renders in Gmail, Outlook, Apple Mail),
  * plus a plain-text version of each. Facts come from src/data/site.ts.
  *
- * The venue does not publish prices: the guest email carries no amounts, only that we confirm
- * availability and send the quote personally. The team email alone lists the stored rate-card
- * figure, labelled "Internal rate-card guide", read as estimate() wrote it: bookingDeposit is due to
- * reserve the date and the rest (total minus bookingDeposit) is the balance.
+ * Pricing comes only from src/shared/rate-card.ts. The guest email carries no amounts, only that we
+ * confirm availability and send the quote personally. The team email lists the rate-card figure for the
+ * request, labelled "Internal rate-card guide", read as estimate() wrote it (bookingDeposit is due to
+ * reserve the date and the rest, total minus bookingDeposit, is the balance), then the published rates
+ * (RATE_LINES) and, once, at the very end, RATES_FINE_PRINT.
  *
  * Brand (docs/design/brand.md, version 6; redesign-spec.md, "Emails and share images"): a very pale Blush
  * page with one white card (a hairline edge, 16px corners), the email lockup as a PNG header (many clients
@@ -20,6 +21,7 @@ import { eventTypeName } from '../../src/data/event-types';
 import { formatEndTime, formatLong, formatTime } from '../../src/shared/dates';
 import { formatPhone } from '../../src/shared/phone';
 import { formatUSD } from '../../src/shared/pricing';
+import { PRICING_NOTES, RATES_FINE_PRINT } from '../../src/shared/rate-card';
 import { SPACE_NAMES, type ContactPreference, type Estimate, type Inquiry } from '../../src/shared/types';
 
 export interface RenderedEmail {
@@ -117,6 +119,15 @@ export function paymentRows(est: Estimate): [string, string][] {
   if (est.refundableDeposit > 0) rows.push(['Refundable damage deposit, returned if there is no damage', formatUSD(est.refundableDeposit)]);
   return rows;
 }
+
+/** The published rates, in the owner's words and order, from the shared rate card. The fine print is not one of them. */
+export const RATE_LINES: string[] = PRICING_NOTES.filter((n) => n !== RATES_FINE_PRINT);
+
+/**
+ * The team email's notes on one estimate: what estimate() says about this request (a booking minimum,
+ * "a starting figure"), without the rate card's own lines, which the email shows once, from the card.
+ */
+export const estimateOnlyNotes = (est: Estimate): string[] => est.notes.filter((n) => !PRICING_NOTES.includes(n));
 
 /** The last step in the guest email, in the site's wording. It names no amount. */
 export const RESERVE_STEP = 'We confirm availability and send your quote personally, with the payment terms for your date.';
@@ -296,9 +307,12 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     i.message ? sectionTitle('Message') : '',
     i.message ? paragraph(multiline(i.message)) : '',
     sectionTitle('Internal rate-card guide'),
-    paragraph(`<span style="color:${MAUVE};font-size:14px;">For the team only. The guest was not shown an amount.</span>`),
+    paragraph(`<span style="color:${MAUVE};font-size:14px;">For the team only. The guest was not shown this estimate.</span>`),
     estimateTable(est),
-    bulletList(est.notes),
+    bulletList(estimateOnlyNotes(est)),
+    sectionTitle('Our rates'),
+    bulletList(RATE_LINES),
+    paragraph(`<span style="color:${MAUVE};font-size:14px;">${escapeHtml(RATES_FINE_PRINT)}</span>`),
     button(`${ctx.origin}/admin/`, 'Open Admin'),
   ].join(NL);
 
@@ -317,9 +331,13 @@ export function venueNotificationEmail(i: Inquiry, est: Estimate, ctx: EmailCont
     ...(i.message ? ['', textHeading('Message'), `    ${continued(i.message)}`] : []),
     '',
     textHeading('Internal rate-card guide'),
-    'For the team only. The guest was not shown an amount.',
+    'For the team only. The guest was not shown this estimate.',
     estimateText(est),
-    ...est.notes.map((n) => `* ${n}`),
+    ...estimateOnlyNotes(est).map((n) => `* ${n}`),
+    '',
+    textHeading('Our rates'),
+    ...RATE_LINES.map((n) => `* ${n}`),
+    RATES_FINE_PRINT,
     '',
     `Open the admin: ${ctx.origin}/admin/`,
     '',

@@ -1,12 +1,11 @@
 /**
- * The venue's internal rate card and the estimate calculator. INTERNAL USE ONLY.
+ * The rate card's types and the estimate calculator.
  *
- * The venue does not publish prices. Nothing here may reach a public page, a booking step, a guest
- * email, structured data, llms.txt, or a share card: the public wording is "Our affordable rates vary
- * with peak season, holidays, and the day of the week. For pricing and special offers, please call us
- * and we will be happy to help you." (RATES_WORDING in src/data/faq.ts).
+ * The rates are public since 2026-10-23: the pages show PUBLIC_RATES and RATES_FINE_PRINT from
+ * src/shared/rate-card.ts. A per-request estimate is still internal: it never reaches a booking step or a
+ * guest email.
  *
- * What still reads it: the server's stored estimate for each inquiry, shown to the team as the
+ * What reads it: the server's stored estimate for each inquiry, shown to the team as the
  * "Internal rate-card guide" in the team email and the admin; and, as booking rules rather than prices,
  * the day types and minimum hours the booking wizard enforces.
  *

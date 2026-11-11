@@ -33,6 +33,7 @@ import { eventTypes } from '../../src/data/event-types';
 import { timelineText } from '../../src/lib/api/demo-seed';
 import { CSV_BOM, CSV_COLUMNS, formatReceived, inquiriesToCsv } from '../../src/shared/csv';
 import { PRICING_NOTES, RATES_FINE_PRINT, estimateWithRates } from '../../src/shared/rate-card';
+import { formatUSD } from '../../src/shared/pricing';
 import { inquiryInputSchema, isSingleLine } from '../../src/shared/schemas';
 import { availabilityFor, spaceIsFree } from '../../src/shared/availability';
 import { closedDayMessage, closedHolidayOf, easterSunday, isClosedDay } from '../../src/shared/booking-rules';
@@ -536,8 +537,31 @@ describe('email templates', () => {
     // The owner set no deposit amount or damage deposit, so those rows are left out.
     assert.ok(!venue.text.includes('Due to reserve the date'));
     assert.ok(!venue.text.includes('Refundable damage deposit'));
-    for (const note of PRICING_NOTES) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
+    for (const note of PRICING_NOTES.filter((n) => n !== RATES_FINE_PRINT)) assert.ok(venue.text.includes(`* ${note}`), `note in text: ${note}`);
     assert.ok(venue.text.includes('* Hourly rate: $375 per hour, up to a maximum of 5 hours.'));
+  });
+
+  test('every email prices from the shared rate card, with the fine print once, after every rate', () => {
+    const ctx = { origin: 'https://venueatncc.org' };
+    const count = (s: string, part: string) => s.split(part).length - 1;
+    for (const hours of [3, 7, 11]) {
+      const e = estimateWithRates({ date: '2026-12-02', space: 'indoor', hours }, '2026-11-10');
+      const venue = venueNotificationEmail({ ...inquiry, date: '2026-12-02', hours }, e, ctx);
+      const guest = guestConfirmationEmail({ ...inquiry, date: '2026-12-02', hours }, e, ctx);
+      for (const part of [venue.text, venue.html]) {
+        for (const amount of ['$375 per hour, up to a maximum of 5 hours', '9 hours, $3,500', '$4,500']) assert.ok(part.includes(amount), `${hours}h: ${amount}`);
+        assert.equal(count(part, RATES_FINE_PRINT), 1, `${hours}h: the fine print once`);
+        assert.equal(count(part, 'not included'), 1, `${hours}h: "not included" once`);
+        const last = part.indexOf(RATES_FINE_PRINT);
+        for (const after of ['$', 'Hourly rate', 'Flat rate', 'Full day-evening', 'starting figure']) {
+          assert.ok(part.lastIndexOf(after) < last, `${hours}h: "${after}" comes before the fine print`);
+        }
+        // No older wording or amounts.
+        for (const old of ['affordable rates', '$250', '$2,500', '$2,995', '$3,995', 'please call us']) assert.ok(!part.includes(old), `${hours}h: no "${old}"`);
+      }
+      assert.ok(venue.text.includes(`Estimated total: ${formatUSD(e.total)}`));
+      for (const part of [guest.text, guest.html]) assert.ok(!/\$[0-9]/.test(part), 'the guest email names no amount');
+    }
   });
 
   test("the owner's rates: $375 an hour up to 5 hours, the $3,500 flat package up to 9, then the $4,500 full day-evening", () => {
