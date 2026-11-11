@@ -766,7 +766,7 @@ export const demoApi: VenueApi = {
               inquiry: detail,
               emails: messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text })),
               adminName: DEMO_ADMIN_NAME,
-              guestName: detail?.name ?? lastIn?.from.name ?? thread?.counterpart.name ?? '',
+              guestName: detail?.name || lastIn?.from.name || thread?.counterpart.name || '',
               today: todayKey(),
             };
             return finishDraft(templateDraft(input), input, 'basic');

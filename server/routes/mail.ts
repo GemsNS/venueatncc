@@ -196,7 +196,7 @@ export function mailRoutes(ctx: ServerContext): Hono<AppEnv> {
       inquiry,
       emails,
       adminName: c.get('session').user.name,
-      guestName: inquiry?.name ?? lastIn?.from.name ?? thread?.counterpart.name ?? '',
+      guestName: inquiry?.name || lastIn?.from.name || thread?.counterpart.name || '',
       today: todayKey(new Date(now())),
     };
     try {

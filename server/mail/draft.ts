@@ -13,6 +13,7 @@ import {
   DRAFT_RULES,
   describeInquiry,
   finishDraft,
+  guestText,
   newTextOf,
   templateDraft,
   venueFacts,
@@ -68,8 +69,8 @@ export function draftUserPrompt(input: DraftInput): string {
         `<emails oldest_first="true"${omitted > 0 ? ` earlier_omitted="${omitted}"` : ''}>`,
         ...emails.map((e) => {
           const who = e.direction === 'in' ? 'guest' : 'venue';
-          const text = newTextOf(e.text).slice(0, DRAFT_MAX_EMAIL_CHARS) || '(no text)';
-          return `<email from="${who}" name="${e.fromName.replace(/"/g, "'")}" sent="${e.sentAt}">\n${text}\n</email>`;
+          const text = guestText(newTextOf(e.text).slice(0, DRAFT_MAX_EMAIL_CHARS)) || '(no text)';
+          return `<email from="${who}" name="${guestText(e.fromName).replace(/"/g, "'")}" sent="${guestText(e.sentAt)}">\n${text}\n</email>`;
         }),
         '</emails>',
       ].join('\n'),
@@ -129,7 +130,8 @@ export function createDrafter(opts: {
   return {
     kind: 'claude',
     async write(input) {
-      client ??= new Anthropic({ apiKey: opts.apiKey!, timeout: 90_000, maxRetries: 1 });
+      // One try within 55 seconds, so the answer comes back before the web server's proxy gives up.
+      client ??= new Anthropic({ apiKey: opts.apiKey!, timeout: 55_000, maxRetries: 0 });
       let res: Anthropic.Beta.Messages.BetaMessage;
       try {
         res = await client.beta.messages.create({

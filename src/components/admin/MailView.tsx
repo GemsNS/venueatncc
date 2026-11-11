@@ -490,7 +490,7 @@ export function ReplyBox({
       class="adm-noteform adm-replybox"
       onSubmit={(e) => {
         e.preventDefault();
-        onSend();
+        if (!drafting) onSend();
       }}
     >
       <label class="field__label" for={id}>
@@ -511,7 +511,7 @@ export function ReplyBox({
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            onSend();
+            if (!drafting) onSend();
           }
         }}
       />

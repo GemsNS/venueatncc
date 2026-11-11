@@ -166,8 +166,6 @@ export const mailDraftSchema = z.object({
   text: multiLine(MAIL_BODY_MAX).optional(),
   instructions: singleLine(500).optional(),
   mode: z.enum(['draft', 'rewrite']),
-  /** For a new email: who it is to. */
-  to: singleLine(400).optional(),
 });
 
 export const mailThreadUpdateSchema = z

@@ -114,20 +114,23 @@ export const DRAFT_RULES = [
   'Start with "Hi <first name>," on its own line. End with a closing such as "Warm regards," on its own line and nothing after it: the name, the business, the phone number, and the website are added below it automatically.',
 ];
 
-/** One request, described for the drafting instructions. */
+/** Text from a guest, made unable to open or close the prompt's marked sections. */
+export const guestText = (s: string): string => s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** One request, described for the drafting instructions. The guest's own words are made inert (guestText). */
 export function describeInquiry(i: DraftInquiry): string {
   const lines = [
     `Reference: ${i.reference}`,
-    `Guest: ${i.name}`,
-    `Event: ${eventTypeName(i.eventType, i.eventTypeOther)}`,
+    `Guest: ${guestText(i.name)}`,
+    `Event: ${guestText(eventTypeName(i.eventType, i.eventTypeOther))}`,
     `Date: ${formatLong(i.date)}${i.altDate ? ` (or ${formatLong(i.altDate)})` : ''}`,
     `Time: ${formatTime(i.startTime)} to ${formatEndTime(i.startTime, i.hours)}, ${i.hours} hours including setup and cleanup`,
     `Space: ${SPACE_NAMES[i.space]}`,
     `Guests: ${i.guests}`,
-    `Wants a tour first: ${i.wantsVisit ? `yes${i.visitNotes ? ` (${i.visitNotes})` : ''}` : 'no'}`,
+    `Wants a tour first: ${i.wantsVisit ? `yes${i.visitNotes ? ` (${guestText(i.visitNotes)})` : ''}` : 'no'}`,
     `Status in the admin: ${i.status}`,
   ];
-  if (i.message) lines.push(`The guest's message with the request:\n${i.message.slice(0, DRAFT_MAX_EMAIL_CHARS)}`);
+  if (i.message) lines.push(`The guest's message with the request:\n${guestText(i.message.slice(0, DRAFT_MAX_EMAIL_CHARS))}`);
   return lines.join('\n');
 }
 
@@ -148,8 +151,12 @@ export function cleanDraft(raw: string, adminName: string): string {
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-/** The amounts the rate card names, like "$375". */
-const rateAmounts = (): Set<string> => new Set(PUBLIC_RATES.flatMap((r) => r.price.match(/\$[\d,]+/g) ?? []));
+/** Dollar amounts in a text, like "$375" or "$3,500" (a comma after one is punctuation, not part of it). */
+const AMOUNT = /\$\d{1,3}(?:,\d{3})+(?!\d)|\$\d+/g;
+const amountsIn = (text: string): string[] => text.match(AMOUNT) ?? [];
+
+/** The amounts the rate card names. */
+const rateAmounts = (): Set<string> => new Set(PUBLIC_RATES.flatMap((r) => amountsIn(r.price)));
 
 /**
  * What to check before sending: placeholders to fill in, and anything the house rules do not allow.
@@ -159,8 +166,8 @@ export function draftWarnings(text: string, ownWords = ''): string[] {
   const out: string[] = [];
   if (/\[[^\]\n]{2,}\]/.test(text)) out.push('Fill in the parts in [square brackets].');
   const allowed = rateAmounts();
-  for (const amount of ownWords.match(/\$[\d,]+/g) ?? []) allowed.add(amount);
-  const odd = [...new Set(text.match(/\$[\d,]+(\.\d\d)?/g) ?? [])].filter((a) => !allowed.has(a.replace(/\.\d\d$/, '')));
+  for (const amount of amountsIn(ownWords)) allowed.add(amount);
+  const odd = [...new Set(amountsIn(text))].filter((a) => !allowed.has(a));
   if (odd.length) out.push(`Check ${odd.join(', ')}: not on the rate card.`);
   const rules: [RegExp, string][] = [
     [/\b(church|congregation|worship|sanctuary|ministry|pastor)\b/i, 'It mentions a church. The venue is its own business.'],
