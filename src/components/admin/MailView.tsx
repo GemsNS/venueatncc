@@ -9,7 +9,17 @@ import type { MailBox, MailMessage, MailStatus, MailThread, MailThreadSummary } 
 import { Icon } from '../islands/Icon';
 import { draftWarnings, finishDraft, tidyDraft, type DraftResult } from '../../shared/draft';
 import { useAdmin } from './context';
-import { localAvailability, localWrite, localWriterError, prepareLocalWriter, type LocalAvailability } from './local-writer';
+import {
+  localAvailability,
+  localState,
+  localWrite,
+  localWriterError,
+  onLocalState,
+  prepareLocalWriter,
+  warmLocalWriter,
+  type LocalAvailability,
+  type LocalState,
+} from './local-writer';
 import { ELLIPSIS, LDQUO, RDQUO, SEP, formatStamp, plural } from './format';
 import { mailHash } from './route';
 import { EmptyState, ErrorBanner, PageHeader, SegmentedRadio, SkeletonRows } from './ui';
@@ -348,20 +358,37 @@ export interface DraftContext {
  */
 type Engine = 'claude' | 'device' | 'basic';
 
-function useEngine(): { engine: Engine; needsDownload: boolean } {
+function useEngine(): { engine: Engine; needsDownload: boolean; downloading: boolean; local: LocalState } {
   const { stats } = useAdmin();
-  const [local, setLocal] = useState<LocalAvailability | null>(null);
+  const [available, setAvailable] = useState<LocalAvailability | null>(null);
+  const [local, setLocal] = useState<LocalState>(localState);
+  const server = stats?.drafting === 'claude';
   useEffect(() => {
     let live = true;
-    localAvailability().then((a) => live && setLocal(a));
+    const off = onLocalState((s) => live && setLocal(s));
+    localAvailability().then((a) => {
+      if (!live) return;
+      setAvailable(a);
+      // The model is already on this computer: load it now, so the first draft does not wait.
+      if (a === 'available' && !server) void warmLocalWriter();
+    });
     return () => {
       live = false;
+      off();
     };
-  }, []);
-  if (stats?.drafting === 'claude') return { engine: 'claude', needsDownload: false };
-  if (local && local !== 'unavailable') return { engine: 'device', needsDownload: local !== 'available' };
-  return { engine: 'basic', needsDownload: false };
+  }, [server]);
+  if (server) return { engine: 'claude', needsDownload: false, downloading: false, local };
+  if (available && available !== 'unavailable') {
+    const needsDownload = available !== 'available' && local.phase !== 'ready';
+    return { engine: 'device', needsDownload, downloading: needsDownload && available === 'downloading', local };
+  }
+  return { engine: 'basic', needsDownload: false, downloading: false, local };
 }
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** How long a draft waits for a writer that is already on the computer to finish loading. */
+const LOAD_WAIT_MS = 15_000;
 
 /**
  * Safari on a Mac: Apple's Writing Tools (Apple Intelligence) rewrite text in any box, on the Mac, for
@@ -401,12 +428,21 @@ export function DraftBar({
   needsInstructions?: boolean;
 }) {
   const { run, user } = useAdmin();
-  const { engine, needsDownload } = useEngine();
+  const { engine, needsDownload, downloading, local } = useEngine();
   const [instructions, setInstructions] = useState('');
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
+  // What the click asked for: a streamed draft fills the box, which must not turn Drafting into Rewriting.
+  const [busyMode, setBusyMode] = useState<'draft' | 'rewrite'>('draft');
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ before: string; after: string; warnings: string[]; by: DraftResult['by']; tidy: boolean } | null>(null);
+  const [result, setResult] = useState<{
+    before: string;
+    after: string;
+    warnings: string[];
+    by: DraftResult['by'];
+    tidy: boolean;
+    /** Why the template wrote it although the computer's writer is set up. */
+    note?: string;
+  } | null>(null);
   const hasText = value.trim() !== '';
   const writes = engine !== 'basic';
   const mode = hasText ? 'rewrite' : 'draft';
@@ -414,9 +450,15 @@ export function DraftBar({
   if (engine === 'basic' && needsInstructions && !hasText) return null;
   const current = result && result.after === value ? result : null;
 
-  const finish = (res: DraftResult, tidy = false) => {
-    setResult({ before: value, after: res.text, warnings: res.warnings, by: res.by, tidy });
+  const finish = (res: DraftResult, tidied = false, note?: string) => {
+    setResult({ before: value, after: res.text, warnings: res.warnings, by: res.by, tidy: tidied, note });
     onReplace(res.text);
+  };
+
+  /** Tidy what is typed (no AI, no server). */
+  const tidy = (note?: string) => {
+    const text = tidyDraft(value, context.guestName ?? '', user.name);
+    finish({ text, warnings: draftWarnings(text, value), by: 'basic' }, true, note);
   };
 
   const go = async () => {
@@ -427,29 +469,54 @@ export function DraftBar({
     }
     setError(null);
     if (engine === 'basic' && hasText) {
-      // Tidy: no AI, no server.
-      const text = tidyDraft(value, context.guestName ?? '', user.name);
-      finish({ text, warnings: draftWarnings(text, value), by: 'basic' }, true);
+      tidy();
       return;
     }
-    setBusy(true);
-    onBusy?.(true);
     const request = { threadId: context.threadId, inquiryId: context.inquiryId, mode, text: hasText ? value : undefined, instructions: instructions.trim() || undefined } as const;
+    /** The template (an empty box) or Tidy (typed text), when the computer's writer cannot write this one. */
+    const fallback = async (note?: string) => {
+      if (hasText) return tidy(note);
+      // A new email has no request or thread for the template to draft from.
+      if (needsInstructions) {
+        setError("Chrome's writer is not ready on this computer yet. Write the email, then press Tidy.");
+        return;
+      }
+      const res = await run(api.admin.mail.draft({ ...request, mode: 'draft' }));
+      if (isError(res)) setError(res.error);
+      else finish(res, false, note);
+    };
+    setBusy(true);
+    setBusyMode(mode);
+    onBusy?.(true);
     try {
       if (engine === 'device') {
-        // Start the writer within the click: Chrome downloads its model only after one.
-        const ready = prepareLocalWriter((f) => setProgress(f)).catch(() => null);
+        // Start the writer within the click: Chrome downloads its model only after one. Nobody waits for
+        // the download: until the model is on the computer, the template and Tidy write.
+        const starting = prepareLocalWriter();
+        const ready = await Promise.race([
+          starting.then(
+            () => true,
+            () => false,
+          ),
+          wait(needsDownload ? 0 : LOAD_WAIT_MS).then(() => false),
+        ]);
+        if (!ready) {
+          // The line under the bar shows the download's progress, so a note here would repeat it.
+          await fallback(localState().phase === 'failed' ? "Chrome's built-in writer could not start on this computer, so the template wrote this." : undefined);
+          return;
+        }
         const input = await run(api.admin.mail.draftInput(request));
         if (isError(input)) {
           setError(input.error);
           return;
         }
-        await ready;
         try {
-          const raw = await localWrite(input, (f) => setProgress(f));
+          // The draft appears in the box as the model writes it.
+          const raw = await localWrite(input, (text) => onReplace(text));
           finish(finishDraft(raw, input, 'device'));
         } catch (err) {
-          setError(localWriterError(err));
+          onReplace(value);
+          await fallback(`${localWriterError(err)} The template wrote this instead.`);
         }
         return;
       }
@@ -458,7 +525,6 @@ export function DraftBar({
       else finish(res);
     } finally {
       setBusy(false);
-      setProgress(null);
       onBusy?.(false);
     }
   };
@@ -470,12 +536,7 @@ export function DraftBar({
   };
 
   const idle = writes ? (mode === 'rewrite' ? 'Rewrite' : 'Draft') : hasText ? 'Tidy' : 'Draft';
-  const working =
-    progress !== null && progress < 1
-      ? `Getting the writer ready ${Math.round(progress * 100)}%`
-      : mode === 'rewrite'
-        ? `Rewriting${ELLIPSIS}`
-        : `Drafting${ELLIPSIS}`;
+  const working = busyMode === 'rewrite' ? `Rewriting${ELLIPSIS}` : `Drafting${ELLIPSIS}`;
   const byline = !current
     ? ''
     : current.tidy
@@ -495,8 +556,8 @@ export function DraftBar({
             type="text"
             maxLength={500}
             value={instructions}
-            placeholder={hasText ? 'What to change' : needsInstructions ? 'What should it say?' : 'What to say'}
-            aria-label={hasText ? 'How your text should change (optional)' : needsInstructions ? 'What the email should say' : 'What the draft should say (optional)'}
+            placeholder={(busy ? busyMode === 'rewrite' : hasText) ? 'What to change' : needsInstructions ? 'What should it say?' : 'What to say'}
+            aria-label={(busy ? busyMode === 'rewrite' : hasText) ? 'How your text should change (optional)' : needsInstructions ? 'What the email should say' : 'What the draft should say (optional)'}
             aria-describedby={error ? `${id}-draft-error` : undefined}
             onInput={(e) => setInstructions((e.target as HTMLInputElement).value)}
             onKeyDown={(e) => {
@@ -526,6 +587,7 @@ export function DraftBar({
       {current && !busy && (
         <div class="adm-draft__check" role="status">
           <p>
+            {current.note ? `${current.note} ` : ''}
             {byline} Read it before sending{current.warnings.length ? ', and check:' : '.'}
           </p>
           {current.warnings.length > 0 && (
@@ -537,8 +599,16 @@ export function DraftBar({
           )}
         </div>
       )}
-      {!current && !busy && engine === 'device' && needsDownload && (
-        <p class="adm-footnote">The first draft downloads Chrome's writer to this computer, once. It is free, and what it reads stays on this computer.</p>
+      {engine === 'device' && (needsDownload || local.phase === 'loading') && !busy && (
+        <p class="adm-footnote" role="status">
+          {local.phase === 'loading'
+            ? `Chrome is getting its writer ready on this computer${local.progress > 0 && local.progress < 1 ? ` (${Math.round(local.progress * 100)}% downloaded)` : ''}. Until it is ready, Draft uses the template.`
+            : local.phase === 'failed'
+              ? "Chrome's writer could not be set up on this computer. Draft uses the template; press it again to retry."
+              : downloading
+                ? "Chrome is downloading its free writer to this computer, once. Until it is ready, Draft uses the template."
+                : "The first Draft starts downloading Chrome's free writer to this computer, once; the template writes until it is ready. What it reads stays on this computer."}
+        </p>
       )}
       {!busy && engine === 'basic' && basicHint(hasText, !!current) && (
         <p class="adm-footnote">{basicHint(hasText, !!current)}</p>

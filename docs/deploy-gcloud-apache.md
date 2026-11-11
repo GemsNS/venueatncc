@@ -1473,8 +1473,13 @@ Who writes the draft, in this order, all with **nothing to set up and nothing to
   Chrome 148). The admin's browser asks the server for the request and the thread
   (`/api/admin/mail/draft-input`, which never includes the team's notes or the estimate) and writes the
   draft on the computer: nothing it reads goes to Google or anyone else, and there is no key and no bill.
-  The first Draft downloads the model once (Chrome shows "Getting the writer ready"). It is a small
-  model, so read its drafts closely; the check list under the button still applies.
+  The first Draft starts Chrome's one-time download of the model (a few GB; it can take a while and
+  continues in the background). Nobody waits for it: until it is on the computer, Draft uses the
+  template and Tidy, and the line under the button shows the download's progress. Once it is there, the
+  admin loads it as soon as a reply box opens, and each draft appears in the box as it is written (a
+  draft that stalls for 45 seconds falls back to the template). To see the download in Chrome, open
+  `chrome://on-device-internals` (Model Status). It is a small model, so read its drafts closely; the
+  check list under the button still applies.
 - **The template and Tidy (free, every device).** On a phone, in another browser, or on a computer
   without the model: Draft fills in the request and the rates, and with text in the box the button is
   **Tidy**, which fixes capitals, "I", day names, times ("4pm" to "4 PM"), spacing, and adds the
