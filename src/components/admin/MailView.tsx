@@ -364,6 +364,23 @@ function useEngine(): { engine: Engine; needsDownload: boolean } {
 }
 
 /**
+ * Safari on a Mac: Apple's Writing Tools (Apple Intelligence) rewrite text in any box, on the Mac, for
+ * free. Web pages cannot call them, so the admin says where they are.
+ */
+const onMacSafari = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Firefox|FxiOS|OPR/.test(ua);
+};
+
+/** The line under the template's Draft and Tidy: what they do, and where a free rewrite is. */
+function basicHint(hasText: boolean, drafted: boolean): string {
+  const what = drafted ? '' : hasText ? 'Tidy fixes capitals and spacing and adds the greeting and closing. ' : 'Draft fills in the request and the rates. ';
+  if (onMacSafari()) return `${what}To rewrite it, select the text, Control-click, and choose Writing Tools (free on a Mac with Apple Intelligence).`;
+  return drafted ? '' : `${what}In Chrome on a computer, the built-in writer drafts and rewrites for free.`;
+}
+
+/**
  * Draft and Rewrite (or Tidy) above a reply box. The draft replaces the box's text, Undo brings the text
  * back, and nothing is sent until Send.
  */
@@ -523,10 +540,8 @@ export function DraftBar({
       {!current && !busy && engine === 'device' && needsDownload && (
         <p class="adm-footnote">The first draft downloads Chrome's writer to this computer, once. It is free, and what it reads stays on this computer.</p>
       )}
-      {!current && !busy && engine === 'basic' && (
-        <p class="adm-footnote">
-          {hasText ? 'Tidy fixes capitals and spacing and adds the greeting and closing.' : 'Draft fills in the request and the rates.'} In Chrome on a computer, the built-in writer drafts and rewrites for free.
-        </p>
+      {!busy && engine === 'basic' && basicHint(hasText, !!current) && (
+        <p class="adm-footnote">{basicHint(hasText, !!current)}</p>
       )}
     </div>
   );

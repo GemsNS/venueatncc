@@ -1479,6 +1479,11 @@ Who writes the draft, in this order, all with **nothing to set up and nothing to
   without the model: Draft fills in the request and the rates, and with text in the box the button is
   **Tidy**, which fixes capitals, "I", day names, times ("4pm" to "4 PM"), spacing, and adds the
   greeting and closing, keeping the admin's own words.
+- **Safari on a Mac (free).** Safari has no built-in writer that a web page can use, but macOS has
+  Apple's **Writing Tools** (Apple Intelligence: a Mac with Apple silicon, M1 or later, on macOS 15.1 or
+  later, with Apple Intelligence turned on in System Settings). In Safari the admin says where they
+  are: select the text in the reply box, Control-click, Writing Tools, then Rewrite, Professional,
+  Friendly, Concise, or Proofread. It works on the Mac, free.
 - **Claude (optional, paid).** With `ANTHROPIC_API_KEY` set, Claude (`claude-opus-5-5`) writes every
   draft on the server instead, on any device, and writes better than the small model. Each draft then
   sends the request's details and the thread to Anthropic's API (not logged on the server) and costs a
