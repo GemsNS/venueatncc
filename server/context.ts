@@ -6,6 +6,7 @@ import type { HttpBindings } from '@hono/node-server';
 import type { Config } from './config';
 import type { Mailer } from './email/mailer';
 import type { MailService } from './mail/service';
+import type { Drafter } from './mail/draft';
 import type { Repo, SessionRecord } from './repo';
 import type { RateLimiter } from './security';
 import type { ApiError } from '../src/shared/types';
@@ -47,6 +48,8 @@ export interface ServerContext {
   mailer: Mailer;
   /** The venue's mailbox in the admin. */
   mail: MailService;
+  /** Reply drafts (Claude, or the template). */
+  drafter: Drafter;
   /** Milliseconds since the epoch. Injectable so tests can move time. */
   now: () => number;
   log: Logger;
@@ -65,6 +68,8 @@ export interface ServerContext {
     mailSend: RateLimiter;
     /** "Check for Mail" presses, per admin. */
     mailSync: RateLimiter;
+    /** Draft and Rewrite presses, per admin. */
+    mailDraft: RateLimiter;
   };
 }
 

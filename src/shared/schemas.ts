@@ -158,6 +158,18 @@ export const mailReplySchema = z.object({ body: mailBody });
 /** An email to a request's guest: a reply in their latest thread, or a new one with this subject. */
 export const inquiryEmailSchema = z.object({ body: mailBody, subject: singleLine(200).optional() });
 
+/** A reply draft: for a thread or a request (or neither, for a new email), from scratch or rewriting the text. */
+export const mailDraftSchema = z.object({
+  threadId: z.number().int().positive().optional(),
+  inquiryId: z.number().int().positive().optional(),
+  /** What is in the reply box; rewritten when mode is rewrite. */
+  text: multiLine(MAIL_BODY_MAX).optional(),
+  instructions: singleLine(500).optional(),
+  mode: z.enum(['draft', 'rewrite']),
+  /** For a new email: who it is to. */
+  to: singleLine(400).optional(),
+});
+
 export const mailThreadUpdateSchema = z
   .object({ archived: z.boolean().optional(), read: z.boolean().optional() })
   .refine((v) => v.archived !== undefined || v.read !== undefined, 'Nothing to change.');

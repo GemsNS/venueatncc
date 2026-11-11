@@ -216,6 +216,8 @@ export interface AdminStats {
   bookedValue: number; // sum of estimates for booked
   /** Unread emails in the venue's mailbox (not archived). */
   unreadMail?: number;
+  /** Who writes reply drafts: Claude (draft and rewrite), or the built-in template (draft only). */
+  drafting?: 'claude' | 'basic';
 }
 
 export interface InquiryListQuery {

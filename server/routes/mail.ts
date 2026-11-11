@@ -5,11 +5,13 @@
 import fs from 'node:fs';
 import { Readable } from 'node:stream';
 import { Hono } from 'hono';
-import { formatLong } from '../../src/shared/dates';
-import { fieldErrors, inquiryEmailSchema, mailComposeSchema, mailReplySchema, mailThreadUpdateSchema, parseRecipients } from '../../src/shared/schemas';
+import { formatLong, todayKey } from '../../src/shared/dates';
+import type { DraftEmail, DraftInput } from '../../src/shared/draft';
+import { fieldErrors, inquiryEmailSchema, mailComposeSchema, mailDraftSchema, mailReplySchema, mailThreadUpdateSchema, parseRecipients } from '../../src/shared/schemas';
 import type { InquiryStatus, MailAddress, MailBox } from '../../src/shared/types';
 import { INQUIRY_STATUSES } from '../../src/shared/types';
 import { apiError, iso, readBody, type AppContextT, type AppEnv, type ServerContext } from '../context';
+import { DraftError } from '../mail/draft';
 import { replySubject } from '../mail/text';
 
 const statusLabel = (s: InquiryStatus) => INQUIRY_STATUSES.find((x) => x.id === s)?.label ?? s;
@@ -159,6 +161,52 @@ export function mailRoutes(ctx: ServerContext): Hono<AppEnv> {
       })();
     }
     return c.json(repo.getInquiryDetail(id)!);
+  });
+
+  /**
+   * A reply draft for the reply box: from scratch, from the request and the emails so far, or a rewrite of
+   * the text. Nothing is sent; the admin edits and sends it.
+   */
+  mail.post('/draft', async (c) => {
+    const parsed = mailDraftSchema.safeParse((await readBody(c, false)) ?? {});
+    if (!parsed.success) return apiError(c, 400, 'That draft request is not valid.');
+    const { threadId, inquiryId, mode } = parsed.data;
+    const text = (parsed.data.text ?? '').trim();
+    const instructions = (parsed.data.instructions ?? '').trim();
+    if (mode === 'rewrite' && !text) return apiError(c, 400, 'Write something to rewrite first.');
+    if (mode === 'rewrite' && ctx.drafter.kind !== 'claude') return apiError(c, 400, 'Rewriting needs Claude, which is not set up on the server.');
+    const thread = threadId ? repo.mailThread(threadId) : null;
+    if (threadId && !thread) return apiError(c, 404, 'That email was not found.');
+    const linked = inquiryId ?? thread?.inquiry?.id ?? null;
+    const inquiry = linked ? repo.getInquiryDetail(linked) : null;
+    if (inquiryId && !inquiry) return apiError(c, 404, 'That inquiry was not found.');
+    if (!thread && !inquiry && mode === 'draft' && !instructions) {
+      return apiError(c, 400, 'Say in a few words what the email should say, then press Draft.', { instructions: 'Say what the email should say.' });
+    }
+    const key = `admin:${c.get('session').user.id}`;
+    if (!ctx.limits.mailDraft.consume(key, now())) return apiError(c, 429, 'That is a lot of drafts in one hour. Wait a while, then try again.');
+
+    const messages = thread?.messages ?? inquiry?.emails ?? [];
+    const emails: DraftEmail[] = messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text }));
+    const lastIn = [...messages].reverse().find((m) => m.direction === 'in');
+    const input: DraftInput = {
+      mode,
+      text,
+      instructions,
+      inquiry,
+      emails,
+      adminName: c.get('session').user.name,
+      guestName: inquiry?.name ?? lastIn?.from.name ?? thread?.counterpart.name ?? '',
+      today: todayKey(new Date(now())),
+    };
+    try {
+      return c.json(await ctx.drafter.write(input));
+    } catch (err) {
+      // The reason only, never the prompt or the draft.
+      const reason = err instanceof DraftError ? err.message : 'Something went wrong while drafting. Try again.';
+      ctx.log.error('[mail] drafting failed:', err instanceof Error ? `${err.name}: ${err.message.slice(0, 200)}` : 'unknown error');
+      return apiError(c, 502, reason);
+    }
   });
 
   mail.get('/attachments/:id', (c) => {

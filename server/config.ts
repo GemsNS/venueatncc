@@ -59,6 +59,9 @@ export const GOOGLE_MAIL = {
   imap: { host: 'imap.gmail.com', port: 993, secure: true, inbox: 'INBOX', sent: '[Gmail]/Sent Mail' },
 } as const;
 
+/** The Claude model that writes reply drafts (DRAFT_MODEL overrides it). */
+export const DEFAULT_DRAFT_MODEL = 'claude-opus-5-5';
+
 export interface Config {
   nodeEnv: string;
   production: boolean;
@@ -88,6 +91,10 @@ export interface Config {
   mailPollSeconds: number;
   /** Where received attachments are kept. */
   mailFilesDir: string;
+  /** Claude writes and rewrites reply drafts with this key (server/mail/draft.ts); without it, the template drafts. */
+  anthropicApiKey: string | null;
+  /** The Claude model for drafts. */
+  draftModel: string;
   admin: { email: string; password: string; name: string } | null;
 }
 
@@ -242,6 +249,8 @@ export function loadConfig(env: Env = process.env, log: Logger = console): Confi
     imap,
     mailPollSeconds: Math.max(30, int(env, 'MAIL_POLL_SECONDS', 120)),
     mailFilesDir: path.resolve(str(env, 'MAIL_FILES_DIR', path.join(dataDir, 'mail-files'))),
+    anthropicApiKey: optional(env, 'ANTHROPIC_API_KEY') ?? null,
+    draftModel: str(env, 'DRAFT_MODEL', DEFAULT_DRAFT_MODEL),
     admin:
       adminEmail && adminPassword
         ? { email: adminEmail.toLowerCase(), password: adminPassword, name: str(env, 'ADMIN_NAME', site.contact.contactName) }

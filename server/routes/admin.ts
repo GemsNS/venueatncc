@@ -249,7 +249,7 @@ export function adminRoutes(ctx: ServerContext): Hono<AppEnv> {
 
   admin.get('/stats', (c) => {
     const nowMs = now();
-    return c.json(repo.stats(todayKey(new Date(nowMs)), iso(nowMs - 7 * 24 * 60 * 60 * 1000)));
+    return c.json({ ...repo.stats(todayKey(new Date(nowMs)), iso(nowMs - 7 * 24 * 60 * 60 * 1000)), drafting: ctx.drafter.kind });
   });
 
   // ------------------------------------------------------------ inquiries

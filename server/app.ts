@@ -9,6 +9,7 @@ import type { Db } from './db';
 import { createMailer, type Mailer } from './email/mailer';
 import { createMailService, type ImapFactory } from './mail/service';
 import { createTokenSource } from './mail/m365';
+import { createDrafter, type Drafter } from './mail/draft';
 import { noStore, sameOrigin, securityHeaders } from './middleware';
 import { Repo } from './repo';
 import { adminRoutes } from './routes/admin';
@@ -22,6 +23,8 @@ export interface AppDeps {
   mailer?: Mailer;
   /** Tests pass a fake mailbox. */
   imapFactory?: ImapFactory;
+  /** Tests pass a drafter that never reaches Claude. */
+  drafter?: Drafter;
   now?: () => number;
   log?: Logger;
 }
@@ -50,6 +53,7 @@ export function createApp(deps: AppDeps): VenueServerApp {
     repo,
     mailer,
     mail: createMailService({ config: deps.config, repo, mailer, tasks, log, now, imapFactory: deps.imapFactory, tokens }),
+    drafter: deps.drafter ?? createDrafter({ apiKey: deps.config.anthropicApiKey, model: deps.config.draftModel }),
     now,
     log,
     tasks,
@@ -62,6 +66,7 @@ export function createApp(deps: AppDeps): VenueServerApp {
       password: new RateLimiter(10, 15 * 60 * 1000),
       mailSend: new RateLimiter(60, 60 * 60 * 1000),
       mailSync: new RateLimiter(30, 15 * 60 * 1000),
+      mailDraft: new RateLimiter(60, 60 * 60 * 1000),
     },
   };
 

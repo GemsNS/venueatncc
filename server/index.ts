@@ -70,6 +70,11 @@ async function main(): Promise<void> {
   } else {
     log.info('[mail] IMAP is not configured, so the admin can send email but not receive it.');
   }
+  log.info(
+    config.anthropicApiKey
+      ? `[draft] Claude (${config.draftModel}) writes and rewrites reply drafts.`
+      : '[draft] ANTHROPIC_API_KEY is not set, so Draft fills in the template and there is no Rewrite.',
+  );
   const mailPoll = setInterval(() => void ctx.mail.sync(), config.mailPollSeconds * 1000);
   mailPoll.unref();
   setTimeout(() => void ctx.mail.sync(), 5_000).unref();

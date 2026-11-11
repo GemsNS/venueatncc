@@ -330,6 +330,132 @@ export function MailListView({ box, q }: { box: MailBox; q: string }) {
 }
 
 /** The reply box under a thread or a request. */
+/** Where a draft's facts come from: a thread, a request, or neither (a new email, from instructions only). */
+export interface DraftContext {
+  threadId?: number;
+  inquiryId?: number;
+}
+
+/**
+ * Draft and Rewrite above a reply box. Claude (on a server with ANTHROPIC_API_KEY) drafts from the request
+ * and the emails, or rewrites what is in the box; otherwise the template drafts an empty box. The draft
+ * replaces the box's text, Undo brings the text back, and nothing is sent until Send.
+ */
+export function DraftBar({
+  id,
+  context,
+  value,
+  onReplace,
+  onBusy,
+  needsInstructions = false,
+}: {
+  id: string;
+  context: DraftContext;
+  value: string;
+  onReplace: (text: string) => void;
+  onBusy?: (busy: boolean) => void;
+  /** A new email has no request or thread to draft from, so it needs a few words. */
+  needsInstructions?: boolean;
+}) {
+  const { run, stats } = useAdmin();
+  const [instructions, setInstructions] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ before: string; after: string; warnings: string[]; by: 'claude' | 'basic' } | null>(null);
+  const drafting = stats?.drafting ?? 'basic';
+  const claude = drafting === 'claude';
+  const hasText = value.trim() !== '';
+  const mode = claude && hasText ? 'rewrite' : 'draft';
+  // The template only drafts an empty box, and only from a request or an email.
+  if (!claude && (needsInstructions || (hasText && result?.after !== value))) return null;
+  const current = result && result.after === value ? result : null;
+
+  const go = async () => {
+    if (busy) return;
+    if (needsInstructions && !instructions.trim() && !hasText) {
+      setError('Say in a few words what the email should say.');
+      return;
+    }
+    setBusy(true);
+    onBusy?.(true);
+    setError(null);
+    const res = await run(api.admin.mail.draft({ ...context, mode, text: mode === 'rewrite' ? value : undefined, instructions: instructions.trim() || undefined }));
+    setBusy(false);
+    onBusy?.(false);
+    if (isError(res)) {
+      setError(res.error);
+      return;
+    }
+    setResult({ before: value, after: res.text, warnings: res.warnings, by: res.by });
+    onReplace(res.text);
+  };
+
+  const undo = () => {
+    if (!current) return;
+    onReplace(current.before);
+    setResult(null);
+  };
+
+  const label = busy ? (mode === 'rewrite' ? `Rewriting${ELLIPSIS}` : `Drafting${ELLIPSIS}`) : mode === 'rewrite' ? 'Rewrite' : 'Draft';
+  return (
+    <div class="adm-draft">
+      <div class="adm-draft__bar">
+        {claude && (
+          <input
+            id={`${id}-ask`}
+            class="input"
+            type="text"
+            maxLength={500}
+            value={instructions}
+            placeholder={hasText ? 'What to change' : needsInstructions ? 'What should it say?' : 'What to say'}
+            aria-label={hasText ? 'How Claude should change your text (optional)' : needsInstructions ? 'What the email should say' : 'What the draft should say (optional)'}
+            aria-describedby={error ? `${id}-draft-error` : undefined}
+            onInput={(e) => setInstructions((e.target as HTMLInputElement).value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                go();
+              }
+            }}
+          />
+        )}
+        <button type="button" class="btn btn--outline" onClick={go} disabled={busy} aria-busy={busy ? 'true' : undefined}>
+          <Icon name="sparkles" />
+          {label}
+        </button>
+        {current && !busy && (
+          <button type="button" class="btn btn--plain" onClick={undo}>
+            <Icon name="undo-2" />
+            Undo
+          </button>
+        )}
+      </div>
+      {error && (
+        <p id={`${id}-draft-error`} class="adm-error" role="alert">
+          {error}
+        </p>
+      )}
+      {current && !busy && (
+        <div class="adm-draft__check" role="status">
+          <p>
+            {current.by === 'claude' ? 'Drafted by Claude.' : 'Drafted from the template.'} Read it before sending{current.warnings.length ? ', and check:' : '.'}
+          </p>
+          {current.warnings.length > 0 && (
+            <ul>
+              {current.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {!claude && !current && (
+        <p class="adm-footnote">The template fills in the request and the rates. Claude can write and rewrite replies once it is set up on the server.</p>
+      )}
+    </div>
+  );
+}
+
 export function ReplyBox({
   id,
   label,
@@ -341,6 +467,7 @@ export function ReplyBox({
   onSend,
   textareaRef,
   mailto,
+  draft,
 }: {
   id: string;
   label: string;
@@ -353,8 +480,11 @@ export function ReplyBox({
   textareaRef?: { current: HTMLTextAreaElement | null };
   /** A mailto: link to write from a mail app instead (the way the request page worked before Mail). */
   mailto?: string;
+  /** Show Draft and Rewrite, drafting from this thread or request. */
+  draft?: DraftContext;
 }) {
   const { user } = useAdmin();
+  const [drafting, setDrafting] = useState(false);
   return (
     <form
       class="adm-noteform adm-replybox"
@@ -366,11 +496,13 @@ export function ReplyBox({
       <label class="field__label" for={id}>
         {label}
       </label>
+      {draft && <DraftBar id={id} context={draft} value={value} onReplace={onInput} onBusy={setDrafting} />}
       <textarea
         ref={textareaRef}
         id={id}
         class="input"
-        rows={6}
+        rows={Math.min(18, Math.max(6, value.split('\n').length + 1))}
+        readOnly={drafting}
         value={value}
         placeholder={placeholder}
         aria-invalid={error ? 'true' : undefined}
@@ -398,7 +530,7 @@ export function ReplyBox({
         </p>
       )}
       <div class="adm-noteform__actions">
-        <button type="submit" class="btn btn--filled" disabled={busy} aria-busy={busy ? 'true' : undefined}>
+        <button type="submit" class="btn btn--filled" disabled={busy || drafting} aria-busy={busy ? 'true' : undefined}>
           <Icon name="send" />
           {busy ? `Sending${ELLIPSIS}` : 'Send'}
         </button>
@@ -566,6 +698,7 @@ export function MailThreadView({ id }: { id: number }) {
         value={reply}
         onInput={setReply}
         onSend={send}
+        draft={{ threadId: thread.id }}
       />
     </div>
   );
@@ -579,10 +712,11 @@ export function MailComposeView({ to: initialTo, subject: initialSubject }: { to
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [drafting, setDrafting] = useState(false);
 
   const send = async (e?: Event) => {
     e?.preventDefault();
-    if (busy) return;
+    if (busy || drafting) return;
     setBusy(true);
     setError(null);
     setFields({});
@@ -636,10 +770,12 @@ export function MailComposeView({ to: initialTo, subject: initialSubject }: { to
           <label class="field__label" for="adm-compose-body">
             Message
           </label>
+          <DraftBar id="adm-compose-body" context={{}} value={body} onReplace={setBody} onBusy={setDrafting} needsInstructions />
           <textarea
             id="adm-compose-body"
             class="input"
-            rows={10}
+            rows={Math.min(20, Math.max(10, body.split('\n').length + 1))}
+            readOnly={drafting}
             value={body}
             onInput={(e) => setBody((e.target as HTMLTextAreaElement).value)}
             onKeyDown={(e) => {
@@ -656,7 +792,7 @@ export function MailComposeView({ to: initialTo, subject: initialSubject }: { to
           </p>
         )}
         <div class="adm-noteform__actions">
-          <button type="submit" class="btn btn--filled" disabled={busy} aria-busy={busy ? 'true' : undefined}>
+          <button type="submit" class="btn btn--filled" disabled={busy || drafting} aria-busy={busy ? 'true' : undefined}>
             <Icon name="send" />
             {busy ? `Sending${ELLIPSIS}` : 'Send'}
           </button>

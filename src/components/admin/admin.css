@@ -2507,6 +2507,53 @@ a.adm-mailfile:hover {
   min-height: 9rem;
 }
 
+/* Draft and Rewrite, above a reply box. */
+.adm-draft {
+  display: grid;
+  gap: 8px;
+}
+
+.adm-draft__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.adm-draft__bar .input {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.adm-draft__bar .btn {
+  flex: 0 0 auto;
+}
+
+.adm-draft__check {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--separator);
+  font-size: 0.9375rem;
+}
+
+.adm-draft__check p {
+  margin: 0;
+}
+
+.adm-draft__check ul {
+  margin: 6px 0 0;
+  padding-left: 1.25rem;
+}
+
+.adm-compose .adm-draft {
+  margin-bottom: 8px;
+}
+
+textarea.input[readonly] {
+  opacity: 0.6;
+}
+
 .adm-compose {
   display: grid;
   gap: 16px;

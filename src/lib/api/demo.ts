@@ -17,6 +17,7 @@ import { capacityError } from '../../shared/capacity';
 import { inquiriesToCsv } from '../../shared/csv';
 import { daysBetween, formatLong, todayKey } from '../../shared/dates';
 import { estimateWithRates } from '../../shared/rate-card';
+import { finishDraft, templateDraft, type DraftInput } from '../../shared/draft';
 import { site } from '../../data/site';
 import { makeReference } from '../../shared/reference';
 import { INQUIRY_STATUSES, SPACE_NAMES, spaceFromParts, spaceParts, spacesOverlap } from '../../shared/types';
@@ -68,6 +69,8 @@ export const demoMessages = {
   blockNotFound: 'We could not find that calendar block.',
   passwordDemo: 'Password changes are turned off in the demo.',
   mailNotFound: 'That email was not found.',
+  rewriteDemo: 'In the demo, drafts come from the template. On the live site, Claude rewrites what you wrote.',
+  draftNeedsContext: 'In the demo, drafts are written for a request or an email you received.',
   nothingToChange: 'Nothing to change.',
   blockConflict: (date: DateKey, space: SpaceChoice) => `${formatLong(date)} already has a calendar block for ${SPACE_NAMES[space]}.`,
   /** Mark Booked refused because another block is in the way (the server's 409). */
@@ -508,7 +511,7 @@ export const demoApi: VenueApi = {
           .sort(byDate)
           .slice(0, UPCOMING_BOOKED_LIMIT)
           .map((b) => ({ date: b.date, label: b.label, space: b.space }));
-        return { byStatus, newThisWeek, upcomingBooked, pipelineValue, bookedValue, unreadMail: db.mail ? unreadCount(db.mail) : 0 };
+        return { byStatus, newThisWeek, upcomingBooked, pipelineValue, bookedValue, unreadMail: db.mail ? unreadCount(db.mail) : 0, drafting: 'basic' as const };
       }),
 
     listInquiries: (query) =>
@@ -740,6 +743,35 @@ export const demoApi: VenueApi = {
       },
 
       attachmentUrl: () => null,
+
+      // The demo has no Claude: the built-in template writes the draft, as on a server without ANTHROPIC_API_KEY.
+      draft: (req) =>
+        admin(() =>
+          mutate((db) => {
+            if (req.mode === 'rewrite') return fail(demoMessages.rewriteDemo);
+            const mail = mailOf(db);
+            const thread = req.threadId ? threadOf(mail, db.inquiries, req.threadId) : null;
+            if (req.threadId && !thread) return fail(demoMessages.mailNotFound);
+            const linked = req.inquiryId ?? thread?.inquiry?.id;
+            const record = linked ? db.inquiries.find((i) => i.id === linked) : undefined;
+            if (req.inquiryId && !record) return fail(demoMessages.inquiryNotFound);
+            if (!thread && !record) return fail(demoMessages.draftNeedsContext);
+            const detail = record ? detailOf(db, record) : null;
+            const messages = thread?.messages ?? detail?.emails ?? [];
+            const lastIn = [...messages].reverse().find((m) => m.direction === 'in');
+            const input: DraftInput = {
+              mode: 'draft',
+              text: '',
+              instructions: (req.instructions ?? '').trim(),
+              inquiry: detail,
+              emails: messages.map((m) => ({ direction: m.direction, fromName: m.from.name || m.from.address, sentAt: m.sentAt, text: m.text })),
+              adminName: DEMO_ADMIN_NAME,
+              guestName: detail?.name ?? lastIn?.from.name ?? thread?.counterpart.name ?? '',
+              today: todayKey(),
+            };
+            return finishDraft(templateDraft(input), input, 'basic');
+          }),
+        ),
     },
   },
 };

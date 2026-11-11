@@ -488,6 +488,21 @@ test('the demo mailbox: seeded threads, reading, replying, archiving, and emaili
   await resetDemoData();
 });
 
+test('demo drafts come from the template: for a request or a thread, never a rewrite', async () => {
+  await resetDemoData();
+  assert.equal(ok(await api.admin.stats()).drafting, 'basic');
+  const inquiry = ok(await api.admin.listInquiries({ status: 'all' }))[0];
+  const forRequest = ok(await api.admin.mail.draft({ mode: 'draft', inquiryId: inquiry.id }));
+  assert.equal(forRequest.by, 'basic');
+  assert.match(forRequest.text, new RegExp(`^Hi ${inquiry.name.split(' ')[0]},`));
+  assert.match(forRequest.text, /Warm regards,$/);
+  const thread = ok(await api.admin.mail.threads('inbox')).threads[0];
+  assert.match(ok(await api.admin.mail.draft({ mode: 'draft', threadId: thread.id })).text, /^Hi /);
+  assert.ok(isError(await api.admin.mail.draft({ mode: 'rewrite', inquiryId: inquiry.id, text: 'hello' })));
+  assert.ok(isError(await api.admin.mail.draft({ mode: 'draft' })));
+  await resetDemoData();
+});
+
 test('logout ends the session', async () => {
   await api.admin.logout();
   assert.equal(await api.admin.session(), null);

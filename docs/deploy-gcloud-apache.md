@@ -575,6 +575,8 @@ so all paths below are absolute.
 | `MAIL_M365_CLIENT_ID`, `MAIL_M365_CLIENT_SECRET` | unset | the app registration from [11.0](#110-the-mailbox-the-existing-microsoft-365-inbox-two-settings-decided-2026-10-30) | With `SMTP_HOST` and `IMAP_HOST` empty, sends and receives as `faith@venueatncc.org` through Microsoft 365 with no other setting (`config.ts`, `M365_MAIL`). Never print the secret. |
 | `MAIL_M365_TENANT`, `MAIL_M365_MAILBOX` | `venueatncc.org`, the `MAIL_FROM` address | defaults | `MAIL_M365_MAILBOX` only when the venue address is an alias of another mailbox. |
 | `MAIL_APP_PASSWORD` | unset | unset | A Google Workspace mailbox instead (`GOOGLE_MAIL`). |
+| `ANTHROPIC_API_KEY` | unset | the venue's Claude API key ([11.5](#115-reply-drafts-with-claude-owner--grokbot)) | Claude writes and rewrites reply drafts in the admin. Unset: Draft fills in the template, and there is no Rewrite. Never print it. |
+| `DRAFT_MODEL` | `claude-opus-5-5` | unset | The Claude model for drafts. |
 | `IMAP_HOST` | unset: the admin's Mail tab sends but does not receive | unset until [11.4](#114-receive-in-the-admin-connect-the-mailbox-owner--grokbot) | The mailbox the admin reads. When set, `IMAP_PASS` or the three `IMAP_OAUTH_*` values are required or the app refuses to start. |
 | `IMAP_PORT` / `IMAP_SECURE` | `993` / `true` | defaults | |
 | `IMAP_USER` | the address in `MAIL_FROM` | per 11.4 | When it is the venue address, all mail in the folders is copied; otherwise only venue mail (`IMAP_COPY_ALL` overrides). |
@@ -1449,6 +1451,41 @@ password, consent not granted, IMAP turned off for the mailbox). Fix the setting
 
 The first check copies the last 30 days (up to 300 messages). Older mail stays in the mailbox only.
 Received attachments are not in the nightly database backup. They remain in the mailbox itself.
+
+### 11.5 Reply drafts with Claude (owner + grokbot)
+
+Every reply box in the admin (a request's Email section, a thread in Mail, and New Email) has a
+**Draft** button. With an empty box, Draft writes a reply from the request (date, time, space, guests,
+the tour), the emails so far, and the venue's facts and rates, which it reads from the site's own data
+(`src/shared/draft.ts`), so a rate change reaches the drafts by itself. With text in the box, the button
+is **Rewrite**: it keeps what the text says and decides and makes it clear and professional. A short
+note beside the button ("shorter", "offer Tuesday at 4 PM") steers either one. The draft only fills
+the box: **Undo** brings back what was there, and nothing is sent until Send. A list under the button
+names anything to check: parts in [square brackets] to fill in, an amount not on the rate card, a date
+said to be available, or anything the house rules leave out (a church, drinks, outside caterers, how
+far ahead to book, the gazebo's roof).
+
+Without a key, Draft fills in the built-in template (the request and the rates), and there is no
+Rewrite. With `ANTHROPIC_API_KEY`, Claude (`claude-opus-5-5`) writes them. Each draft sends the
+request's details and the emails in that thread to Anthropic's API; prompts and drafts are not logged
+on the server. A draft costs a few cents (about 2 to 5). Drafts are limited to 60 an hour per admin.
+
+1. **Owner:** sign in at https://platform.claude.com with the venue's account, add a payment method,
+   and create an API key named "venueatncc.org drafts" (Settings, API keys). Set a monthly spend limit
+   (Settings, Limits), for example $20. Give the key to grokbot privately.
+2. **grokbot:** replace any older line, then add the key through stdin, never as an argument:
+
+   ```sh
+   ssh <server> "sudo -u mvandykeanthony sed -i '/^ANTHROPIC_API_KEY=/d' /var/www/venueatncc.org/.env"
+   # then pipe the one line ANTHROPIC_API_KEY=<key> into:
+   ssh <server> "sudo -u mvandykeanthony tee -a /var/www/venueatncc.org/.env >/dev/null"
+   ssh <server> "sudo grep -c '^ANTHROPIC_API_KEY=sk-ant-' /var/www/venueatncc.org/.env"   # expect 1
+   ```
+
+   Restart only this app (14.1); its log shows `[draft] Claude (claude-opus-5-5) writes and rewrites
+   reply drafts.` The admin's Draft button now has a "What to say" box beside it.
+3. **Check:** open a request, press Draft. A reply appears with "Drafted by Claude." If the box shows
+   "Claude did not accept the API key", the key is wrong or was revoked.
 
 ---
 

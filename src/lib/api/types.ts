@@ -25,6 +25,18 @@ import type {
   SpaceChoice,
   BlockKind,
 } from '../../shared/types';
+import type { DraftMode, DraftResult } from '../../shared/draft';
+
+/** A reply draft: for a thread, a request, or (with instructions) a new email. */
+export interface MailDraftRequest {
+  mode: DraftMode;
+  threadId?: number;
+  inquiryId?: number;
+  /** What is in the reply box (rewritten in rewrite mode). */
+  text?: string;
+  /** What the email should say, in a few words. */
+  instructions?: string;
+}
 
 export type Result<T> = T | ApiError;
 
@@ -74,6 +86,8 @@ export interface VenueApi {
       emailInquiry(id: number, body: string): Promise<Result<InquiryDetail>>;
       /** Check the mailbox now. */
       sync(): Promise<Result<MailStatus>>;
+      /** Write a reply draft (nothing is sent). */
+      draft(input: MailDraftRequest): Promise<Result<DraftResult>>;
       /** A link that downloads an attachment, or null where there is none (the demo). */
       attachmentUrl(id: number): string | null;
     };
